@@ -424,6 +424,12 @@ function BuyerAuthorizationDetail() {
                 This authorizes the instrument only. The buyer-side commission provision is a
                 separate item below and requires its own authorization.
               </p>
+            ) : payload?.request?.commission_expected ? (
+              <p className="text-xs text-muted-foreground">
+                This instrument contains a buyer-side commission provision. The Heavy Lifting Agent
+                has not proposed it yet; once they do, it will appear here as a separate item for
+                your own authorization. The instrument will not be tendered until then.
+              </p>
             ) : null}
 
             <SecondaryVerification

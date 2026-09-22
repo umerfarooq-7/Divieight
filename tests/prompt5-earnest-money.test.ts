@@ -112,6 +112,7 @@ describe("Prompt 5 — issuing funding instructions", () => {
         actionType: "counter_offer_acceptance",
         headline: "Accept seller counter",
         terms: { Price: "$2,480,000" },
+        commissionExpected: false,
       },
     });
     as(USERS.b2);
@@ -123,14 +124,27 @@ describe("Prompt 5 — issuing funding instructions", () => {
     expect(properties.find((p) => p.propertyId === IDS.property)?.acceptanceAuthorized).toBe(true);
   });
 
-  it("re-issuing never rewrites a funded obligation", async () => {
+  it("re-issue that would re-price a funded Account is refused (nothing changes)", async () => {
     seedPod(db());
     await issue();
     await markObligationFunded(db(), USERS.admin, { obligationId: obligation(IDS.b1).id, reference: "WIRE-1" });
-    await issue({ totalAmount: 12_000 });
+    await expect(issue({ totalAmount: 12_000 })).rejects.toThrow("already funded escrow");
     expect(obligation(IDS.b1).status).toBe("funded");
     expect(obligation(IDS.b1).amount).toBe(2666.66);
-    expect(obligation(IDS.b2).amount).toBe(8000);
+    expect(obligation(IDS.b2).amount).toBe(5333.34);
+    expect(db().table("earnest_money_terms")[0].total_amount).toBe(8000);
+    expect(db().audits("earnest.reissue_blocked")).toHaveLength(1);
+  });
+
+  it("re-issue with the same total (new deadline/escrow details) is allowed after funding", async () => {
+    seedPod(db());
+    await issue();
+    await markObligationFunded(db(), USERS.admin, { obligationId: obligation(IDS.b1).id });
+    const later = hoursFromNow(120);
+    await issue({ fundingDeadline: later, escrowCompany: "Stewart Title" });
+    expect(obligation(IDS.b1).status).toBe("funded");
+    expect(obligation(IDS.b2).funding_deadline).toBe(new Date(later).toISOString());
+    expect(db().table("earnest_money_terms")[0].escrow_company).toBe("Stewart Title");
   });
 });
 

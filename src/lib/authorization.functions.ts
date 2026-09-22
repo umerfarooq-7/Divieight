@@ -193,6 +193,12 @@ export interface CreateAuthorizationInput {
   priorRequestId?: string | null;
   /** Explicit market deadline (seller's clock) — otherwise the default window. */
   deadlineAt?: string | null;
+  /**
+   * The instrument carries a buyer-side commission provision. Defaults to true
+   * for offer/counter/REPA actions. When true the instrument cannot tender
+   * until the HLA's provision is separately authorized by every member.
+   */
+  commissionExpected?: boolean;
 }
 
 /** Queue a triggering action for the Buyer Account's express authorization. */
@@ -209,9 +215,10 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
     if (!(await isAdmin(userId))) throw new Error("Not authorized");
     const db = await adminDb();
 
-    const { DEFAULT_AUTHORIZATION_SETTINGS, AUTHORIZATION_SETTINGS_KEY } = await import(
-      "@/lib/authorization"
-    );
+    const { DEFAULT_AUTHORIZATION_SETTINGS, AUTHORIZATION_SETTINGS_KEY, COMMISSION_BEARING_ACTIONS } =
+      await import("@/lib/authorization");
+    const commissionExpected =
+      data.commissionExpected ?? COMMISSION_BEARING_ACTIONS.includes(data.actionType);
     const { data: setting } = await db
       .from("platform_settings")
       .select("value")
@@ -255,10 +262,18 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
         consequence_text: CONSEQUENCE_TEXT[data.actionType],
         agent_id: buyer.tethered_resident_agent_id,
         created_by: userId,
+        // Omitted when false so the column's default applies.
+        ...(commissionExpected ? { commission_expected: true } : {}),
       })
       .select("id, deadline_at")
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (/commission_expected/.test(error.message))
+        throw new Error(
+          "Database is missing authorization_requests.commission_expected — run authorization-commission-expected.sql in Supabase.",
+        );
+      throw new Error(error.message);
+    }
 
     const property = await propertyFor(db, data.propertyId);
     const link = `/buyer/authorizations/${created.id}`;
@@ -296,6 +311,29 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
       }
     }
 
+    // The HLA proposes the commission provision — invite them to do so now.
+    if (commissionExpected) {
+      const hlaId = await heavyLiftingAgentId(db, data.propertyId);
+      if (hlaId) {
+        const { data: hla } = await db
+          .from("agents")
+          .select("auth_user_id, email")
+          .eq("id", hlaId)
+          .maybeSingle();
+        if (hla)
+          await deliver(
+            db,
+            { authUserId: hla.auth_user_id, email: hla.email },
+            {
+              subject: "Commission provision needed",
+              message: `${label} on ${propertyLabel(property)} carries a buyer-side commission provision. As Heavy Lifting Agent, propose it so each Preferred Member can authorize it separately — the instrument cannot be tendered until they do.`,
+              link: "/agent/authorizations",
+              requestId: created.id,
+            },
+          );
+      }
+    }
+
     await audit(db, {
       actorId: userId,
       actorType: "admin",
@@ -308,6 +346,7 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
         deadline_at: created.deadline_at,
         market_driven: MARKET_DRIVEN_ACTIONS.includes(data.actionType),
         has_prior_version: Boolean(priorTerms),
+        commission_expected: commissionExpected,
       },
     });
 
@@ -539,8 +578,12 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
 
     // Authorizing the instrument is NOT authorizing the commission provision.
     // While a proposed provision is unauthorized, the instrument does not tender.
+    // An instrument flagged as carrying a commission provision stays untendered
+    // until the HLA has proposed it and every member has authorized it.
     const commissionItem = await loadCommissionItem(db, row.id);
-    const commissionPending = Boolean(commissionItem && commissionItem.status !== "authorized");
+    const commissionPending = commissionItem
+      ? commissionItem.status !== "authorized"
+      : Boolean(row.commission_expected);
     if (disposition === "authorized" && commissionPending) disposition = null;
 
     if (disposition) {

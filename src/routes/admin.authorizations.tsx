@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { formatCents, formatRate, fundingSourceLabel } from "@/lib/commission-item";
 import {
   AUTHORIZATION_ACTIONS,
+  COMMISSION_BEARING_ACTIONS,
   AUTHORIZATION_ACTION_LABELS,
   authorizationStatusLabel,
   formatDeadline,
@@ -91,6 +92,7 @@ function AdminAuthorizations() {
   const [terms, setTerms] = useState("Purchase price: \nClosing date: \nContingencies: ");
   const [deadline, setDeadline] = useState("");
   const [priorId, setPriorId] = useState("");
+  const [commissionExpected, setCommissionExpected] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -134,6 +136,7 @@ function AdminAuthorizations() {
           terms: parseTerms(),
           priorRequestId: priorId || null,
           deadlineAt: deadline ? new Date(deadline).toISOString() : null,
+          commissionExpected,
         },
       });
       toast.success("Authorization request queued and the buyer notified.");
@@ -202,7 +205,11 @@ function AdminAuthorizations() {
         </select>
         <select
           value={action}
-          onChange={(e) => setAction(e.target.value as AuthorizationAction)}
+          onChange={(e) => {
+            const next = e.target.value as AuthorizationAction;
+            setAction(next);
+            setCommissionExpected(COMMISSION_BEARING_ACTIONS.includes(next));
+          }}
           className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
         >
           {AUTHORIZATION_ACTIONS.map((a) => (
@@ -227,6 +234,21 @@ function AdminAuthorizations() {
           One term per line as <code>Label: value</code>. Link a prior request below to show the
           buyer a diff.
         </p>
+        <label className="flex items-start gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={commissionExpected}
+            onChange={(e) => setCommissionExpected(e.target.checked)}
+            className="mt-1"
+          />
+          <span>
+            This instrument contains a buyer-side commission provision
+            <span className="block text-xs text-muted-foreground">
+              The Heavy Lifting Agent is asked to propose it, and the instrument cannot be tendered
+              until every Preferred Member authorizes that provision separately.
+            </span>
+          </span>
+        </label>
         <select
           value={priorId}
           onChange={(e) => setPriorId(e.target.value)}

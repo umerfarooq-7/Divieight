@@ -149,11 +149,23 @@ export const issueEarnestMoney = createServerFn({ method: "POST" })
     if (!(await isAdmin(userId))) throw new Error("Not authorized");
     const db = await adminDb();
     const { issueEarnestObligations } = await import("@/lib/earnest-money.server");
-    return issueEarnestObligations(db, userId, {
+    const result = await issueEarnestObligations(db, userId, {
       ...data,
       totalAmount: Number(data.totalAmount),
       fundingDeadline: new Date(data.fundingDeadline).toISOString(),
     });
+    if (result.reason === "funded_amount_conflict") {
+      const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+      const detail = result.conflicts
+        .map((c) => `${money(c.fundedAmount)} funded vs ${money(c.newAmount)} under the new total`)
+        .join("; ");
+      throw new Error(
+        `Not issued: ${result.conflicts.length} Buyer Account(s) already funded escrow and this total would change their share (${detail}). Keep the original total, or settle the difference with the title/escrow company first.`,
+      );
+    }
+    if (result.reason === "no_active_reservations")
+      throw new Error("No active reservations on this property.");
+    return result;
   });
 
 export const markEarnestFunded = createServerFn({ method: "POST" })

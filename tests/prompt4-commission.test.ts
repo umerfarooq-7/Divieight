@@ -17,7 +17,7 @@ import {
 const as = (user: string) => (harness.userId = user);
 const db = () => harness.db;
 
-async function queueOffer(buyerAccountId = IDS.b1) {
+async function queueOffer(buyerAccountId = IDS.b1, commissionExpected?: boolean) {
   as(USERS.admin);
   const { id } = await createAuthorizationRequest({
     data: {
@@ -26,6 +26,7 @@ async function queueOffer(buyerAccountId = IDS.b1) {
       actionType: "offer_tender",
       headline: "Tender offer at $2.45M",
       terms: { Price: "$2,450,000", Closing: "45 days" },
+      commissionExpected,
     },
   });
   return id;
@@ -191,7 +192,7 @@ describe("Prompt 4 — itemized commission authorization", () => {
 
   it("any instrument decline resolves the request as declined", async () => {
     seedPod(db());
-    const id = await queueOffer();
+    const id = await queueOffer(IDS.b1, false);
     as(USERS.b1);
     const r = await respondToAuthorization(member(id, IDS.b1m1, "declined"));
     expect(r.disposition).toBe("declined");
@@ -201,7 +202,7 @@ describe("Prompt 4 — itemized commission authorization", () => {
 
   it("a member can answer for the other only with documented authority", async () => {
     seedPod(db());
-    const id = await queueOffer();
+    const id = await queueOffer(IDS.b1, false);
     as(USERS.b1);
     await expect(
       respondToAuthorization({ data: { ...member(id, IDS.b1m1, "confirmed").data, onBehalfOfMemberId: IDS.b1m2 } }),
@@ -229,6 +230,47 @@ describe("Prompt 4 — itemized commission authorization", () => {
     const { runAuthorizationEscalationSweep } = await import("@/lib/authorization.server");
     await runAuthorizationEscalationSweep();
     expect(status(id)).toBe("pending");
+  });
+});
+
+describe("Commission-bearing instruments can't tender before the HLA's provision", () => {
+  it("offers default to commission_expected and the HLA is asked to propose", async () => {
+    seedPod(db());
+    const id = await queueOffer();
+    expect(db().table("authorization_requests").find((r) => r.id === id)!.commission_expected).toBe(true);
+    expect(db().notificationsFor(USERS.hla).at(-1)!.message).toContain("propose it");
+  });
+
+  it("members authorizing the instrument BEFORE any proposal does not tender it", async () => {
+    seedPod(db());
+    const id = await queueOffer();
+    as(USERS.b1);
+    await respondToAuthorization(member(id, IDS.b1m1, "confirmed"));
+    const r = await respondToAuthorization(member(id, IDS.b1m2, "confirmed"));
+    expect(r.disposition).toBeNull();
+    expect(r.commissionPending).toBe(true);
+    expect(status(id)).toBe("pending");
+
+    // HLA can still propose (request is pending), and once both members
+    // authorize the provision the instrument resolves.
+    await propose(id);
+    as(USERS.b1);
+    await respondToCommissionItem(member(id, IDS.b1m1, "confirmed"));
+    await respondToCommissionItem(member(id, IDS.b1m2, "confirmed"));
+    expect(status(id)).toBe("authorized");
+  });
+
+  it("admin can mark an instrument as having no commission provision (e.g. contingency waiver)", async () => {
+    seedPod(db());
+    as(USERS.admin);
+    const { id } = await createAuthorizationRequest({
+      data: { propertyId: IDS.property, buyerAccountId: IDS.b1, actionType: "contingency_waiver", headline: "Waive inspection", terms: {} },
+    });
+    expect(db().table("authorization_requests").find((r) => r.id === id)!.commission_expected).toBeUndefined();
+    as(USERS.b1);
+    await respondToAuthorization(member(id, IDS.b1m1, "confirmed"));
+    const r = await respondToAuthorization(member(id, IDS.b1m2, "confirmed"));
+    expect(r.disposition).toBe("authorized");
   });
 });
 

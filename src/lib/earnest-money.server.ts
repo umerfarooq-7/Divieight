@@ -91,7 +91,9 @@ async function activeHolders(db: Db, propertyId: string) {
     .from("pod_reservations")
     .select("id, buyer_account_id, shares_reserved")
     .eq("property_id", propertyId)
-    .eq("status", "reserved");
+    .eq("status", "reserved")
+    // Deterministic order so a re-issue splits (and rounds) identically.
+    .order("reserved_at", { ascending: true });
   return (data ?? []) as Array<{
     id: string;
     buyer_account_id: string;
@@ -149,7 +151,8 @@ export async function issueEarnestObligations(
   input: IssueEarnestInput,
 ) {
   const holders = await activeHolders(db, input.propertyId);
-  if (holders.length === 0) return { issued: 0, reason: "no_active_reservations" as const };
+  if (holders.length === 0)
+    return { issued: 0, reason: "no_active_reservations" as const, conflicts: [] };
 
   const sharesBasis = holders.reduce((s, h) => s + (h.shares_reserved ?? 1), 0);
   const parts = splitProRata(
@@ -160,6 +163,36 @@ export async function issueEarnestObligations(
     })),
   );
   const perShareAmount = sharesBasis > 0 ? input.totalAmount / sharesBasis : 0;
+
+  // Money already sent to escrow can't be silently re-priced: if a re-issue
+  // would change what a funded Account owes, refuse and name who's affected.
+  const { data: existingRows } = await db
+    .from("earnest_money_obligations")
+    .select("buyer_account_id, amount, status")
+    .eq("property_id", input.propertyId)
+    .eq("status", "funded");
+  const fundedByBuyer = new Map(
+    ((existingRows ?? []) as Array<{ buyer_account_id: string; amount: number }>).map((o) => [
+      o.buyer_account_id,
+      toCents(Number(o.amount)),
+    ]),
+  );
+  const conflicts = parts
+    .filter((p) => fundedByBuyer.has(p.buyerAccountId) && fundedByBuyer.get(p.buyerAccountId) !== p.amountCents)
+    .map((p) => ({
+      buyerAccountId: p.buyerAccountId,
+      fundedAmount: fundedByBuyer.get(p.buyerAccountId)! / 100,
+      newAmount: p.amountCents / 100,
+    }));
+  if (conflicts.length > 0) {
+    await audit(db, {
+      actorId,
+      actionType: "earnest.reissue_blocked",
+      entityId: null,
+      metadata: { property_id: input.propertyId, total_amount: input.totalAmount, conflicts },
+    });
+    return { issued: 0, reason: "funded_amount_conflict" as const, conflicts };
+  }
   const methods =
     input.fundingMethods && input.fundingMethods.length > 0
       ? input.fundingMethods
@@ -284,7 +317,7 @@ export async function issueEarnestObligations(
     });
   }
 
-  return { issued, sharesBasis };
+  return { issued, sharesBasis, reason: null, conflicts: [] };
 }
 
 // ---------------------------------------------------------------------------

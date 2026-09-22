@@ -34,6 +34,14 @@ export const MARKET_DRIVEN_ACTIONS: AuthorizationAction[] = [
   "final_repa_acceptance",
 ];
 
+/** Instruments that normally carry a buyer-side commission provision. */
+export const COMMISSION_BEARING_ACTIONS: AuthorizationAction[] = [
+  "offer_tender",
+  "offer_revision",
+  "counter_offer_acceptance",
+  "final_repa_acceptance",
+];
+
 export const CONSEQUENCE_TEXT: Record<AuthorizationAction, string> = {
   offer_tender:
     "If you do not confirm by the deadline, no offer will be tendered on your behalf. Nothing is submitted without your express confirmation, and the Manager has no authority to act for you.",
@@ -86,6 +94,8 @@ export interface AuthorizationRequestRow {
   prior_terms: AuthorizationTerms | null;
   prior_request_id: string | null;
   market_driven: boolean;
+  /** Instrument carries a buyer-side commission provision (Rev 42). */
+  commission_expected?: boolean;
   deadline_at: string;
   consequence_text: string;
   status: "pending" | "authorized" | "declined" | "withdrawn";
