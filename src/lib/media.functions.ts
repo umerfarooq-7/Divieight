@@ -2,26 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 /**
- * Signs storage paths in the private `property-media` bucket so browser
+ * Resolves storage paths in the `property-media` bucket so browser
  * surfaces (wishlist cards, etc.) can render photos.
  */
 export const signPropertyPhotos = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ paths: z.array(z.string()).max(100) }).parse(data))
   .handler(async ({ data }): Promise<Record<string, string>> => {
     if (data.paths.length === 0) return {};
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-      const { data: signed } = await supabaseAdmin.storage
-        .from("property-media")
-        .createSignedUrls(data.paths, 60 * 60);
-      const out: Record<string, string> = {};
-      (signed ?? []).forEach((s) => {
-        if (s.path && s.signedUrl) out[s.path] = s.signedUrl;
-      });
-      return out;
-    } catch {
-      return {};
-    }
+    const { resolvePropertyMediaUrls } = await import("@/lib/property-media.server");
+    return Object.fromEntries(await resolvePropertyMediaUrls(data.paths));
   });
 
 export const getPropertyCoverPhotos = createServerFn({ method: "POST" })
@@ -49,13 +38,8 @@ export const getPropertyCoverPhotos = createServerFn({ method: "POST" })
       });
       if (pathByProperty.size === 0) return {};
 
-      const { data: signed } = await supabaseAdmin.storage
-        .from("property-media")
-        .createSignedUrls(Array.from(pathByProperty.values()), 60 * 60);
-      const urlByPath = new Map<string, string>();
-      (signed ?? []).forEach((item) => {
-        if (item.path && item.signedUrl) urlByPath.set(item.path, item.signedUrl);
-      });
+      const { resolvePropertyMediaUrls } = await import("@/lib/property-media.server");
+      const urlByPath = await resolvePropertyMediaUrls(Array.from(pathByProperty.values()));
 
       return Object.fromEntries(
         Array.from(pathByProperty.entries()).flatMap(([propertyId, path]) => {

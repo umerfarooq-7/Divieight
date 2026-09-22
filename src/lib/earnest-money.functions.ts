@@ -167,10 +167,17 @@ export const markEarnestFunded = createServerFn({ method: "POST" })
     if (!(await isAdmin(userId))) throw new Error("Not authorized");
     const db = await adminDb();
     const { markObligationFunded } = await import("@/lib/earnest-money.server");
-    return markObligationFunded(db, userId, {
+    const result = await markObligationFunded(db, userId, {
       obligationId: data.obligationId,
       reference: data.reference ?? null,
     });
+    if (!result.ok)
+      throw new Error(
+        result.reason === "already_defaulted"
+          ? "This obligation was already declared a Default and its share released to substitution."
+          : "Obligation not found",
+      );
+    return result;
   });
 
 export const runEarnestMoneyDeadlineSweep = createServerFn({ method: "POST" })

@@ -105,22 +105,12 @@ export const getMarketplaceProperties = createServerFn({ method: "GET" }).handle
 
     const paths = Array.from(firstByProp.values());
     if (paths.length > 0) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const { data: signed } = await supabaseAdmin.storage
-          .from("property-media")
-          .createSignedUrls(paths, 60 * 60);
-        const byPath = new Map<string, string>();
-        (signed ?? []).forEach((s) => {
-          if (s.path && s.signedUrl) byPath.set(s.path, s.signedUrl);
-        });
-        rows.forEach((r) => {
-          const path = firstByProp.get(r.id);
-          r.photo = path ? (byPath.get(path) ?? null) : null;
-        });
-      } catch {
-        // photos are optional on the public marketplace
-      }
+      const { resolvePropertyMediaUrls } = await import("@/lib/property-media.server");
+      const byPath = await resolvePropertyMediaUrls(paths);
+      rows.forEach((r) => {
+        const path = firstByProp.get(r.id);
+        r.photo = path ? (byPath.get(path) ?? null) : null;
+      });
     }
 
     return rows;
@@ -185,20 +175,8 @@ export const getMarketplaceProperty = createServerFn({ method: "GET" })
       .order("display_order", { ascending: true });
 
     const paths = (media ?? []).map((m) => m.url).filter((u): u is string => !!u);
-    const byPath = new Map<string, string>();
-    if (paths.length > 0) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const { data: signed } = await supabaseAdmin.storage
-          .from("property-media")
-          .createSignedUrls(paths, 60 * 60);
-        (signed ?? []).forEach((s) => {
-          if (s.path && s.signedUrl) byPath.set(s.path, s.signedUrl);
-        });
-      } catch {
-        // photos are optional on the public marketplace
-      }
-    }
+    const { resolvePropertyMediaUrls } = await import("@/lib/property-media.server");
+    const byPath = await resolvePropertyMediaUrls(paths);
 
     const photos = (media ?? [])
       .map((m) => ({ url: m.url ? (byPath.get(m.url) ?? null) : null, caption: m.caption }))

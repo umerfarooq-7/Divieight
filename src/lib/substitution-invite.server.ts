@@ -411,12 +411,32 @@ export async function respondToInvitation(
   // A Substitute Member funds their pro-rata earnest money on the SAME
   // timeline as the member they replace — a condition of installation.
   {
+    // Link to the obligation of the member being replaced, when there is one.
+    let replacesObligationId: string | null = null;
+    if (invitation.vacated_reservation_id) {
+      const { data: vacated } = await db
+        .from("pod_reservations")
+        .select("buyer_account_id")
+        .eq("id", invitation.vacated_reservation_id)
+        .maybeSingle();
+      if (vacated?.buyer_account_id) {
+        const { data: prior } = await db
+          .from("earnest_money_obligations")
+          .select("id")
+          .eq("property_id", property.id)
+          .eq("buyer_account_id", vacated.buyer_account_id)
+          .maybeSingle();
+        replacesObligationId = prior?.id ?? null;
+      }
+    }
+
     const { createSubstituteObligation } = await import("@/lib/earnest-money.server");
     await createSubstituteObligation(db as never, {
       propertyId: property.id,
       buyerAccountId: params.buyerAccountId,
       shares: invitation.shares_offered ?? 1,
       actorId: params.authUserId,
+      replacesObligationId,
     });
   }
 

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { auditIp } from "@/lib/request-ip.server";
 import {
   AGENT_ACK_TEXT,
   GOVERNING_CATEGORIES,
@@ -91,7 +92,27 @@ async function loadAcks(
     )
     .eq("buyer_account_id", buyerAccountId)
     .in("document_id", documentIds);
-  return (data ?? []) as DdAcknowledgment[];
+  return currentAgentAcks(db, buyerAccountId, (data ?? []) as DdAcknowledgment[]);
+}
+
+/**
+ * Only the buyer's CURRENTLY tethered Resident Agent satisfies the parallel
+ * acknowledgment. After a re-tether, the prior agent's acks stay in the Audit
+ * Vault but no longer count toward the gate.
+ */
+export async function currentAgentAcks<T extends { actor_role: string; agent_id: string | null }>(
+  db: Db,
+  buyerAccountId: string,
+  acks: T[],
+): Promise<T[]> {
+  if (!acks.some((a) => a.actor_role === "resident_agent")) return acks;
+  const { data: buyer } = await db
+    .from("buyer_accounts")
+    .select("tethered_resident_agent_id")
+    .eq("id", buyerAccountId)
+    .maybeSingle();
+  const tethered = (buyer?.tethered_resident_agent_id as string | null) ?? null;
+  return acks.filter((a) => a.actor_role !== "resident_agent" || a.agent_id === tethered);
 }
 
 async function loadMembers(db: Db, buyerAccountId: string): Promise<DdMember[]> {
@@ -242,7 +263,7 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
       signed_name: data.signedName || (member.full_name ?? "Account Member"),
       acknowledgment_text: MEMBER_ACK_TEXT,
       content_hash: doc.content_hash,
-      ip_address: data.ipAddress,
+      ip_address: auditIp(data.ipAddress),
       device_fingerprint: data.deviceFingerprint,
       secondary_verification_method: data.secondaryVerificationMethod,
       independent_review_notice_text: showNotice ? INDEPENDENT_REVIEW_NOTICE : null,
@@ -459,7 +480,7 @@ export const acknowledgeAsAgent = createServerFn({ method: "POST" })
       signed_name: data.signedName || (agent.full_name ?? "Resident Agent"),
       acknowledgment_text: AGENT_ACK_TEXT,
       content_hash: doc.content_hash,
-      ip_address: data.ipAddress,
+      ip_address: auditIp(data.ipAddress),
       device_fingerprint: data.deviceFingerprint,
       secondary_verification_method: data.secondaryVerificationMethod,
       independent_review_notice_text: showNotice ? INDEPENDENT_REVIEW_NOTICE : null,

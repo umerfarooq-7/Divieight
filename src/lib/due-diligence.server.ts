@@ -64,15 +64,13 @@ export async function runDiligenceEscalationSweep(): Promise<DiligenceEscalation
     for (const buyerAccountId of buyerIds) {
       scanned += 1;
 
-      const { data: ack } = await db
+      const { data: agentAcks } = await db
         .from("due_diligence_acknowledgments")
-        .select("id")
+        .select("agent_id")
         .eq("document_id", doc.id)
         .eq("buyer_account_id", buyerAccountId)
         .eq("actor_role", "resident_agent")
-        .eq("content_hash", doc.content_hash)
-        .maybeSingle();
-      if (ack) continue;
+        .eq("content_hash", doc.content_hash);
 
       const { data: already } = await db
         .from("audit_log")
@@ -89,6 +87,13 @@ export async function runDiligenceEscalationSweep(): Promise<DiligenceEscalation
         .eq("id", buyerAccountId)
         .maybeSingle();
       if (!buyer) continue;
+      // Only the currently tethered agent's acknowledgment satisfies the gate.
+      if (
+        ((agentAcks ?? []) as any[]).some(
+          (a) => a.agent_id === buyer.tethered_resident_agent_id,
+        )
+      )
+        continue;
 
       let agentUser: string | null = null;
       let brokerUser: string | null = null;

@@ -130,7 +130,8 @@ function fingerprint(rows: CapTableRow[]) {
         r.shareNumber,
         r.holderType,
         r.buyerAccountId ?? r.sellerId ?? "",
-        r.acquisitionDate,
+        // Normalize: Postgres returns "+00:00" offsets, toISOString() returns "Z".
+        new Date(r.acquisitionDate).toISOString(),
       ].join(":"),
     )
     .join("|");
@@ -166,7 +167,7 @@ export async function syncCapTable(
 
   await db.from("cap_table_entries").delete().eq("property_id", params.propertyId);
   if (desired.length > 0) {
-    await db.from("cap_table_entries").insert(
+    const { error: insertError } = await db.from("cap_table_entries").insert(
       desired.map((r) => ({
         property_id: params.propertyId,
         share_number: r.shareNumber,
@@ -178,6 +179,7 @@ export async function syncCapTable(
         retention_lock_expires_at: r.retentionLockExpiresAt,
       })),
     );
+    if (insertError) console.error("[entity-genesis] cap table write failed:", insertError.message);
   }
 
   await db

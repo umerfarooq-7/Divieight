@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabase } from "@/integrations/supabase/client";
 import { buildGateState, gateClear, gatingDocuments } from "@/lib/due-diligence";
 import { adminRecipients, deliver } from "@/lib/authorization.notify.server";
+import { auditIp } from "@/lib/request-ip.server";
 import {
   AUTHORIZATION_ACTIONS,
   AUTHORIZATION_ACTION_LABELS,
@@ -97,7 +98,9 @@ export async function diligenceGateStatus(
     .select("id, full_name, role")
     .eq("buyer_account_id", buyerAccountId);
   const memberRows = (members ?? []) as Array<{ id: string }>;
-  const states = buildGateState(documents as any, (acks ?? []) as any, memberRows as any);
+  const { currentAgentAcks } = await import("@/lib/due-diligence.functions");
+  const liveAcks = await currentAgentAcks(db, buyerAccountId, (acks ?? []) as any[]);
+  const states = buildGateState(documents as any, liveAcks as any, memberRows as any);
   const required = gatingDocuments(states);
   const buyerPending = required.some(
     (state) =>
@@ -504,7 +507,7 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
         secondary_verification_method: data.secondaryVerificationMethod,
         on_behalf_of_member_id: data.onBehalfOfMemberId ?? null,
         authority_basis: data.authorityBasis?.trim() ?? null,
-        ip_address: data.ipAddress ?? null,
+        ip_address: auditIp(data.ipAddress),
         device_fingerprint: data.deviceFingerprint ?? null,
         responded_at: new Date().toISOString(),
       },
@@ -526,7 +529,7 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
         authority_basis: data.authorityBasis ?? null,
         secondary_verification_method: data.secondaryVerificationMethod,
         signed_name: data.signedName.trim(),
-        ip_address: data.ipAddress ?? null,
+        ip_address: auditIp(data.ipAddress),
       },
     });
 
@@ -1149,7 +1152,7 @@ export const respondToCommissionItem = createServerFn({ method: "POST" })
         secondary_verification_method: data.secondaryVerificationMethod,
         presented_text: presented,
         instrument_hash: item.instrument_hash,
-        ip_address: data.ipAddress ?? null,
+        ip_address: auditIp(data.ipAddress),
         device_fingerprint: data.deviceFingerprint ?? null,
         responded_at: new Date().toISOString(),
       },
@@ -1174,7 +1177,7 @@ export const respondToCommissionItem = createServerFn({ method: "POST" })
         secondary_verification_method: data.secondaryVerificationMethod,
         presented_text: presented,
         instrument_hash: item.instrument_hash,
-        ip_address: data.ipAddress ?? null,
+        ip_address: auditIp(data.ipAddress),
         is_default_under_pra_section_8: false,
       },
     });

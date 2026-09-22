@@ -302,6 +302,9 @@ export async function markObligationFunded(
     .eq("id", params.obligationId)
     .maybeSingle();
   if (!row) return { ok: false as const, reason: "not_found" as const };
+  // A missed obligation has already been declared a Default and its slice
+  // released to substitution — marking it funded would contradict that.
+  if (row.status === "missed") return { ok: false as const, reason: "already_defaulted" as const };
 
   const fundedAt = params.fundedAt || new Date().toISOString();
   await db
@@ -448,6 +451,21 @@ async function declareDefault(
       .from("pod_reservations")
       .update({ status: "defaulted", updated_at: now })
       .eq("id", reservation.id);
+
+    // Same bookkeeping as a withdrawal: a vacated slice reopens a fully
+    // locked pod, and the cap table must drop the defaulting holder.
+    await db
+      .from("properties")
+      .update({ listing_status: "forming" })
+      .eq("id", row.property_id)
+      .eq("listing_status", "system_lock");
+
+    const { syncCapTable } = await import("@/lib/entity-genesis.server");
+    await syncCapTable(db as never, {
+      propertyId: row.property_id,
+      actorId: actorId as string, // null for scheduled sweeps (system actor)
+      reason: "earnest_money_default",
+    });
   }
 
   const { openSubstitution } = await import("@/lib/substitution-invite.server");
@@ -478,6 +496,10 @@ export async function runEarnestMoneySweep(db: Db, actorId: string | null = null
     .from("earnest_money_obligations")
     .select("id, property_id, buyer_account_id, amount, status, funding_deadline, late_at")
     .in("status", ["pending", "late"])
+    // Only past-deadline rows, oldest first — otherwise future-dated rows can
+    // fill the batch and starve overdue ones.
+    .lte("funding_deadline", new Date(now).toISOString())
+    .order("funding_deadline", { ascending: true })
     .limit(limit);
 
   let markedLate = 0;
@@ -591,6 +613,7 @@ export async function createSubstituteObligation(
         late_at: null,
         missed_at: null,
         is_substitute: true,
+        replaces_obligation_id: params.replacesObligationId ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", obligationId);
