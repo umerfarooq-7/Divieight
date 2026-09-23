@@ -44,6 +44,7 @@ import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 import { Route as DataRoomIdRouteImport } from './routes/data-room.$id'
 import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
 import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
+import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
 import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
@@ -57,6 +58,7 @@ import { Route as BrokerLoginRouteImport } from './routes/broker.login'
 import { Route as BrokerDashboardRouteImport } from './routes/broker.dashboard'
 import { Route as BrokerClosingHoldsRouteImport } from './routes/broker.closing-holds'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AgentReportsRouteImport } from './routes/agent.reports'
 import { Route as AgentRegisterRouteImport } from './routes/agent.register'
 import { Route as AgentPoolsRouteImport } from './routes/agent.pools'
 import { Route as AgentLoginRouteImport } from './routes/agent.login'
@@ -126,6 +128,7 @@ import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.in
 import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
+import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
 import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
@@ -305,6 +308,11 @@ const BuyerVerificationRoute = BuyerVerificationRouteImport.update({
   path: '/buyer/verification',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerReportsRoute = BuyerReportsRouteImport.update({
+  id: '/buyer/reports',
+  path: '/buyer/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerRegisterRoute = BuyerRegisterRouteImport.update({
   id: '/buyer/register',
   path: '/buyer/register',
@@ -369,6 +377,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AgentReportsRoute = AgentReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AgentRoute,
 } as any)
 const AgentRegisterRoute = AgentRegisterRouteImport.update({
   id: '/register',
@@ -736,6 +749,12 @@ const AgentAuthorizationsIdCommissionRoute =
     path: '/$id/commission',
     getParentRoute: () => AgentAuthorizationsRoute,
   } as any)
+const AdminPropertiesIdReportsRoute =
+  AdminPropertiesIdReportsRouteImport.update({
+    id: '/$id/reports',
+    path: '/$id/reports',
+    getParentRoute: () => AdminPropertiesRoute,
+  } as any)
 const AdminPropertiesIdDueDiligenceRoute =
   AdminPropertiesIdDueDiligenceRouteImport.update({
     id: '/$id/due-diligence',
@@ -793,6 +812,7 @@ export interface FileRoutesByFullPath {
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
   '/agent/register': typeof AgentRegisterRoute
+  '/agent/reports': typeof AgentReportsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/broker/closing-holds': typeof BrokerClosingHoldsRoute
   '/broker/dashboard': typeof BrokerDashboardRoute
@@ -806,6 +826,7 @@ export interface FileRoutesByFullPath {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
+  '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
@@ -871,6 +892,7 @@ export interface FileRoutesByFullPath {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -909,6 +931,7 @@ export interface FileRoutesByTo {
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
   '/agent/register': typeof AgentRegisterRoute
+  '/agent/reports': typeof AgentReportsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/broker/closing-holds': typeof BrokerClosingHoldsRoute
   '/broker/dashboard': typeof BrokerDashboardRoute
@@ -921,6 +944,7 @@ export interface FileRoutesByTo {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
+  '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
@@ -986,6 +1010,7 @@ export interface FileRoutesByTo {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -1031,6 +1056,7 @@ export interface FileRoutesById {
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
   '/agent/register': typeof AgentRegisterRoute
+  '/agent/reports': typeof AgentReportsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/broker/closing-holds': typeof BrokerClosingHoldsRoute
   '/broker/dashboard': typeof BrokerDashboardRoute
@@ -1044,6 +1070,7 @@ export interface FileRoutesById {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
+  '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
@@ -1109,6 +1136,7 @@ export interface FileRoutesById {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -1155,6 +1183,7 @@ export interface FileRouteTypes {
     | '/agent/login'
     | '/agent/pools'
     | '/agent/register'
+    | '/agent/reports'
     | '/auth/callback'
     | '/broker/closing-holds'
     | '/broker/dashboard'
@@ -1168,6 +1197,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/login'
     | '/buyer/register'
+    | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
@@ -1233,6 +1263,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1271,6 +1302,7 @@ export interface FileRouteTypes {
     | '/agent/login'
     | '/agent/pools'
     | '/agent/register'
+    | '/agent/reports'
     | '/auth/callback'
     | '/broker/closing-holds'
     | '/broker/dashboard'
@@ -1283,6 +1315,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/login'
     | '/buyer/register'
+    | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
@@ -1348,6 +1381,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1392,6 +1426,7 @@ export interface FileRouteTypes {
     | '/agent/login'
     | '/agent/pools'
     | '/agent/register'
+    | '/agent/reports'
     | '/auth/callback'
     | '/broker/closing-holds'
     | '/broker/dashboard'
@@ -1405,6 +1440,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/login'
     | '/buyer/register'
+    | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
@@ -1470,6 +1506,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1499,6 +1536,7 @@ export interface RootRouteChildren {
   BuyerGoldenTicketRoute: typeof BuyerGoldenTicketRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
   BuyerRegisterRoute: typeof BuyerRegisterRoute
+  BuyerReportsRoute: typeof BuyerReportsRoute
   BuyerVerificationRoute: typeof BuyerVerificationRoute
   BuyerWishlistRoute: typeof BuyerWishlistRoute
   DataRoomIdRoute: typeof DataRoomIdRoute
@@ -1786,6 +1824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/reports': {
+      id: '/buyer/reports'
+      path: '/buyer/reports'
+      fullPath: '/buyer/reports'
+      preLoaderRoute: typeof BuyerReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/register': {
       id: '/buyer/register'
       path: '/buyer/register'
@@ -1876,6 +1921,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/agent/reports': {
+      id: '/agent/reports'
+      path: '/reports'
+      fullPath: '/agent/reports'
+      preLoaderRoute: typeof AgentReportsRouteImport
+      parentRoute: typeof AgentRoute
     }
     '/agent/register': {
       id: '/agent/register'
@@ -2360,6 +2412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentAuthorizationsIdCommissionRouteImport
       parentRoute: typeof AgentAuthorizationsRoute
     }
+    '/admin/properties/$id/reports': {
+      id: '/admin/properties/$id/reports'
+      path: '/$id/reports'
+      fullPath: '/admin/properties/$id/reports'
+      preLoaderRoute: typeof AdminPropertiesIdReportsRouteImport
+      parentRoute: typeof AdminPropertiesRoute
+    }
     '/admin/properties/$id/due-diligence': {
       id: '/admin/properties/$id/due-diligence'
       path: '/$id/due-diligence'
@@ -2387,11 +2446,13 @@ declare module '@tanstack/react-router' {
 interface AdminPropertiesRouteChildren {
   AdminPropertiesIndexRoute: typeof AdminPropertiesIndexRoute
   AdminPropertiesIdDueDiligenceRoute: typeof AdminPropertiesIdDueDiligenceRoute
+  AdminPropertiesIdReportsRoute: typeof AdminPropertiesIdReportsRoute
 }
 
 const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
   AdminPropertiesIndexRoute: AdminPropertiesIndexRoute,
   AdminPropertiesIdDueDiligenceRoute: AdminPropertiesIdDueDiligenceRoute,
+  AdminPropertiesIdReportsRoute: AdminPropertiesIdReportsRoute,
 }
 
 const AdminPropertiesRouteWithChildren = AdminPropertiesRoute._addFileChildren(
@@ -2469,6 +2530,7 @@ interface AgentRouteChildren {
   AgentLoginRoute: typeof AgentLoginRoute
   AgentPoolsRoute: typeof AgentPoolsRoute
   AgentRegisterRoute: typeof AgentRegisterRoute
+  AgentReportsRoute: typeof AgentReportsRoute
   AgentIndexRoute: typeof AgentIndexRoute
   AgentDocumentsIdRoute: typeof AgentDocumentsIdRoute
   AgentListingsIdRoute: typeof AgentListingsIdRoute
@@ -2494,6 +2556,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentLoginRoute: AgentLoginRoute,
   AgentPoolsRoute: AgentPoolsRoute,
   AgentRegisterRoute: AgentRegisterRoute,
+  AgentReportsRoute: AgentReportsRoute,
   AgentIndexRoute: AgentIndexRoute,
   AgentDocumentsIdRoute: AgentDocumentsIdRoute,
   AgentListingsIdRoute: AgentListingsIdRoute,
@@ -2600,6 +2663,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerGoldenTicketRoute: BuyerGoldenTicketRoute,
   BuyerLoginRoute: BuyerLoginRoute,
   BuyerRegisterRoute: BuyerRegisterRoute,
+  BuyerReportsRoute: BuyerReportsRoute,
   BuyerVerificationRoute: BuyerVerificationRoute,
   BuyerWishlistRoute: BuyerWishlistRoute,
   DataRoomIdRoute: DataRoomIdRoute,

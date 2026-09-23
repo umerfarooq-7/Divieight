@@ -51,13 +51,24 @@ async function sendEmail(to: string, subject: string, body: string, link: string
 export async function deliver(
   db: Db,
   recipient: AuthorizationRecipient,
-  args: { subject: string; message: string; link?: string | null; requestId?: string | null },
+  args: {
+    subject: string;
+    message: string;
+    link?: string | null;
+    requestId?: string | null;
+    /** Portal notification type; defaults to "authorization". */
+    type?: string;
+  },
 ) {
   let portal = false;
   if (recipient.authUserId) {
     const { error } = await db
       .from("notifications")
-      .insert({ seller_id: recipient.authUserId, message: args.message, type: "authorization" });
+      .insert({
+        seller_id: recipient.authUserId,
+        message: args.message,
+        type: args.type ?? "authorization",
+      });
     portal = !error;
   }
   const emailed = recipient.email

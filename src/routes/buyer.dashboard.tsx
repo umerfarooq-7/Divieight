@@ -456,6 +456,12 @@ function BuyerDashboardPage() {
                     Earnest money →
                   </Link>
                   <Link
+                    to="/buyer/reports"
+                    className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    Reports →
+                  </Link>
+                  <Link
                     to="/properties/$id"
                     params={{ id: r.property_id }}
                     className="text-xs font-medium text-muted-foreground underline-offset-4 hover:underline"

@@ -28,6 +28,18 @@ const DEFAULTS: Record<string, Row> = {
   entity_genesis: { stage: "digital_genesis" },
   due_diligence_inventory: { required: true, is_governing_instrument: false, superseded_by: null },
   substitution_invitations: { status: "pending" },
+  property_reports: { flags: [] },
+  property_documents: { document_type: "other" },
+};
+
+/** Timestamp columns that DEFAULT now() in the schema. */
+const NOW_DEFAULTS: Record<string, string[]> = {
+  due_diligence_inventory: ["placed_at"],
+  due_diligence_acknowledgments: ["acknowledged_at"],
+  pod_reservations: ["reserved_at"],
+  property_reports: ["received_at"],
+  property_documents: ["uploaded_at"],
+  earnest_money_terms: ["issued_at"],
 };
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);
@@ -240,7 +252,9 @@ export class FakeDb {
 
   withDefaults(table: string, p: Row): Row {
     const now = new Date().toISOString();
-    return { id: randomUUID(), created_at: now, updated_at: now, ...DEFAULTS[table], ...p };
+    const stamps: Row = {};
+    for (const col of NOW_DEFAULTS[table] ?? []) stamps[col] = now;
+    return { id: randomUUID(), created_at: now, updated_at: now, ...stamps, ...DEFAULTS[table], ...p };
   }
 
   uniqueClash(table: string, row: Row): string | null {

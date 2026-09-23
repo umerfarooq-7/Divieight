@@ -106,7 +106,14 @@ export function NotificationsBell() {
                       ) : (
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0" />
                       )}
-                      <p className="flex-1 text-sm text-foreground">{n.message}</p>
+                      <p className="flex-1 text-sm text-foreground">
+                        {n.type === "report_flag" ? (
+                          <span className="mr-1.5 inline-block rounded bg-amber-100 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                            Priority
+                          </span>
+                        ) : null}
+                        {n.message}
+                      </p>
                     </div>
                     <p className="pl-3.5 text-[11px] text-muted-foreground">
                       {new Date(n.created_at).toLocaleString()}

@@ -1,11 +1,13 @@
 export type DataRoomDocumentType =
   | "inspection"
+  | "appraisal"
   | "title_teaser"
   | "tax_projection"
   | "other";
 
 export const DATA_ROOM_TYPES: DataRoomDocumentType[] = [
   "inspection",
+  "appraisal",
   "title_teaser",
   "tax_projection",
   "other",
@@ -13,6 +15,7 @@ export const DATA_ROOM_TYPES: DataRoomDocumentType[] = [
 
 export const DATA_ROOM_TYPE_LABELS: Record<DataRoomDocumentType, string> = {
   inspection: "Inspection reports",
+  appraisal: "Appraisal reports",
   title_teaser: "Title documents",
   tax_projection: "Tax & rental projections",
   other: "Other documents",
@@ -20,9 +23,10 @@ export const DATA_ROOM_TYPE_LABELS: Record<DataRoomDocumentType, string> = {
 
 export const DATA_ROOM_TYPE_HINTS: Record<DataRoomDocumentType, string> = {
   inspection: "Home, roof, pest and structural inspection findings.",
+  appraisal: "Independent appraisals of the property's value.",
   title_teaser: "Preliminary title report, deed and encumbrance summaries.",
   tax_projection: "Property tax estimates and rental income projections.",
-  other: "HOA packets, appraisals, warranties and anything else.",
+  other: "HOA packets, warranties and anything else.",
 };
 
 export interface DataRoomDocument {

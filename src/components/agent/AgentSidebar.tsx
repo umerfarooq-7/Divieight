@@ -3,6 +3,7 @@ import {
   Check,
   Circle,
   FileCheck2,
+  FileSearch,
   FileSignature,
   Layers,
   LayoutDashboard,
@@ -43,6 +44,7 @@ const PORTAL_NAV = [
   { to: "/agent/documents", label: "Agreements", icon: FileSignature },
   { to: "/agent/due-diligence", label: "Due diligence", icon: FileCheck2 },
   { to: "/agent/authorizations", label: "Authorizations", icon: ShieldCheck },
+  { to: "/agent/reports", label: "Reports", icon: FileSearch },
   { to: "/support", label: "Support", icon: LifeBuoy },
 ] as const;
 
