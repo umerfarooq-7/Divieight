@@ -46,6 +46,7 @@ const NAV = [
   { to: "/admin/support", label: "Support tickets", icon: LifeBuoy },
   { to: "/admin/authorizations", label: "Authorizations", icon: FileSignature },
   { to: "/admin/earnest-money", label: "Earnest money", icon: CreditCard },
+  { to: "/admin/closing-funds", label: "Closing funds", icon: CreditCard },
   { to: "/admin/pods", label: "Pods & HLA", icon: Boxes },
   { to: "/admin/entity-genesis", label: "Entity Genesis", icon: Building2 },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },

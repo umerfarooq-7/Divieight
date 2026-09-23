@@ -456,6 +456,12 @@ function BuyerDashboardPage() {
                     Earnest money →
                   </Link>
                   <Link
+                    to="/buyer/closing-funds"
+                    className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    Closing funds →
+                  </Link>
+                  <Link
                     to="/buyer/reports"
                     className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
                   >

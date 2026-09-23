@@ -408,35 +408,46 @@ export async function respondToInvitation(
     },
   });
 
-  // A Substitute Member funds their pro-rata earnest money on the SAME
-  // timeline as the member they replace — a condition of installation.
+  // A Substitute Member funds their pro-rata earnest money and closing funds on
+  // the SAME timeline as the member they replace — a condition of installation.
   {
-    // Link to the obligation of the member being replaced, when there is one.
-    let replacesObligationId: string | null = null;
+    // Link to the obligations of the member being replaced, when there are any.
+    let vacatedBuyerId: string | null = null;
     if (invitation.vacated_reservation_id) {
       const { data: vacated } = await db
         .from("pod_reservations")
         .select("buyer_account_id")
         .eq("id", invitation.vacated_reservation_id)
         .maybeSingle();
-      if (vacated?.buyer_account_id) {
-        const { data: prior } = await db
-          .from("earnest_money_obligations")
-          .select("id")
-          .eq("property_id", property.id)
-          .eq("buyer_account_id", vacated.buyer_account_id)
-          .maybeSingle();
-        replacesObligationId = prior?.id ?? null;
-      }
+      vacatedBuyerId = vacated?.buyer_account_id ?? null;
     }
+    const priorObligation = async (table: string) => {
+      if (!vacatedBuyerId) return null;
+      const { data: prior } = await db
+        .from(table)
+        .select("id")
+        .eq("property_id", property.id)
+        .eq("buyer_account_id", vacatedBuyerId)
+        .maybeSingle();
+      return (prior?.id as string | undefined) ?? null;
+    };
 
-    const { createSubstituteObligation } = await import("@/lib/earnest-money.server");
-    await createSubstituteObligation(db as never, {
+    const substitute = {
       propertyId: property.id,
       buyerAccountId: params.buyerAccountId,
       shares: invitation.shares_offered ?? 1,
       actorId: params.authUserId,
-      replacesObligationId,
+    };
+    const { createSubstituteObligation } = await import("@/lib/earnest-money.server");
+    await createSubstituteObligation(db as never, {
+      ...substitute,
+      replacesObligationId: await priorObligation("earnest_money_obligations"),
+    });
+    // Closing funds too, once a Closing Funds Notice has been issued (no-op before).
+    const { createClosingSubstituteObligation } = await import("@/lib/closing-funds.server");
+    await createClosingSubstituteObligation(db as never, {
+      ...substitute,
+      replacesObligationId: await priorObligation("closing_funds_obligations"),
     });
   }
 

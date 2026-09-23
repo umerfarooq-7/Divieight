@@ -4,6 +4,7 @@ import {
   Circle,
   FileCheck2,
   FileSearch,
+  Landmark,
   FileSignature,
   Layers,
   LayoutDashboard,
@@ -45,6 +46,7 @@ const PORTAL_NAV = [
   { to: "/agent/due-diligence", label: "Due diligence", icon: FileCheck2 },
   { to: "/agent/authorizations", label: "Authorizations", icon: ShieldCheck },
   { to: "/agent/reports", label: "Reports", icon: FileSearch },
+  { to: "/agent/closing-funds", label: "Closing funds", icon: Landmark },
   { to: "/support", label: "Support", icon: LifeBuoy },
 ] as const;
 

@@ -15,6 +15,8 @@ const UNIQUE: Record<string, string[][]> = {
   authorization_commission_responses: [["item_id", "account_member_id"]],
   earnest_money_obligations: [["property_id", "buyer_account_id"]],
   earnest_money_terms: [["property_id"]],
+  closing_funds_obligations: [["property_id", "buyer_account_id"]],
+  closing_funds_terms: [["property_id"]],
   entity_genesis: [["property_id"]],
   cap_table_entries: [["property_id", "share_number"]],
 };
@@ -24,6 +26,7 @@ const DEFAULTS: Record<string, Row> = {
   authorization_requests: { status: "pending", market_driven: false, terms: {} },
   authorization_commission_items: { status: "proposed", provision_text: "" },
   earnest_money_obligations: { status: "pending", shares: 1, is_substitute: false },
+  closing_funds_obligations: { status: "pending", shares: 1, is_substitute: false },
   pod_reservations: { status: "reserved", shares_reserved: 1 },
   entity_genesis: { stage: "digital_genesis" },
   due_diligence_inventory: { required: true, is_governing_instrument: false, superseded_by: null },

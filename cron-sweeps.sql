@@ -22,6 +22,7 @@ BEGIN
       -- name,                          path,                            schedule,       auth
       ('divieight-authorization-escalation', 'authorization-escalation',  '*/15 * * * *', 'apikey'),
       ('divieight-earnest-money-sweep',      'earnest-money-sweep',       '0 * * * *',    'secret'),
+      ('divieight-closing-funds-sweep',      'closing-funds-sweep',       '5 * * * *',    'secret'),
       ('divieight-substitution-sweep',       'substitution-sweep',        '15 * * * *',   'secret'),
       ('divieight-listing-approval-esc',     'listing-approval-escalation','30 * * * *',  'apikey'),
       ('divieight-arello-retry',             'arello-retry',              '45 * * * *',   'apikey'),

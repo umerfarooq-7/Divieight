@@ -51,6 +51,7 @@ import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-tic
 import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-money'
 import { Route as BuyerDocumentsRouteImport } from './routes/buyer.documents'
 import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
+import { Route as BuyerClosingFundsRouteImport } from './routes/buyer.closing-funds'
 import { Route as BuyerAuthorizationsRouteImport } from './routes/buyer.authorizations'
 import { Route as BuyerAdverseActionRouteImport } from './routes/buyer.adverse-action'
 import { Route as BrokerRegisterRouteImport } from './routes/broker.register'
@@ -65,6 +66,7 @@ import { Route as AgentLoginRouteImport } from './routes/agent.login'
 import { Route as AgentLeadsRouteImport } from './routes/agent.leads'
 import { Route as AgentDueDiligenceRouteImport } from './routes/agent.due-diligence'
 import { Route as AgentDashboardRouteImport } from './routes/agent.dashboard'
+import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-funds'
 import { Route as AgentBrokerRelationshipRouteImport } from './routes/agent.broker-relationship'
 import { Route as AgentAuthorizationsRouteImport } from './routes/agent.authorizations'
 import { Route as AgentAttributionRouteImport } from './routes/agent.attribution'
@@ -79,6 +81,7 @@ import { Route as AdminListingComplianceRouteImport } from './routes/admin.listi
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
+import { Route as AdminClosingFundsRouteImport } from './routes/admin.closing-funds'
 import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
 import { Route as AdminBrokersRouteImport } from './routes/admin.brokers'
 import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
@@ -114,6 +117,7 @@ import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api
 import { Route as ApiPublicEarnestMoneySweepRouteImport } from './routes/api.public.earnest-money-sweep'
 import { Route as ApiPublicDiligenceEscalationRouteImport } from './routes/api.public.diligence-escalation'
 import { Route as ApiPublicDesignationSweepRouteImport } from './routes/api.public.designation-sweep'
+import { Route as ApiPublicClosingFundsSweepRouteImport } from './routes/api.public.closing-funds-sweep'
 import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
 import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
 import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
@@ -343,6 +347,11 @@ const BuyerDashboardRoute = BuyerDashboardRouteImport.update({
   path: '/buyer/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerClosingFundsRoute = BuyerClosingFundsRouteImport.update({
+  id: '/buyer/closing-funds',
+  path: '/buyer/closing-funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerAuthorizationsRoute = BuyerAuthorizationsRouteImport.update({
   id: '/buyer/authorizations',
   path: '/buyer/authorizations',
@@ -413,6 +422,11 @@ const AgentDashboardRoute = AgentDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentClosingFundsRoute = AgentClosingFundsRouteImport.update({
+  id: '/closing-funds',
+  path: '/closing-funds',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentBrokerRelationshipRoute = AgentBrokerRelationshipRouteImport.update({
   id: '/broker-relationship',
   path: '/broker-relationship',
@@ -481,6 +495,11 @@ const AdminEarnestMoneyRoute = AdminEarnestMoneyRouteImport.update({
 const AdminContactsRoute = AdminContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClosingFundsRoute = AdminClosingFundsRouteImport.update({
+  id: '/closing-funds',
+  path: '/closing-funds',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBuyersRoute = AdminBuyersRouteImport.update({
@@ -671,6 +690,12 @@ const ApiPublicDesignationSweepRoute =
     path: '/api/public/designation-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicClosingFundsSweepRoute =
+  ApiPublicClosingFundsSweepRouteImport.update({
+    id: '/api/public/closing-funds-sweep',
+    path: '/api/public/closing-funds-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBrokerRelationshipSweepRoute =
   ApiPublicBrokerRelationshipSweepRouteImport.update({
     id: '/api/public/broker-relationship-sweep',
@@ -792,6 +817,7 @@ export interface FileRoutesByFullPath {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -806,6 +832,7 @@ export interface FileRoutesByFullPath {
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
+  '/agent/closing-funds': typeof AgentClosingFundsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -820,6 +847,7 @@ export interface FileRoutesByFullPath {
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
+  '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
@@ -859,6 +887,7 @@ export interface FileRoutesByFullPath {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
@@ -913,6 +942,7 @@ export interface FileRoutesByTo {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -925,6 +955,7 @@ export interface FileRoutesByTo {
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
+  '/agent/closing-funds': typeof AgentClosingFundsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -938,6 +969,7 @@ export interface FileRoutesByTo {
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
+  '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
@@ -977,6 +1009,7 @@ export interface FileRoutesByTo {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
@@ -1036,6 +1069,7 @@ export interface FileRoutesById {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -1050,6 +1084,7 @@ export interface FileRoutesById {
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
+  '/agent/closing-funds': typeof AgentClosingFundsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -1064,6 +1099,7 @@ export interface FileRoutesById {
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
+  '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
@@ -1103,6 +1139,7 @@ export interface FileRoutesById {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
@@ -1163,6 +1200,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -1177,6 +1215,7 @@ export interface FileRouteTypes {
     | '/agent/attribution'
     | '/agent/authorizations'
     | '/agent/broker-relationship'
+    | '/agent/closing-funds'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -1191,6 +1230,7 @@ export interface FileRouteTypes {
     | '/broker/register'
     | '/buyer/adverse-action'
     | '/buyer/authorizations'
+    | '/buyer/closing-funds'
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
@@ -1230,6 +1270,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
     | '/api/public/earnest-money-sweep'
@@ -1284,6 +1325,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -1296,6 +1338,7 @@ export interface FileRouteTypes {
     | '/admin/tether-resolution'
     | '/agent/attribution'
     | '/agent/broker-relationship'
+    | '/agent/closing-funds'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -1309,6 +1352,7 @@ export interface FileRouteTypes {
     | '/broker/login'
     | '/broker/register'
     | '/buyer/adverse-action'
+    | '/buyer/closing-funds'
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
@@ -1348,6 +1392,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
     | '/api/public/earnest-money-sweep'
@@ -1406,6 +1451,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -1420,6 +1466,7 @@ export interface FileRouteTypes {
     | '/agent/attribution'
     | '/agent/authorizations'
     | '/agent/broker-relationship'
+    | '/agent/closing-funds'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -1434,6 +1481,7 @@ export interface FileRouteTypes {
     | '/broker/register'
     | '/buyer/adverse-action'
     | '/buyer/authorizations'
+    | '/buyer/closing-funds'
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
@@ -1473,6 +1521,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
     | '/api/public/earnest-money-sweep'
@@ -1530,6 +1579,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BuyerAdverseActionRoute: typeof BuyerAdverseActionRoute
   BuyerAuthorizationsRoute: typeof BuyerAuthorizationsRouteWithChildren
+  BuyerClosingFundsRoute: typeof BuyerClosingFundsRoute
   BuyerDashboardRoute: typeof BuyerDashboardRoute
   BuyerDocumentsRoute: typeof BuyerDocumentsRoute
   BuyerEarnestMoneyRoute: typeof BuyerEarnestMoneyRoute
@@ -1557,6 +1607,7 @@ export interface RootRouteChildren {
   ApiPublicArelloRetryRoute: typeof ApiPublicArelloRetryRoute
   ApiPublicAuthorizationEscalationRoute: typeof ApiPublicAuthorizationEscalationRoute
   ApiPublicBrokerRelationshipSweepRoute: typeof ApiPublicBrokerRelationshipSweepRoute
+  ApiPublicClosingFundsSweepRoute: typeof ApiPublicClosingFundsSweepRoute
   ApiPublicDesignationSweepRoute: typeof ApiPublicDesignationSweepRoute
   ApiPublicDiligenceEscalationRoute: typeof ApiPublicDiligenceEscalationRoute
   ApiPublicEarnestMoneySweepRoute: typeof ApiPublicEarnestMoneySweepRoute
@@ -1873,6 +1924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/closing-funds': {
+      id: '/buyer/closing-funds'
+      path: '/buyer/closing-funds'
+      fullPath: '/buyer/closing-funds'
+      preLoaderRoute: typeof BuyerClosingFundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/authorizations': {
       id: '/buyer/authorizations'
       path: '/buyer/authorizations'
@@ -1971,6 +2029,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentDashboardRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/closing-funds': {
+      id: '/agent/closing-funds'
+      path: '/closing-funds'
+      fullPath: '/agent/closing-funds'
+      preLoaderRoute: typeof AgentClosingFundsRouteImport
+      parentRoute: typeof AgentRoute
+    }
     '/agent/broker-relationship': {
       id: '/agent/broker-relationship'
       path: '/broker-relationship'
@@ -2067,6 +2132,13 @@ declare module '@tanstack/react-router' {
       path: '/contacts'
       fullPath: '/admin/contacts'
       preLoaderRoute: typeof AdminContactsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closing-funds': {
+      id: '/admin/closing-funds'
+      path: '/closing-funds'
+      fullPath: '/admin/closing-funds'
+      preLoaderRoute: typeof AdminClosingFundsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/buyers': {
@@ -2314,6 +2386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDesignationSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/closing-funds-sweep': {
+      id: '/api/public/closing-funds-sweep'
+      path: '/api/public/closing-funds-sweep'
+      fullPath: '/api/public/closing-funds-sweep'
+      preLoaderRoute: typeof ApiPublicClosingFundsSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/broker-relationship-sweep': {
       id: '/api/public/broker-relationship-sweep'
       path: '/api/public/broker-relationship-sweep'
@@ -2465,6 +2544,7 @@ interface AdminRouteChildren {
   AdminAuthorizationsRoute: typeof AdminAuthorizationsRoute
   AdminBrokersRoute: typeof AdminBrokersRoute
   AdminBuyersRoute: typeof AdminBuyersRoute
+  AdminClosingFundsRoute: typeof AdminClosingFundsRoute
   AdminContactsRoute: typeof AdminContactsRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
@@ -2488,6 +2568,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthorizationsRoute: AdminAuthorizationsRoute,
   AdminBrokersRoute: AdminBrokersRoute,
   AdminBuyersRoute: AdminBuyersRoute,
+  AdminClosingFundsRoute: AdminClosingFundsRoute,
   AdminContactsRoute: AdminContactsRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
@@ -2524,6 +2605,7 @@ interface AgentRouteChildren {
   AgentAttributionRoute: typeof AgentAttributionRoute
   AgentAuthorizationsRoute: typeof AgentAuthorizationsRouteWithChildren
   AgentBrokerRelationshipRoute: typeof AgentBrokerRelationshipRoute
+  AgentClosingFundsRoute: typeof AgentClosingFundsRoute
   AgentDashboardRoute: typeof AgentDashboardRoute
   AgentDueDiligenceRoute: typeof AgentDueDiligenceRoute
   AgentLeadsRoute: typeof AgentLeadsRoute
@@ -2550,6 +2632,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentAttributionRoute: AgentAttributionRoute,
   AgentAuthorizationsRoute: AgentAuthorizationsRouteWithChildren,
   AgentBrokerRelationshipRoute: AgentBrokerRelationshipRoute,
+  AgentClosingFundsRoute: AgentClosingFundsRoute,
   AgentDashboardRoute: AgentDashboardRoute,
   AgentDueDiligenceRoute: AgentDueDiligenceRoute,
   AgentLeadsRoute: AgentLeadsRoute,
@@ -2657,6 +2740,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BuyerAdverseActionRoute: BuyerAdverseActionRoute,
   BuyerAuthorizationsRoute: BuyerAuthorizationsRouteWithChildren,
+  BuyerClosingFundsRoute: BuyerClosingFundsRoute,
   BuyerDashboardRoute: BuyerDashboardRoute,
   BuyerDocumentsRoute: BuyerDocumentsRoute,
   BuyerEarnestMoneyRoute: BuyerEarnestMoneyRoute,
@@ -2684,6 +2768,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicArelloRetryRoute: ApiPublicArelloRetryRoute,
   ApiPublicAuthorizationEscalationRoute: ApiPublicAuthorizationEscalationRoute,
   ApiPublicBrokerRelationshipSweepRoute: ApiPublicBrokerRelationshipSweepRoute,
+  ApiPublicClosingFundsSweepRoute: ApiPublicClosingFundsSweepRoute,
   ApiPublicDesignationSweepRoute: ApiPublicDesignationSweepRoute,
   ApiPublicDiligenceEscalationRoute: ApiPublicDiligenceEscalationRoute,
   ApiPublicEarnestMoneySweepRoute: ApiPublicEarnestMoneySweepRoute,

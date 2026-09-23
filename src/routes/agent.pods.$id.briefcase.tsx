@@ -6,6 +6,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Briefcase as BriefcaseIcon } from "lucide-react";
 import { getBriefcase, postBriefcaseMessage } from "@/lib/hla.functions";
+import { getPodClosingFunds } from "@/lib/closing-funds.functions";
+import { CLOSING_STATUS_LABELS } from "@/lib/closing-funds";
+import { CLOSING_BADGE } from "@/components/ClosingFundsCard";
+import { formatDeadline, money } from "@/lib/earnest-money";
 
 /** Master Briefcase — unlocked only after the agent formally accepts. */
 /**
@@ -128,6 +132,8 @@ function BriefcasePage() {
         )}
       </section>
 
+      <ClosingFundsPanel podId={id} />
+
       <section className="mt-8">
         <h2 className="font-display text-lg font-semibold text-foreground">
           Message &amp; document routing
@@ -165,5 +171,52 @@ function BriefcasePage() {
         </button>
       </section>
     </div>
+  );
+}
+
+/** Closing-funds coordination: status and amounts per Buyer Account, de-identified. */
+function ClosingFundsPanel({ podId }: { podId: string }) {
+  const load = useServerFn(getPodClosingFunds);
+  const { data } = useQuery({
+    queryKey: ["briefcase-closing-funds", podId],
+    queryFn: () => load({ data: { podId } }),
+  });
+  if (!data || "error" in data) return null;
+
+  const funded = data.rows.filter((r) => r.status === "funded").length;
+  return (
+    <section className="mt-8">
+      <h2 className="font-display text-lg font-semibold text-foreground">Closing funds</h2>
+      <p className="text-xs text-muted-foreground">
+        Each Buyer Account wires directly to escrow; divieight never holds these funds.
+      </p>
+      {!data.terms ? (
+        <p className="mt-2 text-sm text-muted-foreground">No Closing Funds Notice issued yet.</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-foreground">
+            {money(data.terms.total_amount)} total · wire deadline{" "}
+            {formatDeadline(data.terms.funding_deadline)} · {data.terms.escrow_company} ·{" "}
+            {funded}/{data.rows.length} received
+          </p>
+          <ul className="mt-3 space-y-2">
+            {data.rows.map((r) => (
+              <li
+                key={r.memberLabel}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background p-3 text-sm"
+              >
+                <span className="text-foreground">
+                  {r.memberLabel}
+                  {r.is_substitute ? " · substitute" : ""} · {r.shares} share(s) · {money(r.amount)}
+                </span>
+                <span className={`rounded-full px-3 py-1 text-xs font-medium ${CLOSING_BADGE[r.status]}`}>
+                  {CLOSING_STATUS_LABELS[r.status]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 }
