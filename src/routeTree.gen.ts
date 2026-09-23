@@ -72,6 +72,7 @@ import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-fu
 import { Route as AgentBrokerRelationshipRouteImport } from './routes/agent.broker-relationship'
 import { Route as AgentAuthorizationsRouteImport } from './routes/agent.authorizations'
 import { Route as AgentAttributionRouteImport } from './routes/agent.attribution'
+import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escrow'
 import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
@@ -134,6 +135,7 @@ import { Route as AgentListingsIdRouteImport } from './routes/agent.listings.$id
 import { Route as AgentDocumentsIdRouteImport } from './routes/agent.documents.$id'
 import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin.entity-genesis_.$propertyId'
 import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
+import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
 import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
@@ -457,6 +459,11 @@ const AgentAttributionRoute = AgentAttributionRouteImport.update({
   id: '/attribution',
   path: '/attribution',
   getParentRoute: () => AgentRoute,
+} as any)
+const AdminTitleEscrowRoute = AdminTitleEscrowRouteImport.update({
+  id: '/title-escrow',
+  path: '/title-escrow',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminTetherResolutionRoute = AdminTetherResolutionRouteImport.update({
   id: '/tether-resolution',
@@ -790,6 +797,12 @@ const AgentPodsIdIndexRoute = AgentPodsIdIndexRouteImport.update({
   path: '/pods/$id/',
   getParentRoute: () => AgentRoute,
 } as any)
+const ApiPublicTitleEscrowProviderRoute =
+  ApiPublicTitleEscrowProviderRouteImport.update({
+    id: '/api/public/title-escrow/$provider',
+    path: '/api/public/title-escrow/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AgentPodsIdHlaInvitationRoute =
   AgentPodsIdHlaInvitationRouteImport.update({
     id: '/pods/$id/hla-invitation',
@@ -869,6 +882,7 @@ export interface FileRoutesByFullPath {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
+  '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
@@ -970,6 +984,7 @@ export interface FileRoutesByFullPath {
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
+  '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -999,6 +1014,7 @@ export interface FileRoutesByTo {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
+  '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
   '/agent/closing-funds': typeof AgentClosingFundsRoute
@@ -1098,6 +1114,7 @@ export interface FileRoutesByTo {
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
+  '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
 }
 export interface FileRoutesById {
@@ -1133,6 +1150,7 @@ export interface FileRoutesById {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
+  '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
@@ -1234,6 +1252,7 @@ export interface FileRoutesById {
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
+  '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -1270,6 +1289,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
+    | '/admin/title-escrow'
     | '/agent/attribution'
     | '/agent/authorizations'
     | '/agent/broker-relationship'
@@ -1371,6 +1391,7 @@ export interface FileRouteTypes {
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
+    | '/api/public/title-escrow/$provider'
     | '/agent/pods/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1400,6 +1421,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
+    | '/admin/title-escrow'
     | '/agent/attribution'
     | '/agent/broker-relationship'
     | '/agent/closing-funds'
@@ -1499,6 +1521,7 @@ export interface FileRouteTypes {
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
+    | '/api/public/title-escrow/$provider'
     | '/agent/pods/$id'
   id:
     | '__root__'
@@ -1533,6 +1556,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
+    | '/admin/title-escrow'
     | '/agent/attribution'
     | '/agent/authorizations'
     | '/agent/broker-relationship'
@@ -1634,6 +1658,7 @@ export interface FileRouteTypes {
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
+    | '/api/public/title-escrow/$provider'
     | '/agent/pods/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -1704,6 +1729,7 @@ export interface RootRouteChildren {
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
+  ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2149,6 +2175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentAttributionRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/admin/title-escrow': {
+      id: '/admin/title-escrow'
+      path: '/title-escrow'
+      fullPath: '/admin/title-escrow'
+      preLoaderRoute: typeof AdminTitleEscrowRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/tether-resolution': {
       id: '/admin/tether-resolution'
       path: '/tether-resolution'
@@ -2583,6 +2616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentPodsIdIndexRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/api/public/title-escrow/$provider': {
+      id: '/api/public/title-escrow/$provider'
+      path: '/api/public/title-escrow/$provider'
+      fullPath: '/api/public/title-escrow/$provider'
+      preLoaderRoute: typeof ApiPublicTitleEscrowProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agent/pods/$id/hla-invitation': {
       id: '/agent/pods/$id/hla-invitation'
       path: '/pods/$id/hla-invitation'
@@ -2679,6 +2719,7 @@ interface AdminRouteChildren {
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
+  AdminTitleEscrowRoute: typeof AdminTitleEscrowRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminEntityGenesisPropertyIdRoute: typeof AdminEntityGenesisPropertyIdRoute
   AdminPodsIndexRoute: typeof AdminPodsIndexRoute
@@ -2705,6 +2746,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
+  AdminTitleEscrowRoute: AdminTitleEscrowRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminEntityGenesisPropertyIdRoute: AdminEntityGenesisPropertyIdRoute,
   AdminPodsIndexRoute: AdminPodsIndexRoute,
@@ -2917,6 +2959,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,
   BuyerPodsIdRoute: BuyerPodsIdRoute,
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
+  ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

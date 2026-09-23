@@ -22,6 +22,8 @@ const UNIQUE: Record<string, string[][]> = {
   insurance_votes: [["property_id", "buyer_account_id"]],
   coverage_requirements: [["version"]],
   operating_agreement_signatures: [["entity_genesis_id", "account_member_id", "document_hash"]],
+  title_escrow_orders: [["property_id"], ["external_order_id"]],
+  title_escrow_events: [["external_event_id"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
@@ -48,6 +50,8 @@ const DEFAULTS: Record<string, Row> = {
   insurance_policies: { status: "pending", procured_by: "manager", procurement_method: "default", premium_paid_from: "llc_operating_account", premium_expense_category: "insurance_premium" },
   insurance_alternative_proposals: { status: "submitted" },
   coverage_requirements: { is_placeholder: true, is_active: false },
+  title_escrow_orders: { status: "bundle_sent", provider: "qualia", simulated: true },
+  title_escrow_discrepancies: { status: "open", details: {} },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */
@@ -59,6 +63,7 @@ const NOW_DEFAULTS: Record<string, string[]> = {
   property_documents: ["uploaded_at"],
   earnest_money_terms: ["issued_at"],
   property_records_vault: ["stored_at"],
+  title_escrow_orders: ["bundle_sent_at"],
 };
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);

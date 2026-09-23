@@ -1,4 +1,5 @@
 import { ClosingHoldBanner } from "@/components/ClosingHoldBanner";
+import { TitleStatusTracker } from "@/components/TitleStatusTracker";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -131,6 +132,10 @@ function BriefcasePage() {
           </ul>
         )}
       </section>
+
+      <div className="mt-8">
+        <TitleStatusTracker podId={id} title="Title & escrow — live from the title company" />
+      </div>
 
       <ClosingFundsPanel podId={id} />
 

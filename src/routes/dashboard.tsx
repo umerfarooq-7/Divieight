@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TitleStatusTracker } from "@/components/TitleStatusTracker";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -346,6 +347,10 @@ function Dashboard() {
                         status={l.listing_status ?? "forming"}
                         showDescription={false}
                       />
+                    </div>
+
+                    <div className="mt-4">
+                      <TitleStatusTracker propertyId={l.id} />
                     </div>
 
                     {l.listing_rejection_reason && (

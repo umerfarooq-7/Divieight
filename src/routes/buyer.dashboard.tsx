@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { TitleStatusTracker } from "@/components/TitleStatusTracker";
 import { useEffect, useState } from "react";
 import { Building2, FileText, Heart, KeyRound, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -502,6 +503,7 @@ function BuyerDashboardPage() {
                   ) : null}
 
                 </div>
+                <TitleStatusTracker propertyId={r.property_id} />
               </li>
             ))}
           </ul>

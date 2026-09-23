@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { TitleStatusTracker } from "@/components/TitleStatusTracker";
+import { listAgentTitleStatuses } from "@/lib/title-escrow.functions";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { getAgentProfile, agentRedirect, type AgentRow } from "@/lib/agent";
 import { formatMarkets } from "@/lib/markets";
@@ -249,6 +252,8 @@ function AgentDashboard() {
         </div>
       </header>
 
+      <AgentTitleStatuses />
+
       <section className="rounded-xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -379,5 +384,26 @@ function AgentDashboard() {
         </p>
       </section>
     </div>
+  );
+}
+
+/** Live title/escrow milestones for properties my tethered buyers are closing on. */
+function AgentTitleStatuses() {
+  const load = useServerFn(listAgentTitleStatuses);
+  const { data } = useQuery({ queryKey: ["agent-title-statuses"], queryFn: () => load(), refetchInterval: 60_000 });
+  const rows = data?.rows ?? [];
+  if (rows.length === 0) return null;
+  return (
+    <section className="rounded-xl border border-border bg-card p-6">
+      <h2 className="text-lg font-semibold text-foreground">Title &amp; escrow</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Milestones arrive directly from the title company — no status calls needed.
+      </p>
+      <div className="mt-4 space-y-3">
+        {rows.map((r) => (
+          <TitleStatusTracker key={r.status.propertyId} status={r.status} title={r.label} />
+        ))}
+      </div>
+    </section>
   );
 }
