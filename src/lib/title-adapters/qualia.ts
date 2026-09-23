@@ -16,6 +16,8 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { TitleMilestone } from "@/lib/title-escrow";
 import type {
+  DisbursementInstruction,
+  TransmitResult,
   ClosingBundle,
   NormalizedTitleEvent,
   OpenOrderResult,
@@ -33,6 +35,16 @@ const CREATE_ORDER_MUTATION = /* GraphQL */ `
 `;
 
 /** Qualia milestone codes → platform milestones. TODO(qualia-schema): verify codes. */
+/** TODO(qualia-schema): confirm the disbursement-instruction mutation with Qualia. */
+const ATTACH_DISBURSEMENT_MUTATION = /* GraphQL */ `
+  mutation AttachDisbursementInstruction($orderId: ID!, $input: DisbursementInstructionInput!) {
+    attachDisbursementInstruction(orderId: $orderId, input: $input) {
+      instruction { id }
+      errors { field message }
+    }
+  }
+`;
+
 const MILESTONE_CODES: Record<string, TitleMilestone> = {
   ORDER_OPENED: "order_opened",
   TITLE_COMMITMENT_ISSUED: "title_report_ready",
@@ -174,6 +186,48 @@ export class QualiaAdapter implements TitleEscrowAdapter {
     }
     if (milestone === "closing_scheduled") body.data.closing = { scheduled_at: opts.closingDate ?? null };
     return JSON.stringify(body);
+  }
+
+  async transmitDisbursementInstruction(externalOrderId: string, cda: DisbursementInstruction): Promise<TransmitResult> {
+    const request = {
+      query: ATTACH_DISBURSEMENT_MUTATION,
+      variables: {
+        orderId: externalOrderId,
+        input: {
+          externalReference: cda.documentId,
+          version: cda.version,
+          documentHash: cda.contentHash,
+          kind: "COMMISSION_DISBURSEMENT_AUTHORIZATION",
+          // Payees are Brokers of Record only — never individual agents.
+          payees: cda.payees.map((p) => ({
+            externalReference: p.brokerId,
+            name: p.brokerageName,
+            licenseNumber: p.licenseNumber,
+            amount: p.amountCents / 100,
+            memo: `Buyer-side commission; credited agents: ${p.creditedAgents.join(", ")}`,
+          })),
+          total: cda.totalCommissionCents / 100,
+        },
+      },
+    };
+    if (!this.apiUrl || !this.apiToken) {
+      // SIMULATED: logged instead of sent until Qualia credentials exist.
+      return { externalReference: `SIM-CDA-${randomUUID().slice(0, 8).toUpperCase()}`, simulated: true, request };
+    }
+    const res = await fetch(this.apiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${this.apiToken}` },
+      body: JSON.stringify(request),
+    });
+    const json = (await res.json()) as {
+      data?: { attachDisbursementInstruction?: { instruction?: { id: string }; errors?: Array<{ message: string }> } };
+    };
+    const out = json.data?.attachDisbursementInstruction;
+    if (!res.ok || !out?.instruction) {
+      const why = out?.errors?.map((e) => e.message).join("; ") ?? `HTTP ${res.status}`;
+      throw new Error(`Qualia rejected the disbursement instruction: ${why}`);
+    }
+    return { externalReference: out.instruction.id, simulated: false, request };
   }
 
   async signForSimulation(rawBody: string): Promise<Record<string, string>> {

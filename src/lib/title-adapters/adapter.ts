@@ -60,4 +60,24 @@ export interface TitleEscrowAdapter {
   simulateWebhook(externalOrderId: string, milestone: TitleMilestone, opts: SimulationOptions): string;
   /** Sign a simulated body the way the provider would, so it can go through verifyWebhook. */
   signForSimulation(rawBody: string): Promise<Record<string, string>>;
+  /**
+   * Transmit a Commission Disbursement Authorization (the Source of Truth) to
+   * the order. This is an INSTRUCTION to title/escrow — it never moves money.
+   */
+  transmitDisbursementInstruction(externalOrderId: string, cda: DisbursementInstruction): Promise<TransmitResult>;
+}
+
+/** Broker-to-broker payee lines title/escrow is instructed to pay from proceeds. */
+export interface DisbursementInstruction {
+  documentId: string;
+  version: number;
+  contentHash: string;
+  totalCommissionCents: number;
+  payees: Array<{ brokerId: string; brokerageName: string; licenseNumber: string | null; amountCents: number; creditedAgents: string[] }>;
+}
+
+export interface TransmitResult {
+  externalReference: string;
+  simulated: boolean;
+  request: unknown;
 }

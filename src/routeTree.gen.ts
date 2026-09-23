@@ -76,6 +76,7 @@ import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escro
 import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
+import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
 import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
@@ -480,6 +481,11 @@ const AdminSubstitutionsRoute = AdminSubstitutionsRouteImport.update({
   path: '/substitutions',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettlementRoute = AdminSettlementRouteImport.update({
+  id: '/settlement',
+  path: '/settlement',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSellersRoute = AdminSellersRouteImport.update({
   id: '/sellers',
   path: '/sellers',
@@ -879,6 +885,7 @@ export interface FileRoutesByFullPath {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/sellers': typeof AdminSellersRoute
+  '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1011,6 +1018,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/sellers': typeof AdminSellersRoute
+  '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1147,6 +1155,7 @@ export interface FileRoutesById {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/sellers': typeof AdminSellersRoute
+  '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1286,6 +1295,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/sellers'
+    | '/admin/settlement'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -1418,6 +1428,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/payments'
     | '/admin/sellers'
+    | '/admin/settlement'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -1553,6 +1564,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/sellers'
+    | '/admin/settlement'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -2203,6 +2215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSubstitutionsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settlement': {
+      id: '/admin/settlement'
+      path: '/settlement'
+      fullPath: '/admin/settlement'
+      preLoaderRoute: typeof AdminSettlementRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/sellers': {
       id: '/admin/sellers'
       path: '/sellers'
@@ -2716,6 +2735,7 @@ interface AdminRouteChildren {
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
   AdminSellersRoute: typeof AdminSellersRoute
+  AdminSettlementRoute: typeof AdminSettlementRoute
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
@@ -2743,6 +2763,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
   AdminSellersRoute: AdminSellersRoute,
+  AdminSettlementRoute: AdminSettlementRoute,
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,

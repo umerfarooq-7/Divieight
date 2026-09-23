@@ -27,10 +27,12 @@ export const TAX_FORM_GATE_MESSAGE =
 /** Detailed gate check — use when the caller wants to surface a reason. */
 export async function checkCommissionPaymentGate(
   brokerId: string,
+  /** Server callers pass their service-role client; defaults to the session client. */
+  client: { from: (table: string) => any } = db,
 ): Promise<PaymentGateResult> {
   if (!brokerId) return { allowed: false, reason: "No Broker of Record on file." };
 
-  const { data, error } = await db
+  const { data, error } = await client
     .from("brokers")
     .select("id, tax_form_verified, w9_or_w8_url")
     .eq("id", brokerId)
@@ -51,7 +53,10 @@ export async function checkCommissionPaymentGate(
  * Guard stub for Month 4 commission disbursement.
  * Returns false when the broker's tax form is not verified.
  */
-export async function canReceivePayment(brokerId: string): Promise<boolean> {
-  const result = await checkCommissionPaymentGate(brokerId);
+export async function canReceivePayment(
+  brokerId: string,
+  client?: { from: (table: string) => any },
+): Promise<boolean> {
+  const result = await checkCommissionPaymentGate(brokerId, client);
   return result.allowed;
 }

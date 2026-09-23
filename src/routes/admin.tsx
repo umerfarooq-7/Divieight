@@ -49,6 +49,7 @@ const NAV = [
   { to: "/admin/closing-funds", label: "Closing funds", icon: CreditCard },
   { to: "/admin/insurance-requirements", label: "Insurance rules", icon: FileSignature },
   { to: "/admin/title-escrow", label: "Title & escrow", icon: FileSignature },
+  { to: "/admin/settlement", label: "Settlement (CDA)", icon: FileSignature },
   { to: "/admin/pods", label: "Pods & HLA", icon: Boxes },
   { to: "/admin/entity-genesis", label: "Entity Genesis", icon: Building2 },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },

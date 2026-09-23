@@ -24,6 +24,7 @@ const UNIQUE: Record<string, string[][]> = {
   operating_agreement_signatures: [["entity_genesis_id", "account_member_id", "document_hash"]],
   title_escrow_orders: [["property_id"], ["external_order_id"]],
   title_escrow_events: [["external_event_id"]],
+  settlement_documents: [["property_id", "version"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
