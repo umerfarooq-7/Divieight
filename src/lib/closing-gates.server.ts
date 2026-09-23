@@ -8,7 +8,7 @@
 type Db = { from: (t: string) => any };
 
 export interface DisbursementBlocker {
-  code: "insurance_not_bound";
+  code: "insurance_not_bound" | "llc_tin_not_verified";
   message: string;
 }
 
@@ -57,6 +57,10 @@ export async function disbursementPreconditions(
   const blockers: DisbursementBlocker[] = [];
   const insurance = await insuranceGate(db, propertyId, closingDate);
   if (!insurance.ok) blockers.push({ code: "insurance_not_bound", message: insurance.message });
+  // Disbursement is a financial transaction of the LLC: IRS TIN match required.
+  const { llcTinGate } = await import("@/lib/entity-genesis-stage2.server");
+  const tin = await llcTinGate(db, propertyId);
+  if (!tin.ok) blockers.push({ code: "llc_tin_not_verified", message: tin.message });
   return blockers;
 }
 

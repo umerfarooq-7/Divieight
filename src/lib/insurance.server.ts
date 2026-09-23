@@ -248,6 +248,9 @@ export async function markPremiumPaid(db: Db, actorId: string, policyId: string)
   const now = new Date().toISOString();
   const { data: pol } = await db.from("insurance_policies").select("id, property_id, premium").eq("id", policyId).maybeSingle();
   if (!pol) throw new Error("Policy not found");
+  // Paid from the LLC's operating account — blocked until the LLC's EIN is TIN-matched.
+  const { assertLlcFinancialsAllowed } = await import("@/lib/entity-genesis-stage2.server");
+  await assertLlcFinancialsAllowed(db, pol.property_id, "insurance_premium_payment");
   await db.from("insurance_policies").update({ premium_paid_at: now, updated_at: now }).eq("id", policyId);
   await audit(db, {
     actorId,

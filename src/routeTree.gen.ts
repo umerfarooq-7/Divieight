@@ -46,6 +46,7 @@ import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
 import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
 import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
+import { Route as BuyerOperatingAgreementRouteImport } from './routes/buyer.operating-agreement'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
 import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
 import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
@@ -131,6 +132,7 @@ import { Route as AgentOnboardingComplianceRouteImport } from './routes/agent.on
 import { Route as AgentOnboardingBrokerRouteImport } from './routes/agent.onboarding.broker'
 import { Route as AgentListingsIdRouteImport } from './routes/agent.listings.$id'
 import { Route as AgentDocumentsIdRouteImport } from './routes/agent.documents.$id'
+import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin.entity-genesis_.$propertyId'
 import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
 import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
@@ -324,6 +326,11 @@ const BuyerReportsRoute = BuyerReportsRouteImport.update({
 const BuyerRegisterRoute = BuyerRegisterRouteImport.update({
   id: '/buyer/register',
   path: '/buyer/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOperatingAgreementRoute = BuyerOperatingAgreementRouteImport.update({
+  id: '/buyer/operating-agreement',
+  path: '/buyer/operating-agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuyerLoginRoute = BuyerLoginRouteImport.update({
@@ -772,6 +779,12 @@ const AgentDocumentsIdRoute = AgentDocumentsIdRouteImport.update({
   path: '/documents/$id',
   getParentRoute: () => AgentRoute,
 } as any)
+const AdminEntityGenesisPropertyIdRoute =
+  AdminEntityGenesisPropertyIdRouteImport.update({
+    id: '/entity-genesis_/$propertyId',
+    path: '/entity-genesis/$propertyId',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AgentPodsIdIndexRoute = AgentPodsIdIndexRouteImport.update({
   id: '/pods/$id/',
   path: '/pods/$id/',
@@ -881,6 +894,7 @@ export interface FileRoutesByFullPath {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
+  '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -905,6 +919,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/': typeof OnboardingIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1007,6 +1022,7 @@ export interface FileRoutesByTo {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
+  '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -1031,6 +1047,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/reset-password': typeof ResetPasswordIndexRoute
+  '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1141,6 +1158,7 @@ export interface FileRoutesById {
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
+  '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -1165,6 +1183,7 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/entity-genesis_/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1276,6 +1295,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
+    | '/buyer/operating-agreement'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -1300,6 +1320,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/entity-genesis/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -1402,6 +1423,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
+    | '/buyer/operating-agreement'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -1426,6 +1448,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/properties'
     | '/reset-password'
+    | '/admin/entity-genesis/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -1535,6 +1558,7 @@ export interface FileRouteTypes {
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
+    | '/buyer/operating-agreement'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -1559,6 +1583,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/entity-genesis_/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -1636,6 +1661,7 @@ export interface RootRouteChildren {
   BuyerGoldenTicketRoute: typeof BuyerGoldenTicketRoute
   BuyerInsuranceRoute: typeof BuyerInsuranceRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
+  BuyerOperatingAgreementRoute: typeof BuyerOperatingAgreementRoute
   BuyerRegisterRoute: typeof BuyerRegisterRoute
   BuyerReportsRoute: typeof BuyerReportsRoute
   BuyerVerificationRoute: typeof BuyerVerificationRoute
@@ -1939,6 +1965,13 @@ declare module '@tanstack/react-router' {
       path: '/buyer/register'
       fullPath: '/buyer/register'
       preLoaderRoute: typeof BuyerRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/operating-agreement': {
+      id: '/buyer/operating-agreement'
+      path: '/buyer/operating-agreement'
+      fullPath: '/buyer/operating-agreement'
+      preLoaderRoute: typeof BuyerOperatingAgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/login': {
@@ -2536,6 +2569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentDocumentsIdRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/admin/entity-genesis_/$propertyId': {
+      id: '/admin/entity-genesis_/$propertyId'
+      path: '/entity-genesis/$propertyId'
+      fullPath: '/admin/entity-genesis/$propertyId'
+      preLoaderRoute: typeof AdminEntityGenesisPropertyIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/agent/pods/$id/': {
       id: '/agent/pods/$id/'
       path: '/pods/$id'
@@ -2640,6 +2680,7 @@ interface AdminRouteChildren {
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminEntityGenesisPropertyIdRoute: typeof AdminEntityGenesisPropertyIdRoute
   AdminPodsIndexRoute: typeof AdminPodsIndexRoute
   AdminPodsIdBriefcaseRoute: typeof AdminPodsIdBriefcaseRoute
   AdminPodsIdSelectHeavyLifterRoute: typeof AdminPodsIdSelectHeavyLifterRoute
@@ -2665,6 +2706,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSupportRoute: AdminSupportRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminEntityGenesisPropertyIdRoute: AdminEntityGenesisPropertyIdRoute,
   AdminPodsIndexRoute: AdminPodsIndexRoute,
   AdminPodsIdBriefcaseRoute: AdminPodsIdBriefcaseRoute,
   AdminPodsIdSelectHeavyLifterRoute: AdminPodsIdSelectHeavyLifterRoute,
@@ -2831,6 +2873,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerGoldenTicketRoute: BuyerGoldenTicketRoute,
   BuyerInsuranceRoute: BuyerInsuranceRoute,
   BuyerLoginRoute: BuyerLoginRoute,
+  BuyerOperatingAgreementRoute: BuyerOperatingAgreementRoute,
   BuyerRegisterRoute: BuyerRegisterRoute,
   BuyerReportsRoute: BuyerReportsRoute,
   BuyerVerificationRoute: BuyerVerificationRoute,

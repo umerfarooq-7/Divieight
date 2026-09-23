@@ -188,6 +188,11 @@ export async function syncCapTable(
     .eq("property_id", params.propertyId);
 
   if (changed) {
+    // Holders changed after Closing-Ready locked the cap table: revoke the lock
+    // so the final Operating Agreement is regenerated and re-signed.
+    const { unlockAfterCapTableChange } = await import("@/lib/entity-genesis-stage2.server");
+    await unlockAfterCapTableChange(db, params.propertyId, params.reason);
+
     await audit(db, {
       actorId: params.actorId,
       actionType: "entity.cap_table_updated",

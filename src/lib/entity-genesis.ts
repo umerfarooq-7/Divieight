@@ -152,3 +152,104 @@ ARTICLE VII — DRAFT PLACEHOLDERS
     [SIGNATURE PAGES — ONE PER MEMBER]
 `;
 }
+
+// ---------------------------------------------------------------------------
+// Stage 2 — State Filing + EIN, final Operating Agreement
+// ---------------------------------------------------------------------------
+
+export type StateFilingStatus = "pending" | "filed" | "confirmed";
+export type EinStatus = "pending" | "issued" | "verified";
+export type TinMatchResult = "match" | "not_found" | "name_mismatch";
+export type AtlasStatus = "not_requested" | "requested" | "completed";
+export type FinalOaStatus = "not_started" | "awaiting_signatures" | "executed";
+
+export const ATLAS_FEE_USD = 500;
+
+export const TIN_MATCH_LABELS: Record<TinMatchResult, string> = {
+  match: "Match — name and EIN confirmed",
+  not_found: "Not found — IRS has no record of this EIN",
+  name_mismatch: "Name mismatch — EIN exists under a different name",
+};
+
+export interface Stage2Signer {
+  buyerAccountId: string;
+  accountMemberId: string;
+  name: string;
+}
+
+/**
+ * The final Operating Agreement: the draft's fixed terms, with the member
+ * roster locked from the Closing-Ready cap table and the Delaware filing
+ * details filled in. One signature line per Account Member.
+ */
+export function finalOperatingAgreement(input: {
+  llcName: string;
+  delawareFileNumber: string | null;
+  ein: string | null;
+  property: { address: string; city: string; state: string; zip: string };
+  capTable: CapTableRow[];
+  signers: Stage2Signer[];
+  lockedAt: string;
+}): string {
+  const draft = draftOperatingAgreement({
+    llcName: input.llcName,
+    property: input.property,
+    capTable: input.capTable,
+    generatedAt: input.lockedAt,
+  });
+  const body = draft
+    .replace("DRAFT LIMITED LIABILITY COMPANY OPERATING AGREEMENT", "LIMITED LIABILITY COMPANY OPERATING AGREEMENT")
+    .replace(
+      /STATUS: DRAFT[\s\S]*?this Company is not a series, cell, or division of any other entity\./,
+      `STATUS: FINAL — member roster locked at Closing-Ready (${input.lockedAt}).
+Each divieight property is held by its own standalone Delaware limited
+liability company; this Company is not a series, cell, or division of any
+other entity.`,
+    )
+    .replace(
+      /1\.3 The Company name shown above is a placeholder[\s\S]*?\[LLC NAME — PENDING STATE FILING\]/,
+      `1.3 The Company was formed by filing a Certificate of Formation with the
+    Delaware Secretary of State${input.delawareFileNumber ? ` (file no. ${input.delawareFileNumber})` : ""}.`,
+    )
+    .replace("1.4 Employer Identification Number: [EIN — PENDING STAGE 2]", `1.4 Employer Identification Number: ${input.ein ?? "as assigned by the IRS"}`)
+    .replace("ARTICLE II — MEMBERS AND UNITS (MEMBER ROSTER — DRAFT)", "ARTICLE II — MEMBERS AND UNITS (MEMBER ROSTER — FINAL)")
+    .replace("    Any unit not listed above remains unissued pending reservation.\n", "")
+    .replace(/ARTICLE VII — DRAFT PLACEHOLDERS[\s\S]*$/, "");
+
+  const lines = input.signers
+    .map(
+      (s) => `  ____________________________________
+  ${s.name} (Buyer Account member)
+  Signed electronically: [SIGNATURE PENDING]`,
+    )
+    .join("\n\n");
+  return `${body.trimEnd()}
+
+ARTICLE VII — EXECUTION
+7.1 This Agreement is executed electronically through the divieight
+    Platform-Native Signing Interface. Members sign in parallel and in no
+    required order; it becomes effective when every member below has signed.
+7.2 Signature pages:
+
+${lines}
+`;
+}
+
+/** The executed copy: the final text with each signature line completed. */
+export function executedOperatingAgreement(
+  finalText: string,
+  signatures: Array<{ name: string; signedAt: string; hash: string }>,
+): string {
+  let text = finalText;
+  for (const s of signatures) {
+    text = text.replace(
+      `  ${s.name} (Buyer Account member)\n  Signed electronically: [SIGNATURE PENDING]`,
+      `  /s/ ${s.name} (Buyer Account member)\n  Signed electronically: ${s.signedAt}`,
+    );
+  }
+  return `${text}
+EXECUTION RECORD
+  Every signature above was applied to the document with SHA-256 hash
+  ${signatures[0]?.hash ?? "—"}.
+`;
+}

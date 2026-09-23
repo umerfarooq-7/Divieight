@@ -21,6 +21,7 @@ const UNIQUE: Record<string, string[][]> = {
   cap_table_entries: [["property_id", "share_number"]],
   insurance_votes: [["property_id", "buyer_account_id"]],
   coverage_requirements: [["version"]],
+  operating_agreement_signatures: [["entity_genesis_id", "account_member_id", "document_hash"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
@@ -30,7 +31,16 @@ const DEFAULTS: Record<string, Row> = {
   earnest_money_obligations: { status: "pending", shares: 1, is_substitute: false },
   closing_funds_obligations: { status: "pending", shares: 1, is_substitute: false },
   pod_reservations: { status: "reserved", shares_reserved: 1 },
-  entity_genesis: { stage: "digital_genesis" },
+  entity_genesis: {
+    stage: "digital_genesis",
+    atlas_request_status: "not_requested",
+    atlas_fee: 500,
+    state_filing_status: "pending",
+    ein_status: "pending",
+    final_oa_status: "not_started",
+    cap_table_locked_at: null,
+    tin_match_result: null,
+  },
   due_diligence_inventory: { required: true, is_governing_instrument: false, superseded_by: null },
   substitution_invitations: { status: "pending" },
   property_reports: { flags: [] },
@@ -48,6 +58,7 @@ const NOW_DEFAULTS: Record<string, string[]> = {
   property_reports: ["received_at"],
   property_documents: ["uploaded_at"],
   earnest_money_terms: ["issued_at"],
+  property_records_vault: ["stored_at"],
 };
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);

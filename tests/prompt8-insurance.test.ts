@@ -36,6 +36,10 @@ function seed() {
   db().seed("coverage_requirements", [{ version: 1, rules: RULES, is_placeholder: true, is_active: true }]);
 }
 
+function tinVerified() {
+  db().seed("entity_genesis", [{ property_id: IDS.property, llc_name: "D8 LLC", ein: "12-3456789", ein_status: "verified", tin_match_result: "match" }]);
+}
+
 const POLICY = {
   propertyId: IDS.property,
   carrierName: "Chubb",
@@ -109,6 +113,7 @@ describe("Manager procurement and the Disbursement Check gate", () => {
     expect(placeholder).toBe(true);
     expect((await insuranceGate(db(), IDS.property)).ok).toBe(false);
     await bindInsurancePolicy({ data: { policyId: id } });
+    tinVerified();
     await expect(assertDisbursementAllowed(db(), IDS.property)).resolves.toBeUndefined();
   });
 
@@ -136,6 +141,10 @@ describe("Manager procurement and the Disbursement Check gate", () => {
     expect(db().audits("insurance.bound")).toHaveLength(1);
     expect(db().notificationsFor(USERS.b1).some((n) => /coverage for .* is bound/.test(n.message))).toBe(true);
 
+    // The premium comes out of the LLC's account: blocked until the EIN is TIN-matched.
+    await expect(markInsurancePremiumPaid({ data: { policyId: id } })).rejects.toThrow("LLC financial transactions are blocked");
+    expect(db().audits("entity.llc_financial_blocked")).toHaveLength(1);
+    tinVerified();
     await markInsurancePremiumPaid({ data: { policyId: id } });
     expect(db().audits("insurance.premium_paid")[0].metadata.paid_from).toBe("llc_operating_account");
   });

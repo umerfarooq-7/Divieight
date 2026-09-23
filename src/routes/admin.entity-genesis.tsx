@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2 } from "lucide-react";
@@ -26,7 +26,8 @@ function AdminEntityGenesis() {
         <h1 className="font-display text-2xl font-semibold text-foreground">Entity Genesis</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Stage 1 (Digital Genesis) opens automatically at Hard-Lock — the first 1/8th share
-          reserved. Each property is a standalone Delaware LLC managed by divieight, LLC; the cap
+          reserved. Stage 2 (Delaware filing via Stripe Atlas, EIN, TIN matching and the executed
+          Operating Agreement) opens at Closing-Ready. Each property is a standalone Delaware LLC managed by divieight, LLC; the cap
           table below reflects who holds what right now.
         </p>
       </header>
@@ -62,6 +63,13 @@ function AdminEntityGenesis() {
                 <div className="text-right text-xs text-muted-foreground">
                   <p>Opened {date(e.createdAt)}</p>
                   <p>Cap table updated {date(e.capTableGeneratedAt)}</p>
+                  <Link
+                    to="/admin/entity-genesis/$propertyId"
+                    params={{ propertyId: e.propertyId }}
+                    className="mt-2 inline-block font-medium text-accent underline-offset-4 hover:underline"
+                  >
+                    Stage 2 — filing, EIN & signing →
+                  </Link>
                 </div>
               </div>
 
