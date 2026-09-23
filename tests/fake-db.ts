@@ -25,6 +25,9 @@ const UNIQUE: Record<string, string[][]> = {
   title_escrow_orders: [["property_id"], ["external_order_id"]],
   title_escrow_events: [["external_event_id"]],
   settlement_documents: [["property_id", "version"]],
+  saga_runs: [["saga_type", "saga_key"]],
+  saga_step_executions: [["idempotency_key"]],
+  saga_test_log: [["idempotency_key"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
@@ -53,6 +56,7 @@ const DEFAULTS: Record<string, Row> = {
   coverage_requirements: { is_placeholder: true, is_active: false },
   title_escrow_orders: { status: "bundle_sent", provider: "qualia", simulated: true },
   title_escrow_discrepancies: { status: "open", details: {} },
+  saga_runs: { status: "running", payload: {} },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */
@@ -65,6 +69,8 @@ const NOW_DEFAULTS: Record<string, string[]> = {
   earnest_money_terms: ["issued_at"],
   property_records_vault: ["stored_at"],
   title_escrow_orders: ["bundle_sent_at"],
+  saga_runs: ["started_at"],
+  saga_step_executions: ["started_at"],
 };
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);

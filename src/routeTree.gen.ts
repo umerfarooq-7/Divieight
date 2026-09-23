@@ -78,6 +78,7 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
 import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
 import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
+import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -491,6 +492,11 @@ const AdminSellersRoute = AdminSellersRouteImport.update({
   path: '/sellers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSagaPocRoute = AdminSagaPocRouteImport.update({
+  id: '/saga-poc',
+  path: '/saga-poc',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   id: '/properties',
   path: '/properties',
@@ -884,6 +890,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
@@ -1017,6 +1024,7 @@ export interface FileRoutesByTo {
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
@@ -1154,6 +1162,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
@@ -1294,6 +1303,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
     | '/admin/substitutions'
@@ -1427,6 +1437,7 @@ export interface FileRouteTypes {
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/payments'
+    | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
     | '/admin/substitutions'
@@ -1563,6 +1574,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
     | '/admin/substitutions'
@@ -2229,6 +2241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSellersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/saga-poc': {
+      id: '/admin/saga-poc'
+      path: '/saga-poc'
+      fullPath: '/admin/saga-poc'
+      preLoaderRoute: typeof AdminSagaPocRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/properties': {
       id: '/admin/properties'
       path: '/properties'
@@ -2734,6 +2753,7 @@ interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
+  AdminSagaPocRoute: typeof AdminSagaPocRoute
   AdminSellersRoute: typeof AdminSellersRoute
   AdminSettlementRoute: typeof AdminSettlementRoute
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
@@ -2762,6 +2782,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
+  AdminSagaPocRoute: AdminSagaPocRoute,
   AdminSellersRoute: AdminSellersRoute,
   AdminSettlementRoute: AdminSettlementRoute,
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
