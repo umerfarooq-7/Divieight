@@ -19,6 +19,8 @@ const UNIQUE: Record<string, string[][]> = {
   closing_funds_terms: [["property_id"]],
   entity_genesis: [["property_id"]],
   cap_table_entries: [["property_id", "share_number"]],
+  insurance_votes: [["property_id", "buyer_account_id"]],
+  coverage_requirements: [["version"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
@@ -33,6 +35,9 @@ const DEFAULTS: Record<string, Row> = {
   substitution_invitations: { status: "pending" },
   property_reports: { flags: [] },
   property_documents: { document_type: "other" },
+  insurance_policies: { status: "pending", procured_by: "manager", procurement_method: "default", premium_paid_from: "llc_operating_account", premium_expense_category: "insurance_premium" },
+  insurance_alternative_proposals: { status: "submitted" },
+  coverage_requirements: { is_placeholder: true, is_active: false },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */

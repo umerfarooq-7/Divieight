@@ -47,6 +47,7 @@ import { Route as BuyerVerificationRouteImport } from './routes/buyer.verificati
 import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
+import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
 import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
 import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-money'
 import { Route as BuyerDocumentsRouteImport } from './routes/buyer.documents'
@@ -78,6 +79,7 @@ import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
+import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
@@ -111,6 +113,7 @@ import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.pub
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
+import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
 import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
 import { Route as ApiPublicEoExpirySweepRouteImport } from './routes/api.public.eo-expiry-sweep'
 import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api.public.enrollment-maintenance'
@@ -133,6 +136,7 @@ import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pod
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
 import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
+import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
 import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
@@ -327,6 +331,11 @@ const BuyerLoginRoute = BuyerLoginRouteImport.update({
   path: '/buyer/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerInsuranceRoute = BuyerInsuranceRouteImport.update({
+  id: '/buyer/insurance',
+  path: '/buyer/insurance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerGoldenTicketRoute = BuyerGoldenTicketRouteImport.update({
   id: '/buyer/golden-ticket',
   path: '/buyer/golden-ticket',
@@ -482,6 +491,12 @@ const AdminListingComplianceRoute = AdminListingComplianceRouteImport.update({
   path: '/listing-compliance',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInsuranceRequirementsRoute =
+  AdminInsuranceRequirementsRouteImport.update({
+    id: '/insurance-requirements',
+    path: '/insurance-requirements',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminEntityGenesisRoute = AdminEntityGenesisRouteImport.update({
   id: '/entity-genesis',
   path: '/entity-genesis',
@@ -656,6 +671,11 @@ const ApiPublicListingApprovalEscalationRoute =
     path: '/api/public/listing-approval-escalation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicInsuranceSweepRoute = ApiPublicInsuranceSweepRouteImport.update({
+  id: '/api/public/insurance-sweep',
+  path: '/api/public/insurance-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHlaSweepRoute = ApiPublicHlaSweepRouteImport.update({
   id: '/api/public/hla-sweep',
   path: '/api/public/hla-sweep',
@@ -780,6 +800,12 @@ const AdminPropertiesIdReportsRoute =
     path: '/$id/reports',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
+const AdminPropertiesIdInsuranceRoute =
+  AdminPropertiesIdInsuranceRouteImport.update({
+    id: '/$id/insurance',
+    path: '/$id/insurance',
+    getParentRoute: () => AdminPropertiesRoute,
+  } as any)
 const AdminPropertiesIdDueDiligenceRoute =
   AdminPropertiesIdDueDiligenceRouteImport.update({
     id: '/$id/due-diligence',
@@ -821,6 +847,7 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -852,6 +879,7 @@ export interface FileRoutesByFullPath {
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
+  '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
@@ -894,6 +922,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
+  '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -921,6 +950,7 @@ export interface FileRoutesByFullPath {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
@@ -946,6 +976,7 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -974,6 +1005,7 @@ export interface FileRoutesByTo {
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
+  '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
@@ -1016,6 +1048,7 @@ export interface FileRoutesByTo {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
+  '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -1043,6 +1076,7 @@ export interface FileRoutesByTo {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
@@ -1073,6 +1107,7 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -1104,6 +1139,7 @@ export interface FileRoutesById {
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
+  '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
@@ -1146,6 +1182,7 @@ export interface FileRoutesById {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
+  '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -1173,6 +1210,7 @@ export interface FileRoutesById {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
@@ -1204,6 +1242,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/payments'
@@ -1235,6 +1274,7 @@ export interface FileRouteTypes {
     | '/buyer/documents'
     | '/buyer/earnest-money'
     | '/buyer/golden-ticket'
+    | '/buyer/insurance'
     | '/buyer/login'
     | '/buyer/register'
     | '/buyer/reports'
@@ -1277,6 +1317,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/hla-sweep'
+    | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -1304,6 +1345,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
@@ -1329,6 +1371,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/payments'
@@ -1357,6 +1400,7 @@ export interface FileRouteTypes {
     | '/buyer/documents'
     | '/buyer/earnest-money'
     | '/buyer/golden-ticket'
+    | '/buyer/insurance'
     | '/buyer/login'
     | '/buyer/register'
     | '/buyer/reports'
@@ -1399,6 +1443,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/hla-sweep'
+    | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -1426,6 +1471,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
@@ -1455,6 +1501,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/payments'
@@ -1486,6 +1533,7 @@ export interface FileRouteTypes {
     | '/buyer/documents'
     | '/buyer/earnest-money'
     | '/buyer/golden-ticket'
+    | '/buyer/insurance'
     | '/buyer/login'
     | '/buyer/register'
     | '/buyer/reports'
@@ -1528,6 +1576,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/hla-sweep'
+    | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -1555,6 +1604,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
@@ -1584,6 +1634,7 @@ export interface RootRouteChildren {
   BuyerDocumentsRoute: typeof BuyerDocumentsRoute
   BuyerEarnestMoneyRoute: typeof BuyerEarnestMoneyRoute
   BuyerGoldenTicketRoute: typeof BuyerGoldenTicketRoute
+  BuyerInsuranceRoute: typeof BuyerInsuranceRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
   BuyerRegisterRoute: typeof BuyerRegisterRoute
   BuyerReportsRoute: typeof BuyerReportsRoute
@@ -1614,6 +1665,7 @@ export interface RootRouteChildren {
   ApiPublicEnrollmentMaintenanceRoute: typeof ApiPublicEnrollmentMaintenanceRoute
   ApiPublicEoExpirySweepRoute: typeof ApiPublicEoExpirySweepRoute
   ApiPublicHlaSweepRoute: typeof ApiPublicHlaSweepRoute
+  ApiPublicInsuranceSweepRoute: typeof ApiPublicInsuranceSweepRoute
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
@@ -1896,6 +1948,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/insurance': {
+      id: '/buyer/insurance'
+      path: '/buyer/insurance'
+      fullPath: '/buyer/insurance'
+      preLoaderRoute: typeof BuyerInsuranceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/golden-ticket': {
       id: '/buyer/golden-ticket'
       path: '/buyer/golden-ticket'
@@ -2111,6 +2170,13 @@ declare module '@tanstack/react-router' {
       path: '/listing-compliance'
       fullPath: '/admin/listing-compliance'
       preLoaderRoute: typeof AdminListingComplianceRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/insurance-requirements': {
+      id: '/admin/insurance-requirements'
+      path: '/insurance-requirements'
+      fullPath: '/admin/insurance-requirements'
+      preLoaderRoute: typeof AdminInsuranceRequirementsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/entity-genesis': {
@@ -2344,6 +2410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicListingApprovalEscalationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/insurance-sweep': {
+      id: '/api/public/insurance-sweep'
+      path: '/api/public/insurance-sweep'
+      fullPath: '/api/public/insurance-sweep'
+      preLoaderRoute: typeof ApiPublicInsuranceSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hla-sweep': {
       id: '/api/public/hla-sweep'
       path: '/api/public/hla-sweep'
@@ -2498,6 +2571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesIdReportsRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
+    '/admin/properties/$id/insurance': {
+      id: '/admin/properties/$id/insurance'
+      path: '/$id/insurance'
+      fullPath: '/admin/properties/$id/insurance'
+      preLoaderRoute: typeof AdminPropertiesIdInsuranceRouteImport
+      parentRoute: typeof AdminPropertiesRoute
+    }
     '/admin/properties/$id/due-diligence': {
       id: '/admin/properties/$id/due-diligence'
       path: '/$id/due-diligence'
@@ -2525,12 +2605,14 @@ declare module '@tanstack/react-router' {
 interface AdminPropertiesRouteChildren {
   AdminPropertiesIndexRoute: typeof AdminPropertiesIndexRoute
   AdminPropertiesIdDueDiligenceRoute: typeof AdminPropertiesIdDueDiligenceRoute
+  AdminPropertiesIdInsuranceRoute: typeof AdminPropertiesIdInsuranceRoute
   AdminPropertiesIdReportsRoute: typeof AdminPropertiesIdReportsRoute
 }
 
 const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
   AdminPropertiesIndexRoute: AdminPropertiesIndexRoute,
   AdminPropertiesIdDueDiligenceRoute: AdminPropertiesIdDueDiligenceRoute,
+  AdminPropertiesIdInsuranceRoute: AdminPropertiesIdInsuranceRoute,
   AdminPropertiesIdReportsRoute: AdminPropertiesIdReportsRoute,
 }
 
@@ -2548,6 +2630,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
+  AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
@@ -2572,6 +2655,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
+  AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
@@ -2745,6 +2829,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerDocumentsRoute: BuyerDocumentsRoute,
   BuyerEarnestMoneyRoute: BuyerEarnestMoneyRoute,
   BuyerGoldenTicketRoute: BuyerGoldenTicketRoute,
+  BuyerInsuranceRoute: BuyerInsuranceRoute,
   BuyerLoginRoute: BuyerLoginRoute,
   BuyerRegisterRoute: BuyerRegisterRoute,
   BuyerReportsRoute: BuyerReportsRoute,
@@ -2775,6 +2860,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnrollmentMaintenanceRoute: ApiPublicEnrollmentMaintenanceRoute,
   ApiPublicEoExpirySweepRoute: ApiPublicEoExpirySweepRoute,
   ApiPublicHlaSweepRoute: ApiPublicHlaSweepRoute,
+  ApiPublicInsuranceSweepRoute: ApiPublicInsuranceSweepRoute,
   ApiPublicListingApprovalEscalationRoute:
     ApiPublicListingApprovalEscalationRoute,
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,

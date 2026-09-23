@@ -462,6 +462,12 @@ function BuyerDashboardPage() {
                     Closing funds →
                   </Link>
                   <Link
+                    to="/buyer/insurance"
+                    className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    Insurance →
+                  </Link>
+                  <Link
                     to="/buyer/reports"
                     className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
                   >
