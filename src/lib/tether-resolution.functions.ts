@@ -88,6 +88,7 @@ export async function runTetherResolutionSweep(
         .eq("id", b.id);
       await db.from("audit_log").insert({
         actor_id: b.auth_user_id,
+        actor_type: "system",
         action_type: "buyer.tether_resolution_flagged",
         entity_type: "buyer_account",
         entity_id: b.id,
@@ -108,6 +109,7 @@ export async function runTetherResolutionSweep(
         .eq("id", b.id);
       await db.from("audit_log").insert({
         actor_id: b.auth_user_id,
+        actor_type: "system",
         action_type: "buyer.tether_resolution_cleared",
         entity_type: "buyer_account",
         entity_id: b.id,
@@ -125,6 +127,7 @@ export async function runTetherResolutionSweep(
         .eq("id", b.id);
       await db.from("audit_log").insert({
         actor_id: b.auth_user_id,
+        actor_type: "system",
         action_type: "buyer.pending_tether_overdue",
         entity_type: "buyer_account",
         entity_id: b.id,

@@ -121,11 +121,12 @@ export const ADMIN_DD_CATEGORIES: DdCategory[] = [
   "other",
 ];
 
-/** Governing by default when the admin hasn't overridden the toggle. */
-export const AUTO_GOVERNING_CATEGORIES: DdCategory[] = [
-  "operating_agreement",
-  "real_estate_purchase_agreement",
-];
+/**
+ * Governing by default when the admin hasn't overridden the toggle — the same
+ * set as GOVERNING_CATEGORIES (Rev 43: OA, REPA and title commitment/exception
+ * documents). Amendments are flagged with the toggle.
+ */
+export const AUTO_GOVERNING_CATEGORIES: DdCategory[] = GOVERNING_CATEGORIES;
 
 /** Low-entropy, non-identifying device fingerprint captured with each ack. */
 export function deviceFingerprint(): string {

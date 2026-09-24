@@ -39,6 +39,7 @@ export async function logDualAgency(
 ) {
   await db.from("audit_log").insert({
     actor_id: params.actorId,
+    actor_type: "system",
     action_type: "compliance.dual_agency_blocked",
     entity_type: params.propertyId ? "property" : "buyer_account",
     entity_id: params.propertyId ?? params.buyerAccountId,

@@ -108,7 +108,8 @@ function PropertySettlement({ row }: { row: SettlementRow }) {
           <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
             {row.latest.content_hash} · ref {row.latest.external_reference ?? "—"} · {row.versions} version(s)
           </p>
-          <table className="mt-3 w-full text-left text-xs">
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-left text-xs">
             <thead className="text-muted-foreground">
               <tr>
                 <th className="py-1 pr-2">Share</th>
@@ -138,6 +139,7 @@ function PropertySettlement({ row }: { row: SettlementRow }) {
               )}
             </tbody>
           </table>
+          </div>
           <p className="mt-3 text-xs font-semibold text-foreground">Payees (broker-to-broker)</p>
           <ul className="mt-1 space-y-0.5 text-xs">
             {sot.payees.map((p) => (

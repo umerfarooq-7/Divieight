@@ -168,7 +168,7 @@ function PropertyPanel({ row, onChange }: { row: AdminTitleRow; onChange: () => 
               <input
                 value={override}
                 onChange={(e) => setOverride(e.target.value)}
-                className="mt-1 block w-72 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm sm:w-72"
               />
             </label>
           ) : null}

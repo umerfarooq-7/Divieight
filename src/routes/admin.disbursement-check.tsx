@@ -102,7 +102,8 @@ function PropertyCheck({ v }: { v: DisbursementCheckView }) {
         </p>
       </div>
 
-      <table className="mt-3 w-full text-left text-sm">
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left text-sm">
         <thead className="text-xs text-muted-foreground">
           <tr>
             <th className="py-1 pr-2">Broker of Record</th>
@@ -144,6 +145,7 @@ function PropertyCheck({ v }: { v: DisbursementCheckView }) {
           })}
         </tbody>
       </table>
+      </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button onClick={() => saveMut.mutate()} disabled={saveMut.isPending} className="rounded-lg border border-border px-3 py-2 text-sm font-medium disabled:opacity-50">
           Save as title company's numbers

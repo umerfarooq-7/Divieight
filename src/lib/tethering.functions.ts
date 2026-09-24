@@ -163,6 +163,7 @@ export async function applyTether(
 
   await db.from("audit_log").insert({
     actor_id: actorId,
+    actor_type: (actorId ? "buyer" : "system"),
     action_type: "buyer.resident_agent_tethered",
     entity_type: "buyer_account",
     entity_id: buyer.id,

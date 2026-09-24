@@ -38,7 +38,7 @@ function SagaPocPage() {
   const qc = useQueryClient();
   const load = useServerFn(listSagaPoc);
   const run = useServerFn(runSagaPoc);
-  const { data } = useQuery({ queryKey: ["saga-poc"], queryFn: () => load() });
+  const { data, isLoading } = useQuery({ queryKey: ["saga-poc"], queryFn: () => load() });
   const [lastKey, setLastKey] = useState<{ key: string; scenario: Scenario } | null>(null);
 
   const mut = useMutation({
@@ -128,6 +128,7 @@ function SagaPocPage() {
 
       <h2 className="mt-8 text-sm font-semibold text-foreground">Recent runs</h2>
       <div className="mt-2 space-y-2">
+        {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
         {(data?.runs ?? []).map((r) => (
           <div key={r.id} className="rounded-lg border border-border bg-card p-3 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">

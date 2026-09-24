@@ -222,6 +222,7 @@ export const designateAgent = createServerFn({ method: "POST" })
 
     await db.from("audit_log").insert({
       actor_id: context.userId,
+      actor_type: "buyer",
       action_type: "buyer.agent_designated",
       entity_type: "buyer_account",
       entity_id: buyer.id,
@@ -275,6 +276,7 @@ export const resendDesignationInvite = createServerFn({ method: "POST" })
 
     await db.from("audit_log").insert({
       actor_id: context.userId,
+      actor_type: "buyer",
       action_type: "buyer.agent_designation_resent",
       entity_type: "buyer_account",
       entity_id: buyer.id,
@@ -429,6 +431,7 @@ export const respondToDesignation = createServerFn({ method: "POST" })
       });
       await db.from("audit_log").insert({
         actor_id: context.userId,
+        actor_type: "agent",
         action_type: "agent.designation_declined",
         entity_type: "buyer_account",
         entity_id: buyer.id,
@@ -493,6 +496,7 @@ export const respondToDesignation = createServerFn({ method: "POST" })
     });
     await db.from("audit_log").insert({
       actor_id: context.userId,
+      actor_type: "agent",
       action_type: "agent.designation_accepted",
       entity_type: "buyer_account",
       entity_id: buyer.id,
@@ -573,6 +577,7 @@ export const respondToReferOnly = createServerFn({ method: "POST" })
 
     await db.from("audit_log").insert({
       actor_id: context.userId,
+      actor_type: "agent",
       action_type:
         data.choice === "accept_tether" ? "agent.tether_accepted" : "agent.refer_only_elected",
       entity_type: "buyer_account",
@@ -663,6 +668,7 @@ export async function runDesignationSweep(
 
     await db.from("audit_log").insert({
       actor_id: b.auth_user_id,
+      actor_type: "system",
       action_type: "buyer.agent_designation_expired",
       entity_type: "buyer_account",
       entity_id: b.id,
