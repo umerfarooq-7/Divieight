@@ -50,6 +50,7 @@ const NAV = [
   { to: "/admin/insurance-requirements", label: "Insurance rules", icon: FileSignature },
   { to: "/admin/title-escrow", label: "Title & escrow", icon: FileSignature },
   { to: "/admin/settlement", label: "Settlement (CDA)", icon: FileSignature },
+  { to: "/admin/closing", label: "Closing saga", icon: FileSignature },
   { to: "/admin/saga-poc", label: "Saga PoC", icon: FileSignature },
   { to: "/admin/pods", label: "Pods & HLA", icon: Boxes },
   { to: "/admin/entity-genesis", label: "Entity Genesis", icon: Building2 },

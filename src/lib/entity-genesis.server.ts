@@ -36,7 +36,7 @@ async function loadProperty(db: Db, propertyId: string) {
   const { data } = await db
     .from("properties")
     .select(
-      "id, address, city, state, zip, seller_id, exit_type, retained_shares, hard_locked_at, created_at",
+      "id, address, city, state, zip, seller_id, exit_type, retained_shares, hard_locked_at, created_at, deed_recorded_at",
     )
     .eq("id", propertyId)
     .maybeSingle();
@@ -52,6 +52,7 @@ async function loadProperty(db: Db, propertyId: string) {
         retained_shares: number | null;
         hard_locked_at: string | null;
         created_at: string;
+        deed_recorded_at?: string | null;
       }
     | null;
 }
@@ -84,7 +85,7 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
       sellerId: property.seller_id,
       memberNames: [],
       acquisitionDate: retainedDate,
-      retentionLockExpiresAt: retentionLockExpiry(retainedDate),
+      retentionLockExpiresAt: retentionLockExpiry(property.deed_recorded_at ?? retainedDate),
     });
   }
 
@@ -115,7 +116,8 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
         sellerId: null,
         memberNames: namesByBuyer.get(r.buyer_account_id) ?? [],
         acquisitionDate: acquired,
-        retentionLockExpiresAt: retentionLockExpiry(acquired),
+        // After closing, the 12-month Retention Lock runs from recordation.
+        retentionLockExpiresAt: retentionLockExpiry(property.deed_recorded_at ?? acquired),
       });
     }
   }

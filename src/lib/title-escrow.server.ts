@@ -143,7 +143,7 @@ export async function sendClosingBundle(
 // ---------------------------------------------------------------------------
 
 export type IngestResult =
-  | { status: "processed"; milestone: TitleMilestone; propertyId: string; discrepancies: number }
+  | { status: "processed"; milestone: TitleMilestone; propertyId: string; discrepancies: number; closingSaga?: string }
   | { status: "duplicate" | "ignored" | "unknown_order" | "unauthorized" };
 
 export async function ingestTitleWebhook(
@@ -232,7 +232,15 @@ export async function ingestTitleWebhook(
   if (event.milestone === "funded_and_recorded") discrepancies = await checkFundingPreconditions(db, propertyId, inserted.id);
 
   await broadcastStatus(db, propertyId, event.milestone);
-  return { status: "processed", milestone: event.milestone, propertyId, discrepancies };
+
+  // Funded and recorded → the Closing Ping Saga (Prompt 13). Its own failures
+  // land in saga_failures; the webhook is still acknowledged.
+  let closingSaga: string | undefined;
+  if (event.milestone === "funded_and_recorded") {
+    const { startClosingSaga } = await import("@/lib/closing-saga.server");
+    closingSaga = (await startClosingSaga(db, propertyId)).status;
+  }
+  return { status: "processed", milestone: event.milestone, propertyId, discrepancies, closingSaga };
 }
 
 /** Admin simulation panel: build a provider-native body and ingest it. */

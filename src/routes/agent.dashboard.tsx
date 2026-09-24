@@ -287,10 +287,9 @@ function AgentDashboard() {
             Compensation is the buyer-side commission paid at closing by the title/escrow company
             through your Broker of Record — divieight never pays agents directly.
           </p>
-          <p className="mt-3 text-xs text-muted-foreground">
-            The full Commission Dashboard, with per-closing splits and referral shares, arrives
-            with the transaction engine.
-          </p>
+          <Link to="/agent/commissions" className="mt-3 inline-block text-xs font-medium text-primary hover:underline">
+            Open your Commission Dashboard — per-share splits, referral shares and Heavy Lifter Premium →
+          </Link>
         </section>
 
         <section className="rounded-xl border border-border bg-card p-6">

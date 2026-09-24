@@ -113,6 +113,7 @@ function PropertyPanel({ row, onChange }: { row: AdminTitleRow; onChange: () => 
   const [override, setOverride] = useState("");
   const [scenario, setScenario] = useState<DepositScenario>("match_platform");
   const [closingDate, setClosingDate] = useState("");
+  const [variance, setVariance] = useState("0");
 
   const sendMut = useMutation({
     mutationFn: () => send({ data: { propertyId: row.propertyId, manualOverrideReason: override || null } }),
@@ -125,11 +126,21 @@ function PropertyPanel({ row, onChange }: { row: AdminTitleRow; onChange: () => 
   const simMut = useMutation({
     mutationFn: () =>
       simulate({
-        data: { propertyId: row.propertyId, milestone: row.next!, depositScenario: scenario, closingDate: closingDate || null },
+        data: {
+          propertyId: row.propertyId,
+          milestone: row.next!,
+          depositScenario: scenario,
+          closingDate: closingDate || null,
+          commissionVarianceCents: Number(variance) || 0,
+        },
       }),
     onSuccess: (r) => {
       if (r.status === "processed")
-        toast.success(`${MILESTONE_LABELS[r.milestone]} received${r.discrepancies ? ` — ${r.discrepancies} discrepancy(ies) flagged` : ""}.`);
+        toast.success(
+          `${MILESTONE_LABELS[r.milestone]} received${r.discrepancies ? ` — ${r.discrepancies} discrepancy(ies) flagged` : ""}${
+            r.closingSaga ? ` · Closing Ping Saga: ${r.closingSaga}` : ""
+          }.`,
+        );
       else toast.error(`Webhook ${r.status}.`);
       onChange();
     },
@@ -201,6 +212,17 @@ function PropertyPanel({ row, onChange }: { row: AdminTitleRow; onChange: () => 
                     value={closingDate}
                     onChange={(e) => setClosingDate(e.target.value)}
                     className="mt-1 block rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                  />
+                </label>
+              ) : null}
+              {row.next === "funded_and_recorded" ? (
+                <label className="text-xs text-muted-foreground">
+                  Title's commission figures differ by (cents)
+                  <input
+                    type="number"
+                    value={variance}
+                    onChange={(e) => setVariance(e.target.value)}
+                    className="mt-1 block w-40 rounded-lg border border-border bg-background px-3 py-2 text-sm"
                   />
                 </label>
               ) : null}

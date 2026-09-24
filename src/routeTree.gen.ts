@@ -68,6 +68,7 @@ import { Route as AgentLoginRouteImport } from './routes/agent.login'
 import { Route as AgentLeadsRouteImport } from './routes/agent.leads'
 import { Route as AgentDueDiligenceRouteImport } from './routes/agent.due-diligence'
 import { Route as AgentDashboardRouteImport } from './routes/agent.dashboard'
+import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
 import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-funds'
 import { Route as AgentBrokerRelationshipRouteImport } from './routes/agent.broker-relationship'
 import { Route as AgentAuthorizationsRouteImport } from './routes/agent.authorizations'
@@ -88,6 +89,7 @@ import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-ge
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminClosingFundsRouteImport } from './routes/admin.closing-funds'
+import { Route as AdminClosingRouteImport } from './routes/admin.closing'
 import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
 import { Route as AdminBrokersRouteImport } from './routes/admin.brokers'
 import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
@@ -442,6 +444,11 @@ const AgentDashboardRoute = AgentDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentCommissionsRoute = AgentCommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentClosingFundsRoute = AgentClosingFundsRouteImport.update({
   id: '/closing-funds',
   path: '/closing-funds',
@@ -541,6 +548,11 @@ const AdminContactsRoute = AdminContactsRouteImport.update({
 const AdminClosingFundsRoute = AdminClosingFundsRouteImport.update({
   id: '/closing-funds',
   path: '/closing-funds',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClosingRoute = AdminClosingRouteImport.update({
+  id: '/closing',
+  path: '/closing',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBuyersRoute = AdminBuyersRouteImport.update({
@@ -881,6 +893,7 @@ export interface FileRoutesByFullPath {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
@@ -901,6 +914,7 @@ export interface FileRoutesByFullPath {
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
   '/agent/closing-funds': typeof AgentClosingFundsRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -1016,6 +1030,7 @@ export interface FileRoutesByTo {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
@@ -1034,6 +1049,7 @@ export interface FileRoutesByTo {
   '/agent/attribution': typeof AgentAttributionRoute
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
   '/agent/closing-funds': typeof AgentClosingFundsRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -1153,6 +1169,7 @@ export interface FileRoutesById {
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
+  '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
@@ -1173,6 +1190,7 @@ export interface FileRoutesById {
   '/agent/authorizations': typeof AgentAuthorizationsRouteWithChildren
   '/agent/broker-relationship': typeof AgentBrokerRelationshipRoute
   '/agent/closing-funds': typeof AgentClosingFundsRoute
+  '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
   '/agent/leads': typeof AgentLeadsRoute
@@ -1294,6 +1312,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing'
     | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
@@ -1314,6 +1333,7 @@ export interface FileRouteTypes {
     | '/agent/authorizations'
     | '/agent/broker-relationship'
     | '/agent/closing-funds'
+    | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -1429,6 +1449,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing'
     | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
@@ -1447,6 +1468,7 @@ export interface FileRouteTypes {
     | '/agent/attribution'
     | '/agent/broker-relationship'
     | '/agent/closing-funds'
+    | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -1565,6 +1587,7 @@ export interface FileRouteTypes {
     | '/admin/authorizations'
     | '/admin/brokers'
     | '/admin/buyers'
+    | '/admin/closing'
     | '/admin/closing-funds'
     | '/admin/contacts'
     | '/admin/earnest-money'
@@ -1585,6 +1608,7 @@ export interface FileRouteTypes {
     | '/agent/authorizations'
     | '/agent/broker-relationship'
     | '/agent/closing-funds'
+    | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
     | '/agent/leads'
@@ -2171,6 +2195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentDashboardRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/commissions': {
+      id: '/agent/commissions'
+      path: '/commissions'
+      fullPath: '/agent/commissions'
+      preLoaderRoute: typeof AgentCommissionsRouteImport
+      parentRoute: typeof AgentRoute
+    }
     '/agent/closing-funds': {
       id: '/agent/closing-funds'
       path: '/closing-funds'
@@ -2309,6 +2340,13 @@ declare module '@tanstack/react-router' {
       path: '/closing-funds'
       fullPath: '/admin/closing-funds'
       preLoaderRoute: typeof AdminClosingFundsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closing': {
+      id: '/admin/closing'
+      path: '/closing'
+      fullPath: '/admin/closing'
+      preLoaderRoute: typeof AdminClosingRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/buyers': {
@@ -2744,6 +2782,7 @@ interface AdminRouteChildren {
   AdminAuthorizationsRoute: typeof AdminAuthorizationsRoute
   AdminBrokersRoute: typeof AdminBrokersRoute
   AdminBuyersRoute: typeof AdminBuyersRoute
+  AdminClosingRoute: typeof AdminClosingRoute
   AdminClosingFundsRoute: typeof AdminClosingFundsRoute
   AdminContactsRoute: typeof AdminContactsRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
@@ -2773,6 +2812,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuthorizationsRoute: AdminAuthorizationsRoute,
   AdminBrokersRoute: AdminBrokersRoute,
   AdminBuyersRoute: AdminBuyersRoute,
+  AdminClosingRoute: AdminClosingRoute,
   AdminClosingFundsRoute: AdminClosingFundsRoute,
   AdminContactsRoute: AdminContactsRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
@@ -2816,6 +2856,7 @@ interface AgentRouteChildren {
   AgentAuthorizationsRoute: typeof AgentAuthorizationsRouteWithChildren
   AgentBrokerRelationshipRoute: typeof AgentBrokerRelationshipRoute
   AgentClosingFundsRoute: typeof AgentClosingFundsRoute
+  AgentCommissionsRoute: typeof AgentCommissionsRoute
   AgentDashboardRoute: typeof AgentDashboardRoute
   AgentDueDiligenceRoute: typeof AgentDueDiligenceRoute
   AgentLeadsRoute: typeof AgentLeadsRoute
@@ -2843,6 +2884,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentAuthorizationsRoute: AgentAuthorizationsRouteWithChildren,
   AgentBrokerRelationshipRoute: AgentBrokerRelationshipRoute,
   AgentClosingFundsRoute: AgentClosingFundsRoute,
+  AgentCommissionsRoute: AgentCommissionsRoute,
   AgentDashboardRoute: AgentDashboardRoute,
   AgentDueDiligenceRoute: AgentDueDiligenceRoute,
   AgentLeadsRoute: AgentLeadsRoute,

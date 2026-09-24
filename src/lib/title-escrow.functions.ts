@@ -119,7 +119,14 @@ export type DepositScenario = "match_platform" | "all_obligations" | "none";
 export const simulateTitleMilestone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { propertyId: string; milestone: TitleMilestone; depositScenario?: DepositScenario; closingDate?: string | null }) => {
+    (input: {
+      propertyId: string;
+      milestone: TitleMilestone;
+      depositScenario?: DepositScenario;
+      closingDate?: string | null;
+      /** funded_and_recorded: shift the first payee by this many cents to simulate a title mismatch. */
+      commissionVarianceCents?: number;
+    }) => {
       if (!input?.propertyId) throw new Error("Missing property");
       if (!TITLE_MILESTONES.includes(input.milestone)) throw new Error("Unknown milestone");
       return input;
@@ -142,10 +149,21 @@ export const simulateTitleMilestone = createServerFn({ method: "POST" })
       deposits = chosen.map((o) => ({ buyerAccountId: o.buyer_account_id, amount: Number(o.amount) }));
       allDepositsComplete = list.length > 0 && chosen.length === list.length;
     }
+    let commissionDisbursements: Array<{ payeeReference: string; amount: number }> = [];
+    if (data.milestone === "funded_and_recorded") {
+      const { latestSourceOfTruth } = await import("@/lib/settlement.server");
+      const sot = await latestSourceOfTruth(db, data.propertyId);
+      const variance = Math.round(Number(data.commissionVarianceCents ?? 0));
+      commissionDisbursements = (sot?.structured.payees ?? []).map((p, i) => ({
+        payeeReference: p.brokerId,
+        amount: (p.amountCents + (i === 0 ? variance : 0)) / 100,
+      }));
+    }
     return (await server()).simulateMilestone(db, userId, data.propertyId, data.milestone, {
       deposits,
       allDepositsComplete,
       closingDate: data.closingDate ?? null,
+      commissionDisbursements,
     });
   });
 

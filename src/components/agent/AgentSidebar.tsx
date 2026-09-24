@@ -5,6 +5,7 @@ import {
   FileCheck2,
   FileSearch,
   Landmark,
+  Coins,
   FileSignature,
   Layers,
   LayoutDashboard,
@@ -47,6 +48,7 @@ const PORTAL_NAV = [
   { to: "/agent/authorizations", label: "Authorizations", icon: ShieldCheck },
   { to: "/agent/reports", label: "Reports", icon: FileSearch },
   { to: "/agent/closing-funds", label: "Closing funds", icon: Landmark },
+  { to: "/agent/commissions", label: "Commissions", icon: Coins },
   { to: "/support", label: "Support", icon: LifeBuoy },
 ] as const;
 

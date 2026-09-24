@@ -39,6 +39,10 @@ export interface NormalizedTitleEvent {
   allDepositsComplete?: boolean;
   closingDate?: string | null;
   titleCommitment?: { url: string; title: string; contentHash: string } | null;
+  /** Title's final commission disbursements from its settlement statement (funded_and_recorded). */
+  commissionDisbursements?: Array<{ payeeReference: string; amount: number }>;
+  /** Deed recording details (funded_and_recorded). */
+  recording?: { instrumentNumber: string; recordedAt: string } | null;
 }
 
 /** Inputs the simulator uses to shape a provider-native webhook body. */
@@ -46,6 +50,8 @@ export interface SimulationOptions {
   deposits?: Array<{ buyerAccountId: string; amount: number }>;
   allDepositsComplete?: boolean;
   closingDate?: string | null;
+  commissionDisbursements?: Array<{ payeeReference: string; amount: number }>;
+  recording?: { instrumentNumber: string; recordedAt: string } | null;
 }
 
 export interface TitleEscrowAdapter {

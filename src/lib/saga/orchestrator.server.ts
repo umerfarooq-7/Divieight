@@ -44,7 +44,19 @@ export interface SagaOptions {
   leaseMs?: number;
   /** Resume a saga that previously landed in the dead letter (manual intervention). */
   resumeFailed?: boolean;
+  /** Observer for every transition (used for audit logging); errors in it are swallowed. */
+  onEvent?: (event: SagaEvent) => Promise<void> | void;
 }
+
+export type SagaEvent =
+  | { type: "saga_started" | "saga_resumed"; runId: string }
+  | { type: "step_skipped"; runId: string; step: string }
+  | { type: "step_attempt"; runId: string; step: string; attempt: number }
+  | { type: "step_retry"; runId: string; step: string; attempt: number; error: string }
+  | { type: "step_succeeded"; runId: string; step: string; attempt: number }
+  | { type: "step_failed"; runId: string; step: string; attempts: number; error: string }
+  | { type: "saga_dead_lettered"; runId: string; step: string; error: string }
+  | { type: "saga_completed"; runId: string };
 
 export type SagaOutcome =
   | { status: "completed"; runId: string; executedSteps: string[]; skippedSteps: string[] }
@@ -69,7 +81,7 @@ async function claimRun(db: Db, opts: SagaOptions, leaseMs: number) {
     })
     .select("id")
     .maybeSingle();
-  if (created) return { runId: created.id as string, claimed: true as const };
+  if (created) return { runId: created.id as string, claimed: true as const, resumed: false };
   if (error && !/duplicate|unique/i.test(error.message)) throw new Error(error.message);
 
   const { data: run } = await db
@@ -95,7 +107,7 @@ async function claimRun(db: Db, opts: SagaOptions, leaseMs: number) {
   if (run.lease_expires_at) q = q.eq("lease_expires_at", run.lease_expires_at);
   const { data: taken } = await q.select("id");
   if (!((taken ?? []) as unknown[]).length) return { runId: run.id as string, claimed: false as const, reason: "in_progress" as const };
-  return { runId: run.id as string, claimed: true as const };
+  return { runId: run.id as string, claimed: true as const, resumed: true };
 }
 
 export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
@@ -104,6 +116,14 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
   const claim = await claimRun(db, opts, leaseMs);
   if (!claim.claimed) return { status: claim.reason, runId: claim.runId } as SagaOutcome;
   const runId = claim.runId;
+  const emit = async (e: SagaEvent) => {
+    try {
+      await opts.onEvent?.(e);
+    } catch {
+      // Observers must never break the saga.
+    }
+  };
+  await emit({ type: claim.resumed ? "saga_resumed" : "saga_started", runId });
 
   const executed: string[] = [];
   const skipped: string[] = [];
@@ -117,6 +137,7 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
       .maybeSingle();
     if (prior?.status === "succeeded") {
       skipped.push(step.name);
+      await emit({ type: "step_skipped", runId, step: step.name });
       continue;
     }
 
@@ -140,6 +161,7 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
     // A resumed step gets a fresh retry budget, but its attempt counter keeps climbing.
     for (let i = 0; i < max; i++) {
       attempts += 1;
+      await emit({ type: "step_attempt", runId, step: step.name, attempt: attempts });
       try {
         const result = await step.run({
           sagaType: opts.sagaType,
@@ -154,11 +176,15 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
           .update({ status: "succeeded", attempts, result: result ?? {}, last_error: null, completed_at: new Date().toISOString() })
           .eq("id", execId);
         ok = true;
+        await emit({ type: "step_succeeded", runId, step: step.name, attempt: attempts });
         break;
       } catch (e) {
         lastError = e instanceof Error ? e.message : String(e);
         await db.from("saga_step_executions").update({ attempts, last_error: lastError }).eq("id", execId);
-        if (i < max - 1) await sleep(retryDelay * 2 ** i);
+        if (i < max - 1) {
+          await emit({ type: "step_retry", runId, step: step.name, attempt: attempts, error: lastError });
+          await sleep(retryDelay * 2 ** i);
+        }
       }
     }
 
@@ -174,6 +200,8 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
         failed_step: step.name,
         error_detail: `After ${attempts} attempt(s): ${lastError}`,
       });
+      await emit({ type: "step_failed", runId, step: step.name, attempts, error: lastError });
+      await emit({ type: "saga_dead_lettered", runId, step: step.name, error: lastError });
       return { status: "failed", runId, failedStep: step.name, error: lastError, executedSteps: executed, skippedSteps: skipped };
     }
     executed.push(step.name);
@@ -188,5 +216,6 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
       .eq("saga_type", opts.sagaType)
       .eq("saga_key", opts.sagaKey)
       .is("resolved_at", null);
+  await emit({ type: "saga_completed", runId });
   return { status: "completed", runId, executedSteps: executed, skippedSteps: skipped };
 }

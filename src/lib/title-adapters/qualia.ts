@@ -73,6 +73,9 @@ interface QualiaWebhookBody {
     deposits_complete?: boolean;
     closing?: { scheduled_at: string | null };
     documents?: Array<{ type: string; url: string; name: string; sha256: string }>;
+    // TODO(qualia-schema): confirm field names for final disbursements and recording.
+    commission_disbursements?: Array<{ payee_reference: string; amount: number }>;
+    recording?: { instrument_number: string; recorded_at: string };
   };
 }
 
@@ -160,6 +163,10 @@ export class QualiaAdapter implements TitleEscrowAdapter {
       allDepositsComplete: body.data.deposits_complete,
       closingDate: body.data.closing?.scheduled_at ?? null,
       titleCommitment: commitment ? { url: commitment.url, title: commitment.name, contentHash: commitment.sha256 } : null,
+      commissionDisbursements: body.data.commission_disbursements?.map((d) => ({ payeeReference: d.payee_reference, amount: Number(d.amount) })),
+      recording: body.data.recording
+        ? { instrumentNumber: body.data.recording.instrument_number, recordedAt: body.data.recording.recorded_at }
+        : null,
     };
   }
 
@@ -185,6 +192,13 @@ export class QualiaAdapter implements TitleEscrowAdapter {
       body.data.deposits_complete = opts.allDepositsComplete ?? true;
     }
     if (milestone === "closing_scheduled") body.data.closing = { scheduled_at: opts.closingDate ?? null };
+    if (milestone === "funded_and_recorded") {
+      body.data.commission_disbursements = (opts.commissionDisbursements ?? []).map((d) => ({ payee_reference: d.payeeReference, amount: d.amount }));
+      body.data.recording = {
+        instrument_number: opts.recording?.instrumentNumber ?? `SIM-${id.slice(-8).toUpperCase()}`,
+        recorded_at: opts.recording?.recordedAt ?? new Date().toISOString(),
+      };
+    }
     return JSON.stringify(body);
   }
 
