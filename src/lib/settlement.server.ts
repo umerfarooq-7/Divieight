@@ -193,8 +193,11 @@ export async function settlementPreconditions(db: Db, propertyId: string, parts?
   const blockers: SettlementBlocker[] = [];
   const name = (id: string) => x.agents.get(id)?.full_name ?? `agent ${id.slice(0, 8)}`;
 
-  // 1. Broker Closing Hold (Month 3, Prompt 15)
-  if (x.closingHold) blockers.push({ code: "closing_hold_active", message: "A Broker Closing Hold is active on this pod." });
+  // 1. Broker Closing Hold (Month 3, Prompt 15) — with its reason and who can lift it.
+  if (x.closingHold) {
+    const { closingHoldStatus, closingHoldMessage } = await import("@/lib/closing-hold-gate.server");
+    blockers.push({ code: "closing_hold_active", message: closingHoldMessage(await closingHoldStatus(db, propertyId)) });
+  }
 
   // 2. transactions_held (lapsed NAR cert, E&O, or broker relationship)
   for (const a of x.agents.values())
@@ -412,6 +415,11 @@ export async function generateAndTransmit(db: Db, actorId: string, propertyId: s
   const blockers = await settlementPreconditions(db, propertyId, parts);
   if (blockers.length) {
     await audit(db, actorId, "generation_blocked", propertyId, { blockers });
+    if (blockers.some((b) => b.code === "closing_hold_active")) {
+      // Audits the hold block and tells the HLA's Broker of Record, who can lift it.
+      const { assertNoClosingHold } = await import("@/lib/closing-hold-gate.server");
+      await assertNoClosingHold(db, propertyId, "source_of_truth_generation").catch(() => undefined);
+    }
     return { status: "blocked", blockers };
   }
 

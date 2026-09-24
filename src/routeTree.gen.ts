@@ -88,6 +88,7 @@ import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.i
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
+import { Route as AdminClosingReadinessRouteImport } from './routes/admin.closing-readiness'
 import { Route as AdminClosingFundsRouteImport } from './routes/admin.closing-funds'
 import { Route as AdminClosingRouteImport } from './routes/admin.closing'
 import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
@@ -545,6 +546,11 @@ const AdminContactsRoute = AdminContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminClosingReadinessRoute = AdminClosingReadinessRouteImport.update({
+  id: '/closing-readiness',
+  path: '/closing-readiness',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminClosingFundsRoute = AdminClosingFundsRouteImport.update({
   id: '/closing-funds',
   path: '/closing-funds',
@@ -895,6 +901,7 @@ export interface FileRoutesByFullPath {
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
+  '/admin/closing-readiness': typeof AdminClosingReadinessRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -1032,6 +1039,7 @@ export interface FileRoutesByTo {
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
+  '/admin/closing-readiness': typeof AdminClosingReadinessRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -1171,6 +1179,7 @@ export interface FileRoutesById {
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
   '/admin/closing-funds': typeof AdminClosingFundsRoute
+  '/admin/closing-readiness': typeof AdminClosingReadinessRoute
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
@@ -1314,6 +1323,7 @@ export interface FileRouteTypes {
     | '/admin/buyers'
     | '/admin/closing'
     | '/admin/closing-funds'
+    | '/admin/closing-readiness'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -1451,6 +1461,7 @@ export interface FileRouteTypes {
     | '/admin/buyers'
     | '/admin/closing'
     | '/admin/closing-funds'
+    | '/admin/closing-readiness'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -1589,6 +1600,7 @@ export interface FileRouteTypes {
     | '/admin/buyers'
     | '/admin/closing'
     | '/admin/closing-funds'
+    | '/admin/closing-readiness'
     | '/admin/contacts'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
@@ -2335,6 +2347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContactsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/closing-readiness': {
+      id: '/admin/closing-readiness'
+      path: '/closing-readiness'
+      fullPath: '/admin/closing-readiness'
+      preLoaderRoute: typeof AdminClosingReadinessRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/closing-funds': {
       id: '/admin/closing-funds'
       path: '/closing-funds'
@@ -2784,6 +2803,7 @@ interface AdminRouteChildren {
   AdminBuyersRoute: typeof AdminBuyersRoute
   AdminClosingRoute: typeof AdminClosingRoute
   AdminClosingFundsRoute: typeof AdminClosingFundsRoute
+  AdminClosingReadinessRoute: typeof AdminClosingReadinessRoute
   AdminContactsRoute: typeof AdminContactsRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
@@ -2814,6 +2834,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBuyersRoute: AdminBuyersRoute,
   AdminClosingRoute: AdminClosingRoute,
   AdminClosingFundsRoute: AdminClosingFundsRoute,
+  AdminClosingReadinessRoute: AdminClosingReadinessRoute,
   AdminContactsRoute: AdminContactsRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,

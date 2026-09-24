@@ -17,6 +17,14 @@
 
 type Db = { from: (t: string) => any };
 
+/**
+ * Throw from a step when retrying can't help (a business rule blocks it, not a
+ * transient fault). The saga goes straight to saga_failures with this message.
+ */
+export class NonRetryableError extends Error {
+  readonly retryable = false;
+}
+
 export interface SagaStepContext {
   sagaType: string;
   sagaKey: string;
@@ -181,6 +189,7 @@ export async function runSaga(db: Db, opts: SagaOptions): Promise<SagaOutcome> {
       } catch (e) {
         lastError = e instanceof Error ? e.message : String(e);
         await db.from("saga_step_executions").update({ attempts, last_error: lastError }).eq("id", execId);
+        if ((e as { retryable?: boolean })?.retryable === false) break;
         if (i < max - 1) {
           await emit({ type: "step_retry", runId, step: step.name, attempt: attempts, error: lastError });
           await sleep(retryDelay * 2 ** i);

@@ -11,7 +11,8 @@
  */
 import { deliver } from "@/lib/authorization.notify.server";
 import { renderTextPdf } from "@/lib/simple-pdf";
-import { runSaga, type SagaEvent, type SagaOutcome, type SagaStep, type SagaStepContext } from "@/lib/saga/orchestrator.server";
+import { NonRetryableError, runSaga, type SagaEvent, type SagaOutcome, type SagaStep, type SagaStepContext } from "@/lib/saga/orchestrator.server";
+import { assertNoClosingHold } from "@/lib/closing-hold-gate.server";
 import type { SourceOfTruth } from "@/lib/settlement.server";
 
 type Db = { from: (t: string) => any; storage?: any };
@@ -147,7 +148,7 @@ function steps(db: Db, propertyId: string): SagaStep[] {
       });
       await audit(db, propertyId, "disbursement_check", { status, differences, settlement_document_id: sot.id });
       if (status === "fail")
-        throw new Error(`Disbursement Check failed — ${differences.length} difference(s) between the Source of Truth and title's final numbers.`);
+        throw new NonRetryableError(`Disbursement Check failed — ${differences.length} difference(s) between the Source of Truth and title's final numbers.`);
       return { status, totalCents: s.totals.commissionCents };
     },
   };
@@ -346,7 +347,15 @@ function steps(db: Db, propertyId: string): SagaStep[] {
     },
   };
 
-  return [verify, unlock, disbursementCheck, activate, recordation, dealClosed, vault];
+  // Every step first checks the Broker Closing Hold (Prompt 14): a hold placed
+  // while the saga is running halts it at the next step, with the hold's reason.
+  return [verify, unlock, disbursementCheck, activate, recordation, dealClosed, vault].map((step) => ({
+    ...step,
+    run: async (ctx: SagaStepContext) => {
+      await assertNoClosingHold(db, propertyId, step.name);
+      return step.run(ctx);
+    },
+  }));
 }
 
 export function closingSagaAuditor(db: Db, propertyId: string) {
