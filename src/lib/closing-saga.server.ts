@@ -114,42 +114,15 @@ function steps(db: Db, propertyId: string): SagaStep[] {
     },
   };
 
-  /** 3. Disbursement Check: platform vs. title's final numbers, to the cent. HALTS on any difference. */
+  /** 3. Disbursement Check (Prompt 16): platform vs. title, to the cent. HALTS on any difference. */
   const disbursementCheck: SagaStep = {
     name: "3_disbursement_check",
     maxAttempts: 1,
     run: async () => {
-      const sot = await currentSot(db, propertyId);
-      const s = sot.structured as SourceOfTruth;
-      const ev = await fundedEvent(db, propertyId);
-      const title = (ev?.commissionDisbursements ?? []).map((d) => ({ brokerId: d.payeeReference, cents: Math.round(d.amount * 100) }));
-      const differences: Array<Record<string, unknown>> = [];
-      if (!ev || title.length === 0) differences.push({ kind: "no_title_figures", detail: "Title reported no final commission disbursements." });
-      for (const p of s.payees) {
-        const t = title.find((x) => x.brokerId === p.brokerId);
-        if (!t) differences.push({ kind: "missing_in_title", brokerId: p.brokerId, brokerage: p.brokerageName, platformCents: p.amountCents });
-        else if (t.cents !== p.amountCents)
-          differences.push({ kind: "amount_mismatch", brokerId: p.brokerId, brokerage: p.brokerageName, platformCents: p.amountCents, titleCents: t.cents, deltaCents: t.cents - p.amountCents });
-      }
-      for (const t of title)
-        if (!s.payees.some((p) => p.brokerId === t.brokerId)) differences.push({ kind: "unexpected_in_title", brokerId: t.brokerId, titleCents: t.cents });
-      const titleTotal = title.reduce((a, t) => a + t.cents, 0);
-      if (title.length && titleTotal !== s.totals.commissionCents)
-        differences.push({ kind: "total_mismatch", platformCents: s.totals.commissionCents, titleCents: titleTotal });
-
-      const status = differences.length ? "fail" : "pass";
-      await db.from("disbursement_checks").insert({
-        property_id: propertyId,
-        settlement_document_id: sot.id,
-        status,
-        platform_total_cents: s.totals.commissionCents,
-        title_total_cents: title.length ? titleTotal : null,
-        differences,
-      });
-      await audit(db, propertyId, "disbursement_check", { status, differences, settlement_document_id: sot.id });
-      if (status === "fail")
-        throw new NonRetryableError(`Disbursement Check failed — ${differences.length} difference(s) between the Source of Truth and title's final numbers.`);
-      return { status, totalCents: s.totals.commissionCents };
+      const { runDisbursementCheck } = await import("@/lib/disbursement-check.server");
+      const result = await runDisbursementCheck(db, propertyId, { triggeredBy: "closing_saga" });
+      if (result.status === "fail") throw new NonRetryableError(result.report);
+      return { status: result.status, checkId: result.checkId, totalCents: result.platformTotalCents };
     },
   };
 

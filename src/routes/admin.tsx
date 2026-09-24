@@ -52,6 +52,7 @@ const NAV = [
   { to: "/admin/settlement", label: "Settlement (CDA)", icon: FileSignature },
   { to: "/admin/closing-readiness", label: "Closing readiness", icon: FileSignature },
   { to: "/admin/closing", label: "Closing saga", icon: FileSignature },
+  { to: "/admin/disbursement-check", label: "Disbursement check", icon: FileSignature },
   { to: "/admin/saga-poc", label: "Saga PoC", icon: FileSignature },
   { to: "/admin/pods", label: "Pods & HLA", icon: Boxes },
   { to: "/admin/entity-genesis", label: "Entity Genesis", icon: Building2 },

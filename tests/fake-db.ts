@@ -61,6 +61,7 @@ const DEFAULTS: Record<string, Row> = {
   saga_runs: { status: "running", payload: {} },
   pods: { governance_status: "inactive" },
   saga_notifications_sent: { status: "pending" },
+  co_owner_digital_keys: { status: "active" },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */
@@ -76,6 +77,7 @@ const NOW_DEFAULTS: Record<string, string[]> = {
   saga_runs: ["started_at"],
   saga_step_executions: ["started_at"],
   disbursement_checks: ["checked_at"],
+  title_reported_figures: ["entered_at"],
 };
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);

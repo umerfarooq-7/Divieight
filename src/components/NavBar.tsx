@@ -8,6 +8,8 @@ import { getAgentProfile } from "@/lib/agent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NotificationsBell } from "./NotificationsBell";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyOwnership } from "@/lib/ownership.functions";
 
 export function NavBar() {
   const { user, loading } = useAuth();
@@ -15,6 +17,22 @@ export function NavBar() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [portal, setPortal] = useState<"buyer" | "seller" | "agent" | null>(null);
+  const [isCoOwner, setIsCoOwner] = useState(false);
+  const loadOwnership = useServerFn(getMyOwnership);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (portal !== "buyer") {
+      setIsCoOwner(false);
+      return;
+    }
+    loadOwnership()
+      .then((o) => !cancelled && setIsCoOwner(o.isCoOwner))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [portal, loadOwnership]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +147,9 @@ export function NavBar() {
                     {portal === "agent"
                       ? "Professional Portal"
                       : portal === "buyer"
-                        ? "Buyer dashboard"
+                        ? isCoOwner
+                          ? "Co-owner dashboard"
+                          : "Buyer dashboard"
                         : "Seller dashboard"}
                   </Link>
                 )

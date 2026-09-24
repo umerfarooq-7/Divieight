@@ -7,6 +7,7 @@ import { DesignateAgentCard } from "@/components/DesignateAgentCard";
 import { buyerRedirect } from "@/lib/buyer";
 import { getSellerAccount } from "@/lib/seller";
 import { getMyReservations, withdrawReservation } from "@/lib/reservations.functions";
+import { getMyOwnership } from "@/lib/ownership.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -112,6 +113,16 @@ function BuyerDashboardPage() {
     queryFn: () => fetchMyReservations(),
   });
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  // After the Closing Ping Saga issues Digital Keys, the portal speaks as a Co-owner.
+  const fetchOwnership = useServerFn(getMyOwnership);
+  const { data: ownership } = useQuery({
+    queryKey: ["my-ownership", authUserId],
+    enabled: !!authUserId,
+    retry: false,
+    queryFn: () => fetchOwnership(),
+  });
+  const isCoOwner = Boolean(ownership?.isCoOwner);
+  const ownedSince = new Map((ownership?.properties ?? []).map((o) => [o.propertyId, o.since]));
 
   async function handleWithdraw(reservationId: string) {
     if (
@@ -194,7 +205,7 @@ function BuyerDashboardPage() {
   if (loading || !account) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
-        Loading your buyer dashboard…
+        Loading your dashboard…
       </div>
     );
   }
@@ -211,7 +222,7 @@ function BuyerDashboardPage() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-            Buyer Account
+            {isCoOwner ? "Co-owner" : "Buyer Account"}
           </p>
           <h1 className="truncate font-display text-2xl font-semibold text-foreground sm:text-3xl">
             {primaryName}
@@ -387,7 +398,7 @@ function BuyerDashboardPage() {
 
       <section className="mt-10">
         <h2 className="font-display text-lg font-semibold text-foreground">
-          My Reservations
+          {isCoOwner ? "My homes & reservations" : "My Reservations"}
           <span className="ml-2 text-xs font-normal text-muted-foreground">
             ({reservations.length})
           </span>
@@ -425,11 +436,17 @@ function BuyerDashboardPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
-                    {r.shares_reserved} of 8 share{r.shares_reserved === 1 ? "" : "s"} reserved
+                    {r.shares_reserved} of 8 share{r.shares_reserved === 1 ? "" : "s"} {ownedSince.has(r.property_id) ? "owned" : "reserved"}
                   </span>
-                  <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                    {r.listing_status === "system_lock" ? "System Lock" : r.status}
-                  </span>
+                  {ownedSince.has(r.property_id) ? (
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
+                      Co-owner since {new Date(ownedSince.get(r.property_id)!).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {r.listing_status === "system_lock" ? "System Lock" : r.status}
+                    </span>
+                  )}
                   <Link
                     to="/buyer/pods/$id"
                     params={{ id: r.property_id }}
@@ -437,6 +454,15 @@ function BuyerDashboardPage() {
                   >
                     View pod →
                   </Link>
+                  {ownedSince.has(r.property_id) ? (
+                  <Link
+                    to="/buyer/documents"
+                    className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
+                  >
+                    Records vault →
+                  </Link>
+                  ) : (
+                    <>
                   <Link
                     to="/buyer/due-diligence/$id"
                     params={{ id: r.property_id }}
@@ -462,6 +488,8 @@ function BuyerDashboardPage() {
                   >
                     Closing funds →
                   </Link>
+                    </>
+                  )}
                   <Link
                     to="/buyer/operating-agreement"
                     className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
