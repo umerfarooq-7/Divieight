@@ -66,6 +66,7 @@ type Row = AuthorizationRequestRow & {
     decision: "confirmed" | "declined" | null;
     respondedAt: string | null;
   }>;
+  hlaMissing: boolean;
 };
 
 
@@ -127,7 +128,7 @@ function AdminAuthorizations() {
     }
     setBusy(true);
     try {
-      await create({
+      const created = await create({
         data: {
           propertyId: selected.propertyId,
           buyerAccountId: selected.buyerAccountId,
@@ -140,6 +141,10 @@ function AdminAuthorizations() {
         },
       });
       toast.success("Authorization request queued and the buyer notified.");
+      if (created.hlaMissing)
+        toast.warning(
+          "No Heavy Lifting Agent has accepted on this pod yet. The instrument will stay pending until one is selected, accepts, and proposes the commission provision — or re-queue with the commission box unticked.",
+        );
       setHeadline("");
       setPriorId("");
       setDeadline("");
@@ -325,6 +330,13 @@ function AdminAuthorizations() {
                         </li>
                       ))}
                     </ul>
+                  ) : null}
+                  {row.hlaMissing ? (
+                    <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                      Waiting on the commission provision, but this pod has no accepted Heavy Lifting
+                      Agent. Select one under Pods; once they accept they can propose it. Members'
+                      confirmations above are kept.
+                    </p>
                   ) : null}
                   {row.commissionItem ? (
                     <div className="mt-2 rounded-lg border border-border bg-muted/40 p-2 text-xs text-muted-foreground">

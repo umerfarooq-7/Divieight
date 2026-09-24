@@ -16,6 +16,7 @@ import {
   type AuthorizationRequestRow,
   type AuthorizationResponseRow,
   type AuthorizationTerms,
+  type PendingStage,
   type RecommendationKind,
 } from "@/lib/authorization";
 import {
@@ -350,7 +351,10 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
       },
     });
 
-    return { id: created.id as string };
+    // A commission-bearing request with no accepted HLA cannot tender until one is
+    // selected and proposes the provision — tell the admin now, not at closing.
+    const hlaMissing = commissionExpected && !(await heavyLiftingAgentId(db, data.propertyId));
+    return { id: created.id as string, hlaMissing };
   });
 
 // ---------------------------------------------------------------------------
@@ -466,6 +470,7 @@ export const listBuyerAuthorizations = createServerFn({ method: "GET" })
             propertyLabel: string;
             gateClear: boolean;
             gateBlocker: DiligenceGateBlocker;
+            pendingStage: PendingStage | null;
           }
         >,
       };
@@ -481,12 +486,18 @@ export const listBuyerAuthorizations = createServerFn({ method: "GET" })
       labels.set(id, propertyLabel(await propertyFor(db, id)));
       gates.set(id, await diligenceGateStatus(db, id, buyer.id));
     }
+    const members = await loadMembers(db, buyer.id);
+    const stages = new Map<string, PendingStage>();
+    for (const r of rows.filter((x) => x.status === "pending")) {
+      stages.set(r.id, await pendingStage(db, r, members));
+    }
     return {
       rows: rows.map((r) => ({
         ...r,
         propertyLabel: labels.get(r.property_id) ?? "",
         gateClear: gates.get(r.property_id)?.clear ?? true,
         gateBlocker: gates.get(r.property_id)?.blocker ?? null,
+        pendingStage: stages.get(r.id) ?? null,
       })),
     };
   });
@@ -836,6 +847,7 @@ export const listAdminAuthorizations = createServerFn({ method: "GET" })
           decision: "confirmed" | "declined" | null;
           respondedAt: string | null;
         }>;
+        hlaMissing: boolean;
       }
     >;
     for (const r of rows) {
@@ -885,6 +897,11 @@ export const listAdminAuthorizations = createServerFn({ method: "GET" })
         memberResponses,
         commissionItem,
         commissionMembers,
+        hlaMissing:
+          r.status === "pending" &&
+          Boolean(r.commission_expected) &&
+          !commissionItem &&
+          !(await heavyLiftingAgentId(db, r.property_id)),
       });
     }
     return { rows: out };
@@ -958,6 +975,19 @@ export async function loadCommissionItem(
     .eq("request_id", requestId)
     .maybeSingle();
   return (data as CommissionItemRow) ?? null;
+}
+
+/** What a pending request is waiting on — see PendingStage. */
+async function pendingStage(
+  db: Db,
+  row: AuthorizationRequestRow,
+  members: AuthorizationMember[],
+): Promise<PendingStage> {
+  const state = authorizationState(row, await loadResponses(db, row.id), members);
+  if (!state.complete || state.anyDeclined) return "members";
+  const item = await loadCommissionItem(db, row.id);
+  if (!item) return row.commission_expected ? "hla_proposal" : "members";
+  return item.status === "proposed" ? "commission_members" : "members";
 }
 
 export async function loadCommissionResponses(

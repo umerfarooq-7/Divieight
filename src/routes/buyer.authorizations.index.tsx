@@ -7,6 +7,7 @@ import {
   authorizationStatusLabel,
   formatDeadline,
   type AuthorizationRequestRow,
+  type PendingStage,
 } from "@/lib/authorization";
 import {
   listBuyerAuthorizations,
@@ -38,6 +39,7 @@ type Row = AuthorizationRequestRow & {
   propertyLabel: string;
   gateClear: boolean;
   gateBlocker: DiligenceGateBlocker;
+  pendingStage: PendingStage | null;
 };
 
 function BuyerAuthorizations() {
@@ -99,7 +101,7 @@ function BuyerAuthorizations() {
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">
                       <ShieldCheck className="h-3.5 w-3.5" />
-                      {authorizationStatusLabel(row)}
+                      {authorizationStatusLabel(row, row.pendingStage)}
                     </span>
                   )}
                 </div>

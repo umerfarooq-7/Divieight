@@ -178,7 +178,9 @@ function BuyerAuthorizationDetail() {
           ? "Authorization granted."
           : result.disposition === "declined"
             ? "Recorded — the action will not proceed."
-            : "Recorded. Awaiting the remaining member's response.",
+            : result.outstanding === 0 && result.commissionPending
+              ? "Recorded. Every member has confirmed — the instrument tenders once the commission provision is proposed and authorized."
+              : "Recorded. Awaiting the remaining member's response.",
       );
       setVerified(false);
       await refresh();

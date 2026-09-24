@@ -217,7 +217,18 @@ export function dispositionFor(state: AuthorizationState): "authorized" | "decli
   return null;
 }
 
-export function authorizationStatusLabel(row: AuthorizationRequestRow): string {
+/**
+ * What a still-pending request is waiting on. Once every member has confirmed
+ * the instrument it can still sit pending on the commission provision — first
+ * for the HLA to propose it, then for members to authorize it.
+ */
+export type PendingStage = "members" | "hla_proposal" | "commission_members";
+
+export function authorizationStatusLabel(row: AuthorizationRequestRow, stage?: PendingStage | null): string {
+  if (row.status === "pending" && stage === "hla_proposal")
+    return "Confirmed — waiting for the HLA's commission proposal";
+  if (row.status === "pending" && stage === "commission_members")
+    return "Confirmed — commission authorization needed";
   switch (row.status) {
     case "authorized":
       return "Authorized";

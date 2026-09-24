@@ -12,6 +12,8 @@ import {
   respondToAuthorization,
   respondToCommissionItem,
   getBuyerAuthorization,
+  listBuyerAuthorizations,
+  listAdminAuthorizations,
 } from "@/lib/authorization.functions";
 
 const as = (user: string) => (harness.userId = user);
@@ -271,6 +273,39 @@ describe("Commission-bearing instruments can't tender before the HLA's provision
     await respondToAuthorization(member(id, IDS.b1m1, "confirmed"));
     const r = await respondToAuthorization(member(id, IDS.b1m2, "confirmed"));
     expect(r.disposition).toBe("authorized");
+  });
+});
+
+describe("What a pending request is waiting on (buyer label, admin warning)", () => {
+  const stage = async (id: string) => {
+    as(USERS.b1);
+    return (await listBuyerAuthorizations()).rows.find((r) => r.id === id)!.pendingStage;
+  };
+
+  it("moves from members → HLA proposal → commission authorization", async () => {
+    seedPod(db());
+    const id = await queueOffer();
+    expect(await stage(id)).toBe("members");
+    await respondToAuthorization(member(id, IDS.b1m1, "confirmed"));
+    expect(await stage(id)).toBe("members");
+    await respondToAuthorization(member(id, IDS.b1m2, "confirmed"));
+    expect(await stage(id)).toBe("hla_proposal");
+    await propose(id);
+    expect(await stage(id)).toBe("commission_members");
+  });
+
+  it("flags a commission-bearing request queued before any HLA has accepted", async () => {
+    seedPod(db());
+    db().table("pods")[0]!.hla_status = "invited";
+    as(USERS.admin);
+    const { hlaMissing } = await createAuthorizationRequest({
+      data: { propertyId: IDS.property, buyerAccountId: IDS.b1, actionType: "offer_tender", headline: "Offer", terms: {} },
+    });
+    expect(hlaMissing).toBe(true);
+    expect((await listAdminAuthorizations()).rows[0]!.hlaMissing).toBe(true);
+
+    db().table("pods")[0]!.hla_status = "accepted";
+    expect((await listAdminAuthorizations()).rows[0]!.hlaMissing).toBe(false);
   });
 });
 
