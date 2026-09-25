@@ -16,6 +16,13 @@ import { cn } from "@/lib/utils";
 import { LifestylePerksConsent } from "@/components/LifestylePerksConsent";
 import { SubstitutionInvitations } from "@/components/SubstitutionInvitations";
 
+// The pod's stage outranks the reservation's own status once it moves past forming.
+const POD_STAGE_LABELS: Record<string, string> = {
+  system_lock: "System Lock",
+  closing_ready: "Closing-Ready",
+  active: "Active",
+};
+
 export const Route = createFileRoute("/buyer/dashboard")({
   head: () => ({
     meta: [
@@ -444,7 +451,7 @@ function BuyerDashboardPage() {
                     </span>
                   ) : (
                     <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-                      {r.listing_status === "system_lock" ? "System Lock" : r.status}
+                      {POD_STAGE_LABELS[r.listing_status ?? ""] ?? r.status}
                     </span>
                   )}
                   <Link
