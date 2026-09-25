@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isListingLocked, LISTING_LOCKED_MESSAGE } from "@/lib/listing-lock";
 import { TitleStatusTracker } from "@/components/TitleStatusTracker";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { ListingStatusTimeline, type ListingStatus } from "@/components/ListingS
 import { resumeRouteForStep } from "@/lib/listing-progress";
 import { getBuyerAccount } from "@/lib/buyer";
 
-import { CheckCircle2, Home, LayoutGrid, Wallet } from "lucide-react";
+import { CheckCircle2, Home, LayoutGrid, Lock, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
@@ -393,7 +394,11 @@ function Dashboard() {
                       {/* Each step is scoped by ?property=<id>, so any listing —
                           draft or live — can be reopened at the right step without
                           repeating Identity verification. */}
-                      {l.listing_rejection_reason ? (
+                      {isListingLocked(l.listing_status) ? (
+                        <span className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-muted px-4 text-sm text-muted-foreground" title={LISTING_LOCKED_MESSAGE}>
+                          <Lock className="h-3.5 w-3.5" /> Locked — pod full
+                        </span>
+                      ) : l.listing_rejection_reason ? (
                         <Link
                           to="/listings/$id/edit"
                           params={{ id: l.id }}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ListingLockGuard } from "@/components/ListingLockGuard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,13 +33,22 @@ export const Route = createFileRoute("/listings/$id/edit")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: EditPropertyScreen,
+  component: EditPropertyScreenGuarded,
 });
 
 type Photo = { id: string; path: string; url: string; caption: string };
 
 function randomId() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function EditPropertyScreenGuarded() {
+  const { id: propertyId } = Route.useParams();
+  return (
+    <ListingLockGuard propertyId={propertyId}>
+      <EditPropertyScreen />
+    </ListingLockGuard>
+  );
 }
 
 function EditPropertyScreen() {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LISTING_LOCKED_MESSAGE } from "@/lib/listing-lock";
 import { FileText, Trash2, Upload, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,9 +22,12 @@ const ACCEPTED = ["application/pdf", "image/jpeg", "image/png"];
 export function SellerDataRoom({
   propertyId,
   sellerId,
+  locked = false,
 }: {
   propertyId: string;
   sellerId: string;
+  /** Pod full — documents can be viewed but no longer added or removed. */
+  locked?: boolean;
 }) {
   const [docs, setDocs] = useState<DataRoomDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +142,11 @@ export function SellerDataRoom({
           These files are visible only to vetted buyers holding a Golden Ticket.
         </p>
 
+        {locked ? (
+          <p className="mt-4 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+            {LISTING_LOCKED_MESSAGE}
+          </p>
+        ) : (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -180,6 +189,7 @@ export function SellerDataRoom({
             </button>
           </div>
         </div>
+        )}
       </section>
 
       {loading ? (
@@ -221,6 +231,7 @@ export function SellerDataRoom({
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                       View
                     </button>
+                    {locked ? null : (
                     <button
                       type="button"
                       onClick={() => void removeDoc(doc)}
@@ -229,6 +240,7 @@ export function SellerDataRoom({
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden />
                     </button>
+                    )}
                   </div>
                 </li>
               ))}

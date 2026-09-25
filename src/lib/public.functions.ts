@@ -47,6 +47,8 @@ export const getFeaturedProperties = createServerFn({ method: "GET" }).handler(
         "id, address, city, state, listing_price, property_type, bedrooms, bathrooms, square_footage, retained_shares, exit_type",
       )
       .eq("status", "listed")
+      // A closed pod (Active) is no longer for sale — keep it off the marketplace.
+      .or("listing_status.is.null,listing_status.neq.active")
       .order("created_at", { ascending: false })
       .limit(6);
 

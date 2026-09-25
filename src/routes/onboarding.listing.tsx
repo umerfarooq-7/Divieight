@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ListingLockGuard } from "@/components/ListingLockGuard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/onboarding/listing")({
       { name: "description", content: "Set price, details, and amenities for your fractional listing." },
     ],
   }),
-  component: ListingScreen,
+  component: ListingScreenGuarded,
 });
 
 const PROPERTY_TYPES = ["Single Family", "Condo", "Townhome", "Villa", "Other"] as const;
@@ -53,6 +54,15 @@ type Errors = Partial<Record<
 function currency(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "—";
   return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+function ListingScreenGuarded() {
+  const { property: propertyId } = Route.useSearch();
+  return (
+    <ListingLockGuard propertyId={propertyId}>
+      <ListingScreen />
+    </ListingLockGuard>
+  );
 }
 
 function ListingScreen() {

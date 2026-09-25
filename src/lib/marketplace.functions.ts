@@ -54,6 +54,8 @@ export const getMarketplaceProperties = createServerFn({ method: "GET" }).handle
         "id, address, city, state, zip, listing_price, property_type, usage_tag, bedrooms, bathrooms, square_footage, amenities, retained_shares, exit_type, listing_status",
       )
       .eq("status", "listed")
+      // A closed pod (Active) is no longer for sale — keep it off the marketplace.
+      .or("listing_status.is.null,listing_status.neq.active")
       .order("created_at", { ascending: false })
       .limit(200);
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isListingLocked } from "@/lib/listing-lock";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ListingAgentTagger } from "@/components/ListingAgentTagger";
@@ -277,7 +278,7 @@ function ListingDetail() {
         </>
       ) : user ? (
         <>
-          <SellerDataRoom propertyId={property.id} sellerId={user.id} />
+          <SellerDataRoom propertyId={property.id} sellerId={user.id} locked={isListingLocked(property.listing_status)} />
           <section className="mt-10">
             <DiligenceUploader propertyId={property.id} mode="seller" />
           </section>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ListingLockGuard } from "@/components/ListingLockGuard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/onboarding/media")({
       { name: "description", content: "Upload photos and a virtual tour narrative for your fractional listing." },
     ],
   }),
-  component: MediaScreen,
+  component: MediaScreenGuarded,
 });
 
 const MIN_IMAGES = 1;
@@ -43,6 +44,15 @@ type Item = {
 
 function randomId() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function MediaScreenGuarded() {
+  const { property: propertyId } = Route.useSearch();
+  return (
+    <ListingLockGuard propertyId={propertyId}>
+      <MediaScreen />
+    </ListingLockGuard>
+  );
 }
 
 function MediaScreen() {
