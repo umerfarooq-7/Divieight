@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { parseMarkets, marketMatches } from "@/lib/markets";
+import { parseMarkets, marketCoversArea } from "@/lib/markets";
 import { BUDGET_BUCKETS, bucketById, bucketForAmount } from "@/lib/budget-buckets";
 
 /**
@@ -112,7 +112,7 @@ export const listAgentPools = createServerFn({ method: "POST" })
 
     const relevant = (buyers ?? []).filter((b: any) => {
       const market = (b.primary_target_market ?? "").trim();
-      return market && myMarkets.some((m) => marketMatches(m, market));
+      return market && myMarkets.some((m) => marketCoversArea(m, market));
     });
     if (relevant.length === 0) return [];
 
@@ -121,7 +121,7 @@ export const listAgentPools = createServerFn({ method: "POST" })
     const groups = new Map<string, any[]>();
     for (const b of relevant) {
       const market = (b.primary_target_market ?? "").trim();
-      const label = myMarkets.find((m) => marketMatches(m, market)) ?? market;
+      const label = myMarkets.find((m) => marketCoversArea(m, market)) ?? market;
       const list = groups.get(label) ?? [];
       list.push(b);
       groups.set(label, list);
@@ -189,7 +189,7 @@ export const listAgentPools = createServerFn({ method: "POST" })
 
       for (const p of props ?? []) {
         const label = `${p.city ?? ""} ${p.state ?? ""} ${p.zip ?? ""}`.trim();
-        if (!marketMatches(market, label) && !marketMatches(market, p.city ?? "")) continue;
+        if (!marketCoversArea(market, label) && !marketCoversArea(market, p.city ?? "")) continue;
         const { data: res } = await db
           .from("pod_reservations")
           .select("shares_reserved")

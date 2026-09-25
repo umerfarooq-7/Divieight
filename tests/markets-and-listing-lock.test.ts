@@ -3,7 +3,7 @@
  * seller listing lock once a pod is full.
  */
 import { describe, it, expect } from "vitest";
-import { marketMatches, residencyFor, stateForZip } from "@/lib/markets";
+import { marketCoversArea, marketMatches, residencyFor, stateForZip } from "@/lib/markets";
 import { isListingLocked } from "@/lib/listing-lock";
 
 describe("markets — a zip resolves to its state", () => {
@@ -16,13 +16,17 @@ describe("markets — a zip resolves to its state", () => {
     expect(stateForZip("CA")).toBeNull();
   });
 
-  it("a buyer's zip matches an agent market given as state code or name, either way round", () => {
-    expect(marketMatches("CA", "94103")).toBe(true);
-    expect(marketMatches("94103", "Ca")).toBe(true);
-    expect(marketMatches("florida", "33101")).toBe(true);
-    expect(marketMatches("NY", "94103")).toBe(false);
-    expect(marketMatches("CA", "33101")).toBe(false);
-    expect(residencyFor(["NY", "FL", "CA"], "94011")).toBe("resident");
+  it("Market pools place a buyer's zip in an agent market given as state code or name", () => {
+    expect(marketCoversArea("CA", "94103")).toBe(true);
+    expect(marketCoversArea("94103", "Ca")).toBe(true);
+    expect(marketCoversArea("florida", "33101")).toBe(true);
+    expect(marketCoversArea("NY", "94103")).toBe(false);
+    expect(marketCoversArea("CA", "33101")).toBe(false);
+  });
+
+  it("tethering/residency stay text-only, so a zip never auto-tethers to a state agent", () => {
+    expect(marketMatches("CA", "94103")).toBe(false);
+    expect(residencyFor(["NY", "FL", "CA"], "94011")).toBe("non_resident");
   });
 
   it("keeps the existing text matching", () => {

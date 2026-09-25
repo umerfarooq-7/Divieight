@@ -57,14 +57,26 @@ function zipInMarket(zip: string, market: string): boolean {
 }
 
 /**
- * Loose market match: exact, either string containing the other, or a zip
- * code against the state (code or name) it lies in.
+ * Loose market match: exact, or either string containing the other. This is
+ * the rule tethering and residency use — deliberately text-only, so a buyer's
+ * zip does not auto-tether them to a state-level agent (they choose instead).
  */
 export function marketMatches(market: string, other: string) {
   const a = (market ?? "").trim().toLowerCase();
   const b = (other ?? "").trim().toLowerCase();
   if (!a || !b) return false;
-  return a === b || a.includes(b) || b.includes(a) || zipInMarket(a, b) || zipInMarket(b, a);
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+/**
+ * Wider match for the aggregate Market pools view only: also places a zip
+ * code in the state (code or name) it lies in.
+ */
+export function marketCoversArea(market: string, other: string) {
+  const a = (market ?? "").trim().toLowerCase();
+  const b = (other ?? "").trim().toLowerCase();
+  if (!a || !b) return false;
+  return marketMatches(a, b) || zipInMarket(a, b) || zipInMarket(b, a);
 }
 
 /** Normalise whatever the database/form hands us into a clean string array. */
