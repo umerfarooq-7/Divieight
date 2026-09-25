@@ -6,6 +6,7 @@
  * path through `ingestTitleWebhook`.
  */
 import { deliver } from "@/lib/authorization.notify.server";
+import { renderTextPdf } from "@/lib/simple-pdf";
 import { getTitleAdapter, DEFAULT_TITLE_PROVIDER, type ClosingBundle, type NormalizedTitleEvent } from "@/lib/title-adapters";
 import type { SimulationOptions } from "@/lib/title-adapters/adapter";
 import {
@@ -16,7 +17,7 @@ import {
   type TitleStatus,
 } from "@/lib/title-escrow";
 
-type Db = { from: (t: string) => any };
+type Db = { from: (t: string) => any; storage?: any };
 
 async function audit(db: Db, actorId: string | null, actionType: string, propertyId: string, metadata: Record<string, unknown>) {
   await db.from("audit_log").insert({
@@ -223,7 +224,7 @@ export async function ingestTitleWebhook(
   });
 
   let discrepancies = 0;
-  if (event.milestone === "title_report_ready") await placeTitleCommitment(db, propertyId, event);
+  if (event.milestone === "title_report_ready") await placeTitleCommitment(db, propertyId, event, Boolean(opts.simulated));
   if (event.milestone === "earnest_money_deposited") discrepancies = await crossCheckEarnestMoney(db, propertyId, inserted.id, event);
   if (event.milestone === "closing_scheduled" && event.closingDate) {
     await db.from("properties").update({ anticipated_closing_date: event.closingDate.slice(0, 10) }).eq("id", propertyId);
@@ -265,9 +266,10 @@ export async function simulateMilestone(
 // ---------------------------------------------------------------------------
 
 /** Automated document fetch: the Title Commitment becomes a Required DD document. */
-async function placeTitleCommitment(db: Db, propertyId: string, event: NormalizedTitleEvent) {
+async function placeTitleCommitment(db: Db, propertyId: string, event: NormalizedTitleEvent, simulated: boolean) {
   const doc = event.titleCommitment;
   if (!doc) return;
+  const fileUrl = await storeTitleCommitment(db, propertyId, doc, simulated);
   const { data: prior } = await db
     .from("due_diligence_inventory")
     .select("id")
@@ -280,7 +282,7 @@ async function placeTitleCommitment(db: Db, propertyId: string, event: Normalize
       property_id: propertyId,
       document_title: doc.title,
       category: "title_commitment",
-      file_url: doc.url,
+      file_url: fileUrl,
       content_hash: doc.contentHash,
       required: true,
       // Title commitment/exception documents are governing instruments (Rev 43).
@@ -323,6 +325,74 @@ async function placeTitleCommitment(db: Db, propertyId: string, event: Normalize
     document_title: doc.title,
     amended: ((prior ?? []) as unknown[]).length > 0,
   });
+}
+
+const DOCUMENTS_BUCKET = "property-documents";
+
+/** True for the storage path the simulated feed invents for a Title Commitment. */
+export function isSimulatedTitleCommitmentPath(path: string) {
+  return /^title-escrow\/[^/]+\/title-commitment-evt_sim_[^/]+\.pdf$/.test(path);
+}
+
+/** Placeholder Title Commitment for the simulated feed — clearly marked as not real. */
+export function simulatedTitleCommitmentPdf(orderRef: string) {
+  const text = [
+    "TITLE COMMITMENT (SCHEDULE A & B) - SIMULATED",
+    "",
+    "This is a placeholder produced by divieight's simulated title feed. It is not",
+    "a real title commitment and must not be relied on.",
+    "",
+    `Title order: ${orderRef}`,
+    "",
+    "SCHEDULE A",
+    "  1. Effective date: as shown on the live commitment.",
+    "  2. Policy to be issued: ALTA Owner's Policy.",
+    "  3. Vested owner: the current seller of record.",
+    "  4. Proposed insured: the property LLC formed for the buyer group.",
+    "",
+    "SCHEDULE B - REQUIREMENTS",
+    "  1. Payment of the full consideration to the seller.",
+    "  2. Recorded deed from the seller to the proposed insured.",
+    "",
+    "SCHEDULE B - EXCEPTIONS",
+    "  1. Taxes and assessments not yet due and payable.",
+    "  2. Easements, covenants and restrictions of record.",
+    "",
+    "Once live title credentials are configured, the provider's actual commitment",
+    "replaces this document and every member re-acknowledges it.",
+  ].join("\n");
+  return renderTextPdf(text, "Title Commitment (simulated)");
+}
+
+/**
+ * Put the commitment in our own storage so the DD viewer can open it: a live
+ * provider URL is fetched and copied in; the simulated feed gets a placeholder.
+ */
+async function storeTitleCommitment(
+  db: Db,
+  propertyId: string,
+  doc: { url: string; contentHash: string },
+  simulated: boolean,
+): Promise<string> {
+  if (/^https?:\/\//i.test(doc.url)) {
+    const res = await fetch(doc.url);
+    if (!res.ok) throw new Error(`Could not fetch the title commitment (${res.status})`);
+    const path = `title-escrow/${propertyId}/title-commitment-${doc.contentHash.replace(/[^\w-]/g, "")}.pdf`;
+    const { error } = (await db.storage?.from(DOCUMENTS_BUCKET).upload(path, await res.blob(), {
+      upsert: true,
+      contentType: "application/pdf",
+    })) ?? { error: null };
+    if (error) throw new Error(`Could not store the title commitment: ${error.message}`);
+    return path;
+  }
+  if (simulated) {
+    const orderRef = doc.url.split("/")[1] ?? "simulated";
+    await db.storage?.from(DOCUMENTS_BUCKET).upload(doc.url, new Blob([simulatedTitleCommitmentPdf(orderRef)], { type: "application/pdf" }), {
+      upsert: true,
+      contentType: "application/pdf",
+    });
+  }
+  return doc.url;
 }
 
 async function flag(

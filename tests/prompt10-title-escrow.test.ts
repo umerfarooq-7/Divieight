@@ -161,6 +161,24 @@ describe("Milestone webhooks → every dashboard", () => {
     expect(db().audits("diligence.document_placed")[0].metadata.source).toBe("title_escrow_webhook");
   });
 
+  it("the simulated feed uploads a readable placeholder PDF at the commitment's path", async () => {
+    seed();
+    await openOrder();
+    await fire("order_opened");
+    const uploads: Array<{ path: string; body: Blob }> = [];
+    db().storage.from = () => ({
+      upload: async (path: string, body: Blob) => (uploads.push({ path, body }), { data: { path }, error: null }),
+    }) as never;
+    await fire("title_report_ready");
+    const path = db().table("due_diligence_inventory")[0].file_url;
+    const { isSimulatedTitleCommitmentPath } = await import("@/lib/title-escrow.server");
+    expect(isSimulatedTitleCommitmentPath(path)).toBe(true);
+    expect(uploads.map((u) => u.path)).toEqual([path]);
+    const text = new TextDecoder().decode(await uploads[0]!.body.arrayBuffer());
+    expect(text.startsWith("%PDF")).toBe(true);
+    expect(text).toContain("SIMULATED");
+  });
+
   it("status visibility follows the pod: members, agents, HLA (by pod), seller — not outsiders", async () => {
     seed();
     await openOrder();

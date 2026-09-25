@@ -15,6 +15,7 @@ import {
   type DdDocumentState,
   type DdMember,
 } from "@/lib/due-diligence";
+import { isSimulatedTitleCommitmentPath, simulatedTitleCommitmentPdf } from "@/lib/title-escrow.server";
 
 /**
  * Due Diligence Acknowledgment Gate — server side.
@@ -75,7 +76,26 @@ async function loadDocuments(db: Db, propertyId: string): Promise<DdDocument[]> 
     .eq("property_id", propertyId)
     .order("placed_at", { ascending: true });
   const rows = (data ?? []) as DdDocument[];
-  const signed = await signUrls(rows.map((r) => r.file_url));
+  let signed = await signUrls(rows.map((r) => r.file_url));
+  // Title commitments placed by the simulated feed before it uploaded a file
+  // have nothing in storage — write the placeholder now so they can be read.
+  const missing = rows.filter((r) => !signed.has(r.file_url) && isSimulatedTitleCommitmentPath(r.file_url));
+  if (missing.length > 0) {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+      for (const r of missing) {
+        await supabaseAdmin.storage
+          .from("property-documents")
+          .upload(r.file_url, new Blob([simulatedTitleCommitmentPdf(r.file_url.split("/")[1]!)], { type: "application/pdf" }), {
+            upsert: true,
+            contentType: "application/pdf",
+          });
+      }
+      signed = await signUrls(rows.map((r) => r.file_url));
+    } catch {
+      // still listed; the viewer shows it as unavailable
+    }
+  }
   return rows.map((r) => ({ ...r, signed_url: signed.get(r.file_url) ?? null }));
 }
 
