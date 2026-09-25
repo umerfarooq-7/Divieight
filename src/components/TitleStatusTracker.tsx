@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatDate } from "@/lib/format-date";
 import { useServerFn } from "@tanstack/react-start";
 import { Check } from "lucide-react";
 import { getTitleStatusFor } from "@/lib/title-escrow.functions";
@@ -38,7 +39,7 @@ export function TitleStatusTracker({
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{title}</p>
         <p className="text-[11px] text-muted-foreground">
           {done}/{status.milestones.length} milestones
-          {status.closingDate ? ` · closing ${new Date(`${status.closingDate.slice(0, 10)}T00:00:00`).toLocaleDateString()}` : ""}
+          {status.closingDate ? ` · closing ${formatDate(status.closingDate.slice(0, 10))}` : ""}
           {status.simulated ? " · simulated feed" : ""}
         </p>
       </div>
@@ -54,7 +55,7 @@ export function TitleStatusTracker({
             </span>
             <span className={m.receivedAt ? "text-foreground" : "text-muted-foreground"}>
               {MILESTONE_LABELS[m.milestone]}
-              {m.receivedAt ? <span className="block text-[10px] text-muted-foreground">{new Date(m.receivedAt).toLocaleDateString()}</span> : null}
+              {m.receivedAt ? <span className="block text-[10px] text-muted-foreground">{formatDate(m.receivedAt)}</span> : null}
             </span>
           </li>
         ))}

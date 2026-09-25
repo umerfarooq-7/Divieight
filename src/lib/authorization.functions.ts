@@ -990,6 +990,27 @@ async function pendingStage(
   return item.status === "proposed" ? "commission_members" : "members";
 }
 
+/** Pending requests that are waiting on this Buyer Account's own members. */
+export async function authorizationsAwaitingBuyer(
+  db: Db,
+  buyerAccountId: string,
+): Promise<Array<AuthorizationRequestRow & { stage: PendingStage }>> {
+  const { data } = await db
+    .from("authorization_requests")
+    .select("*")
+    .eq("buyer_account_id", buyerAccountId)
+    .eq("status", "pending");
+  const rows = (data ?? []) as AuthorizationRequestRow[];
+  if (rows.length === 0) return [];
+  const members = await loadMembers(db, buyerAccountId);
+  const out: Array<AuthorizationRequestRow & { stage: PendingStage }> = [];
+  for (const r of rows) {
+    const stage = await pendingStage(db, r, members);
+    if (stage !== "hla_proposal") out.push({ ...r, stage });
+  }
+  return out;
+}
+
 export async function loadCommissionResponses(
   db: Db,
   itemId: string,
