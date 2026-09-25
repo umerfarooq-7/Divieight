@@ -204,27 +204,42 @@ export const renewInsurancePolicy = createServerFn({ method: "POST" })
     return (await server()).renewPolicy(await adminDb(), userId, policyId, terms);
   });
 
-const policyAction = (fn: "bind" | "premium" | "lapse") =>
-  createServerFn({ method: "POST" })
-    .middleware([requireSupabaseAuth])
-    .inputValidator((input: { policyId: string }) => {
-      if (!input?.policyId) throw new Error("Missing policy");
-      return input;
-    })
-    .handler(async ({ data, context }) => {
-      const userId = context.claims?.sub as string;
-      await requireAdmin(userId);
-      const db = await adminDb();
-      const s = await server();
-      if (fn === "bind") await s.bindPolicy(db, userId, data.policyId);
-      else if (fn === "premium") await s.markPremiumPaid(db, userId, data.policyId);
-      else await s.lapsePolicy(db, userId, data.policyId, "marked_lapsed_by_manager");
-      return { ok: true };
-    });
+// Each server fn is declared at top level: the Start compiler only registers
+// createServerFn calls it can see statically, so a factory loses its context.
+const policyIdInput = (input: { policyId: string }) => {
+  if (!input?.policyId) throw new Error("Missing policy");
+  return input;
+};
 
-export const bindInsurancePolicy = policyAction("bind");
-export const markInsurancePremiumPaid = policyAction("premium");
-export const lapseInsurancePolicy = policyAction("lapse");
+export const bindInsurancePolicy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(policyIdInput)
+  .handler(async ({ data, context }) => {
+    const userId = context.claims?.sub as string;
+    await requireAdmin(userId);
+    await (await server()).bindPolicy(await adminDb(), userId, data.policyId);
+    return { ok: true };
+  });
+
+export const markInsurancePremiumPaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(policyIdInput)
+  .handler(async ({ data, context }) => {
+    const userId = context.claims?.sub as string;
+    await requireAdmin(userId);
+    await (await server()).markPremiumPaid(await adminDb(), userId, data.policyId);
+    return { ok: true };
+  });
+
+export const lapseInsurancePolicy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(policyIdInput)
+  .handler(async ({ data, context }) => {
+    const userId = context.claims?.sub as string;
+    await requireAdmin(userId);
+    await (await server()).lapsePolicy(await adminDb(), userId, data.policyId, "marked_lapsed_by_manager");
+    return { ok: true };
+  });
 
 export const reviewInsuranceProposal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
