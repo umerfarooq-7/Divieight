@@ -48,9 +48,10 @@ async function uploadToVaultBucket(propertyId: string, file: File, kind: string)
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) throw new Error("Your session expired — sign in again.");
   const ext = file.name.split(".").pop() ?? "pdf";
-  const path = `entity-genesis/${propertyId}/${kind}-${crypto.randomUUID()}.${ext}`;
+  // Storage policy only lets a user write under their own uid folder.
+  const path = `${auth.user.id}/entity-genesis/${propertyId}/${kind}-${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from("property-documents").upload(path, file, { contentType: file.type, upsert: false });
-  if (error) throw new Error("Upload failed — try again.");
+  if (error) throw new Error(`Upload failed — ${error.message}`);
   return { path, hash: await hashFile(file) };
 }
 
