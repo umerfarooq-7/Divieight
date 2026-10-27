@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parsePropertyScope, type PropertyScopeInput } from "@/lib/property-scope";
 import { supabase } from "@/integrations/supabase/client";
 import type { EarnestObligation, EarnestTerms } from "@/lib/earnest-money";
 
@@ -211,7 +212,8 @@ export interface BuyerEarnestRow {
 /** The signed-in buyer's own earnest-money obligations. */
 export const listBuyerEarnestMoney = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }) => {
     const userId = context.claims?.sub as string;
     const db = await adminDb();
 
@@ -222,11 +224,12 @@ export const listBuyerEarnestMoney = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!account) return { rows: [] as BuyerEarnestRow[] };
 
-    const { data: obligations } = await db
+    let query = db
       .from("earnest_money_obligations")
       .select("*")
-      .eq("buyer_account_id", (account as { id: string }).id)
-      .order("funding_deadline", { ascending: true });
+      .eq("buyer_account_id", (account as { id: string }).id);
+    if (scope.propertyId) query = query.eq("property_id", scope.propertyId);
+    const { data: obligations } = await query.order("funding_deadline", { ascending: true });
 
     const rows = (obligations ?? []) as EarnestObligation[];
     if (rows.length === 0) return { rows: [] as BuyerEarnestRow[] };

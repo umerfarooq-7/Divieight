@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { auditIp } from "@/lib/request-ip.server";
+import { buyerConnectedToProperty } from "@/lib/property-access.server";
 import {
   AGENT_ACK_TEXT,
   GOVERNING_CATEGORIES,
@@ -145,7 +146,7 @@ async function loadMembers(db: Db, buyerAccountId: string): Promise<DdMember[]> 
 
 export interface BuyerDiligencePayload {
   allowed: boolean;
-  reason: "ok" | "no_buyer_account" | "not_found";
+  reason: "ok" | "no_buyer_account" | "not_found" | "not_connected";
   buyerAccountId: string | null;
   property: { id: string; address: string; city: string; state: string } | null;
   members: DdMember[];
@@ -188,6 +189,9 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       .eq("id", data.propertyId)
       .maybeSingle();
     if (!property) return { allowed: false, reason: "not_found", ...empty };
+    // Only a Buyer Account holding a share in THIS property sees its documents.
+    if (!(await buyerConnectedToProperty(db, buyer.id, data.propertyId)))
+      return { allowed: false, reason: "not_connected", ...empty };
 
     const documents = await loadDocuments(db, data.propertyId);
     const members = await loadMembers(db, buyer.id);
@@ -263,6 +267,10 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
     if (!doc) return { ok: false, error: "Document not found." };
     if (doc.content_hash !== data.contentHash)
       return { ok: false, error: "This document changed — reload and review the current version." };
+    // The acknowledgment belongs to the document's own property — the account
+    // must hold a live share there, whatever else it holds.
+    if (!(await buyerConnectedToProperty(db, buyer.id, doc.property_id, { activeOnly: true })))
+      return { ok: false, error: "This document belongs to a property your account isn't in." };
 
     const { data: member } = await db
       .from("account_members")
@@ -581,6 +589,10 @@ export const getAuthorizationGateStatus = createServerFn({ method: "GET" })
   .handler(async ({ data, context }): Promise<GateStatus> => {
     const db = await adminDb();
     let buyerAccountId = data.buyerAccountId;
+    if (buyerAccountId) {
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (!isAdmin) buyerAccountId = undefined; // only an admin may ask about another account
+    }
     if (!buyerAccountId) {
       const { data: buyer } = await db
         .from("buyer_accounts")
@@ -602,6 +614,28 @@ export const getAuthorizationGateStatus = createServerFn({ method: "GET" })
     }
     return status;
   });
+
+/**
+ * A placement must name its property, and may only supersede a document of
+ * that same property — otherwise an amendment uploaded on one property would
+ * retire another property's document. Returns an error message, or null.
+ */
+async function checkPlacementScope(db: Db, propertyId: string, supersedesId: string | null) {
+  if (!propertyId || propertyId === "undefined" || propertyId === "null")
+    return "Missing property — open the property's Documents page and try again.";
+  const { data: property } = await db.from("properties").select("id").eq("id", propertyId).maybeSingle();
+  if (!property) return "Property not found.";
+  if (supersedesId) {
+    const { data: prior } = await db
+      .from("due_diligence_inventory")
+      .select("property_id")
+      .eq("id", supersedesId)
+      .maybeSingle();
+    if (!prior || prior.property_id !== propertyId)
+      return "The document being replaced belongs to a different property.";
+  }
+  return null;
+}
 
 /**
  * Place or amend a due-diligence document (admin/compliance only).
@@ -630,6 +664,8 @@ export const placeDiligenceDocument = createServerFn({ method: "POST" })
     if (!isAdmin) return { ok: false, error: "Admins only." };
 
     const db = await adminDb();
+    const scope = await checkPlacementScope(db, data.propertyId, data.supersedesId);
+    if (scope) return { ok: false, error: scope };
     const governing =
       data.isGoverningInstrument ?? GOVERNING_CATEGORIES.includes(data.category);
 
@@ -799,6 +835,8 @@ export const placeSellerDisclosure = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!property || property.seller_id !== context.userId)
       return { ok: false, error: "This property isn't on your account." };
+    const scope = await checkPlacementScope(db, data.propertyId, data.supersedesId);
+    if (scope) return { ok: false, error: scope };
 
     const { data: inserted, error } = await db
       .from("due_diligence_inventory")

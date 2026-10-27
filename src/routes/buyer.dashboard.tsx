@@ -468,14 +468,14 @@ function BuyerDashboardPage() {
                           <PageLink to="/buyer/due-diligence/$id" params={{ id: r.property_id }}>
                             Due diligence
                           </PageLink>
-                          <PageLink to="/buyer/authorizations">Authorizations</PageLink>
-                          <PageLink to="/buyer/earnest-money">Earnest money</PageLink>
-                          <PageLink to="/buyer/closing-funds">Closing funds</PageLink>
+                          <PageLink to="/buyer/authorizations" search={{ property: r.property_id }}>Authorizations</PageLink>
+                          <PageLink to="/buyer/earnest-money" search={{ property: r.property_id }}>Earnest money</PageLink>
+                          <PageLink to="/buyer/closing-funds" search={{ property: r.property_id }}>Closing funds</PageLink>
                         </>
                       )}
-                      <PageLink to="/buyer/operating-agreement">Operating Agreement</PageLink>
-                      <PageLink to="/buyer/insurance">Insurance</PageLink>
-                      <PageLink to="/buyer/reports">Reports</PageLink>
+                      <PageLink to="/buyer/operating-agreement" search={{ property: r.property_id }}>Operating Agreement</PageLink>
+                      <PageLink to="/buyer/insurance" search={{ property: r.property_id }}>Insurance</PageLink>
+                      <PageLink to="/buyer/reports" search={{ property: r.property_id }}>Reports</PageLink>
                       <PageLink to="/properties/$id" params={{ id: r.property_id }}>
                         View home
                       </PageLink>
@@ -703,6 +703,7 @@ function NeedsYourAction({
               <Link
                 to={ACTION_LINK[a.kind]}
                 params={actionParams(a)}
+                search={actionParams(a) ? undefined : { property: a.propertyId }}
                 className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-secondary/60"
               >
                 <span className="min-w-0">
@@ -771,16 +772,19 @@ function ProgressTracker({ steps }: { steps: ProgressStep[] }) {
 function PageLink({
   to,
   params,
+  search,
   children,
 }: {
   to: string;
   params?: { id: string };
+  search?: { property: string };
   children: React.ReactNode;
 }) {
   return (
     <Link
       to={to}
       params={params}
+      search={search}
       className="flex min-h-9 items-center justify-between gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
     >
       <span className="truncate">{children}</span>

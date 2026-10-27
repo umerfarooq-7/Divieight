@@ -51,8 +51,21 @@ export function DiligenceUploader({
   const [confirming, setConfirming] = useState<PropertyDdDocument | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // A replace target or document list from another property must never carry
+  // over: clear on property change, and drop responses for an older property.
+  const currentProperty = useRef(propertyId);
+  currentProperty.current = propertyId;
+  useEffect(() => {
+    setDocuments([]);
+    setLoading(true);
+    setReplaceTarget(null);
+    setConfirming(null);
+  }, [propertyId]);
+
   const load = useCallback(async () => {
-    const res = await list({ data: { propertyId } });
+    const requested = propertyId;
+    const res = await list({ data: { propertyId: requested } });
+    if (currentProperty.current !== requested) return;
     setAllowed(res.allowed);
     setDocuments(res.documents);
     setLoading(false);

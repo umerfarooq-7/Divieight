@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabase } from "@/integrations/supabase/client";
+import { parsePropertyScope, scopeIds, type PropertyScopeInput } from "@/lib/property-scope";
 import type { PropertyReportRow, ReportAnnotation, ReportType } from "@/lib/reports";
 
 /**
@@ -39,7 +40,13 @@ async function loadReports(db: Db, propertyIds: string[]): Promise<ReportView[]>
     .in("property_id", propertyIds)
     .order("received_at", { ascending: false });
   const rows = (data ?? []) as Array<PropertyReportRow & { supersedes_report_id: string | null }>;
-  const supersededIds = new Set(rows.map((r) => r.supersedes_report_id).filter(Boolean));
+  // A report is superseded only by a newer report of the same property.
+  const propertyOf = new Map(rows.map((r) => [r.id, r.property_id]));
+  const supersededIds = new Set(
+    rows
+      .filter((r) => r.supersedes_report_id && propertyOf.get(r.supersedes_report_id) === r.property_id)
+      .map((r) => r.supersedes_report_id),
+  );
 
   const { data: props } = await db
     .from("properties")
@@ -157,7 +164,8 @@ export interface BuyerReportsPayload {
 
 export const listBuyerReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<BuyerReportsPayload> => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }): Promise<BuyerReportsPayload> => {
     const db = await adminDb();
     const { data: buyer } = await db
       .from("buyer_accounts")
@@ -171,7 +179,10 @@ export const listBuyerReports = createServerFn({ method: "GET" })
       .select("property_id")
       .eq("buyer_account_id", buyer.id)
       .eq("status", "reserved");
-    const propertyIds = [...new Set(((reservations ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))];
+    const propertyIds = scopeIds(
+      [...new Set(((reservations ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))],
+      scope.propertyId,
+    );
     const reports = await loadReports(db, propertyIds);
     const annotations = await loadAnnotations(db, reports.map((r) => r.id), { buyerAccountId: buyer.id });
     return {

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -31,12 +33,17 @@ export const Route = createFileRoute("/buyer/insurance")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerInsurance,
 });
 
 function BuyerInsurance() {
   const load = useServerFn(getBuyerInsurance);
-  const { data, isLoading } = useQuery({ queryKey: ["buyer-insurance"], queryFn: () => load() });
+  const { property } = Route.useSearch();
+  const { data, isLoading } = useQuery({
+    queryKey: ["buyer-insurance", property ?? "all"],
+    queryFn: () => load({ data: { propertyId: property ?? null } }),
+  });
   const properties = data?.properties ?? [];
 
   return (
@@ -44,6 +51,7 @@ function BuyerInsurance() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-semibold text-foreground">Homeowners insurance</h1>
         <p className="mt-1 text-sm text-muted-foreground">{BLOCK2_AUTHORITY_NOTICE}</p>
+        <PropertyScopeBanner to="/buyer/insurance" property={property} label={data?.properties[0]?.propertyLabel} />
       </header>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

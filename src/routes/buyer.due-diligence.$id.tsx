@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, CheckCircle2, FileText, Lock, ShieldCheck } from "lucide-react";
@@ -62,8 +62,20 @@ function BuyerDueDiligencePage() {
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Switching property must never show the previous property's documents —
+  // clear on change, and ignore a response that arrives for an older id.
+  const currentId = useRef(id);
+  currentId.current = id;
+  useEffect(() => {
+    setPayload(null);
+    setLoading(true);
+    setOpenId(null);
+  }, [id]);
+
   const refresh = useCallback(async () => {
-    const result = await load({ data: { propertyId: id } });
+    const requestedId = id;
+    const result = await load({ data: { propertyId: requestedId } });
+    if (currentId.current !== requestedId) return;
     if (!result.allowed) {
       toast.error("This document set isn't available to your account.");
       navigate({ to: "/buyer/dashboard" });

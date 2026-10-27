@@ -72,6 +72,16 @@ export async function deliverReport(db: Db, actorId: string, input: DeliverRepor
     .eq("id", input.propertyId)
     .maybeSingle();
   if (!property) throw new Error("Property not found");
+  // A revision may only replace a report of the same property.
+  if (input.supersedesReportId) {
+    const { data: prior } = await db
+      .from("property_reports")
+      .select("property_id")
+      .eq("id", input.supersedesReportId)
+      .maybeSingle();
+    if (!prior || prior.property_id !== input.propertyId)
+      throw new Error("The report being replaced belongs to a different property.");
+  }
   const where = `${property.address}, ${property.city}, ${property.state}`;
 
   await audit(db, {

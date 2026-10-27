@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parsePropertyScope, scopeIds, type PropertyScopeInput } from "@/lib/property-scope";
 import { supabase } from "@/integrations/supabase/client";
 import { auditIp } from "@/lib/request-ip.server";
 import type { AtlasStatus, EinStatus, FinalOaStatus, StateFilingStatus, TinMatchResult } from "@/lib/entity-genesis";
@@ -193,12 +194,16 @@ async function buyerFor(db: Db, userId: string) {
 
 export const listMyOperatingAgreements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ agreements: BuyerOaView[] }> => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }): Promise<{ agreements: BuyerOaView[] }> => {
     const db = await adminDb();
     const buyer = await buyerFor(db, context.claims?.sub as string);
     if (!buyer) return { agreements: [] };
     const { data: cap } = await db.from("cap_table_entries").select("property_id").eq("buyer_account_id", buyer.id);
-    const ids = [...new Set(((cap ?? []) as Array<{ property_id: string }>).map((c) => c.property_id))];
+    const ids = scopeIds(
+      [...new Set(((cap ?? []) as Array<{ property_id: string }>).map((c) => c.property_id))],
+      scope.propertyId,
+    );
     const s = await stage2();
     const out: BuyerOaView[] = [];
     for (const pid of ids) {

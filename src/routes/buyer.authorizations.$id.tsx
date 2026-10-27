@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
@@ -88,8 +88,19 @@ function BuyerAuthorizationDetail() {
   const [commChecked, setCommChecked] = useState(false);
   const [commSubmitting, setCommSubmitting] = useState(false);
 
+  // A different request id must never show the previous request (or its
+  // property) — clear on change, and drop a response for an older id.
+  const currentId = useRef(id);
+  currentId.current = id;
+  useEffect(() => {
+    setPayload(null);
+    setLoading(true);
+  }, [id]);
+
   const refresh = useCallback(async () => {
-    const result = await load({ data: { id } });
+    const requestedId = id;
+    const result = await load({ data: { id: requestedId } });
+    if (currentId.current !== requestedId) return;
     // Precondition: the Due Diligence Acknowledgment Gate must be current.
     if (
       result.gateBlockedPropertyId &&

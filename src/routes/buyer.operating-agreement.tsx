@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,12 +24,17 @@ export const Route = createFileRoute("/buyer/operating-agreement")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerOperatingAgreement,
 });
 
 function BuyerOperatingAgreement() {
   const load = useServerFn(listMyOperatingAgreements);
-  const { data, isLoading } = useQuery({ queryKey: ["buyer-oa"], queryFn: () => load() });
+  const { property } = Route.useSearch();
+  const { data, isLoading } = useQuery({
+    queryKey: ["buyer-oa", property ?? "all"],
+    queryFn: () => load({ data: { propertyId: property ?? null } }),
+  });
   const agreements = data?.agreements ?? [];
 
   return (
@@ -37,6 +44,7 @@ function BuyerOperatingAgreement() {
         Each property is held by its own Delaware LLC managed by divieight, LLC. Every Account Member signs; all Buyer
         Accounts sign in parallel, in no particular order.
       </p>
+      <PropertyScopeBanner to="/buyer/operating-agreement" property={property} label={data?.agreements[0]?.llcName} />
       <div className="mt-6 space-y-6">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useServerFn } from "@tanstack/react-start";
 import { FileWarning, ShieldCheck } from "lucide-react";
 import {
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/buyer/authorizations/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerAuthorizations,
 });
 
@@ -44,16 +47,32 @@ type Row = AuthorizationRequestRow & {
 
 function BuyerAuthorizations() {
   const load = useServerFn(listBuyerAuthorizations);
+  const { property } = Route.useSearch();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    setRows([]);
+    setLoading(true);
     void (async () => {
-      const result = await load({});
+      const result = await load({ data: { propertyId: property ?? null } });
+      if (cancelled) return; // a newer scope is loading
       setRows(result.rows as Row[]);
       setLoading(false);
     })();
-  }, [load]);
+    return () => {
+      cancelled = true;
+    };
+  }, [load, property]);
+
+  // Requests are grouped under their own property, never mixed.
+  const groups: Array<{ propertyId: string; label: string; rows: Row[] }> = [];
+  for (const row of rows) {
+    let g = groups.find((x) => x.propertyId === row.property_id);
+    if (!g) groups.push((g = { propertyId: row.property_id, label: row.propertyLabel, rows: [] }));
+    g.rows.push(row);
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
@@ -67,6 +86,7 @@ function BuyerAuthorizations() {
         Nothing is submitted, accepted or waived on your Buyer Account's behalf without your
         express confirmation here.
       </p>
+      <PropertyScopeBanner to="/buyer/authorizations" property={property} label={rows[0]?.propertyLabel} />
 
       {loading ? (
         <p className="mt-10 text-sm text-muted-foreground">Loading…</p>
@@ -76,8 +96,12 @@ function BuyerAuthorizations() {
           one is queued.
         </div>
       ) : (
-        <ul className="mt-8 space-y-3">
-          {rows.map((row) => {
+        <div className="mt-8 space-y-8">
+          {groups.map((group) => (
+          <section key={group.propertyId} aria-label={group.label}>
+            <h2 className="text-sm font-semibold text-foreground">{group.label || "Property"}</h2>
+        <ul className="mt-3 space-y-3">
+          {group.rows.map((row) => {
             const blocked = row.status === "pending" && !row.gateClear;
             const buyerPending = row.gateBlocker === "buyer" || row.gateBlocker === "both";
             const bothPending = row.gateBlocker === "both";
@@ -137,6 +161,9 @@ function BuyerAuthorizations() {
             );
           })}
         </ul>
+          </section>
+          ))}
+        </div>
       )}
     </div>
   );

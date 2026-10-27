@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MessageSquareText } from "lucide-react";
@@ -19,14 +21,16 @@ export const Route = createFileRoute("/buyer/reports")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerReports,
 });
 
 function BuyerReports() {
   const fetchReports = useServerFn(listBuyerReports);
+  const { property } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["buyer-reports"],
-    queryFn: () => fetchReports(),
+    queryKey: ["buyer-reports", property ?? "all"],
+    queryFn: () => fetchReports({ data: { propertyId: property ?? null } }),
   });
   const reports = data?.reports ?? [];
 
@@ -37,6 +41,7 @@ function BuyerReports() {
           Appraisal & inspection reports
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{DELIVERY_NOTICE}</p>
+        <PropertyScopeBanner to="/buyer/reports" property={property} label={data?.reports[0]?.propertyLabel} />
       </header>
 
       {isLoading ? (

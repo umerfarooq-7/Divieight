@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listBuyerClosingFunds } from "@/lib/closing-funds.functions";
@@ -18,14 +20,16 @@ export const Route = createFileRoute("/buyer/closing-funds")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerClosingFunds,
 });
 
 function BuyerClosingFunds() {
   const fetchRows = useServerFn(listBuyerClosingFunds);
+  const { property } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["buyer-closing-funds"],
-    queryFn: () => fetchRows(),
+    queryKey: ["buyer-closing-funds", property ?? "all"],
+    queryFn: () => fetchRows({ data: { propertyId: property ?? null } }),
   });
   const rows = data?.rows ?? [];
 
@@ -34,6 +38,7 @@ function BuyerClosingFunds() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-semibold text-foreground">Closing funds</h1>
         <p className="mt-1 text-sm text-muted-foreground">{CLOSING_DIRECT_TO_ESCROW_NOTICE}</p>
+        <PropertyScopeBanner to="/buyer/closing-funds" property={property} label={data?.rows[0]?.propertyLabel} />
       </header>
 
       {isLoading ? (

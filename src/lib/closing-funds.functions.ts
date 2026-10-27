@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parsePropertyScope, type PropertyScopeInput } from "@/lib/property-scope";
 import { supabase } from "@/integrations/supabase/client";
 import type { ClosingObligation, ClosingTerms } from "@/lib/closing-funds";
 
@@ -180,7 +181,8 @@ export interface ClosingRow {
 
 export const listBuyerClosingFunds = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }) => {
     const db = await adminDb();
     const { data: account } = await db
       .from("buyer_accounts")
@@ -189,11 +191,12 @@ export const listBuyerClosingFunds = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!account) return { rows: [] as ClosingRow[] };
 
-    const { data } = await db
+    let query = db
       .from("closing_funds_obligations")
       .select("*")
-      .eq("buyer_account_id", account.id)
-      .order("funding_deadline", { ascending: true });
+      .eq("buyer_account_id", account.id);
+    if (scope.propertyId) query = query.eq("property_id", scope.propertyId);
+    const { data } = await query.order("funding_deadline", { ascending: true });
     const rows = (data ?? []) as ClosingObligation[];
     const ids = [...new Set(rows.map((o) => o.property_id))];
     const props = await propertiesById(db, ids);

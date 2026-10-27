@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parsePropertyScope, scopeIds, type PropertyScopeInput } from "@/lib/property-scope";
 import { supabase } from "@/integrations/supabase/client";
 import {
   checkCoverage,
@@ -288,7 +289,8 @@ async function buyerAccount(db: Db, userId: string) {
 
 export const getBuyerInsurance = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ properties: BuyerInsuranceProperty[] }> => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }): Promise<{ properties: BuyerInsuranceProperty[] }> => {
     const db = await adminDb();
     const buyer = await buyerAccount(db, context.claims?.sub as string);
     if (!buyer) return { properties: [] };
@@ -297,7 +299,10 @@ export const getBuyerInsurance = createServerFn({ method: "GET" })
       .select("property_id")
       .eq("buyer_account_id", buyer.id)
       .eq("status", "reserved");
-    const ids = [...new Set(((res ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))];
+    const ids = scopeIds(
+      [...new Set(((res ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))],
+      scope.propertyId,
+    );
     if (ids.length === 0) return { properties: [] };
 
     const requirements = await (await server()).activeRequirements(db);

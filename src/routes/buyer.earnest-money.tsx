@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PropertyScopeBanner } from "@/components/PropertyScopeBanner";
+import { propertySearch } from "@/lib/property-scope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Banknote, ShieldAlert } from "lucide-react";
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/buyer/earnest-money")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: propertySearch,
   component: BuyerEarnestMoney,
 });
 
@@ -45,9 +48,10 @@ const BADGE: Record<EarnestStatus, string> = {
 
 function BuyerEarnestMoney() {
   const fetchRows = useServerFn(listBuyerEarnestMoney);
+  const { property } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["buyer-earnest-money"],
-    queryFn: () => fetchRows(),
+    queryKey: ["buyer-earnest-money", property ?? "all"],
+    queryFn: () => fetchRows({ data: { propertyId: property ?? null } }),
   });
   const rows = data?.rows ?? [];
 
@@ -59,6 +63,7 @@ function BuyerEarnestMoney() {
         <p className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           {NOT_ENROLLMENT_FEE_NOTICE}
         </p>
+        <PropertyScopeBanner to="/buyer/earnest-money" property={property} label={data?.rows[0]?.propertyLabel} />
       </header>
 
       {isLoading ? (

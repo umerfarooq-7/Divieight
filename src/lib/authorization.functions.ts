@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parsePropertyScope, type PropertyScopeInput } from "@/lib/property-scope";
 import { supabase } from "@/integrations/supabase/client";
 import { buildGateState, gateClear, gatingDocuments } from "@/lib/due-diligence";
 import { adminRecipients, deliver } from "@/lib/authorization.notify.server";
@@ -460,7 +461,8 @@ export const getBuyerAuthorization = createServerFn({ method: "GET" })
 
 export const listBuyerAuthorizations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input?: PropertyScopeInput) => parsePropertyScope(input))
+  .handler(async ({ data: scope, context }) => {
     const db = await adminDb();
     const buyer = await buyerFor(db, context.claims?.sub as string);
     if (!buyer)
@@ -474,11 +476,12 @@ export const listBuyerAuthorizations = createServerFn({ method: "GET" })
           }
         >,
       };
-    const { data } = await db
+    let query = db
       .from("authorization_requests")
       .select("*")
-      .eq("buyer_account_id", buyer.id)
-      .order("created_at", { ascending: false });
+      .eq("buyer_account_id", buyer.id);
+    if (scope.propertyId) query = query.eq("property_id", scope.propertyId);
+    const { data } = await query.order("created_at", { ascending: false });
     const rows = (data ?? []) as AuthorizationRequestRow[];
     const labels = new Map<string, string>();
     const gates = new Map<string, DiligenceGateStatus>();
@@ -678,12 +681,19 @@ export const listAgentAuthorizations = createServerFn({ method: "GET" })
     const agent = await agentFor(db, context.claims?.sub as string);
     if (!agent) return { rows: [] as AgentAuthorizationRow[] };
 
-    // Requests where this agent is the tethered Resident Agent…
-    const { data: mine } = await db
+    // Requests where this agent is the tethered Resident Agent — only for
+    // buyers still tethered to them (a re-tether moves visibility, as with DD)…
+    const { data: mineAll } = await db
       .from("authorization_requests")
       .select("*")
       .eq("agent_id", agent.id)
       .order("created_at", { ascending: false });
+    const { data: tetheredBuyers } = await db
+      .from("buyer_accounts")
+      .select("id")
+      .eq("tethered_resident_agent_id", agent.id);
+    const stillTethered = new Set(((tetheredBuyers ?? []) as Array<{ id: string }>).map((b) => b.id));
+    const mine = ((mineAll ?? []) as AuthorizationRequestRow[]).filter((r) => stillTethered.has(r.buyer_account_id));
 
     // …plus requests on properties where this agent is the pod's Heavy Lifting
     // Agent, since the commission provision is proposed by the HLA.
