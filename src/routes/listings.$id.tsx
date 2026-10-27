@@ -25,7 +25,7 @@ export const Route = createFileRoute("/listings/$id")({
       <h1 className="font-display text-2xl font-semibold text-foreground">
         Something went wrong
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
       <Link
         to="/dashboard"
         className="mt-4 inline-block text-sm text-accent underline-offset-4 hover:underline"

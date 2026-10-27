@@ -40,7 +40,7 @@ export const Route = createFileRoute("/properties/")({
       <h1 className="font-display text-2xl font-semibold text-foreground">
         Couldn't load the marketplace
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : String(error)}</p>
     </div>
   ),
   notFoundComponent: () => (

@@ -9,201 +9,151 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SupportRouteImport } from './routes/support'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as BrokerRouteImport } from './routes/broker'
-import { Route as AgentRouteImport } from './routes/agent'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password.index'
-import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
-import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
-import { Route as BrokerIndexRouteImport } from './routes/broker.index'
-import { Route as AgentIndexRouteImport } from './routes/agent.index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AgentRouteImport } from './routes/agent'
+import { Route as BrokerRouteImport } from './routes/broker'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as ResetPasswordConfirmRouteImport } from './routes/reset-password.confirm'
-import { Route as ReserveIdRouteImport } from './routes/reserve.$id'
-import { Route as RTokenRouteImport } from './routes/r.$token'
-import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
-import { Route as OnboardingPropertyRouteImport } from './routes/onboarding.property'
-import { Route as OnboardingMediaRouteImport } from './routes/onboarding.media'
-import { Route as OnboardingListingAgentRouteImport } from './routes/onboarding.listing-agent'
-import { Route as OnboardingListingRouteImport } from './routes/onboarding.listing'
-import { Route as OnboardingIdentityRouteImport } from './routes/onboarding.identity'
-import { Route as OnboardingFeeRouteImport } from './routes/onboarding.fee'
-import { Route as OnboardingAgreementRouteImport } from './routes/onboarding.agreement'
-import { Route as ListingsNewRouteImport } from './routes/listings.new'
-import { Route as ListingsIdRouteImport } from './routes/listings.$id'
-import { Route as DataRoomIdRouteImport } from './routes/data-room.$id'
-import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
-import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
-import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
-import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
-import { Route as BuyerOperatingAgreementRouteImport } from './routes/buyer.operating-agreement'
-import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
-import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
-import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
-import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-money'
-import { Route as BuyerDocumentsRouteImport } from './routes/buyer.documents'
-import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
-import { Route as BuyerClosingFundsRouteImport } from './routes/buyer.closing-funds'
-import { Route as BuyerAuthorizationsRouteImport } from './routes/buyer.authorizations'
-import { Route as BuyerAdverseActionRouteImport } from './routes/buyer.adverse-action'
-import { Route as BrokerRegisterRouteImport } from './routes/broker.register'
-import { Route as BrokerLoginRouteImport } from './routes/broker.login'
-import { Route as BrokerDashboardRouteImport } from './routes/broker.dashboard'
-import { Route as BrokerClosingHoldsRouteImport } from './routes/broker.closing-holds'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as AgentReportsRouteImport } from './routes/agent.reports'
-import { Route as AgentRegisterRouteImport } from './routes/agent.register'
-import { Route as AgentPoolsRouteImport } from './routes/agent.pools'
-import { Route as AgentLoginRouteImport } from './routes/agent.login'
-import { Route as AgentLeadsRouteImport } from './routes/agent.leads'
-import { Route as AgentDueDiligenceRouteImport } from './routes/agent.due-diligence'
-import { Route as AgentDashboardRouteImport } from './routes/agent.dashboard'
-import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
-import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-funds'
-import { Route as AgentBrokerRelationshipRouteImport } from './routes/agent.broker-relationship'
-import { Route as AgentAuthorizationsRouteImport } from './routes/agent.authorizations'
-import { Route as AgentAttributionRouteImport } from './routes/agent.attribution'
-import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escrow'
-import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
-import { Route as AdminSupportRouteImport } from './routes/admin.support'
-import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
-import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
-import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
-import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
-import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
-import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
-import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
-import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
-import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
-import { Route as AdminDisbursementCheckRouteImport } from './routes/admin.disbursement-check'
-import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
-import { Route as AdminClosingReadinessRouteImport } from './routes/admin.closing-readiness'
-import { Route as AdminClosingFundsRouteImport } from './routes/admin.closing-funds'
-import { Route as AdminClosingRouteImport } from './routes/admin.closing'
-import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
-import { Route as AdminBrokersRouteImport } from './routes/admin.brokers'
-import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
-import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
-import { Route as BuyerOnboardingIndexRouteImport } from './routes/buyer.onboarding.index'
-import { Route as BuyerAuthorizationsIndexRouteImport } from './routes/buyer.authorizations.index'
-import { Route as AgentListingsIndexRouteImport } from './routes/agent.listings.index'
-import { Route as AgentDocumentsIndexRouteImport } from './routes/agent.documents.index'
-import { Route as AgentAuthorizationsIndexRouteImport } from './routes/agent.authorizations.index'
-import { Route as AdminPropertiesIndexRouteImport } from './routes/admin.properties.index'
-import { Route as AdminPodsIndexRouteImport } from './routes/admin.pods.index'
-import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
-import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
-import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
-import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
-import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onboarding.liquidity'
-import { Route as BuyerOnboardingLifestyleRouteImport } from './routes/buyer.onboarding.lifestyle'
-import { Route as BuyerOnboardingIdentityRouteImport } from './routes/buyer.onboarding.identity'
-import { Route as BuyerDueDiligenceIdRouteImport } from './routes/buyer.due-diligence.$id'
-import { Route as BuyerAuthorizationsIdRouteImport } from './routes/buyer.authorizations.$id'
-import { Route as BrokerOnboardingLicenseCheckRouteImport } from './routes/broker.onboarding.license-check'
-import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.onboarding.insurance'
-import { Route as BrokerOnboardingComplianceRouteImport } from './routes/broker.onboarding.compliance'
-import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
-import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
-import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
-import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
-import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
-import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
-import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
-import { Route as ApiPublicEoExpirySweepRouteImport } from './routes/api.public.eo-expiry-sweep'
-import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api.public.enrollment-maintenance'
-import { Route as ApiPublicEarnestMoneySweepRouteImport } from './routes/api.public.earnest-money-sweep'
-import { Route as ApiPublicDiligenceEscalationRouteImport } from './routes/api.public.diligence-escalation'
-import { Route as ApiPublicDesignationSweepRouteImport } from './routes/api.public.designation-sweep'
-import { Route as ApiPublicClosingFundsSweepRouteImport } from './routes/api.public.closing-funds-sweep'
-import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
-import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
-import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
-import { Route as AgentOnboardingLicenseDetailsRouteImport } from './routes/agent.onboarding.license-details'
-import { Route as AgentOnboardingLicenseCheckRouteImport } from './routes/agent.onboarding.license-check'
-import { Route as AgentOnboardingInsuranceRouteImport } from './routes/agent.onboarding.insurance'
-import { Route as AgentOnboardingComplianceRouteImport } from './routes/agent.onboarding.compliance'
-import { Route as AgentOnboardingBrokerRouteImport } from './routes/agent.onboarding.broker'
-import { Route as AgentListingsIdRouteImport } from './routes/agent.listings.$id'
-import { Route as AgentDocumentsIdRouteImport } from './routes/agent.documents.$id'
+import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
+import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
+import { Route as AdminBrokersRouteImport } from './routes/admin.brokers'
+import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
+import { Route as AdminClosingRouteImport } from './routes/admin.closing'
+import { Route as AdminClosingFundsRouteImport } from './routes/admin.closing-funds'
+import { Route as AdminClosingReadinessRouteImport } from './routes/admin.closing-readiness'
+import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
+import { Route as AdminDisbursementCheckRouteImport } from './routes/admin.disbursement-check'
+import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
+import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
+import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
+import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
+import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
+import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
+import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
+import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
+import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escrow'
+import { Route as AgentIndexRouteImport } from './routes/agent.index'
+import { Route as AgentAttributionRouteImport } from './routes/agent.attribution'
+import { Route as AgentAuthorizationsRouteImport } from './routes/agent.authorizations'
+import { Route as AgentBrokerRelationshipRouteImport } from './routes/agent.broker-relationship'
+import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-funds'
+import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
+import { Route as AgentDashboardRouteImport } from './routes/agent.dashboard'
+import { Route as AgentDueDiligenceRouteImport } from './routes/agent.due-diligence'
+import { Route as AgentLeadsRouteImport } from './routes/agent.leads'
+import { Route as AgentLoginRouteImport } from './routes/agent.login'
+import { Route as AgentPoolsRouteImport } from './routes/agent.pools'
+import { Route as AgentRegisterRouteImport } from './routes/agent.register'
+import { Route as AgentReportsRouteImport } from './routes/agent.reports'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BrokerIndexRouteImport } from './routes/broker.index'
+import { Route as BrokerClosingHoldsRouteImport } from './routes/broker.closing-holds'
+import { Route as BrokerDashboardRouteImport } from './routes/broker.dashboard'
+import { Route as BrokerLoginRouteImport } from './routes/broker.login'
+import { Route as BrokerRegisterRouteImport } from './routes/broker.register'
+import { Route as BuyerAdverseActionRouteImport } from './routes/buyer.adverse-action'
+import { Route as BuyerAuthorizationsRouteImport } from './routes/buyer.authorizations'
+import { Route as BuyerClosingFundsRouteImport } from './routes/buyer.closing-funds'
+import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
+import { Route as BuyerDocumentsRouteImport } from './routes/buyer.documents'
+import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-money'
+import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
+import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
+import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
+import { Route as BuyerOperatingAgreementRouteImport } from './routes/buyer.operating-agreement'
+import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
+import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
+import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
+import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
+import { Route as DataRoomIdRouteImport } from './routes/data-room.$id'
+import { Route as ListingsIdRouteImport } from './routes/listings.$id'
+import { Route as ListingsNewRouteImport } from './routes/listings.new'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
+import { Route as OnboardingAgreementRouteImport } from './routes/onboarding.agreement'
+import { Route as OnboardingFeeRouteImport } from './routes/onboarding.fee'
+import { Route as OnboardingIdentityRouteImport } from './routes/onboarding.identity'
+import { Route as OnboardingListingRouteImport } from './routes/onboarding.listing'
+import { Route as OnboardingListingAgentRouteImport } from './routes/onboarding.listing-agent'
+import { Route as OnboardingMediaRouteImport } from './routes/onboarding.media'
+import { Route as OnboardingPropertyRouteImport } from './routes/onboarding.property'
+import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
+import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
+import { Route as RTokenRouteImport } from './routes/r.$token'
+import { Route as ReserveIdRouteImport } from './routes/reserve.$id'
+import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password.index'
+import { Route as ResetPasswordConfirmRouteImport } from './routes/reset-password.confirm'
 import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin.entity-genesis_.$propertyId'
-import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
-import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
-import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
-import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
-import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
-import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
-import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
-import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
-import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
+import { Route as AdminPodsIndexRouteImport } from './routes/admin.pods.index'
+import { Route as AdminPropertiesIndexRouteImport } from './routes/admin.properties.index'
+import { Route as AgentAuthorizationsIndexRouteImport } from './routes/agent.authorizations.index'
+import { Route as AgentDocumentsIndexRouteImport } from './routes/agent.documents.index'
+import { Route as AgentDocumentsIdRouteImport } from './routes/agent.documents.$id'
+import { Route as AgentListingsIndexRouteImport } from './routes/agent.listings.index'
+import { Route as AgentListingsIdRouteImport } from './routes/agent.listings.$id'
+import { Route as AgentOnboardingBrokerRouteImport } from './routes/agent.onboarding.broker'
+import { Route as AgentOnboardingComplianceRouteImport } from './routes/agent.onboarding.compliance'
+import { Route as AgentOnboardingInsuranceRouteImport } from './routes/agent.onboarding.insurance'
+import { Route as AgentOnboardingLicenseCheckRouteImport } from './routes/agent.onboarding.license-check'
+import { Route as AgentOnboardingLicenseDetailsRouteImport } from './routes/agent.onboarding.license-details'
+import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
+import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
+import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
+import { Route as ApiPublicClosingFundsSweepRouteImport } from './routes/api.public.closing-funds-sweep'
+import { Route as ApiPublicDesignationSweepRouteImport } from './routes/api.public.designation-sweep'
+import { Route as ApiPublicDiligenceEscalationRouteImport } from './routes/api.public.diligence-escalation'
+import { Route as ApiPublicEarnestMoneySweepRouteImport } from './routes/api.public.earnest-money-sweep'
+import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api.public.enrollment-maintenance'
+import { Route as ApiPublicEoExpirySweepRouteImport } from './routes/api.public.eo-expiry-sweep'
+import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
+import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
+import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
+import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
+import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
+import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
+import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
+import { Route as BrokerOnboardingComplianceRouteImport } from './routes/broker.onboarding.compliance'
+import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.onboarding.insurance'
+import { Route as BrokerOnboardingLicenseCheckRouteImport } from './routes/broker.onboarding.license-check'
+import { Route as BuyerAuthorizationsIndexRouteImport } from './routes/buyer.authorizations.index'
+import { Route as BuyerAuthorizationsIdRouteImport } from './routes/buyer.authorizations.$id'
+import { Route as BuyerDueDiligenceIdRouteImport } from './routes/buyer.due-diligence.$id'
+import { Route as BuyerOnboardingIndexRouteImport } from './routes/buyer.onboarding.index'
+import { Route as BuyerOnboardingIdentityRouteImport } from './routes/buyer.onboarding.identity'
+import { Route as BuyerOnboardingLifestyleRouteImport } from './routes/buyer.onboarding.lifestyle'
+import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onboarding.liquidity'
+import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
+import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
+import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
+import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
+import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
+import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
+import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
+import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
+import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
+import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
+import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
+import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
+import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
 
-const SupportRoute = SupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BrokerRoute = BrokerRouteImport.update({
-  id: '/broker',
-  path: '/broker',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentRoute = AgentRouteImport.update({
-  id: '/agent',
-  path: '/agent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -211,319 +161,124 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordIndexRoute = ResetPasswordIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ResetPasswordRoute,
-} as any)
-const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
-  id: '/properties/',
-  path: '/properties/',
+const AgentRoute = AgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
-  id: '/onboarding/',
-  path: '/onboarding/',
+const BrokerRoute = BrokerRouteImport.update({
+  id: '/broker',
+  path: '/broker',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrokerIndexRoute = BrokerIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => BrokerRoute,
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AgentIndexRoute = AgentIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AgentRoute,
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const ResetPasswordConfirmRoute = ResetPasswordConfirmRouteImport.update({
-  id: '/confirm',
-  path: '/confirm',
-  getParentRoute: () => ResetPasswordRoute,
+const AdminAgentsRoute = AdminAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AdminRoute,
 } as any)
-const ReserveIdRoute = ReserveIdRouteImport.update({
-  id: '/reserve/$id',
-  path: '/reserve/$id',
-  getParentRoute: () => rootRouteImport,
+const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AdminRoute,
 } as any)
-const RTokenRoute = RTokenRouteImport.update({
-  id: '/r/$token',
-  path: '/r/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PropertiesIdRoute = PropertiesIdRouteImport.update({
-  id: '/properties/$id',
-  path: '/properties/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingPropertyRoute = OnboardingPropertyRouteImport.update({
-  id: '/onboarding/property',
-  path: '/onboarding/property',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingMediaRoute = OnboardingMediaRouteImport.update({
-  id: '/onboarding/media',
-  path: '/onboarding/media',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingListingAgentRoute = OnboardingListingAgentRouteImport.update({
-  id: '/onboarding/listing-agent',
-  path: '/onboarding/listing-agent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingListingRoute = OnboardingListingRouteImport.update({
-  id: '/onboarding/listing',
-  path: '/onboarding/listing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingIdentityRoute = OnboardingIdentityRouteImport.update({
-  id: '/onboarding/identity',
-  path: '/onboarding/identity',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingFeeRoute = OnboardingFeeRouteImport.update({
-  id: '/onboarding/fee',
-  path: '/onboarding/fee',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingAgreementRoute = OnboardingAgreementRouteImport.update({
-  id: '/onboarding/agreement',
-  path: '/onboarding/agreement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListingsNewRoute = ListingsNewRouteImport.update({
-  id: '/listings/new',
-  path: '/listings/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListingsIdRoute = ListingsIdRouteImport.update({
-  id: '/listings/$id',
-  path: '/listings/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataRoomIdRoute = DataRoomIdRouteImport.update({
-  id: '/data-room/$id',
-  path: '/data-room/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerWishlistRoute = BuyerWishlistRouteImport.update({
-  id: '/buyer/wishlist',
-  path: '/buyer/wishlist',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerVerificationRoute = BuyerVerificationRouteImport.update({
-  id: '/buyer/verification',
-  path: '/buyer/verification',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerReportsRoute = BuyerReportsRouteImport.update({
-  id: '/buyer/reports',
-  path: '/buyer/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerRegisterRoute = BuyerRegisterRouteImport.update({
-  id: '/buyer/register',
-  path: '/buyer/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerOperatingAgreementRoute = BuyerOperatingAgreementRouteImport.update({
-  id: '/buyer/operating-agreement',
-  path: '/buyer/operating-agreement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerLoginRoute = BuyerLoginRouteImport.update({
-  id: '/buyer/login',
-  path: '/buyer/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerInsuranceRoute = BuyerInsuranceRouteImport.update({
-  id: '/buyer/insurance',
-  path: '/buyer/insurance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerGoldenTicketRoute = BuyerGoldenTicketRouteImport.update({
-  id: '/buyer/golden-ticket',
-  path: '/buyer/golden-ticket',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerEarnestMoneyRoute = BuyerEarnestMoneyRouteImport.update({
-  id: '/buyer/earnest-money',
-  path: '/buyer/earnest-money',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerDocumentsRoute = BuyerDocumentsRouteImport.update({
-  id: '/buyer/documents',
-  path: '/buyer/documents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerDashboardRoute = BuyerDashboardRouteImport.update({
-  id: '/buyer/dashboard',
-  path: '/buyer/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerClosingFundsRoute = BuyerClosingFundsRouteImport.update({
-  id: '/buyer/closing-funds',
-  path: '/buyer/closing-funds',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerAuthorizationsRoute = BuyerAuthorizationsRouteImport.update({
-  id: '/buyer/authorizations',
-  path: '/buyer/authorizations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerAdverseActionRoute = BuyerAdverseActionRouteImport.update({
-  id: '/buyer/adverse-action',
-  path: '/buyer/adverse-action',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BrokerRegisterRoute = BrokerRegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => BrokerRoute,
-} as any)
-const BrokerLoginRoute = BrokerLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => BrokerRoute,
-} as any)
-const BrokerDashboardRoute = BrokerDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => BrokerRoute,
-} as any)
-const BrokerClosingHoldsRoute = BrokerClosingHoldsRouteImport.update({
-  id: '/closing-holds',
-  path: '/closing-holds',
-  getParentRoute: () => BrokerRoute,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentReportsRoute = AgentReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentRegisterRoute = AgentRegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentPoolsRoute = AgentPoolsRouteImport.update({
-  id: '/pools',
-  path: '/pools',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentLoginRoute = AgentLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentLeadsRoute = AgentLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentDueDiligenceRoute = AgentDueDiligenceRouteImport.update({
-  id: '/due-diligence',
-  path: '/due-diligence',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentDashboardRoute = AgentDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentCommissionsRoute = AgentCommissionsRouteImport.update({
-  id: '/commissions',
-  path: '/commissions',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentClosingFundsRoute = AgentClosingFundsRouteImport.update({
-  id: '/closing-funds',
-  path: '/closing-funds',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentBrokerRelationshipRoute = AgentBrokerRelationshipRouteImport.update({
-  id: '/broker-relationship',
-  path: '/broker-relationship',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentAuthorizationsRoute = AgentAuthorizationsRouteImport.update({
+const AdminAuthorizationsRoute = AdminAuthorizationsRouteImport.update({
   id: '/authorizations',
   path: '/authorizations',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentAttributionRoute = AgentAttributionRouteImport.update({
-  id: '/attribution',
-  path: '/attribution',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AdminTitleEscrowRoute = AdminTitleEscrowRouteImport.update({
-  id: '/title-escrow',
-  path: '/title-escrow',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminTetherResolutionRoute = AdminTetherResolutionRouteImport.update({
-  id: '/tether-resolution',
-  path: '/tether-resolution',
+const AdminBrokersRoute = AdminBrokersRouteImport.update({
+  id: '/brokers',
+  path: '/brokers',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSupportRoute = AdminSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
+const AdminBuyersRoute = AdminBuyersRouteImport.update({
+  id: '/buyers',
+  path: '/buyers',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSubstitutionsRoute = AdminSubstitutionsRouteImport.update({
-  id: '/substitutions',
-  path: '/substitutions',
+const AdminClosingRoute = AdminClosingRouteImport.update({
+  id: '/closing',
+  path: '/closing',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSettlementRoute = AdminSettlementRouteImport.update({
-  id: '/settlement',
-  path: '/settlement',
+const AdminClosingFundsRoute = AdminClosingFundsRouteImport.update({
+  id: '/closing-funds',
+  path: '/closing-funds',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSellersRoute = AdminSellersRouteImport.update({
-  id: '/sellers',
-  path: '/sellers',
+const AdminClosingReadinessRoute = AdminClosingReadinessRouteImport.update({
+  id: '/closing-readiness',
+  path: '/closing-readiness',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSagaPocRoute = AdminSagaPocRouteImport.update({
-  id: '/saga-poc',
-  path: '/saga-poc',
+const AdminContactsRoute = AdminContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
-  id: '/properties',
-  path: '/properties',
+const AdminDisbursementCheckRoute = AdminDisbursementCheckRouteImport.update({
+  id: '/disbursement-check',
+  path: '/disbursement-check',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
+const AdminEarnestMoneyRoute = AdminEarnestMoneyRouteImport.update({
+  id: '/earnest-money',
+  path: '/earnest-money',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminListingComplianceRoute = AdminListingComplianceRouteImport.update({
-  id: '/listing-compliance',
-  path: '/listing-compliance',
+const AdminEntityGenesisRoute = AdminEntityGenesisRouteImport.update({
+  id: '/entity-genesis',
+  path: '/entity-genesis',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInsuranceRequirementsRoute =
@@ -532,86 +287,326 @@ const AdminInsuranceRequirementsRoute =
     path: '/insurance-requirements',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminEntityGenesisRoute = AdminEntityGenesisRouteImport.update({
-  id: '/entity-genesis',
-  path: '/entity-genesis',
+const AdminListingComplianceRoute = AdminListingComplianceRouteImport.update({
+  id: '/listing-compliance',
+  path: '/listing-compliance',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminEarnestMoneyRoute = AdminEarnestMoneyRouteImport.update({
-  id: '/earnest-money',
-  path: '/earnest-money',
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminDisbursementCheckRoute = AdminDisbursementCheckRouteImport.update({
-  id: '/disbursement-check',
-  path: '/disbursement-check',
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminContactsRoute = AdminContactsRouteImport.update({
-  id: '/contacts',
-  path: '/contacts',
+const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminClosingReadinessRoute = AdminClosingReadinessRouteImport.update({
-  id: '/closing-readiness',
-  path: '/closing-readiness',
+const AdminSagaPocRoute = AdminSagaPocRouteImport.update({
+  id: '/saga-poc',
+  path: '/saga-poc',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminClosingFundsRoute = AdminClosingFundsRouteImport.update({
-  id: '/closing-funds',
-  path: '/closing-funds',
+const AdminSellersRoute = AdminSellersRouteImport.update({
+  id: '/sellers',
+  path: '/sellers',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminClosingRoute = AdminClosingRouteImport.update({
-  id: '/closing',
-  path: '/closing',
+const AdminSettlementRoute = AdminSettlementRouteImport.update({
+  id: '/settlement',
+  path: '/settlement',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminBuyersRoute = AdminBuyersRouteImport.update({
-  id: '/buyers',
-  path: '/buyers',
+const AdminSubstitutionsRoute = AdminSubstitutionsRouteImport.update({
+  id: '/substitutions',
+  path: '/substitutions',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminBrokersRoute = AdminBrokersRouteImport.update({
-  id: '/brokers',
-  path: '/brokers',
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuthorizationsRoute = AdminAuthorizationsRouteImport.update({
+const AdminTetherResolutionRoute = AdminTetherResolutionRouteImport.update({
+  id: '/tether-resolution',
+  path: '/tether-resolution',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTitleEscrowRoute = AdminTitleEscrowRouteImport.update({
+  id: '/title-escrow',
+  path: '/title-escrow',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AgentIndexRoute = AgentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentAttributionRoute = AgentAttributionRouteImport.update({
+  id: '/attribution',
+  path: '/attribution',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentAuthorizationsRoute = AgentAuthorizationsRouteImport.update({
   id: '/authorizations',
   path: '/authorizations',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => AgentRoute,
 } as any)
-const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
-  id: '/audit-log',
-  path: '/audit-log',
-  getParentRoute: () => AdminRoute,
+const AgentBrokerRelationshipRoute = AgentBrokerRelationshipRouteImport.update({
+  id: '/broker-relationship',
+  path: '/broker-relationship',
+  getParentRoute: () => AgentRoute,
 } as any)
-const AdminAgentsRoute = AdminAgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
-  getParentRoute: () => AdminRoute,
+const AgentClosingFundsRoute = AgentClosingFundsRouteImport.update({
+  id: '/closing-funds',
+  path: '/closing-funds',
+  getParentRoute: () => AgentRoute,
 } as any)
-const BuyerOnboardingIndexRoute = BuyerOnboardingIndexRouteImport.update({
-  id: '/buyer/onboarding/',
-  path: '/buyer/onboarding/',
+const AgentCommissionsRoute = AgentCommissionsRouteImport.update({
+  id: '/commissions',
+  path: '/commissions',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentDashboardRoute = AgentDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentDueDiligenceRoute = AgentDueDiligenceRouteImport.update({
+  id: '/due-diligence',
+  path: '/due-diligence',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentLeadsRoute = AgentLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentLoginRoute = AgentLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentPoolsRoute = AgentPoolsRouteImport.update({
+  id: '/pools',
+  path: '/pools',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentRegisterRoute = AgentRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentReportsRoute = AgentReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BuyerAuthorizationsIndexRoute =
-  BuyerAuthorizationsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => BuyerAuthorizationsRoute,
-  } as any)
-const AgentListingsIndexRoute = AgentListingsIndexRouteImport.update({
-  id: '/listings/',
-  path: '/listings/',
-  getParentRoute: () => AgentRoute,
+const BrokerIndexRoute = BrokerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BrokerRoute,
 } as any)
-const AgentDocumentsIndexRoute = AgentDocumentsIndexRouteImport.update({
-  id: '/documents/',
-  path: '/documents/',
-  getParentRoute: () => AgentRoute,
+const BrokerClosingHoldsRoute = BrokerClosingHoldsRouteImport.update({
+  id: '/closing-holds',
+  path: '/closing-holds',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BrokerDashboardRoute = BrokerDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BrokerLoginRoute = BrokerLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BrokerRegisterRoute = BrokerRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BuyerAdverseActionRoute = BuyerAdverseActionRouteImport.update({
+  id: '/buyer/adverse-action',
+  path: '/buyer/adverse-action',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerAuthorizationsRoute = BuyerAuthorizationsRouteImport.update({
+  id: '/buyer/authorizations',
+  path: '/buyer/authorizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerClosingFundsRoute = BuyerClosingFundsRouteImport.update({
+  id: '/buyer/closing-funds',
+  path: '/buyer/closing-funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerDashboardRoute = BuyerDashboardRouteImport.update({
+  id: '/buyer/dashboard',
+  path: '/buyer/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerDocumentsRoute = BuyerDocumentsRouteImport.update({
+  id: '/buyer/documents',
+  path: '/buyer/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerEarnestMoneyRoute = BuyerEarnestMoneyRouteImport.update({
+  id: '/buyer/earnest-money',
+  path: '/buyer/earnest-money',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerGoldenTicketRoute = BuyerGoldenTicketRouteImport.update({
+  id: '/buyer/golden-ticket',
+  path: '/buyer/golden-ticket',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerInsuranceRoute = BuyerInsuranceRouteImport.update({
+  id: '/buyer/insurance',
+  path: '/buyer/insurance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerLoginRoute = BuyerLoginRouteImport.update({
+  id: '/buyer/login',
+  path: '/buyer/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOperatingAgreementRoute = BuyerOperatingAgreementRouteImport.update({
+  id: '/buyer/operating-agreement',
+  path: '/buyer/operating-agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerRegisterRoute = BuyerRegisterRouteImport.update({
+  id: '/buyer/register',
+  path: '/buyer/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerReportsRoute = BuyerReportsRouteImport.update({
+  id: '/buyer/reports',
+  path: '/buyer/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerVerificationRoute = BuyerVerificationRouteImport.update({
+  id: '/buyer/verification',
+  path: '/buyer/verification',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerWishlistRoute = BuyerWishlistRouteImport.update({
+  id: '/buyer/wishlist',
+  path: '/buyer/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataRoomIdRoute = DataRoomIdRouteImport.update({
+  id: '/data-room/$id',
+  path: '/data-room/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingsIdRoute = ListingsIdRouteImport.update({
+  id: '/listings/$id',
+  path: '/listings/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingsNewRoute = ListingsNewRouteImport.update({
+  id: '/listings/new',
+  path: '/listings/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingAgreementRoute = OnboardingAgreementRouteImport.update({
+  id: '/onboarding/agreement',
+  path: '/onboarding/agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingFeeRoute = OnboardingFeeRouteImport.update({
+  id: '/onboarding/fee',
+  path: '/onboarding/fee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingIdentityRoute = OnboardingIdentityRouteImport.update({
+  id: '/onboarding/identity',
+  path: '/onboarding/identity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingListingRoute = OnboardingListingRouteImport.update({
+  id: '/onboarding/listing',
+  path: '/onboarding/listing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingListingAgentRoute = OnboardingListingAgentRouteImport.update({
+  id: '/onboarding/listing-agent',
+  path: '/onboarding/listing-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingMediaRoute = OnboardingMediaRouteImport.update({
+  id: '/onboarding/media',
+  path: '/onboarding/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingPropertyRoute = OnboardingPropertyRouteImport.update({
+  id: '/onboarding/property',
+  path: '/onboarding/property',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
+  id: '/properties/',
+  path: '/properties/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropertiesIdRoute = PropertiesIdRouteImport.update({
+  id: '/properties/$id',
+  path: '/properties/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RTokenRoute = RTokenRouteImport.update({
+  id: '/r/$token',
+  path: '/r/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReserveIdRoute = ReserveIdRouteImport.update({
+  id: '/reserve/$id',
+  path: '/reserve/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordIndexRoute = ResetPasswordIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ResetPasswordRoute,
+} as any)
+const ResetPasswordConfirmRoute = ResetPasswordConfirmRouteImport.update({
+  id: '/confirm',
+  path: '/confirm',
+  getParentRoute: () => ResetPasswordRoute,
+} as any)
+const AdminEntityGenesisPropertyIdRoute =
+  AdminEntityGenesisPropertyIdRouteImport.update({
+    id: '/entity-genesis_/$propertyId',
+    path: '/entity-genesis/$propertyId',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminPodsIndexRoute = AdminPodsIndexRouteImport.update({
+  id: '/pods/',
+  path: '/pods/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPropertiesIndexRoute = AdminPropertiesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminPropertiesRoute,
 } as any)
 const AgentAuthorizationsIndexRoute =
   AgentAuthorizationsIndexRouteImport.update({
@@ -619,180 +614,35 @@ const AgentAuthorizationsIndexRoute =
     path: '/',
     getParentRoute: () => AgentAuthorizationsRoute,
   } as any)
-const AdminPropertiesIndexRoute = AdminPropertiesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminPropertiesRoute,
+const AgentDocumentsIndexRoute = AgentDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => AgentRoute,
 } as any)
-const AdminPodsIndexRoute = AdminPodsIndexRouteImport.update({
-  id: '/pods/',
-  path: '/pods/',
-  getParentRoute: () => AdminRoute,
+const AgentDocumentsIdRoute = AgentDocumentsIdRouteImport.update({
+  id: '/documents/$id',
+  path: '/documents/$id',
+  getParentRoute: () => AgentRoute,
 } as any)
-const ListingsIdEditRoute = ListingsIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => ListingsIdRoute,
+const AgentListingsIndexRoute = AgentListingsIndexRouteImport.update({
+  id: '/listings/',
+  path: '/listings/',
+  getParentRoute: () => AgentRoute,
 } as any)
-const BuyerPodsIdRoute = BuyerPodsIdRouteImport.update({
-  id: '/buyer/pods/$id',
-  path: '/buyer/pods/$id',
-  getParentRoute: () => rootRouteImport,
+const AgentListingsIdRoute = AgentListingsIdRouteImport.update({
+  id: '/listings/$id',
+  path: '/listings/$id',
+  getParentRoute: () => AgentRoute,
 } as any)
-const BuyerOnboardingVettingRoute = BuyerOnboardingVettingRouteImport.update({
-  id: '/buyer/onboarding/vetting',
-  path: '/buyer/onboarding/vetting',
-  getParentRoute: () => rootRouteImport,
+const AgentOnboardingBrokerRoute = AgentOnboardingBrokerRouteImport.update({
+  id: '/onboarding/broker',
+  path: '/onboarding/broker',
+  getParentRoute: () => AgentRoute,
 } as any)
-const BuyerOnboardingPaymentRoute = BuyerOnboardingPaymentRouteImport.update({
-  id: '/buyer/onboarding/payment',
-  path: '/buyer/onboarding/payment',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerOnboardingLiquidityRoute =
-  BuyerOnboardingLiquidityRouteImport.update({
-    id: '/buyer/onboarding/liquidity',
-    path: '/buyer/onboarding/liquidity',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const BuyerOnboardingLifestyleRoute =
-  BuyerOnboardingLifestyleRouteImport.update({
-    id: '/buyer/onboarding/lifestyle',
-    path: '/buyer/onboarding/lifestyle',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const BuyerOnboardingIdentityRoute = BuyerOnboardingIdentityRouteImport.update({
-  id: '/buyer/onboarding/identity',
-  path: '/buyer/onboarding/identity',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerDueDiligenceIdRoute = BuyerDueDiligenceIdRouteImport.update({
-  id: '/buyer/due-diligence/$id',
-  path: '/buyer/due-diligence/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BuyerAuthorizationsIdRoute = BuyerAuthorizationsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => BuyerAuthorizationsRoute,
-} as any)
-const BrokerOnboardingLicenseCheckRoute =
-  BrokerOnboardingLicenseCheckRouteImport.update({
-    id: '/onboarding/license-check',
-    path: '/onboarding/license-check',
-    getParentRoute: () => BrokerRoute,
-  } as any)
-const BrokerOnboardingInsuranceRoute =
-  BrokerOnboardingInsuranceRouteImport.update({
-    id: '/onboarding/insurance',
-    path: '/onboarding/insurance',
-    getParentRoute: () => BrokerRoute,
-  } as any)
-const BrokerOnboardingComplianceRoute =
-  BrokerOnboardingComplianceRouteImport.update({
+const AgentOnboardingComplianceRoute =
+  AgentOnboardingComplianceRouteImport.update({
     id: '/onboarding/compliance',
     path: '/onboarding/compliance',
-    getParentRoute: () => BrokerRoute,
-  } as any)
-const BrokerOnboardingBankingRoute = BrokerOnboardingBankingRouteImport.update({
-  id: '/onboarding/banking',
-  path: '/onboarding/banking',
-  getParentRoute: () => BrokerRoute,
-} as any)
-const ApiPublicSubstitutionSweepRoute =
-  ApiPublicSubstitutionSweepRouteImport.update({
-    id: '/api/public/substitution-sweep',
-    path: '/api/public/substitution-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicNarCertSweepRoute = ApiPublicNarCertSweepRouteImport.update({
-  id: '/api/public/nar-cert-sweep',
-  path: '/api/public/nar-cert-sweep',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicLoggingHealthRoute = ApiPublicLoggingHealthRouteImport.update({
-  id: '/api/public/logging-health',
-  path: '/api/public/logging-health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicListingApprovalEscalationRoute =
-  ApiPublicListingApprovalEscalationRouteImport.update({
-    id: '/api/public/listing-approval-escalation',
-    path: '/api/public/listing-approval-escalation',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicInsuranceSweepRoute = ApiPublicInsuranceSweepRouteImport.update({
-  id: '/api/public/insurance-sweep',
-  path: '/api/public/insurance-sweep',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHlaSweepRoute = ApiPublicHlaSweepRouteImport.update({
-  id: '/api/public/hla-sweep',
-  path: '/api/public/hla-sweep',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicEoExpirySweepRoute = ApiPublicEoExpirySweepRouteImport.update({
-  id: '/api/public/eo-expiry-sweep',
-  path: '/api/public/eo-expiry-sweep',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicEnrollmentMaintenanceRoute =
-  ApiPublicEnrollmentMaintenanceRouteImport.update({
-    id: '/api/public/enrollment-maintenance',
-    path: '/api/public/enrollment-maintenance',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicEarnestMoneySweepRoute =
-  ApiPublicEarnestMoneySweepRouteImport.update({
-    id: '/api/public/earnest-money-sweep',
-    path: '/api/public/earnest-money-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDiligenceEscalationRoute =
-  ApiPublicDiligenceEscalationRouteImport.update({
-    id: '/api/public/diligence-escalation',
-    path: '/api/public/diligence-escalation',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDesignationSweepRoute =
-  ApiPublicDesignationSweepRouteImport.update({
-    id: '/api/public/designation-sweep',
-    path: '/api/public/designation-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicClosingFundsSweepRoute =
-  ApiPublicClosingFundsSweepRouteImport.update({
-    id: '/api/public/closing-funds-sweep',
-    path: '/api/public/closing-funds-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBrokerRelationshipSweepRoute =
-  ApiPublicBrokerRelationshipSweepRouteImport.update({
-    id: '/api/public/broker-relationship-sweep',
-    path: '/api/public/broker-relationship-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicAuthorizationEscalationRoute =
-  ApiPublicAuthorizationEscalationRouteImport.update({
-    id: '/api/public/authorization-escalation',
-    path: '/api/public/authorization-escalation',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicArelloRetryRoute = ApiPublicArelloRetryRouteImport.update({
-  id: '/api/public/arello-retry',
-  path: '/api/public/arello-retry',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentOnboardingLicenseDetailsRoute =
-  AgentOnboardingLicenseDetailsRouteImport.update({
-    id: '/onboarding/license-details',
-    path: '/onboarding/license-details',
-    getParentRoute: () => AgentRoute,
-  } as any)
-const AgentOnboardingLicenseCheckRoute =
-  AgentOnboardingLicenseCheckRouteImport.update({
-    id: '/onboarding/license-check',
-    path: '/onboarding/license-check',
     getParentRoute: () => AgentRoute,
   } as any)
 const AgentOnboardingInsuranceRoute =
@@ -801,65 +651,198 @@ const AgentOnboardingInsuranceRoute =
     path: '/onboarding/insurance',
     getParentRoute: () => AgentRoute,
   } as any)
-const AgentOnboardingComplianceRoute =
-  AgentOnboardingComplianceRouteImport.update({
-    id: '/onboarding/compliance',
-    path: '/onboarding/compliance',
+const AgentOnboardingLicenseCheckRoute =
+  AgentOnboardingLicenseCheckRouteImport.update({
+    id: '/onboarding/license-check',
+    path: '/onboarding/license-check',
     getParentRoute: () => AgentRoute,
   } as any)
-const AgentOnboardingBrokerRoute = AgentOnboardingBrokerRouteImport.update({
-  id: '/onboarding/broker',
-  path: '/onboarding/broker',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentListingsIdRoute = AgentListingsIdRouteImport.update({
-  id: '/listings/$id',
-  path: '/listings/$id',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AgentDocumentsIdRoute = AgentDocumentsIdRouteImport.update({
-  id: '/documents/$id',
-  path: '/documents/$id',
-  getParentRoute: () => AgentRoute,
-} as any)
-const AdminEntityGenesisPropertyIdRoute =
-  AdminEntityGenesisPropertyIdRouteImport.update({
-    id: '/entity-genesis_/$propertyId',
-    path: '/entity-genesis/$propertyId',
-    getParentRoute: () => AdminRoute,
+const AgentOnboardingLicenseDetailsRoute =
+  AgentOnboardingLicenseDetailsRouteImport.update({
+    id: '/onboarding/license-details',
+    path: '/onboarding/license-details',
+    getParentRoute: () => AgentRoute,
   } as any)
-const AgentPodsIdIndexRoute = AgentPodsIdIndexRouteImport.update({
-  id: '/pods/$id/',
-  path: '/pods/$id/',
-  getParentRoute: () => AgentRoute,
+const ApiPublicArelloRetryRoute = ApiPublicArelloRetryRouteImport.update({
+  id: '/api/public/arello-retry',
+  path: '/api/public/arello-retry',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTitleEscrowProviderRoute =
-  ApiPublicTitleEscrowProviderRouteImport.update({
-    id: '/api/public/title-escrow/$provider',
-    path: '/api/public/title-escrow/$provider',
+const ApiPublicAuthorizationEscalationRoute =
+  ApiPublicAuthorizationEscalationRouteImport.update({
+    id: '/api/public/authorization-escalation',
+    path: '/api/public/authorization-escalation',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AgentPodsIdHlaInvitationRoute =
-  AgentPodsIdHlaInvitationRouteImport.update({
-    id: '/pods/$id/hla-invitation',
-    path: '/pods/$id/hla-invitation',
-    getParentRoute: () => AgentRoute,
+const ApiPublicBrokerRelationshipSweepRoute =
+  ApiPublicBrokerRelationshipSweepRouteImport.update({
+    id: '/api/public/broker-relationship-sweep',
+    path: '/api/public/broker-relationship-sweep',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AgentPodsIdBriefcaseRoute = AgentPodsIdBriefcaseRouteImport.update({
+const ApiPublicClosingFundsSweepRoute =
+  ApiPublicClosingFundsSweepRouteImport.update({
+    id: '/api/public/closing-funds-sweep',
+    path: '/api/public/closing-funds-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDesignationSweepRoute =
+  ApiPublicDesignationSweepRouteImport.update({
+    id: '/api/public/designation-sweep',
+    path: '/api/public/designation-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDiligenceEscalationRoute =
+  ApiPublicDiligenceEscalationRouteImport.update({
+    id: '/api/public/diligence-escalation',
+    path: '/api/public/diligence-escalation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEarnestMoneySweepRoute =
+  ApiPublicEarnestMoneySweepRouteImport.update({
+    id: '/api/public/earnest-money-sweep',
+    path: '/api/public/earnest-money-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEnrollmentMaintenanceRoute =
+  ApiPublicEnrollmentMaintenanceRouteImport.update({
+    id: '/api/public/enrollment-maintenance',
+    path: '/api/public/enrollment-maintenance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEoExpirySweepRoute = ApiPublicEoExpirySweepRouteImport.update({
+  id: '/api/public/eo-expiry-sweep',
+  path: '/api/public/eo-expiry-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHlaSweepRoute = ApiPublicHlaSweepRouteImport.update({
+  id: '/api/public/hla-sweep',
+  path: '/api/public/hla-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicInsuranceSweepRoute = ApiPublicInsuranceSweepRouteImport.update({
+  id: '/api/public/insurance-sweep',
+  path: '/api/public/insurance-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicListingApprovalEscalationRoute =
+  ApiPublicListingApprovalEscalationRouteImport.update({
+    id: '/api/public/listing-approval-escalation',
+    path: '/api/public/listing-approval-escalation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicLoggingHealthRoute = ApiPublicLoggingHealthRouteImport.update({
+  id: '/api/public/logging-health',
+  path: '/api/public/logging-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNarCertSweepRoute = ApiPublicNarCertSweepRouteImport.update({
+  id: '/api/public/nar-cert-sweep',
+  path: '/api/public/nar-cert-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSubstitutionSweepRoute =
+  ApiPublicSubstitutionSweepRouteImport.update({
+    id: '/api/public/substitution-sweep',
+    path: '/api/public/substitution-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BrokerOnboardingBankingRoute = BrokerOnboardingBankingRouteImport.update({
+  id: '/onboarding/banking',
+  path: '/onboarding/banking',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BrokerOnboardingComplianceRoute =
+  BrokerOnboardingComplianceRouteImport.update({
+    id: '/onboarding/compliance',
+    path: '/onboarding/compliance',
+    getParentRoute: () => BrokerRoute,
+  } as any)
+const BrokerOnboardingInsuranceRoute =
+  BrokerOnboardingInsuranceRouteImport.update({
+    id: '/onboarding/insurance',
+    path: '/onboarding/insurance',
+    getParentRoute: () => BrokerRoute,
+  } as any)
+const BrokerOnboardingLicenseCheckRoute =
+  BrokerOnboardingLicenseCheckRouteImport.update({
+    id: '/onboarding/license-check',
+    path: '/onboarding/license-check',
+    getParentRoute: () => BrokerRoute,
+  } as any)
+const BuyerAuthorizationsIndexRoute =
+  BuyerAuthorizationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => BuyerAuthorizationsRoute,
+  } as any)
+const BuyerAuthorizationsIdRoute = BuyerAuthorizationsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BuyerAuthorizationsRoute,
+} as any)
+const BuyerDueDiligenceIdRoute = BuyerDueDiligenceIdRouteImport.update({
+  id: '/buyer/due-diligence/$id',
+  path: '/buyer/due-diligence/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOnboardingIndexRoute = BuyerOnboardingIndexRouteImport.update({
+  id: '/buyer/onboarding/',
+  path: '/buyer/onboarding/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOnboardingIdentityRoute = BuyerOnboardingIdentityRouteImport.update({
+  id: '/buyer/onboarding/identity',
+  path: '/buyer/onboarding/identity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOnboardingLifestyleRoute =
+  BuyerOnboardingLifestyleRouteImport.update({
+    id: '/buyer/onboarding/lifestyle',
+    path: '/buyer/onboarding/lifestyle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BuyerOnboardingLiquidityRoute =
+  BuyerOnboardingLiquidityRouteImport.update({
+    id: '/buyer/onboarding/liquidity',
+    path: '/buyer/onboarding/liquidity',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const BuyerOnboardingPaymentRoute = BuyerOnboardingPaymentRouteImport.update({
+  id: '/buyer/onboarding/payment',
+  path: '/buyer/onboarding/payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerOnboardingVettingRoute = BuyerOnboardingVettingRouteImport.update({
+  id: '/buyer/onboarding/vetting',
+  path: '/buyer/onboarding/vetting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerPodsIdRoute = BuyerPodsIdRouteImport.update({
+  id: '/buyer/pods/$id',
+  path: '/buyer/pods/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingsIdEditRoute = ListingsIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ListingsIdRoute,
+} as any)
+const AdminPodsIdBriefcaseRoute = AdminPodsIdBriefcaseRouteImport.update({
   id: '/pods/$id/briefcase',
   path: '/pods/$id/briefcase',
-  getParentRoute: () => AgentRoute,
+  getParentRoute: () => AdminRoute,
 } as any)
-const AgentAuthorizationsIdCommissionRoute =
-  AgentAuthorizationsIdCommissionRouteImport.update({
-    id: '/$id/commission',
-    path: '/$id/commission',
-    getParentRoute: () => AgentAuthorizationsRoute,
+const AdminPodsIdSelectHeavyLifterRoute =
+  AdminPodsIdSelectHeavyLifterRouteImport.update({
+    id: '/pods/$id/select-heavy-lifter',
+    path: '/pods/$id/select-heavy-lifter',
+    getParentRoute: () => AdminRoute,
   } as any)
-const AdminPropertiesIdReportsRoute =
-  AdminPropertiesIdReportsRouteImport.update({
-    id: '/$id/reports',
-    path: '/$id/reports',
+const AdminPropertiesIdDueDiligenceRoute =
+  AdminPropertiesIdDueDiligenceRouteImport.update({
+    id: '/$id/due-diligence',
+    path: '/$id/due-diligence',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
 const AdminPropertiesIdInsuranceRoute =
@@ -868,23 +851,40 @@ const AdminPropertiesIdInsuranceRoute =
     path: '/$id/insurance',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
-const AdminPropertiesIdDueDiligenceRoute =
-  AdminPropertiesIdDueDiligenceRouteImport.update({
-    id: '/$id/due-diligence',
-    path: '/$id/due-diligence',
+const AdminPropertiesIdReportsRoute =
+  AdminPropertiesIdReportsRouteImport.update({
+    id: '/$id/reports',
+    path: '/$id/reports',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
-const AdminPodsIdSelectHeavyLifterRoute =
-  AdminPodsIdSelectHeavyLifterRouteImport.update({
-    id: '/pods/$id/select-heavy-lifter',
-    path: '/pods/$id/select-heavy-lifter',
-    getParentRoute: () => AdminRoute,
+const AgentAuthorizationsIdCommissionRoute =
+  AgentAuthorizationsIdCommissionRouteImport.update({
+    id: '/$id/commission',
+    path: '/$id/commission',
+    getParentRoute: () => AgentAuthorizationsRoute,
   } as any)
-const AdminPodsIdBriefcaseRoute = AdminPodsIdBriefcaseRouteImport.update({
+const AgentPodsIdIndexRoute = AgentPodsIdIndexRouteImport.update({
+  id: '/pods/$id/',
+  path: '/pods/$id/',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentPodsIdBriefcaseRoute = AgentPodsIdBriefcaseRouteImport.update({
   id: '/pods/$id/briefcase',
   path: '/pods/$id/briefcase',
-  getParentRoute: () => AdminRoute,
+  getParentRoute: () => AgentRoute,
 } as any)
+const AgentPodsIdHlaInvitationRoute =
+  AgentPodsIdHlaInvitationRouteImport.update({
+    id: '/pods/$id/hla-invitation',
+    path: '/pods/$id/hla-invitation',
+    getParentRoute: () => AgentRoute,
+  } as any)
+const ApiPublicTitleEscrowProviderRoute =
+  ApiPublicTitleEscrowProviderRouteImport.update({
+    id: '/api/public/title-escrow/$provider',
+    path: '/api/public/title-escrow/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -1806,81 +1806,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/broker': {
-      id: '/broker'
-      path: '/broker'
-      fullPath: '/broker'
-      preLoaderRoute: typeof BrokerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agent': {
-      id: '/agent'
-      path: '/agent'
-      fullPath: '/agent'
-      preLoaderRoute: typeof AgentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -1890,529 +1820,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password/': {
-      id: '/reset-password/'
-      path: '/'
-      fullPath: '/reset-password/'
-      preLoaderRoute: typeof ResetPasswordIndexRouteImport
-      parentRoute: typeof ResetPasswordRoute
-    }
-    '/properties/': {
-      id: '/properties/'
-      path: '/properties'
-      fullPath: '/properties/'
-      preLoaderRoute: typeof PropertiesIndexRouteImport
+    '/agent': {
+      id: '/agent'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof AgentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding/': {
-      id: '/onboarding/'
-      path: '/onboarding'
-      fullPath: '/onboarding/'
-      preLoaderRoute: typeof OnboardingIndexRouteImport
+    '/broker': {
+      id: '/broker'
+      path: '/broker'
+      fullPath: '/broker'
+      preLoaderRoute: typeof BrokerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/broker/': {
-      id: '/broker/'
-      path: '/'
-      fullPath: '/broker/'
-      preLoaderRoute: typeof BrokerIndexRouteImport
-      parentRoute: typeof BrokerRoute
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/agent/': {
-      id: '/agent/'
-      path: '/'
-      fullPath: '/agent/'
-      preLoaderRoute: typeof AgentIndexRouteImport
-      parentRoute: typeof AgentRoute
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/reset-password/confirm': {
-      id: '/reset-password/confirm'
-      path: '/confirm'
-      fullPath: '/reset-password/confirm'
-      preLoaderRoute: typeof ResetPasswordConfirmRouteImport
-      parentRoute: typeof ResetPasswordRoute
-    }
-    '/reserve/$id': {
-      id: '/reserve/$id'
-      path: '/reserve/$id'
-      fullPath: '/reserve/$id'
-      preLoaderRoute: typeof ReserveIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/r/$token': {
-      id: '/r/$token'
-      path: '/r/$token'
-      fullPath: '/r/$token'
-      preLoaderRoute: typeof RTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/properties/$id': {
-      id: '/properties/$id'
-      path: '/properties/$id'
-      fullPath: '/properties/$id'
-      preLoaderRoute: typeof PropertiesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/property': {
-      id: '/onboarding/property'
-      path: '/onboarding/property'
-      fullPath: '/onboarding/property'
-      preLoaderRoute: typeof OnboardingPropertyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/media': {
-      id: '/onboarding/media'
-      path: '/onboarding/media'
-      fullPath: '/onboarding/media'
-      preLoaderRoute: typeof OnboardingMediaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/listing-agent': {
-      id: '/onboarding/listing-agent'
-      path: '/onboarding/listing-agent'
-      fullPath: '/onboarding/listing-agent'
-      preLoaderRoute: typeof OnboardingListingAgentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/listing': {
-      id: '/onboarding/listing'
-      path: '/onboarding/listing'
-      fullPath: '/onboarding/listing'
-      preLoaderRoute: typeof OnboardingListingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/identity': {
-      id: '/onboarding/identity'
-      path: '/onboarding/identity'
-      fullPath: '/onboarding/identity'
-      preLoaderRoute: typeof OnboardingIdentityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/fee': {
-      id: '/onboarding/fee'
-      path: '/onboarding/fee'
-      fullPath: '/onboarding/fee'
-      preLoaderRoute: typeof OnboardingFeeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/agreement': {
-      id: '/onboarding/agreement'
-      path: '/onboarding/agreement'
-      fullPath: '/onboarding/agreement'
-      preLoaderRoute: typeof OnboardingAgreementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/listings/new': {
-      id: '/listings/new'
-      path: '/listings/new'
-      fullPath: '/listings/new'
-      preLoaderRoute: typeof ListingsNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/listings/$id': {
-      id: '/listings/$id'
-      path: '/listings/$id'
-      fullPath: '/listings/$id'
-      preLoaderRoute: typeof ListingsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-room/$id': {
-      id: '/data-room/$id'
-      path: '/data-room/$id'
-      fullPath: '/data-room/$id'
-      preLoaderRoute: typeof DataRoomIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/wishlist': {
-      id: '/buyer/wishlist'
-      path: '/buyer/wishlist'
-      fullPath: '/buyer/wishlist'
-      preLoaderRoute: typeof BuyerWishlistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/verification': {
-      id: '/buyer/verification'
-      path: '/buyer/verification'
-      fullPath: '/buyer/verification'
-      preLoaderRoute: typeof BuyerVerificationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/reports': {
-      id: '/buyer/reports'
-      path: '/buyer/reports'
-      fullPath: '/buyer/reports'
-      preLoaderRoute: typeof BuyerReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/register': {
-      id: '/buyer/register'
-      path: '/buyer/register'
-      fullPath: '/buyer/register'
-      preLoaderRoute: typeof BuyerRegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/operating-agreement': {
-      id: '/buyer/operating-agreement'
-      path: '/buyer/operating-agreement'
-      fullPath: '/buyer/operating-agreement'
-      preLoaderRoute: typeof BuyerOperatingAgreementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/login': {
-      id: '/buyer/login'
-      path: '/buyer/login'
-      fullPath: '/buyer/login'
-      preLoaderRoute: typeof BuyerLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/insurance': {
-      id: '/buyer/insurance'
-      path: '/buyer/insurance'
-      fullPath: '/buyer/insurance'
-      preLoaderRoute: typeof BuyerInsuranceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/golden-ticket': {
-      id: '/buyer/golden-ticket'
-      path: '/buyer/golden-ticket'
-      fullPath: '/buyer/golden-ticket'
-      preLoaderRoute: typeof BuyerGoldenTicketRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/earnest-money': {
-      id: '/buyer/earnest-money'
-      path: '/buyer/earnest-money'
-      fullPath: '/buyer/earnest-money'
-      preLoaderRoute: typeof BuyerEarnestMoneyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/documents': {
-      id: '/buyer/documents'
-      path: '/buyer/documents'
-      fullPath: '/buyer/documents'
-      preLoaderRoute: typeof BuyerDocumentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/dashboard': {
-      id: '/buyer/dashboard'
-      path: '/buyer/dashboard'
-      fullPath: '/buyer/dashboard'
-      preLoaderRoute: typeof BuyerDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/closing-funds': {
-      id: '/buyer/closing-funds'
-      path: '/buyer/closing-funds'
-      fullPath: '/buyer/closing-funds'
-      preLoaderRoute: typeof BuyerClosingFundsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/authorizations': {
-      id: '/buyer/authorizations'
-      path: '/buyer/authorizations'
-      fullPath: '/buyer/authorizations'
-      preLoaderRoute: typeof BuyerAuthorizationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/adverse-action': {
-      id: '/buyer/adverse-action'
-      path: '/buyer/adverse-action'
-      fullPath: '/buyer/adverse-action'
-      preLoaderRoute: typeof BuyerAdverseActionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/broker/register': {
-      id: '/broker/register'
-      path: '/register'
-      fullPath: '/broker/register'
-      preLoaderRoute: typeof BrokerRegisterRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/login': {
-      id: '/broker/login'
-      path: '/login'
-      fullPath: '/broker/login'
-      preLoaderRoute: typeof BrokerLoginRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/dashboard': {
-      id: '/broker/dashboard'
-      path: '/dashboard'
-      fullPath: '/broker/dashboard'
-      preLoaderRoute: typeof BrokerDashboardRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/closing-holds': {
-      id: '/broker/closing-holds'
-      path: '/closing-holds'
-      fullPath: '/broker/closing-holds'
-      preLoaderRoute: typeof BrokerClosingHoldsRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agent/reports': {
-      id: '/agent/reports'
-      path: '/reports'
-      fullPath: '/agent/reports'
-      preLoaderRoute: typeof AgentReportsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/register': {
-      id: '/agent/register'
-      path: '/register'
-      fullPath: '/agent/register'
-      preLoaderRoute: typeof AgentRegisterRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/pools': {
-      id: '/agent/pools'
-      path: '/pools'
-      fullPath: '/agent/pools'
-      preLoaderRoute: typeof AgentPoolsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/login': {
-      id: '/agent/login'
-      path: '/login'
-      fullPath: '/agent/login'
-      preLoaderRoute: typeof AgentLoginRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/leads': {
-      id: '/agent/leads'
-      path: '/leads'
-      fullPath: '/agent/leads'
-      preLoaderRoute: typeof AgentLeadsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/due-diligence': {
-      id: '/agent/due-diligence'
-      path: '/due-diligence'
-      fullPath: '/agent/due-diligence'
-      preLoaderRoute: typeof AgentDueDiligenceRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/dashboard': {
-      id: '/agent/dashboard'
-      path: '/dashboard'
-      fullPath: '/agent/dashboard'
-      preLoaderRoute: typeof AgentDashboardRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/commissions': {
-      id: '/agent/commissions'
-      path: '/commissions'
-      fullPath: '/agent/commissions'
-      preLoaderRoute: typeof AgentCommissionsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/closing-funds': {
-      id: '/agent/closing-funds'
-      path: '/closing-funds'
-      fullPath: '/agent/closing-funds'
-      preLoaderRoute: typeof AgentClosingFundsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/broker-relationship': {
-      id: '/agent/broker-relationship'
-      path: '/broker-relationship'
-      fullPath: '/agent/broker-relationship'
-      preLoaderRoute: typeof AgentBrokerRelationshipRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/authorizations': {
-      id: '/agent/authorizations'
-      path: '/authorizations'
-      fullPath: '/agent/authorizations'
-      preLoaderRoute: typeof AgentAuthorizationsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/attribution': {
-      id: '/agent/attribution'
-      path: '/attribution'
-      fullPath: '/agent/attribution'
-      preLoaderRoute: typeof AgentAttributionRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/admin/title-escrow': {
-      id: '/admin/title-escrow'
-      path: '/title-escrow'
-      fullPath: '/admin/title-escrow'
-      preLoaderRoute: typeof AdminTitleEscrowRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/tether-resolution': {
-      id: '/admin/tether-resolution'
-      path: '/tether-resolution'
-      fullPath: '/admin/tether-resolution'
-      preLoaderRoute: typeof AdminTetherResolutionRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/support': {
-      id: '/admin/support'
-      path: '/support'
-      fullPath: '/admin/support'
-      preLoaderRoute: typeof AdminSupportRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/substitutions': {
-      id: '/admin/substitutions'
-      path: '/substitutions'
-      fullPath: '/admin/substitutions'
-      preLoaderRoute: typeof AdminSubstitutionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settlement': {
-      id: '/admin/settlement'
-      path: '/settlement'
-      fullPath: '/admin/settlement'
-      preLoaderRoute: typeof AdminSettlementRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/sellers': {
-      id: '/admin/sellers'
-      path: '/sellers'
-      fullPath: '/admin/sellers'
-      preLoaderRoute: typeof AdminSellersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/saga-poc': {
-      id: '/admin/saga-poc'
-      path: '/saga-poc'
-      fullPath: '/admin/saga-poc'
-      preLoaderRoute: typeof AdminSagaPocRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/properties': {
-      id: '/admin/properties'
-      path: '/properties'
-      fullPath: '/admin/properties'
-      preLoaderRoute: typeof AdminPropertiesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/payments': {
-      id: '/admin/payments'
-      path: '/payments'
-      fullPath: '/admin/payments'
-      preLoaderRoute: typeof AdminPaymentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/listing-compliance': {
-      id: '/admin/listing-compliance'
-      path: '/listing-compliance'
-      fullPath: '/admin/listing-compliance'
-      preLoaderRoute: typeof AdminListingComplianceRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/insurance-requirements': {
-      id: '/admin/insurance-requirements'
-      path: '/insurance-requirements'
-      fullPath: '/admin/insurance-requirements'
-      preLoaderRoute: typeof AdminInsuranceRequirementsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/entity-genesis': {
-      id: '/admin/entity-genesis'
-      path: '/entity-genesis'
-      fullPath: '/admin/entity-genesis'
-      preLoaderRoute: typeof AdminEntityGenesisRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/earnest-money': {
-      id: '/admin/earnest-money'
-      path: '/earnest-money'
-      fullPath: '/admin/earnest-money'
-      preLoaderRoute: typeof AdminEarnestMoneyRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/disbursement-check': {
-      id: '/admin/disbursement-check'
-      path: '/disbursement-check'
-      fullPath: '/admin/disbursement-check'
-      preLoaderRoute: typeof AdminDisbursementCheckRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/contacts': {
-      id: '/admin/contacts'
-      path: '/contacts'
-      fullPath: '/admin/contacts'
-      preLoaderRoute: typeof AdminContactsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/closing-readiness': {
-      id: '/admin/closing-readiness'
-      path: '/closing-readiness'
-      fullPath: '/admin/closing-readiness'
-      preLoaderRoute: typeof AdminClosingReadinessRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/closing-funds': {
-      id: '/admin/closing-funds'
-      path: '/closing-funds'
-      fullPath: '/admin/closing-funds'
-      preLoaderRoute: typeof AdminClosingFundsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/closing': {
-      id: '/admin/closing'
-      path: '/closing'
-      fullPath: '/admin/closing'
-      preLoaderRoute: typeof AdminClosingRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/buyers': {
-      id: '/admin/buyers'
-      path: '/buyers'
-      fullPath: '/admin/buyers'
-      preLoaderRoute: typeof AdminBuyersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/brokers': {
-      id: '/admin/brokers'
-      path: '/brokers'
-      fullPath: '/admin/brokers'
-      preLoaderRoute: typeof AdminBrokersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/authorizations': {
-      id: '/admin/authorizations'
-      path: '/authorizations'
-      fullPath: '/admin/authorizations'
-      preLoaderRoute: typeof AdminAuthorizationsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/audit-log': {
-      id: '/admin/audit-log'
-      path: '/audit-log'
-      fullPath: '/admin/audit-log'
-      preLoaderRoute: typeof AdminAuditLogRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/agents': {
@@ -2422,47 +1911,523 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgentsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/buyer/onboarding/': {
-      id: '/buyer/onboarding/'
-      path: '/buyer/onboarding'
-      fullPath: '/buyer/onboarding/'
-      preLoaderRoute: typeof BuyerOnboardingIndexRouteImport
+    '/admin/audit-log': {
+      id: '/admin/audit-log'
+      path: '/audit-log'
+      fullPath: '/admin/audit-log'
+      preLoaderRoute: typeof AdminAuditLogRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/authorizations': {
+      id: '/admin/authorizations'
+      path: '/authorizations'
+      fullPath: '/admin/authorizations'
+      preLoaderRoute: typeof AdminAuthorizationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/brokers': {
+      id: '/admin/brokers'
+      path: '/brokers'
+      fullPath: '/admin/brokers'
+      preLoaderRoute: typeof AdminBrokersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/buyers': {
+      id: '/admin/buyers'
+      path: '/buyers'
+      fullPath: '/admin/buyers'
+      preLoaderRoute: typeof AdminBuyersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closing': {
+      id: '/admin/closing'
+      path: '/closing'
+      fullPath: '/admin/closing'
+      preLoaderRoute: typeof AdminClosingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closing-funds': {
+      id: '/admin/closing-funds'
+      path: '/closing-funds'
+      fullPath: '/admin/closing-funds'
+      preLoaderRoute: typeof AdminClosingFundsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closing-readiness': {
+      id: '/admin/closing-readiness'
+      path: '/closing-readiness'
+      fullPath: '/admin/closing-readiness'
+      preLoaderRoute: typeof AdminClosingReadinessRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contacts': {
+      id: '/admin/contacts'
+      path: '/contacts'
+      fullPath: '/admin/contacts'
+      preLoaderRoute: typeof AdminContactsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/disbursement-check': {
+      id: '/admin/disbursement-check'
+      path: '/disbursement-check'
+      fullPath: '/admin/disbursement-check'
+      preLoaderRoute: typeof AdminDisbursementCheckRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/earnest-money': {
+      id: '/admin/earnest-money'
+      path: '/earnest-money'
+      fullPath: '/admin/earnest-money'
+      preLoaderRoute: typeof AdminEarnestMoneyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/entity-genesis': {
+      id: '/admin/entity-genesis'
+      path: '/entity-genesis'
+      fullPath: '/admin/entity-genesis'
+      preLoaderRoute: typeof AdminEntityGenesisRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/insurance-requirements': {
+      id: '/admin/insurance-requirements'
+      path: '/insurance-requirements'
+      fullPath: '/admin/insurance-requirements'
+      preLoaderRoute: typeof AdminInsuranceRequirementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/listing-compliance': {
+      id: '/admin/listing-compliance'
+      path: '/listing-compliance'
+      fullPath: '/admin/listing-compliance'
+      preLoaderRoute: typeof AdminListingComplianceRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/properties': {
+      id: '/admin/properties'
+      path: '/properties'
+      fullPath: '/admin/properties'
+      preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/saga-poc': {
+      id: '/admin/saga-poc'
+      path: '/saga-poc'
+      fullPath: '/admin/saga-poc'
+      preLoaderRoute: typeof AdminSagaPocRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/sellers': {
+      id: '/admin/sellers'
+      path: '/sellers'
+      fullPath: '/admin/sellers'
+      preLoaderRoute: typeof AdminSellersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settlement': {
+      id: '/admin/settlement'
+      path: '/settlement'
+      fullPath: '/admin/settlement'
+      preLoaderRoute: typeof AdminSettlementRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/substitutions': {
+      id: '/admin/substitutions'
+      path: '/substitutions'
+      fullPath: '/admin/substitutions'
+      preLoaderRoute: typeof AdminSubstitutionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/tether-resolution': {
+      id: '/admin/tether-resolution'
+      path: '/tether-resolution'
+      fullPath: '/admin/tether-resolution'
+      preLoaderRoute: typeof AdminTetherResolutionRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/title-escrow': {
+      id: '/admin/title-escrow'
+      path: '/title-escrow'
+      fullPath: '/admin/title-escrow'
+      preLoaderRoute: typeof AdminTitleEscrowRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/agent/': {
+      id: '/agent/'
+      path: '/'
+      fullPath: '/agent/'
+      preLoaderRoute: typeof AgentIndexRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/attribution': {
+      id: '/agent/attribution'
+      path: '/attribution'
+      fullPath: '/agent/attribution'
+      preLoaderRoute: typeof AgentAttributionRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/authorizations': {
+      id: '/agent/authorizations'
+      path: '/authorizations'
+      fullPath: '/agent/authorizations'
+      preLoaderRoute: typeof AgentAuthorizationsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/broker-relationship': {
+      id: '/agent/broker-relationship'
+      path: '/broker-relationship'
+      fullPath: '/agent/broker-relationship'
+      preLoaderRoute: typeof AgentBrokerRelationshipRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/closing-funds': {
+      id: '/agent/closing-funds'
+      path: '/closing-funds'
+      fullPath: '/agent/closing-funds'
+      preLoaderRoute: typeof AgentClosingFundsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/commissions': {
+      id: '/agent/commissions'
+      path: '/commissions'
+      fullPath: '/agent/commissions'
+      preLoaderRoute: typeof AgentCommissionsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/dashboard': {
+      id: '/agent/dashboard'
+      path: '/dashboard'
+      fullPath: '/agent/dashboard'
+      preLoaderRoute: typeof AgentDashboardRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/due-diligence': {
+      id: '/agent/due-diligence'
+      path: '/due-diligence'
+      fullPath: '/agent/due-diligence'
+      preLoaderRoute: typeof AgentDueDiligenceRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/leads': {
+      id: '/agent/leads'
+      path: '/leads'
+      fullPath: '/agent/leads'
+      preLoaderRoute: typeof AgentLeadsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/login': {
+      id: '/agent/login'
+      path: '/login'
+      fullPath: '/agent/login'
+      preLoaderRoute: typeof AgentLoginRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/pools': {
+      id: '/agent/pools'
+      path: '/pools'
+      fullPath: '/agent/pools'
+      preLoaderRoute: typeof AgentPoolsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/register': {
+      id: '/agent/register'
+      path: '/register'
+      fullPath: '/agent/register'
+      preLoaderRoute: typeof AgentRegisterRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/reports': {
+      id: '/agent/reports'
+      path: '/reports'
+      fullPath: '/agent/reports'
+      preLoaderRoute: typeof AgentReportsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/buyer/authorizations/': {
-      id: '/buyer/authorizations/'
+    '/broker/': {
+      id: '/broker/'
       path: '/'
-      fullPath: '/buyer/authorizations/'
-      preLoaderRoute: typeof BuyerAuthorizationsIndexRouteImport
-      parentRoute: typeof BuyerAuthorizationsRoute
+      fullPath: '/broker/'
+      preLoaderRoute: typeof BrokerIndexRouteImport
+      parentRoute: typeof BrokerRoute
     }
-    '/agent/listings/': {
-      id: '/agent/listings/'
-      path: '/listings'
-      fullPath: '/agent/listings/'
-      preLoaderRoute: typeof AgentListingsIndexRouteImport
-      parentRoute: typeof AgentRoute
+    '/broker/closing-holds': {
+      id: '/broker/closing-holds'
+      path: '/closing-holds'
+      fullPath: '/broker/closing-holds'
+      preLoaderRoute: typeof BrokerClosingHoldsRouteImport
+      parentRoute: typeof BrokerRoute
     }
-    '/agent/documents/': {
-      id: '/agent/documents/'
-      path: '/documents'
-      fullPath: '/agent/documents/'
-      preLoaderRoute: typeof AgentDocumentsIndexRouteImport
-      parentRoute: typeof AgentRoute
+    '/broker/dashboard': {
+      id: '/broker/dashboard'
+      path: '/dashboard'
+      fullPath: '/broker/dashboard'
+      preLoaderRoute: typeof BrokerDashboardRouteImport
+      parentRoute: typeof BrokerRoute
     }
-    '/agent/authorizations/': {
-      id: '/agent/authorizations/'
+    '/broker/login': {
+      id: '/broker/login'
+      path: '/login'
+      fullPath: '/broker/login'
+      preLoaderRoute: typeof BrokerLoginRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/broker/register': {
+      id: '/broker/register'
+      path: '/register'
+      fullPath: '/broker/register'
+      preLoaderRoute: typeof BrokerRegisterRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/buyer/adverse-action': {
+      id: '/buyer/adverse-action'
+      path: '/buyer/adverse-action'
+      fullPath: '/buyer/adverse-action'
+      preLoaderRoute: typeof BuyerAdverseActionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/authorizations': {
+      id: '/buyer/authorizations'
+      path: '/buyer/authorizations'
+      fullPath: '/buyer/authorizations'
+      preLoaderRoute: typeof BuyerAuthorizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/closing-funds': {
+      id: '/buyer/closing-funds'
+      path: '/buyer/closing-funds'
+      fullPath: '/buyer/closing-funds'
+      preLoaderRoute: typeof BuyerClosingFundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/dashboard': {
+      id: '/buyer/dashboard'
+      path: '/buyer/dashboard'
+      fullPath: '/buyer/dashboard'
+      preLoaderRoute: typeof BuyerDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/documents': {
+      id: '/buyer/documents'
+      path: '/buyer/documents'
+      fullPath: '/buyer/documents'
+      preLoaderRoute: typeof BuyerDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/earnest-money': {
+      id: '/buyer/earnest-money'
+      path: '/buyer/earnest-money'
+      fullPath: '/buyer/earnest-money'
+      preLoaderRoute: typeof BuyerEarnestMoneyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/golden-ticket': {
+      id: '/buyer/golden-ticket'
+      path: '/buyer/golden-ticket'
+      fullPath: '/buyer/golden-ticket'
+      preLoaderRoute: typeof BuyerGoldenTicketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/insurance': {
+      id: '/buyer/insurance'
+      path: '/buyer/insurance'
+      fullPath: '/buyer/insurance'
+      preLoaderRoute: typeof BuyerInsuranceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/login': {
+      id: '/buyer/login'
+      path: '/buyer/login'
+      fullPath: '/buyer/login'
+      preLoaderRoute: typeof BuyerLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/operating-agreement': {
+      id: '/buyer/operating-agreement'
+      path: '/buyer/operating-agreement'
+      fullPath: '/buyer/operating-agreement'
+      preLoaderRoute: typeof BuyerOperatingAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/register': {
+      id: '/buyer/register'
+      path: '/buyer/register'
+      fullPath: '/buyer/register'
+      preLoaderRoute: typeof BuyerRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/reports': {
+      id: '/buyer/reports'
+      path: '/buyer/reports'
+      fullPath: '/buyer/reports'
+      preLoaderRoute: typeof BuyerReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/verification': {
+      id: '/buyer/verification'
+      path: '/buyer/verification'
+      fullPath: '/buyer/verification'
+      preLoaderRoute: typeof BuyerVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/wishlist': {
+      id: '/buyer/wishlist'
+      path: '/buyer/wishlist'
+      fullPath: '/buyer/wishlist'
+      preLoaderRoute: typeof BuyerWishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-room/$id': {
+      id: '/data-room/$id'
+      path: '/data-room/$id'
+      fullPath: '/data-room/$id'
+      preLoaderRoute: typeof DataRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listings/$id': {
+      id: '/listings/$id'
+      path: '/listings/$id'
+      fullPath: '/listings/$id'
+      preLoaderRoute: typeof ListingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listings/new': {
+      id: '/listings/new'
+      path: '/listings/new'
+      fullPath: '/listings/new'
+      preLoaderRoute: typeof ListingsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/agreement': {
+      id: '/onboarding/agreement'
+      path: '/onboarding/agreement'
+      fullPath: '/onboarding/agreement'
+      preLoaderRoute: typeof OnboardingAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/fee': {
+      id: '/onboarding/fee'
+      path: '/onboarding/fee'
+      fullPath: '/onboarding/fee'
+      preLoaderRoute: typeof OnboardingFeeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/identity': {
+      id: '/onboarding/identity'
+      path: '/onboarding/identity'
+      fullPath: '/onboarding/identity'
+      preLoaderRoute: typeof OnboardingIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/listing': {
+      id: '/onboarding/listing'
+      path: '/onboarding/listing'
+      fullPath: '/onboarding/listing'
+      preLoaderRoute: typeof OnboardingListingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/listing-agent': {
+      id: '/onboarding/listing-agent'
+      path: '/onboarding/listing-agent'
+      fullPath: '/onboarding/listing-agent'
+      preLoaderRoute: typeof OnboardingListingAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/media': {
+      id: '/onboarding/media'
+      path: '/onboarding/media'
+      fullPath: '/onboarding/media'
+      preLoaderRoute: typeof OnboardingMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/property': {
+      id: '/onboarding/property'
+      path: '/onboarding/property'
+      fullPath: '/onboarding/property'
+      preLoaderRoute: typeof OnboardingPropertyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/properties/': {
+      id: '/properties/'
+      path: '/properties'
+      fullPath: '/properties/'
+      preLoaderRoute: typeof PropertiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/properties/$id': {
+      id: '/properties/$id'
+      path: '/properties/$id'
+      fullPath: '/properties/$id'
+      preLoaderRoute: typeof PropertiesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/r/$token': {
+      id: '/r/$token'
+      path: '/r/$token'
+      fullPath: '/r/$token'
+      preLoaderRoute: typeof RTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reserve/$id': {
+      id: '/reserve/$id'
+      path: '/reserve/$id'
+      fullPath: '/reserve/$id'
+      preLoaderRoute: typeof ReserveIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password/': {
+      id: '/reset-password/'
       path: '/'
-      fullPath: '/agent/authorizations/'
-      preLoaderRoute: typeof AgentAuthorizationsIndexRouteImport
-      parentRoute: typeof AgentAuthorizationsRoute
+      fullPath: '/reset-password/'
+      preLoaderRoute: typeof ResetPasswordIndexRouteImport
+      parentRoute: typeof ResetPasswordRoute
     }
-    '/admin/properties/': {
-      id: '/admin/properties/'
-      path: '/'
-      fullPath: '/admin/properties/'
-      preLoaderRoute: typeof AdminPropertiesIndexRouteImport
-      parentRoute: typeof AdminPropertiesRoute
+    '/reset-password/confirm': {
+      id: '/reset-password/confirm'
+      path: '/confirm'
+      fullPath: '/reset-password/confirm'
+      preLoaderRoute: typeof ResetPasswordConfirmRouteImport
+      parentRoute: typeof ResetPasswordRoute
+    }
+    '/admin/entity-genesis_/$propertyId': {
+      id: '/admin/entity-genesis_/$propertyId'
+      path: '/entity-genesis/$propertyId'
+      fullPath: '/admin/entity-genesis/$propertyId'
+      preLoaderRoute: typeof AdminEntityGenesisPropertyIdRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/pods/': {
       id: '/admin/pods/'
@@ -2471,242 +2436,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPodsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/listings/$id/edit': {
-      id: '/listings/$id/edit'
-      path: '/edit'
-      fullPath: '/listings/$id/edit'
-      preLoaderRoute: typeof ListingsIdEditRouteImport
-      parentRoute: typeof ListingsIdRoute
+    '/admin/properties/': {
+      id: '/admin/properties/'
+      path: '/'
+      fullPath: '/admin/properties/'
+      preLoaderRoute: typeof AdminPropertiesIndexRouteImport
+      parentRoute: typeof AdminPropertiesRoute
     }
-    '/buyer/pods/$id': {
-      id: '/buyer/pods/$id'
-      path: '/buyer/pods/$id'
-      fullPath: '/buyer/pods/$id'
-      preLoaderRoute: typeof BuyerPodsIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/agent/authorizations/': {
+      id: '/agent/authorizations/'
+      path: '/'
+      fullPath: '/agent/authorizations/'
+      preLoaderRoute: typeof AgentAuthorizationsIndexRouteImport
+      parentRoute: typeof AgentAuthorizationsRoute
     }
-    '/buyer/onboarding/vetting': {
-      id: '/buyer/onboarding/vetting'
-      path: '/buyer/onboarding/vetting'
-      fullPath: '/buyer/onboarding/vetting'
-      preLoaderRoute: typeof BuyerOnboardingVettingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/onboarding/payment': {
-      id: '/buyer/onboarding/payment'
-      path: '/buyer/onboarding/payment'
-      fullPath: '/buyer/onboarding/payment'
-      preLoaderRoute: typeof BuyerOnboardingPaymentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/onboarding/liquidity': {
-      id: '/buyer/onboarding/liquidity'
-      path: '/buyer/onboarding/liquidity'
-      fullPath: '/buyer/onboarding/liquidity'
-      preLoaderRoute: typeof BuyerOnboardingLiquidityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/onboarding/lifestyle': {
-      id: '/buyer/onboarding/lifestyle'
-      path: '/buyer/onboarding/lifestyle'
-      fullPath: '/buyer/onboarding/lifestyle'
-      preLoaderRoute: typeof BuyerOnboardingLifestyleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/onboarding/identity': {
-      id: '/buyer/onboarding/identity'
-      path: '/buyer/onboarding/identity'
-      fullPath: '/buyer/onboarding/identity'
-      preLoaderRoute: typeof BuyerOnboardingIdentityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/due-diligence/$id': {
-      id: '/buyer/due-diligence/$id'
-      path: '/buyer/due-diligence/$id'
-      fullPath: '/buyer/due-diligence/$id'
-      preLoaderRoute: typeof BuyerDueDiligenceIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/buyer/authorizations/$id': {
-      id: '/buyer/authorizations/$id'
-      path: '/$id'
-      fullPath: '/buyer/authorizations/$id'
-      preLoaderRoute: typeof BuyerAuthorizationsIdRouteImport
-      parentRoute: typeof BuyerAuthorizationsRoute
-    }
-    '/broker/onboarding/license-check': {
-      id: '/broker/onboarding/license-check'
-      path: '/onboarding/license-check'
-      fullPath: '/broker/onboarding/license-check'
-      preLoaderRoute: typeof BrokerOnboardingLicenseCheckRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/onboarding/insurance': {
-      id: '/broker/onboarding/insurance'
-      path: '/onboarding/insurance'
-      fullPath: '/broker/onboarding/insurance'
-      preLoaderRoute: typeof BrokerOnboardingInsuranceRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/onboarding/compliance': {
-      id: '/broker/onboarding/compliance'
-      path: '/onboarding/compliance'
-      fullPath: '/broker/onboarding/compliance'
-      preLoaderRoute: typeof BrokerOnboardingComplianceRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/broker/onboarding/banking': {
-      id: '/broker/onboarding/banking'
-      path: '/onboarding/banking'
-      fullPath: '/broker/onboarding/banking'
-      preLoaderRoute: typeof BrokerOnboardingBankingRouteImport
-      parentRoute: typeof BrokerRoute
-    }
-    '/api/public/substitution-sweep': {
-      id: '/api/public/substitution-sweep'
-      path: '/api/public/substitution-sweep'
-      fullPath: '/api/public/substitution-sweep'
-      preLoaderRoute: typeof ApiPublicSubstitutionSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/nar-cert-sweep': {
-      id: '/api/public/nar-cert-sweep'
-      path: '/api/public/nar-cert-sweep'
-      fullPath: '/api/public/nar-cert-sweep'
-      preLoaderRoute: typeof ApiPublicNarCertSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/logging-health': {
-      id: '/api/public/logging-health'
-      path: '/api/public/logging-health'
-      fullPath: '/api/public/logging-health'
-      preLoaderRoute: typeof ApiPublicLoggingHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/listing-approval-escalation': {
-      id: '/api/public/listing-approval-escalation'
-      path: '/api/public/listing-approval-escalation'
-      fullPath: '/api/public/listing-approval-escalation'
-      preLoaderRoute: typeof ApiPublicListingApprovalEscalationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/insurance-sweep': {
-      id: '/api/public/insurance-sweep'
-      path: '/api/public/insurance-sweep'
-      fullPath: '/api/public/insurance-sweep'
-      preLoaderRoute: typeof ApiPublicInsuranceSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hla-sweep': {
-      id: '/api/public/hla-sweep'
-      path: '/api/public/hla-sweep'
-      fullPath: '/api/public/hla-sweep'
-      preLoaderRoute: typeof ApiPublicHlaSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/eo-expiry-sweep': {
-      id: '/api/public/eo-expiry-sweep'
-      path: '/api/public/eo-expiry-sweep'
-      fullPath: '/api/public/eo-expiry-sweep'
-      preLoaderRoute: typeof ApiPublicEoExpirySweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/enrollment-maintenance': {
-      id: '/api/public/enrollment-maintenance'
-      path: '/api/public/enrollment-maintenance'
-      fullPath: '/api/public/enrollment-maintenance'
-      preLoaderRoute: typeof ApiPublicEnrollmentMaintenanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/earnest-money-sweep': {
-      id: '/api/public/earnest-money-sweep'
-      path: '/api/public/earnest-money-sweep'
-      fullPath: '/api/public/earnest-money-sweep'
-      preLoaderRoute: typeof ApiPublicEarnestMoneySweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/diligence-escalation': {
-      id: '/api/public/diligence-escalation'
-      path: '/api/public/diligence-escalation'
-      fullPath: '/api/public/diligence-escalation'
-      preLoaderRoute: typeof ApiPublicDiligenceEscalationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/designation-sweep': {
-      id: '/api/public/designation-sweep'
-      path: '/api/public/designation-sweep'
-      fullPath: '/api/public/designation-sweep'
-      preLoaderRoute: typeof ApiPublicDesignationSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/closing-funds-sweep': {
-      id: '/api/public/closing-funds-sweep'
-      path: '/api/public/closing-funds-sweep'
-      fullPath: '/api/public/closing-funds-sweep'
-      preLoaderRoute: typeof ApiPublicClosingFundsSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/broker-relationship-sweep': {
-      id: '/api/public/broker-relationship-sweep'
-      path: '/api/public/broker-relationship-sweep'
-      fullPath: '/api/public/broker-relationship-sweep'
-      preLoaderRoute: typeof ApiPublicBrokerRelationshipSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/authorization-escalation': {
-      id: '/api/public/authorization-escalation'
-      path: '/api/public/authorization-escalation'
-      fullPath: '/api/public/authorization-escalation'
-      preLoaderRoute: typeof ApiPublicAuthorizationEscalationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/arello-retry': {
-      id: '/api/public/arello-retry'
-      path: '/api/public/arello-retry'
-      fullPath: '/api/public/arello-retry'
-      preLoaderRoute: typeof ApiPublicArelloRetryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agent/onboarding/license-details': {
-      id: '/agent/onboarding/license-details'
-      path: '/onboarding/license-details'
-      fullPath: '/agent/onboarding/license-details'
-      preLoaderRoute: typeof AgentOnboardingLicenseDetailsRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/onboarding/license-check': {
-      id: '/agent/onboarding/license-check'
-      path: '/onboarding/license-check'
-      fullPath: '/agent/onboarding/license-check'
-      preLoaderRoute: typeof AgentOnboardingLicenseCheckRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/onboarding/insurance': {
-      id: '/agent/onboarding/insurance'
-      path: '/onboarding/insurance'
-      fullPath: '/agent/onboarding/insurance'
-      preLoaderRoute: typeof AgentOnboardingInsuranceRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/onboarding/compliance': {
-      id: '/agent/onboarding/compliance'
-      path: '/onboarding/compliance'
-      fullPath: '/agent/onboarding/compliance'
-      preLoaderRoute: typeof AgentOnboardingComplianceRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/onboarding/broker': {
-      id: '/agent/onboarding/broker'
-      path: '/onboarding/broker'
-      fullPath: '/agent/onboarding/broker'
-      preLoaderRoute: typeof AgentOnboardingBrokerRouteImport
-      parentRoute: typeof AgentRoute
-    }
-    '/agent/listings/$id': {
-      id: '/agent/listings/$id'
-      path: '/listings/$id'
-      fullPath: '/agent/listings/$id'
-      preLoaderRoute: typeof AgentListingsIdRouteImport
+    '/agent/documents/': {
+      id: '/agent/documents/'
+      path: '/documents'
+      fullPath: '/agent/documents/'
+      preLoaderRoute: typeof AgentDocumentsIndexRouteImport
       parentRoute: typeof AgentRoute
     }
     '/agent/documents/$id': {
@@ -2716,53 +2464,284 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentDocumentsIdRouteImport
       parentRoute: typeof AgentRoute
     }
-    '/admin/entity-genesis_/$propertyId': {
-      id: '/admin/entity-genesis_/$propertyId'
-      path: '/entity-genesis/$propertyId'
-      fullPath: '/admin/entity-genesis/$propertyId'
-      preLoaderRoute: typeof AdminEntityGenesisPropertyIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/agent/pods/$id/': {
-      id: '/agent/pods/$id/'
-      path: '/pods/$id'
-      fullPath: '/agent/pods/$id/'
-      preLoaderRoute: typeof AgentPodsIdIndexRouteImport
+    '/agent/listings/': {
+      id: '/agent/listings/'
+      path: '/listings'
+      fullPath: '/agent/listings/'
+      preLoaderRoute: typeof AgentListingsIndexRouteImport
       parentRoute: typeof AgentRoute
     }
-    '/api/public/title-escrow/$provider': {
-      id: '/api/public/title-escrow/$provider'
-      path: '/api/public/title-escrow/$provider'
-      fullPath: '/api/public/title-escrow/$provider'
-      preLoaderRoute: typeof ApiPublicTitleEscrowProviderRouteImport
+    '/agent/listings/$id': {
+      id: '/agent/listings/$id'
+      path: '/listings/$id'
+      fullPath: '/agent/listings/$id'
+      preLoaderRoute: typeof AgentListingsIdRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/onboarding/broker': {
+      id: '/agent/onboarding/broker'
+      path: '/onboarding/broker'
+      fullPath: '/agent/onboarding/broker'
+      preLoaderRoute: typeof AgentOnboardingBrokerRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/onboarding/compliance': {
+      id: '/agent/onboarding/compliance'
+      path: '/onboarding/compliance'
+      fullPath: '/agent/onboarding/compliance'
+      preLoaderRoute: typeof AgentOnboardingComplianceRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/onboarding/insurance': {
+      id: '/agent/onboarding/insurance'
+      path: '/onboarding/insurance'
+      fullPath: '/agent/onboarding/insurance'
+      preLoaderRoute: typeof AgentOnboardingInsuranceRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/onboarding/license-check': {
+      id: '/agent/onboarding/license-check'
+      path: '/onboarding/license-check'
+      fullPath: '/agent/onboarding/license-check'
+      preLoaderRoute: typeof AgentOnboardingLicenseCheckRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/onboarding/license-details': {
+      id: '/agent/onboarding/license-details'
+      path: '/onboarding/license-details'
+      fullPath: '/agent/onboarding/license-details'
+      preLoaderRoute: typeof AgentOnboardingLicenseDetailsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/api/public/arello-retry': {
+      id: '/api/public/arello-retry'
+      path: '/api/public/arello-retry'
+      fullPath: '/api/public/arello-retry'
+      preLoaderRoute: typeof ApiPublicArelloRetryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agent/pods/$id/hla-invitation': {
-      id: '/agent/pods/$id/hla-invitation'
-      path: '/pods/$id/hla-invitation'
-      fullPath: '/agent/pods/$id/hla-invitation'
-      preLoaderRoute: typeof AgentPodsIdHlaInvitationRouteImport
-      parentRoute: typeof AgentRoute
+    '/api/public/authorization-escalation': {
+      id: '/api/public/authorization-escalation'
+      path: '/api/public/authorization-escalation'
+      fullPath: '/api/public/authorization-escalation'
+      preLoaderRoute: typeof ApiPublicAuthorizationEscalationRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/agent/pods/$id/briefcase': {
-      id: '/agent/pods/$id/briefcase'
+    '/api/public/broker-relationship-sweep': {
+      id: '/api/public/broker-relationship-sweep'
+      path: '/api/public/broker-relationship-sweep'
+      fullPath: '/api/public/broker-relationship-sweep'
+      preLoaderRoute: typeof ApiPublicBrokerRelationshipSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/closing-funds-sweep': {
+      id: '/api/public/closing-funds-sweep'
+      path: '/api/public/closing-funds-sweep'
+      fullPath: '/api/public/closing-funds-sweep'
+      preLoaderRoute: typeof ApiPublicClosingFundsSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/designation-sweep': {
+      id: '/api/public/designation-sweep'
+      path: '/api/public/designation-sweep'
+      fullPath: '/api/public/designation-sweep'
+      preLoaderRoute: typeof ApiPublicDesignationSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/diligence-escalation': {
+      id: '/api/public/diligence-escalation'
+      path: '/api/public/diligence-escalation'
+      fullPath: '/api/public/diligence-escalation'
+      preLoaderRoute: typeof ApiPublicDiligenceEscalationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/earnest-money-sweep': {
+      id: '/api/public/earnest-money-sweep'
+      path: '/api/public/earnest-money-sweep'
+      fullPath: '/api/public/earnest-money-sweep'
+      preLoaderRoute: typeof ApiPublicEarnestMoneySweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enrollment-maintenance': {
+      id: '/api/public/enrollment-maintenance'
+      path: '/api/public/enrollment-maintenance'
+      fullPath: '/api/public/enrollment-maintenance'
+      preLoaderRoute: typeof ApiPublicEnrollmentMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/eo-expiry-sweep': {
+      id: '/api/public/eo-expiry-sweep'
+      path: '/api/public/eo-expiry-sweep'
+      fullPath: '/api/public/eo-expiry-sweep'
+      preLoaderRoute: typeof ApiPublicEoExpirySweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hla-sweep': {
+      id: '/api/public/hla-sweep'
+      path: '/api/public/hla-sweep'
+      fullPath: '/api/public/hla-sweep'
+      preLoaderRoute: typeof ApiPublicHlaSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/insurance-sweep': {
+      id: '/api/public/insurance-sweep'
+      path: '/api/public/insurance-sweep'
+      fullPath: '/api/public/insurance-sweep'
+      preLoaderRoute: typeof ApiPublicInsuranceSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/listing-approval-escalation': {
+      id: '/api/public/listing-approval-escalation'
+      path: '/api/public/listing-approval-escalation'
+      fullPath: '/api/public/listing-approval-escalation'
+      preLoaderRoute: typeof ApiPublicListingApprovalEscalationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/logging-health': {
+      id: '/api/public/logging-health'
+      path: '/api/public/logging-health'
+      fullPath: '/api/public/logging-health'
+      preLoaderRoute: typeof ApiPublicLoggingHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/nar-cert-sweep': {
+      id: '/api/public/nar-cert-sweep'
+      path: '/api/public/nar-cert-sweep'
+      fullPath: '/api/public/nar-cert-sweep'
+      preLoaderRoute: typeof ApiPublicNarCertSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/substitution-sweep': {
+      id: '/api/public/substitution-sweep'
+      path: '/api/public/substitution-sweep'
+      fullPath: '/api/public/substitution-sweep'
+      preLoaderRoute: typeof ApiPublicSubstitutionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/broker/onboarding/banking': {
+      id: '/broker/onboarding/banking'
+      path: '/onboarding/banking'
+      fullPath: '/broker/onboarding/banking'
+      preLoaderRoute: typeof BrokerOnboardingBankingRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/broker/onboarding/compliance': {
+      id: '/broker/onboarding/compliance'
+      path: '/onboarding/compliance'
+      fullPath: '/broker/onboarding/compliance'
+      preLoaderRoute: typeof BrokerOnboardingComplianceRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/broker/onboarding/insurance': {
+      id: '/broker/onboarding/insurance'
+      path: '/onboarding/insurance'
+      fullPath: '/broker/onboarding/insurance'
+      preLoaderRoute: typeof BrokerOnboardingInsuranceRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/broker/onboarding/license-check': {
+      id: '/broker/onboarding/license-check'
+      path: '/onboarding/license-check'
+      fullPath: '/broker/onboarding/license-check'
+      preLoaderRoute: typeof BrokerOnboardingLicenseCheckRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/buyer/authorizations/': {
+      id: '/buyer/authorizations/'
+      path: '/'
+      fullPath: '/buyer/authorizations/'
+      preLoaderRoute: typeof BuyerAuthorizationsIndexRouteImport
+      parentRoute: typeof BuyerAuthorizationsRoute
+    }
+    '/buyer/authorizations/$id': {
+      id: '/buyer/authorizations/$id'
+      path: '/$id'
+      fullPath: '/buyer/authorizations/$id'
+      preLoaderRoute: typeof BuyerAuthorizationsIdRouteImport
+      parentRoute: typeof BuyerAuthorizationsRoute
+    }
+    '/buyer/due-diligence/$id': {
+      id: '/buyer/due-diligence/$id'
+      path: '/buyer/due-diligence/$id'
+      fullPath: '/buyer/due-diligence/$id'
+      preLoaderRoute: typeof BuyerDueDiligenceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/': {
+      id: '/buyer/onboarding/'
+      path: '/buyer/onboarding'
+      fullPath: '/buyer/onboarding/'
+      preLoaderRoute: typeof BuyerOnboardingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/identity': {
+      id: '/buyer/onboarding/identity'
+      path: '/buyer/onboarding/identity'
+      fullPath: '/buyer/onboarding/identity'
+      preLoaderRoute: typeof BuyerOnboardingIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/lifestyle': {
+      id: '/buyer/onboarding/lifestyle'
+      path: '/buyer/onboarding/lifestyle'
+      fullPath: '/buyer/onboarding/lifestyle'
+      preLoaderRoute: typeof BuyerOnboardingLifestyleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/liquidity': {
+      id: '/buyer/onboarding/liquidity'
+      path: '/buyer/onboarding/liquidity'
+      fullPath: '/buyer/onboarding/liquidity'
+      preLoaderRoute: typeof BuyerOnboardingLiquidityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/payment': {
+      id: '/buyer/onboarding/payment'
+      path: '/buyer/onboarding/payment'
+      fullPath: '/buyer/onboarding/payment'
+      preLoaderRoute: typeof BuyerOnboardingPaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/vetting': {
+      id: '/buyer/onboarding/vetting'
+      path: '/buyer/onboarding/vetting'
+      fullPath: '/buyer/onboarding/vetting'
+      preLoaderRoute: typeof BuyerOnboardingVettingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/pods/$id': {
+      id: '/buyer/pods/$id'
+      path: '/buyer/pods/$id'
+      fullPath: '/buyer/pods/$id'
+      preLoaderRoute: typeof BuyerPodsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listings/$id/edit': {
+      id: '/listings/$id/edit'
+      path: '/edit'
+      fullPath: '/listings/$id/edit'
+      preLoaderRoute: typeof ListingsIdEditRouteImport
+      parentRoute: typeof ListingsIdRoute
+    }
+    '/admin/pods/$id/briefcase': {
+      id: '/admin/pods/$id/briefcase'
       path: '/pods/$id/briefcase'
-      fullPath: '/agent/pods/$id/briefcase'
-      preLoaderRoute: typeof AgentPodsIdBriefcaseRouteImport
-      parentRoute: typeof AgentRoute
+      fullPath: '/admin/pods/$id/briefcase'
+      preLoaderRoute: typeof AdminPodsIdBriefcaseRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/agent/authorizations/$id/commission': {
-      id: '/agent/authorizations/$id/commission'
-      path: '/$id/commission'
-      fullPath: '/agent/authorizations/$id/commission'
-      preLoaderRoute: typeof AgentAuthorizationsIdCommissionRouteImport
-      parentRoute: typeof AgentAuthorizationsRoute
+    '/admin/pods/$id/select-heavy-lifter': {
+      id: '/admin/pods/$id/select-heavy-lifter'
+      path: '/pods/$id/select-heavy-lifter'
+      fullPath: '/admin/pods/$id/select-heavy-lifter'
+      preLoaderRoute: typeof AdminPodsIdSelectHeavyLifterRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin/properties/$id/reports': {
-      id: '/admin/properties/$id/reports'
-      path: '/$id/reports'
-      fullPath: '/admin/properties/$id/reports'
-      preLoaderRoute: typeof AdminPropertiesIdReportsRouteImport
+    '/admin/properties/$id/due-diligence': {
+      id: '/admin/properties/$id/due-diligence'
+      path: '/$id/due-diligence'
+      fullPath: '/admin/properties/$id/due-diligence'
+      preLoaderRoute: typeof AdminPropertiesIdDueDiligenceRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
     '/admin/properties/$id/insurance': {
@@ -2772,26 +2751,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesIdInsuranceRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
-    '/admin/properties/$id/due-diligence': {
-      id: '/admin/properties/$id/due-diligence'
-      path: '/$id/due-diligence'
-      fullPath: '/admin/properties/$id/due-diligence'
-      preLoaderRoute: typeof AdminPropertiesIdDueDiligenceRouteImport
+    '/admin/properties/$id/reports': {
+      id: '/admin/properties/$id/reports'
+      path: '/$id/reports'
+      fullPath: '/admin/properties/$id/reports'
+      preLoaderRoute: typeof AdminPropertiesIdReportsRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
-    '/admin/pods/$id/select-heavy-lifter': {
-      id: '/admin/pods/$id/select-heavy-lifter'
-      path: '/pods/$id/select-heavy-lifter'
-      fullPath: '/admin/pods/$id/select-heavy-lifter'
-      preLoaderRoute: typeof AdminPodsIdSelectHeavyLifterRouteImport
-      parentRoute: typeof AdminRoute
+    '/agent/authorizations/$id/commission': {
+      id: '/agent/authorizations/$id/commission'
+      path: '/$id/commission'
+      fullPath: '/agent/authorizations/$id/commission'
+      preLoaderRoute: typeof AgentAuthorizationsIdCommissionRouteImport
+      parentRoute: typeof AgentAuthorizationsRoute
     }
-    '/admin/pods/$id/briefcase': {
-      id: '/admin/pods/$id/briefcase'
+    '/agent/pods/$id/': {
+      id: '/agent/pods/$id/'
+      path: '/pods/$id'
+      fullPath: '/agent/pods/$id/'
+      preLoaderRoute: typeof AgentPodsIdIndexRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/pods/$id/briefcase': {
+      id: '/agent/pods/$id/briefcase'
       path: '/pods/$id/briefcase'
-      fullPath: '/admin/pods/$id/briefcase'
-      preLoaderRoute: typeof AdminPodsIdBriefcaseRouteImport
-      parentRoute: typeof AdminRoute
+      fullPath: '/agent/pods/$id/briefcase'
+      preLoaderRoute: typeof AgentPodsIdBriefcaseRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/pods/$id/hla-invitation': {
+      id: '/agent/pods/$id/hla-invitation'
+      path: '/pods/$id/hla-invitation'
+      fullPath: '/agent/pods/$id/hla-invitation'
+      preLoaderRoute: typeof AgentPodsIdHlaInvitationRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/api/public/title-escrow/$provider': {
+      id: '/api/public/title-escrow/$provider'
+      path: '/api/public/title-escrow/$provider'
+      fullPath: '/api/public/title-escrow/$provider'
+      preLoaderRoute: typeof ApiPublicTitleEscrowProviderRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
