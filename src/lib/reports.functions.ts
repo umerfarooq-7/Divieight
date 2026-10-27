@@ -235,19 +235,18 @@ export const listAgentReports = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!agent) return { rows: [] };
 
+    // (buyer, property) pairs on which this agent is the buyer's agent.
+    const { agentPropertyPairs } = await import("@/lib/property-agent.server");
+    const pairs = (await agentPropertyPairs(db, agent.id)).map((p) => ({
+      buyer_account_id: p.buyerAccountId,
+      property_id: p.propertyId,
+    }));
+    if (pairs.length === 0) return { rows: [] };
     const { data: buyers } = await db
       .from("buyer_accounts")
       .select("id, email")
-      .eq("tethered_resident_agent_id", agent.id);
+      .in("id", [...new Set(pairs.map((p) => p.buyer_account_id))]);
     const buyerList = (buyers ?? []) as Array<{ id: string; email: string | null }>;
-    if (buyerList.length === 0) return { rows: [] };
-
-    const { data: reservations } = await db
-      .from("pod_reservations")
-      .select("buyer_account_id, property_id")
-      .in("buyer_account_id", buyerList.map((b) => b.id))
-      .eq("status", "reserved");
-    const pairs = (reservations ?? []) as Array<{ buyer_account_id: string; property_id: string }>;
     const reports = await loadReports(db, [...new Set(pairs.map((p) => p.property_id))]);
     const annotations = await loadAnnotations(db, reports.map((r) => r.id), { agentId: agent.id });
     const emailById = new Map(buyerList.map((b) => [b.id, b.email]));
@@ -293,8 +292,7 @@ export const annotateReport = createServerFn({ method: "POST" })
       .select("id, auth_user_id, email, tethered_resident_agent_id")
       .eq("id", data.buyerAccountId)
       .maybeSingle();
-    if (!buyer || buyer.tethered_resident_agent_id !== agent.id)
-      throw new Error("You can only annotate for your own tethered buyers");
+    if (!buyer) throw new Error("You can only annotate for your own tethered buyers");
 
     const { data: report } = await db
       .from("property_reports")
@@ -302,6 +300,10 @@ export const annotateReport = createServerFn({ method: "POST" })
       .eq("id", data.reportId)
       .maybeSingle();
     if (!report) throw new Error("Report not found");
+    // The buyer's agent on the report's property.
+    const { effectiveAgentId } = await import("@/lib/property-agent.server");
+    if ((await effectiveAgentId(db, buyer.id, report.property_id, buyer.tethered_resident_agent_id)) !== agent.id)
+      throw new Error("You can only annotate for your own tethered buyers");
 
     const { data: reservation } = await db
       .from("pod_reservations")

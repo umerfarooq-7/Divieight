@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parsePropertyScope, type PropertyScopeInput } from "@/lib/property-scope";
+import { agentPropertyPairs, withPropertyAgents } from "@/lib/property-agent.server";
 import { supabase } from "@/integrations/supabase/client";
 import { buildGateState, gateClear, gatingDocuments } from "@/lib/due-diligence";
 import { adminRecipients, deliver } from "@/lib/authorization.notify.server";
@@ -88,7 +89,7 @@ export async function diligenceGateStatus(
   const { data: acks } = await db
     .from("due_diligence_acknowledgments")
     .select(
-      "id, document_id, actor_role, account_member_id, agent_id, signed_name, content_hash, acknowledged_at, independent_review_notice_shown_at",
+      "id, document_id, property_id, actor_role, account_member_id, agent_id, signed_name, content_hash, acknowledged_at, independent_review_notice_shown_at",
     )
     .eq("buyer_account_id", buyerAccountId)
     .in(
@@ -242,12 +243,14 @@ export const createAuthorizationRequest = createServerFn({ method: "POST" })
       priorTerms = (prior?.terms as AuthorizationTerms) ?? null;
     }
 
-    const { data: buyer } = await db
+    const { data: buyerRow } = await db
       .from("buyer_accounts")
       .select("id, auth_user_id, email, tethered_resident_agent_id")
       .eq("id", data.buyerAccountId)
       .maybeSingle();
-    if (!buyer) throw new Error("Buyer account not found");
+    if (!buyerRow) throw new Error("Buyer account not found");
+    // The request's agent is the buyer's agent on THIS property.
+    const [buyer] = await withPropertyAgents(db, data.propertyId, [buyerRow as any]);
 
     const { data: created, error } = await db
       .from("authorization_requests")
@@ -688,12 +691,12 @@ export const listAgentAuthorizations = createServerFn({ method: "GET" })
       .select("*")
       .eq("agent_id", agent.id)
       .order("created_at", { ascending: false });
-    const { data: tetheredBuyers } = await db
-      .from("buyer_accounts")
-      .select("id")
-      .eq("tethered_resident_agent_id", agent.id);
-    const stillTethered = new Set(((tetheredBuyers ?? []) as Array<{ id: string }>).map((b) => b.id));
-    const mine = ((mineAll ?? []) as AuthorizationRequestRow[]).filter((r) => stillTethered.has(r.buyer_account_id));
+    const stillAgent = new Set(
+      (await agentPropertyPairs(db, agent.id)).map((p) => `${p.buyerAccountId}:${p.propertyId}`),
+    );
+    const mine = ((mineAll ?? []) as AuthorizationRequestRow[]).filter((r) =>
+      stillAgent.has(`${r.buyer_account_id}:${r.property_id}`),
+    );
 
     // …plus requests on properties where this agent is the pod's Heavy Lifting
     // Agent, since the commission provision is proposed by the HLA.
@@ -1157,11 +1160,14 @@ export const proposeCommissionItem = createServerFn({ method: "POST" })
 
     // Notify the buyer and the tethered Resident Agent — attributed to the HLA.
     const property2 = await propertyFor(db, row.property_id);
-    const { data: buyer } = await db
+    const { data: buyerAccountRow } = await db
       .from("buyer_accounts")
-      .select("auth_user_id, email, tethered_resident_agent_id")
+      .select("id, auth_user_id, email, tethered_resident_agent_id")
       .eq("id", row.buyer_account_id)
       .maybeSingle();
+    const buyer = buyerAccountRow
+      ? (await withPropertyAgents(db, row.property_id, [buyerAccountRow as any]))[0]
+      : null;
     if (buyer) {
       await deliver(
         db,

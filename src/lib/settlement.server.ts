@@ -122,6 +122,18 @@ async function loadParticipants(db: Db, propertyId: string): Promise<Participant
     const { data: rows } = await db.from("buyer_accounts").select("id, tethered_resident_agent_id").in("id", buyerIds);
     for (const b of (rows ?? []) as Array<{ id: string; tethered_resident_agent_id: string | null }>)
       buyers.set(b.id, { residentAgentId: b.tethered_resident_agent_id, referringAgentId: null, referringRole: null });
+    // A per-property agent (the account agent holds this listing) is the
+    // Resident Agent here; a replaced agent who was the buyer's referrer keeps
+    // the referral share. The cascade math itself is unchanged.
+    const { loadAgentOverrides } = await import("@/lib/property-agent.server");
+    const overrides = await loadAgentOverrides(db, { buyerIds, propertyIds: [propertyId] });
+    const preservedReferral = new Map<string, string>();
+    for (const o of overrides) {
+      const b = buyers.get(o.buyer_account_id);
+      if (!b) continue;
+      b.residentAgentId = o.resident_agent_id;
+      if (o.referral_preserved && o.replaced_agent_id) preservedReferral.set(o.buyer_account_id, o.replaced_agent_id);
+    }
     const { data: refs } = await db
       .from("pending_referral_agreements")
       .select("buyer_account_id, non_resident_agent_id, referring_agent_role, status")
@@ -132,6 +144,13 @@ async function loadParticipants(db: Db, propertyId: string): Promise<Participant
       if (b) {
         b.referringAgentId = r.non_resident_agent_id;
         b.referringRole = r.referring_agent_role ?? "non_resident";
+      }
+    }
+    for (const [buyerId, referrer] of preservedReferral) {
+      const b = buyers.get(buyerId);
+      if (b && !b.referringAgentId) {
+        b.referringAgentId = referrer;
+        b.referringRole = "original_agent";
       }
     }
   }

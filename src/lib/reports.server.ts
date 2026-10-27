@@ -229,12 +229,15 @@ export async function deliverReport(db: Db, actorId: string, input: DeliverRepor
     .eq("status", "reserved");
   const buyerIds = [...new Set(((reservations ?? []) as Array<{ buyer_account_id: string }>).map((r) => r.buyer_account_id))];
 
-  const { data: buyers } = buyerIds.length
+  const { data: buyerRows } = buyerIds.length
     ? await db
         .from("buyer_accounts")
         .select("id, auth_user_id, email, tethered_resident_agent_id")
         .in("id", buyerIds)
     : { data: [] };
+  // Each buyer's agent on this property (per-property agent where one applies).
+  const { withPropertyAgents } = await import("@/lib/property-agent.server");
+  const buyers = await withPropertyAgents(db, input.propertyId, (buyerRows ?? []) as any[]);
 
   const agentIds = [
     ...new Set(((buyers ?? []) as any[]).map((b) => b.tethered_resident_agent_id).filter(Boolean)),

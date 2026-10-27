@@ -28,10 +28,27 @@ export interface ReservationEligibility {
 
 export interface ReservationResult {
   ok: boolean;
-  reason: ReservationEligibility["reason"] | "error";
+  reason:
+    | ReservationEligibility["reason"]
+    | "error"
+    // The buyer's agent holds this property's listing — choose another agent.
+    | "dual_agency_conflict"
+    | "invalid_replacement_agent"
+    | "no_replacement_agent";
   reservationId: string | null;
   composition: PodComposition | null;
   systemLocked: boolean;
+  /** Present with reason "dual_agency_conflict". */
+  conflict?: {
+    code: "DUAL_AGENCY_CONFLICT";
+    conflicting_agent_id: string;
+    conflicting_agent_name: string | null;
+    referring_agent_id_same: boolean;
+  } | null;
+  /** Explanation for invalid_replacement_agent / no_replacement_agent. */
+  message?: string | null;
+  /** Present when the reservation finalized with a per-property agent. */
+  agentChange?: { newAgentId: string; newAgentName: string | null; referralPreserved: boolean } | null;
 }
 
 export interface MyReservation {

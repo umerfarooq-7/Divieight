@@ -11,6 +11,7 @@
  */
 
 import { deliver } from "@/lib/authorization.notify.server";
+import { withPropertyAgents } from "@/lib/property-agent.server";
 import {
   DEFAULT_FUNDING_METHODS,
   money,
@@ -112,12 +113,14 @@ async function activeHolders(db: Db, propertyId: string) {
   return (data ?? []) as Array<{ id: string; buyer_account_id: string; shares_reserved: number | null }>;
 }
 
-async function buyerRecipient(db: Db, buyerAccountId: string) {
-  const { data } = await db
+/** The buyer, with tethered_resident_agent_id as their agent on this property. */
+async function buyerRecipient(db: Db, buyerAccountId: string, propertyId: string) {
+  const { data: row } = await db
     .from("buyer_accounts")
     .select("id, auth_user_id, email, tethered_resident_agent_id")
     .eq("id", buyerAccountId)
     .maybeSingle();
+  const data = row ? (await withPropertyAgents(db, propertyId, [row as any]))[0] : null;
   return (data ?? null) as {
     id: string;
     auth_user_id: string;
@@ -270,7 +273,7 @@ export async function issueObligations(
     }
     issued++;
 
-    const buyer = await buyerRecipient(db, part.buyerAccountId);
+    const buyer = await buyerRecipient(db, part.buyerAccountId, input.propertyId);
     if (buyer) {
       const obligation: FundingObligation = {
         id: obligationId ?? "",
@@ -370,7 +373,7 @@ export async function markFunded(
     },
   });
 
-  const buyer = await buyerRecipient(db, row.buyer_account_id);
+  const buyer = await buyerRecipient(db, row.buyer_account_id, row.property_id);
   const property = await propertyFor(db, row.property_id);
   if (buyer)
     await deliver(
@@ -443,7 +446,7 @@ async function declareDefault(
   const holders = await activeHolders(db, row.property_id);
   for (const h of holders) {
     if (h.buyer_account_id === row.buyer_account_id) continue;
-    const buyer = await buyerRecipient(db, h.buyer_account_id);
+    const buyer = await buyerRecipient(db, h.buyer_account_id, row.property_id);
     if (!buyer) continue;
     await deliver(
       db,
@@ -468,7 +471,7 @@ async function declareDefault(
   }
 
   // Defaulting Account's own tethered Resident Agent.
-  const defaulting = await buyerRecipient(db, row.buyer_account_id);
+  const defaulting = await buyerRecipient(db, row.buyer_account_id, row.property_id);
   if (defaulting) {
     const ra = await agentRecipient(db, defaulting.tethered_resident_agent_id);
     if (ra)
@@ -550,7 +553,7 @@ export async function runSweep(db: Db, kind: FundingKind, actorId: string | null
       await db.from(kind.obligationsTable).update({ status: "late", late_at: at, updated_at: at }).eq("id", row.id);
       markedLate++;
 
-      const buyer = await buyerRecipient(db, row.buyer_account_id);
+      const buyer = await buyerRecipient(db, row.buyer_account_id, row.property_id);
       const property = await propertyFor(db, row.property_id);
       if (buyer)
         await deliver(
@@ -659,7 +662,7 @@ export async function createSubstituteObligation(
   }
 
   const property = await propertyFor(db, params.propertyId);
-  const buyer = await buyerRecipient(db, params.buyerAccountId);
+  const buyer = await buyerRecipient(db, params.buyerAccountId, params.propertyId);
   if (buyer) {
     const obligation: FundingObligation = {
       id: obligationId ?? "",

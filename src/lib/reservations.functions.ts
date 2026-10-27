@@ -75,7 +75,14 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
  */
 export const createReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { propertyId: string }) => ({ propertyId: String(data.propertyId) }))
+  .inputValidator(
+    (data: { propertyId: string; replacementAgentId?: string | null; autoAssignAgent?: boolean }) => ({
+      propertyId: String(data.propertyId),
+      // Only used to resolve a dual-agency conflict on this property.
+      replacementAgentId: data.replacementAgentId ? String(data.replacementAgentId) : null,
+      autoAssignAgent: data.autoAssignAgent === true,
+    }),
+  )
   .handler(async ({ data, context }): Promise<ReservationResult> => {
     const { fetchPodComposition } = await import("@/lib/pod.server");
     const { supabase, userId } = context;
@@ -111,18 +118,92 @@ export const createReservation = createServerFn({ method: "POST" })
       .limit(1);
     if ((mine?.length ?? 0) > 0) return fail("already_reserved");
 
-    const { data: inserted, error } = await supabase
-      .from("pod_reservations")
-      .insert({
-        property_id: data.propertyId,
-        buyer_account_id: buyer.id,
-        shares_reserved: 1,
-        status: "reserved",
-      })
-      .select("id")
+    // Dual-agency checkpoint 4: the buyer's agent may not hold THIS listing.
+    // Nothing is reserved until the buyer has a different agent for this
+    // property; their other properties keep the account-level agent.
+    const { supabaseAdmin: adminDb } = await import("@/integrations/supabase/admin.server");
+    const propertyAgent = await import("@/lib/property-agent.server");
+    const { data: agentInfo } = await (adminDb as any)
+      .from("buyer_accounts")
+      .select("id, tethered_resident_agent_id, referring_agent_id, primary_target_market")
+      .eq("id", buyer.id)
       .maybeSingle();
+    const conflict = agentInfo
+      ? await propertyAgent.reservationAgentConflict(adminDb as never, agentInfo, data.propertyId)
+      : null;
 
-    if (error || !inserted) return fail("error");
+    let inserted: { id: string } | null = null;
+    let agentChange: ReservationResult["agentChange"] = null;
+    if (conflict) {
+      const resolving = Boolean(data.replacementAgentId) || data.autoAssignAgent;
+      const { logDualAgency } = await import("@/lib/dual-agency");
+      await logDualAgency(adminDb as never, {
+        actorId: userId,
+        point: "reservation",
+        agentId: conflict.conflicting_agent_id,
+        propertyId: data.propertyId,
+        buyerAccountId: buyer.id,
+        resolution: resolving
+          ? "buyer re-tethered for this property before the reservation finalized"
+          : "reservation paused — buyer asked to choose a different agent for this property",
+      });
+      if (!resolving) return { ...fail("dual_agency_conflict"), conflict };
+
+      const newAgentId =
+        data.replacementAgentId ??
+        (await propertyAgent.pickReplacementAgent(adminDb as never, {
+          listingAgentId: conflict.conflicting_agent_id,
+          market: agentInfo?.primary_target_market ?? null,
+        }));
+      if (!newAgentId)
+        return {
+          ...fail("no_replacement_agent"),
+          conflict,
+          message: "No eligible agent is available right now — choose an agent yourself or contact support.",
+        };
+      const problem = await propertyAgent.replacementAgentProblem(adminDb as never, newAgentId, conflict.conflicting_agent_id);
+      if (problem) return { ...fail("invalid_replacement_agent"), conflict, message: problem };
+
+      // One transaction: the per-property agent and the reservation together.
+      const { data: reservationId, error: rpcError } = await (supabase as any).rpc("reserve_share_with_agent", {
+        p_property_id: data.propertyId,
+        p_resident_agent_id: newAgentId,
+        p_replaced_agent_id: conflict.conflicting_agent_id,
+        p_referral_preserved: conflict.referring_agent_id_same,
+      });
+      if (rpcError || !reservationId) return { ...fail("error"), message: rpcError?.message ?? null };
+      inserted = { id: String(reservationId) };
+      const { data: newAgent } = await (adminDb as any).from("agents").select("full_name").eq("id", newAgentId).maybeSingle();
+      agentChange = {
+        newAgentId,
+        newAgentName: newAgent?.full_name ?? null,
+        referralPreserved: conflict.referring_agent_id_same,
+      };
+      await propertyAgent.announcePropertyAgentChange(adminDb as never, {
+        actorId: userId,
+        buyerAccountId: buyer.id,
+        propertyId: data.propertyId,
+        reservationId: inserted.id,
+        replacedAgentId: conflict.conflicting_agent_id,
+        newAgentId,
+        referralPreserved: conflict.referring_agent_id_same,
+        chosenBy: data.replacementAgentId ? "buyer" : "platform",
+      });
+    } else {
+      const { data: row, error } = await supabase
+        .from("pod_reservations")
+        .insert({
+          property_id: data.propertyId,
+          buyer_account_id: buyer.id,
+          shares_reserved: 1,
+          status: "reserved",
+        })
+        .select("id")
+        .maybeSingle();
+
+      if (error || !row) return fail("error");
+      inserted = row;
+    }
 
     const after = await fetchPodComposition(data.propertyId);
     const systemLocked = (after?.availableShares ?? 1) === 0;
@@ -194,6 +275,7 @@ export const createReservation = createServerFn({ method: "POST" })
       reservationId: inserted.id,
       composition: after,
       systemLocked,
+      agentChange,
     };
   });
 
@@ -374,6 +456,17 @@ export const getMyPodDetails = createServerFn({ method: "GET" })
       .eq("auth_user_id", userId)
       .maybeSingle();
     if (!buyer) return { error: "Buyer account not found." };
+    {
+      // Show the buyer's agent on THIS property (per-property agent where one applies).
+      const { supabaseAdmin: adminForAgent } = await import("@/integrations/supabase/admin.server");
+      const { effectiveAgentId } = await import("@/lib/property-agent.server");
+      buyer.tethered_resident_agent_id = await effectiveAgentId(
+        adminForAgent as never,
+        buyer.id,
+        data.propertyId,
+        buyer.tethered_resident_agent_id,
+      );
+    }
 
     const { data: mine } = await supabase
       .from("pod_reservations")

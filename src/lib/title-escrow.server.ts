@@ -6,6 +6,7 @@
  * path through `ingestTitleWebhook`.
  */
 import { deliver } from "@/lib/authorization.notify.server";
+import { withPropertyAgents } from "@/lib/property-agent.server";
 import { renderTextPdf } from "@/lib/simple-pdf";
 import { getTitleAdapter, DEFAULT_TITLE_PROVIDER, type ClosingBundle, type NormalizedTitleEvent } from "@/lib/title-adapters";
 import type { SimulationOptions } from "@/lib/title-adapters/adapter";
@@ -68,9 +69,11 @@ export async function buildClosingBundle(db: Db, propertyId: string, sourceReque
   const { data: members } = ids.length
     ? await db.from("account_members").select("buyer_account_id, full_name").in("buyer_account_id", ids)
     : { data: [] };
-  const { data: accounts } = ids.length
+  const { data: accountRows } = ids.length
     ? await db.from("buyer_accounts").select("id, tethered_resident_agent_id").in("id", ids)
     : { data: [] };
+  // Each buyer's agent on this property (per-property agent where one applies).
+  const accounts = await withPropertyAgents(db, propertyId, (accountRows ?? []) as any[]);
   const { data: earnest } = await db.from("earnest_money_terms").select("funding_deadline, escrow_company, escrow_reference").eq("property_id", propertyId).maybeSingle();
   const { data: closing } = await db.from("closing_funds_terms").select("funding_deadline").eq("property_id", propertyId).maybeSingle();
 
@@ -531,8 +534,9 @@ export async function propertyWatchers(db: Db, propertyId: string) {
   const ids = [...new Set(((res ?? []) as Array<{ buyer_account_id: string }>).map((r) => r.buyer_account_id))];
   const agentIds = new Set<string>();
   if (ids.length) {
-    const { data: buyers } = await db.from("buyer_accounts").select("auth_user_id, email, tethered_resident_agent_id").in("id", ids);
-    for (const b of (buyers ?? []) as Array<{ auth_user_id: string; email: string | null; tethered_resident_agent_id: string | null }>) {
+    const { data: buyerRows } = await db.from("buyer_accounts").select("id, auth_user_id, email, tethered_resident_agent_id").in("id", ids);
+    const buyers = await withPropertyAgents(db, propertyId, (buyerRows ?? []) as any[]);
+    for (const b of buyers as Array<{ auth_user_id: string; email: string | null; tethered_resident_agent_id: string | null }>) {
       users.set(b.auth_user_id, b.email);
       if (b.tethered_resident_agent_id) agentIds.add(b.tethered_resident_agent_id);
     }

@@ -116,10 +116,14 @@ async function eligiblePool(db: Db, propertyId: string): Promise<EligibleAgent[]
   const buyerIds = (reservations ?? []).map((r: any) => r.buyer_account_id);
   if (buyerIds.length === 0) return [];
 
-  const { data: buyers } = await db
+  const { data: buyerRows } = await db
     .from("buyer_accounts")
     .select("id, tethered_resident_agent_id")
     .in("id", buyerIds);
+  // The pool is each buyer's agent on THIS property, so a Listing Agent who was
+  // replaced here (per-property agent) never enters it.
+  const { withPropertyAgents } = await import("@/lib/property-agent.server");
+  const buyers = await withPropertyAgents(db, propertyId, (buyerRows ?? []) as any[]);
 
   const counts = new Map<string, number>();
   for (const b of buyers ?? []) {
@@ -582,7 +586,8 @@ export const getBriefcase = createServerFn({ method: "POST" })
         .from("buyer_accounts")
         .select("id, primary_name, tethered_resident_agent_id")
         .in("id", buyerIds);
-      for (const r of rows ?? []) buyerRows.set(r.id, r);
+      const { withPropertyAgents } = await import("@/lib/property-agent.server");
+      for (const r of await withPropertyAgents(db, pod.property_id, (rows ?? []) as any[])) buyerRows.set(r.id, r);
     }
     const agentIds = [...new Set([...buyerRows.values()].map((b) => b.tethered_resident_agent_id).filter(Boolean))];
     const agentNames = new Map<string, string>();

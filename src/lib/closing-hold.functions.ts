@@ -76,7 +76,8 @@ async function podParties(db: Db, pod: any): Promise<PodParty[]> {
       .from("buyer_accounts")
       .select("id, primary_name, tethered_resident_agent_id")
       .in("id", buyerIds);
-    for (const b of data ?? []) buyers.set(b.id, b);
+    const { withPropertyAgents } = await import("@/lib/property-agent.server");
+    for (const b of await withPropertyAgents(db, pod.property_id, (data ?? []) as any[])) buyers.set(b.id, b);
   }
 
   const agentIds = [
@@ -228,10 +229,12 @@ export const placeClosingHold = createServerFn({ method: "POST" })
       .eq("status", "reserved");
     const buyerIds = (reservations ?? []).map((r: any) => r.buyer_account_id);
     if (buyerIds.length) {
-      const { data: buyers } = await db
+      const { data: buyerRows } = await db
         .from("buyer_accounts")
-        .select("auth_user_id, tethered_resident_agent_id")
+        .select("id, auth_user_id, tethered_resident_agent_id")
         .in("id", buyerIds);
+      const { withPropertyAgents } = await import("@/lib/property-agent.server");
+      const buyers = await withPropertyAgents(db, pod.property_id, (buyerRows ?? []) as any[]);
       const tethered = [
         ...new Set((buyers ?? []).map((b: any) => b.tethered_resident_agent_id).filter(Boolean)),
       ] as string[];

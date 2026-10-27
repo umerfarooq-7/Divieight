@@ -1,4 +1,5 @@
 import { AGENT_ACK_DEADLINE_DAYS, agentDeadline } from "@/lib/due-diligence";
+import { withPropertyAgents } from "@/lib/property-agent.server";
 
 /**
  * Parallel Resident Agent acknowledgment escalation.
@@ -81,12 +82,14 @@ export async function runDiligenceEscalationSweep(): Promise<DiligenceEscalation
         .maybeSingle();
       if (already) continue;
 
-      const { data: buyer } = await db
+      const { data: buyerRow } = await db
         .from("buyer_accounts")
         .select("id, auth_user_id, tethered_resident_agent_id")
         .eq("id", buyerAccountId)
         .maybeSingle();
-      if (!buyer) continue;
+      if (!buyerRow) continue;
+      // The buyer's agent on this document's property.
+      const [buyer] = await withPropertyAgents(db, doc.property_id, [buyerRow as any]);
       // Only the currently tethered agent's acknowledgment satisfies the gate.
       if (
         ((agentAcks ?? []) as any[]).some(

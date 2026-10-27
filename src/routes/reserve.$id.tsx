@@ -11,7 +11,9 @@ import {
   checkReservationEligibility,
   createReservation,
 } from "@/lib/reservations.functions";
-import { RESERVATION_BLOCK_COPY } from "@/lib/pod";
+import { RESERVATION_BLOCK_COPY, type ReservationResult } from "@/lib/pod";
+import { searchAgents } from "@/lib/designation.functions";
+import { formatMarkets } from "@/lib/markets";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -53,7 +55,10 @@ function ReservePage() {
   const reserve = useServerFn(createReservation);
 
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<{ systemLocked: boolean } | null>(null);
+  const [done, setDone] = useState<{ systemLocked: boolean; agentChange: ReservationResult["agentChange"] } | null>(null);
+  // Set when the buyer's agent holds this listing: nothing is reserved until
+  // they pick a different agent for this property (or let divieight choose).
+  const [conflict, setConflict] = useState<ReservationResult["conflict"]>(null);
 
   const { data: property, isLoading: propertyLoading } = useQuery({
     queryKey: ["marketplace-property", id],
@@ -98,17 +103,26 @@ function ReservePage() {
       ? (eligibility.reason as keyof typeof RESERVATION_BLOCK_COPY)
       : null;
 
-  async function confirm() {
+  async function confirm(agent?: { replacementAgentId?: string; autoAssignAgent?: boolean }) {
     setSubmitting(true);
-    const result = await reserve({ data: { propertyId: id } });
+    const result = await reserve({ data: { propertyId: id, ...agent } });
     setSubmitting(false);
+    if (!result.ok && result.reason === "dual_agency_conflict") {
+      setConflict(result.conflict ?? null);
+      return;
+    }
+    if (!result.ok && (result.reason === "invalid_replacement_agent" || result.reason === "no_replacement_agent")) {
+      toast.error("Choose a different agent", { description: result.message ?? undefined });
+      return;
+    }
     if (!result.ok) {
       const copy = RESERVATION_BLOCK_COPY[result.reason as keyof typeof RESERVATION_BLOCK_COPY];
       toast.error(copy?.title ?? "Reservation failed", { description: copy?.body });
       void refetch();
       return;
     }
-    setDone({ systemLocked: result.systemLocked });
+    setConflict(null);
+    setDone({ systemLocked: result.systemLocked, agentChange: result.agentChange ?? null });
     void refetch();
     // Keep the Eight-Slices Tracker honest on the listing page and marketplace.
     void queryClient.invalidateQueries({ queryKey: ["pod-composition", id] });
@@ -230,11 +244,15 @@ function ReservePage() {
         <Notice
           tone="ok"
           title="Share reserved"
-          body={
+          body={[
             done.systemLocked
               ? "All eight shares are now committed — this pod has entered System Lock."
-              : "Your 1/8th share is reserved and the pod price is now Hard-Locked."
-          }
+              : "Your 1/8th share is reserved and the pod price is now Hard-Locked.",
+            done.agentChange
+              ? ` For this property your agent is ${done.agentChange.newAgentName ?? "your new agent"}; your other properties keep your usual agent.`
+              : "",
+            done.agentChange?.referralPreserved ? " Your original agent keeps their referral share." : "",
+          ].join("")}
           action={
             <Link
               to="/buyer/dashboard"
@@ -243,6 +261,15 @@ function ReservePage() {
               Go to my dashboard
             </Link>
           }
+        />
+      ) : conflict ? (
+        <AgentChangeStep
+          propertyId={id}
+          conflict={conflict}
+          submitting={submitting}
+          onChoose={(agentId) => void confirm({ replacementAgentId: agentId })}
+          onAutoAssign={() => void confirm({ autoAssignAgent: true })}
+          onCancel={() => setConflict(null)}
         />
       ) : (
         <>
@@ -274,7 +301,7 @@ function ReservePage() {
             <button
               type="button"
               disabled={submitting}
-              onClick={confirm}
+              onClick={() => void confirm()}
               className="mt-5 w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? "Reserving…" : "Confirm and secure my priority rank"}
@@ -291,6 +318,117 @@ function ReservePage() {
         <PodCompositionPanel composition={composition} className="mt-6" />
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Dual-agency step: the buyer's agent holds this listing. Pick another agent
+ * for THIS property (the Listing Agent is never offered), or let divieight
+ * choose. Nothing is reserved until one of these succeeds.
+ */
+function AgentChangeStep({
+  propertyId,
+  conflict,
+  submitting,
+  onChoose,
+  onAutoAssign,
+  onCancel,
+}: {
+  propertyId: string;
+  conflict: NonNullable<ReservationResult["conflict"]>;
+  submitting: boolean;
+  onChoose: (agentId: string) => void;
+  onAutoAssign: () => void;
+  onCancel: () => void;
+}) {
+  const runSearch = useServerFn(searchAgents);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Array<{ id: string; full_name: string; email: string; markets: unknown }>>([]);
+  const [searching, setSearching] = useState(false);
+
+  async function search(e: React.FormEvent) {
+    e.preventDefault();
+    if (query.trim().length < 2) return;
+    setSearching(true);
+    try {
+      setResults((await runSearch({ data: { query, excludeListingAgentOf: propertyId } })) as never);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-xl border border-accent/50 bg-accent/5 p-6" aria-labelledby="agent-change-heading">
+      <h2 id="agent-change-heading" className="font-display text-base font-semibold text-foreground">
+        Choose a different agent for this property
+      </h2>
+      <p className="mt-1 text-sm text-foreground">
+        Your agent {conflict.conflicting_agent_name ?? ""} is also the listing agent for this property. For this property
+        you need a different agent. Your other properties keep your usual agent.
+      </p>
+      {conflict.referring_agent_id_same ? (
+        <p className="mt-2 text-sm text-muted-foreground">Your original agent keeps their referral share.</p>
+      ) : null}
+      <p className="mt-2 text-xs text-muted-foreground">Nothing is reserved until you confirm an agent below.</p>
+
+      <form onSubmit={search} className="mt-4 flex flex-wrap gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search agents by name or email"
+          aria-label="Search agents by name or email"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          disabled={searching || query.trim().length < 2}
+          className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground disabled:opacity-60"
+        >
+          {searching ? "Searching…" : "Search"}
+        </button>
+      </form>
+      {results.length > 0 ? (
+        <ul className="mt-3 divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+          {results.map((a) => (
+            <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-foreground">{a.full_name}</span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {a.email} · {formatMarkets(a.markets)}
+                </span>
+              </span>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => onChoose(a.id)}
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-60"
+              >
+                {submitting ? "Reserving…" : "Use this agent & reserve"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={onAutoAssign}
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground disabled:opacity-60"
+        >
+          {submitting ? "Reserving…" : "Let divieight choose an agent for me"}
+        </button>
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={onCancel}
+          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground disabled:opacity-60"
+        >
+          Not now
+        </button>
+      </div>
+    </section>
   );
 }
 

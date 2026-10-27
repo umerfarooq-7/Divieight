@@ -110,7 +110,7 @@ Compensation for representing this buyer is the buyer-side commission paid at cl
 
 export const searchAgents = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { query: string }) => input)
+  .inputValidator((input: { query: string; excludeListingAgentOf?: string | null }) => input)
   .handler(async ({ data }): Promise<AgentSearchResult[]> => {
     const q = data.query.trim();
     if (q.length < 2) return [];
@@ -119,8 +119,18 @@ export const searchAgents = createServerFn({ method: "POST" })
       .from("agents")
       .select("id, full_name, email, markets")
       .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`)
-      .limit(10);
-    return (rows ?? []) as AgentSearchResult[];
+      .limit(11);
+    let results = (rows ?? []) as AgentSearchResult[];
+    // Choosing an agent for one property: its Listing Agent is never offered.
+    if (data.excludeListingAgentOf) {
+      const { data: property } = await db
+        .from("properties")
+        .select("listing_agent_id")
+        .eq("id", data.excludeListingAgentOf)
+        .maybeSingle();
+      if (property?.listing_agent_id) results = results.filter((a) => a.id !== property.listing_agent_id);
+    }
+    return results.slice(0, 10);
   });
 
 export const getDesignationState = createServerFn({ method: "POST" })

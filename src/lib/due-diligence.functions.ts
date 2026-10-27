@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { auditIp } from "@/lib/request-ip.server";
 import { buyerConnectedToProperty } from "@/lib/property-access.server";
+import { agentPropertyPairs, effectiveAgentId, loadAgentOverrides } from "@/lib/property-agent.server";
 import {
   AGENT_ACK_TEXT,
   GOVERNING_CATEGORIES,
@@ -109,7 +110,7 @@ async function loadAcks(
   const { data } = await db
     .from("due_diligence_acknowledgments")
     .select(
-      "id, document_id, actor_role, account_member_id, agent_id, signed_name, content_hash, acknowledged_at, independent_review_notice_shown_at",
+      "id, document_id, property_id, actor_role, account_member_id, agent_id, signed_name, content_hash, acknowledged_at, independent_review_notice_shown_at",
     )
     .eq("buyer_account_id", buyerAccountId)
     .in("document_id", documentIds);
@@ -121,11 +122,9 @@ async function loadAcks(
  * acknowledgment. After a re-tether, the prior agent's acks stay in the Audit
  * Vault but no longer count toward the gate.
  */
-export async function currentAgentAcks<T extends { actor_role: string; agent_id: string | null }>(
-  db: Db,
-  buyerAccountId: string,
-  acks: T[],
-): Promise<T[]> {
+export async function currentAgentAcks<
+  T extends { actor_role: string; agent_id: string | null; property_id?: string | null },
+>(db: Db, buyerAccountId: string, acks: T[]): Promise<T[]> {
   if (!acks.some((a) => a.actor_role === "resident_agent")) return acks;
   const { data: buyer } = await db
     .from("buyer_accounts")
@@ -133,7 +132,13 @@ export async function currentAgentAcks<T extends { actor_role: string; agent_id:
     .eq("id", buyerAccountId)
     .maybeSingle();
   const tethered = (buyer?.tethered_resident_agent_id as string | null) ?? null;
-  return acks.filter((a) => a.actor_role !== "resident_agent" || a.agent_id === tethered);
+  // The agent who counts is the buyer's agent on the acknowledged document's
+  // property (a per-property agent replaces a Listing-Agent tether there).
+  const propertyIds = [...new Set(acks.map((a) => a.property_id).filter(Boolean))] as string[];
+  const overrides = await loadAgentOverrides(db, { buyerIds: [buyerAccountId], propertyIds });
+  const agentOn = (propertyId: string | null | undefined) =>
+    overrides.find((o) => o.property_id === propertyId)?.resident_agent_id ?? tethered;
+  return acks.filter((a) => a.actor_role !== "resident_agent" || a.agent_id === agentOn(a.property_id));
 }
 
 async function loadMembers(db: Db, buyerAccountId: string): Promise<DdMember[]> {
@@ -199,11 +204,12 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
     const states = buildGateState(documents, acks, members);
 
     let agent: { id: string; name: string | null } | null = null;
-    if (buyer.tethered_resident_agent_id) {
+    const agentId = await effectiveAgentId(db, buyer.id, data.propertyId, buyer.tethered_resident_agent_id);
+    if (agentId) {
       const { data: a } = await db
         .from("agents")
         .select("id, full_name")
-        .eq("id", buyer.tethered_resident_agent_id)
+        .eq("id", agentId)
         .maybeSingle();
       if (a) agent = { id: a.id, name: a.full_name ?? null };
     }
@@ -383,30 +389,8 @@ export const getAgentDiligenceTasks = createServerFn({ method: "GET" })
     if (!agent)
       return { agentId: null, agentName: "Resident Agent", tasks: [], ackText: AGENT_ACK_TEXT };
 
-    const { data: buyers } = await db
-      .from("buyer_accounts")
-      .select("id")
-      .eq("tethered_resident_agent_id", agent.id);
-    const buyerIds = ((buyers ?? []) as { id: string }[]).map((b) => b.id);
-    if (buyerIds.length === 0)
-      return {
-        agentId: agent.id,
-        agentName: agent.full_name ?? "Resident Agent",
-        tasks: [],
-        ackText: AGENT_ACK_TEXT,
-      };
-
-    // Properties those buyers have reserved into.
-    const { data: reservations } = await db
-      .from("pod_reservations")
-      .select("buyer_account_id, property_id, status")
-      .in("buyer_account_id", buyerIds)
-      .eq("status", "reserved");
-
-    const pairs = ((reservations ?? []) as any[]).map((r) => ({
-      buyerAccountId: r.buyer_account_id as string,
-      propertyId: r.property_id as string,
-    }));
+    // (buyer, property) pairs where this agent is the buyer's agent on that property.
+    const pairs = await agentPropertyPairs(db, agent.id);
     if (pairs.length === 0)
       return {
         agentId: agent.id,
@@ -485,8 +469,7 @@ export const acknowledgeAsAgent = createServerFn({ method: "POST" })
       .select("id, tethered_resident_agent_id")
       .eq("id", data.buyerAccountId)
       .maybeSingle();
-    if (!buyer || buyer.tethered_resident_agent_id !== agent.id)
-      return { ok: false, error: "You are not the tethered Resident Agent for this account." };
+    if (!buyer) return { ok: false, error: "You are not the tethered Resident Agent for this account." };
 
     const { data: doc } = await db
       .from("due_diligence_inventory")
@@ -494,6 +477,10 @@ export const acknowledgeAsAgent = createServerFn({ method: "POST" })
       .eq("id", data.documentId)
       .maybeSingle();
     if (!doc) return { ok: false, error: "Document not found." };
+    // The buyer's agent on THIS document's property (a per-property agent may
+    // replace the account-level tether there).
+    if ((await effectiveAgentId(db, buyer.id, doc.property_id, buyer.tethered_resident_agent_id)) !== agent.id)
+      return { ok: false, error: "You are not the tethered Resident Agent for this account." };
     if (doc.content_hash !== data.contentHash)
       return { ok: false, error: "This document changed — reload and review the current version." };
 

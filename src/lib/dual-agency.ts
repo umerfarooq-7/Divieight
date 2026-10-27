@@ -8,6 +8,8 @@
  *   1. tethering time (Module 7 selection, buyer designation, "keep this buyer")
  *   2. when a seller tags/assigns a Listing Agent on a property
  *   3. at Hard-Lock, as a safeguard that logs a compliance alert if it fires
+ *   4. at reservation: a buyer whose agent holds THIS listing must take a
+ *      different agent for this property (property-agent.server.ts)
  *
  * The Heavy Lifting Agent pool is drawn only from tethered Resident Agents in
  * the pod, so blocking the tether automatically blocks HLA selection too — no
@@ -24,7 +26,7 @@ export const DUAL_AGENCY_MESSAGE =
 export const DUAL_AGENCY_DESIGNATION_MESSAGE =
   "This agent is the Listing Agent for this property and cannot also represent a buyer in this transaction — please choose a different agent";
 
-export type DualAgencyPoint = "tethering" | "listing_agent_tag" | "hard_lock";
+export type DualAgencyPoint = "tethering" | "listing_agent_tag" | "hard_lock" | "reservation";
 
 export async function logDualAgency(
   db: Db,
@@ -110,14 +112,23 @@ export async function clearTethersForListingAgent(
   const buyerIds = await podBuyerAccountIds(db, params.propertyId);
   if (buyerIds.length === 0) return { retethered: [] };
 
-  const { data: rows } = await db
+  const { data: tetheredRows } = await db
     .from("buyer_accounts")
     .select("id, auth_user_id")
     .in("id", buyerIds)
     .eq("tethered_resident_agent_id", params.agentId);
+  // Buyers who already have a different agent on THIS property keep their
+  // account tether (their other properties are unaffected by this listing).
+  const { loadAgentOverrides } = await import("@/lib/property-agent.server");
+  const replacedHere = new Set(
+    (await loadAgentOverrides(db, { buyerIds, propertyIds: [params.propertyId] }))
+      .filter((o) => o.resident_agent_id !== params.agentId)
+      .map((o) => o.buyer_account_id),
+  );
+  const rows = ((tetheredRows ?? []) as any[]).filter((b) => !replacedHere.has(b.id));
 
   const retethered: string[] = [];
-  for (const buyer of rows ?? []) {
+  for (const buyer of rows) {
     await db
       .from("buyer_accounts")
       .update({
@@ -177,11 +188,15 @@ export async function verifyPodDualAgency(
 
   const { data: rows } = await db
     .from("buyer_accounts")
-    .select("id")
-    .in("id", buyerIds)
-    .eq("tethered_resident_agent_id", property.listing_agent_id);
-
-  const violations = (rows ?? []).map((r: any) => r.id as string);
+    .select("id, tethered_resident_agent_id")
+    .in("id", buyerIds);
+  // The buyer's agent on THIS property — a per-property agent that replaced
+  // the Listing Agent here is not a violation.
+  const { withPropertyAgents } = await import("@/lib/property-agent.server");
+  const onProperty = await withPropertyAgents(db, params.propertyId, (rows ?? []) as any[]);
+  const violations = onProperty
+    .filter((r: any) => r.tethered_resident_agent_id === property.listing_agent_id)
+    .map((r: any) => r.id as string);
   for (const buyerAccountId of violations) {
     await logDualAgency(db, {
       actorId: params.actorId,

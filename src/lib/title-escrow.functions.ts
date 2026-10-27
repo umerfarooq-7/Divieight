@@ -212,11 +212,10 @@ export const listAgentTitleStatuses = createServerFn({ method: "GET" })
     const db = await adminDb();
     const { data: agent } = await db.from("agents").select("id").eq("auth_user_id", context.claims?.sub as string).maybeSingle();
     if (!agent) return { rows: [] };
-    const { data: buyers } = await db.from("buyer_accounts").select("id").eq("tethered_resident_agent_id", agent.id);
-    const buyerIds = ((buyers ?? []) as Array<{ id: string }>).map((b) => b.id);
-    if (!buyerIds.length) return { rows: [] };
-    const { data: res } = await db.from("pod_reservations").select("property_id").in("buyer_account_id", buyerIds).eq("status", "reserved");
-    const ids = [...new Set(((res ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))];
+    // Properties on which this agent is a buyer's agent (per-property agent aware).
+    const { agentPropertyPairs } = await import("@/lib/property-agent.server");
+    const ids = [...new Set((await agentPropertyPairs(db, agent.id)).map((p) => p.propertyId))];
+    if (!ids.length) return { rows: [] };
     const { data: orders } = ids.length ? await db.from("title_escrow_orders").select("property_id").in("property_id", ids) : { data: [] };
     const withOrders = ((orders ?? []) as Array<{ property_id: string }>).map((o) => o.property_id);
     if (!withOrders.length) return { rows: [] };

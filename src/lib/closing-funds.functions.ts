@@ -225,19 +225,23 @@ export const listAgentClosingFunds = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!agent) return { rows: [] as Array<ClosingRow & { buyerEmail: string | null }> };
 
-    const { data: buyers } = await db
-      .from("buyer_accounts")
-      .select("id, email")
-      .eq("tethered_resident_agent_id", agent.id);
+    // Only the (buyer, property) pairs on which this agent is the buyer's agent.
+    const { agentPropertyPairs } = await import("@/lib/property-agent.server");
+    const pairs = await agentPropertyPairs(db, agent.id);
+    const pairKeys = new Set(pairs.map((p) => `${p.buyerAccountId}:${p.propertyId}`));
+    const pairBuyerIds = [...new Set(pairs.map((p) => p.buyerAccountId))];
+    if (pairBuyerIds.length === 0) return { rows: [] as Array<ClosingRow & { buyerEmail: string | null }> };
+    const { data: buyers } = await db.from("buyer_accounts").select("id, email").in("id", pairBuyerIds);
     const buyerList = (buyers ?? []) as Array<{ id: string; email: string | null }>;
-    if (buyerList.length === 0) return { rows: [] as Array<ClosingRow & { buyerEmail: string | null }> };
 
     const { data } = await db
       .from("closing_funds_obligations")
       .select("*")
-      .in("buyer_account_id", buyerList.map((b) => b.id))
+      .in("buyer_account_id", pairBuyerIds)
       .order("funding_deadline", { ascending: true });
-    const rows = (data ?? []) as ClosingObligation[];
+    const rows = ((data ?? []) as ClosingObligation[]).filter((o) =>
+      pairKeys.has(`${o.buyer_account_id}:${o.property_id}`),
+    );
     const ids = [...new Set(rows.map((o) => o.property_id))];
     const props = await propertiesById(db, ids);
     const terms = await termsById(db, ids);

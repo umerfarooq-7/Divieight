@@ -91,7 +91,9 @@ export const getAgentPodView = createServerFn({ method: "GET" })
       .from("buyer_accounts")
       .select("id, email, onboarding_status, tethered_resident_agent_id")
       .in("id", buyerIds);
-    const buyerRows = (buyers ?? []) as any[];
+    // Each buyer's agent on this property (per-property agent where one applies).
+    const { withPropertyAgents } = await import("@/lib/property-agent.server");
+    const buyerRows = (await withPropertyAgents(db, data.propertyId, (buyers ?? []) as any[])) as any[];
 
     const mineIds = new Set(
       buyerRows.filter((b) => b.tethered_resident_agent_id === agent.id).map((b) => b.id),

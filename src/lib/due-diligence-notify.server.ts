@@ -1,3 +1,4 @@
+import { withPropertyAgents } from "@/lib/property-agent.server";
 /**
  * Due-diligence notifications (server-only).
  *
@@ -53,10 +54,12 @@ export async function notifyNewRequiredDocument(
   ];
   if (buyerIds.length === 0) return;
 
-  const { data: buyers } = await db
+  const { data: buyerRows } = await db
     .from("buyer_accounts")
     .select("id, auth_user_id, tethered_resident_agent_id")
     .in("id", buyerIds);
+  // Each buyer's agent on this document's property.
+  const buyers = await withPropertyAgents(db, doc.property_id, (buyerRows ?? []) as any[]);
 
   const buyerMessage = doc.amended
     ? `An updated version of "${doc.document_title}" is on file — your prior acknowledgment no longer applies, please review and acknowledge the current version.`
@@ -92,12 +95,13 @@ export async function notifyOutstandingDiligence(
   const pending = (docs ?? []) as any[];
   if (pending.length === 0) return;
 
-  const { data: buyer } = await db
+  const { data: buyerRow } = await db
     .from("buyer_accounts")
     .select("id, auth_user_id, tethered_resident_agent_id")
     .eq("id", input.buyerAccountId)
     .maybeSingle();
-  if (!buyer) return;
+  if (!buyerRow) return;
+  const [buyer] = await withPropertyAgents(db, input.propertyId, [buyerRow as any]);
 
   const count = pending.length;
   const noun = count === 1 ? "document" : "documents";

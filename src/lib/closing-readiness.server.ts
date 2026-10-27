@@ -1,3 +1,4 @@
+import { withPropertyAgents } from "@/lib/property-agent.server";
 /**
  * Closing Readiness (Prompt 15) — READ-ONLY aggregation of every gate a
  * closing depends on. It never writes: no audit rows, no compliance alerts,
@@ -49,7 +50,12 @@ export async function closingReadiness(db: Db, propertyId: string): Promise<Read
   const { data: buyerRows } = buyerIds.length
     ? await db.from("buyer_accounts").select("id, email, tethered_resident_agent_id").in("id", buyerIds)
     : { data: [] };
-  const buyers = (buyerRows ?? []) as Array<{ id: string; email: string | null; tethered_resident_agent_id: string | null }>;
+  // Each buyer's agent on this property (per-property agent where one applies).
+  const buyers = (await withPropertyAgents(db, propertyId, (buyerRows ?? []) as any[])) as Array<{
+    id: string;
+    email: string | null;
+    tethered_resident_agent_id: string | null;
+  }>;
   const who = (id: string) => buyers.find((b) => b.id === id)?.email ?? `Buyer Account ${short(id)}`;
   const retained = p.exit_type === "hybrid_exit" ? (p.retained_shares ?? 0) : 0;
   const reserved = reservations.reduce((s, r) => s + (r.shares_reserved ?? 0), 0);
