@@ -145,6 +145,7 @@ import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
 import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
+import { Route as AdminPropertiesIdGovernanceRouteImport } from './routes/admin.properties.$id.governance'
 import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
 import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
@@ -154,6 +155,7 @@ import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pod
 import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
 import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
+import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -859,6 +861,12 @@ const AdminPropertiesIdDueDiligenceRoute =
     path: '/$id/due-diligence',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
+const AdminPropertiesIdGovernanceRoute =
+  AdminPropertiesIdGovernanceRouteImport.update({
+    id: '/$id/governance',
+    path: '/$id/governance',
+    getParentRoute: () => AdminPropertiesRoute,
+  } as any)
 const AdminPropertiesIdInsuranceRoute =
   AdminPropertiesIdInsuranceRouteImport.update({
     id: '/$id/insurance',
@@ -909,6 +917,12 @@ const OwnerPropertiesPropertyIdSectionRoute =
   OwnerPropertiesPropertyIdSectionRouteImport.update({
     id: '/owner/properties/$propertyId/$section',
     path: '/owner/properties/$propertyId/$section',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdLlcRoute =
+  OwnerPropertiesPropertyIdLlcRouteImport.update({
+    id: '/owner/properties/$propertyId/llc',
+    path: '/owner/properties/$propertyId/llc',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -1049,6 +1063,7 @@ export interface FileRoutesByFullPath {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
@@ -1056,6 +1071,7 @@ export interface FileRoutesByFullPath {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
 }
@@ -1189,6 +1205,7 @@ export interface FileRoutesByTo {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
@@ -1196,6 +1213,7 @@ export interface FileRoutesByTo {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
 }
@@ -1337,6 +1355,7 @@ export interface FileRoutesById {
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
+  '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
@@ -1344,6 +1363,7 @@ export interface FileRoutesById {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
 }
@@ -1486,6 +1506,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
@@ -1493,6 +1514,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
   fileRoutesByTo: FileRoutesByTo
@@ -1626,6 +1648,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
@@ -1633,6 +1656,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
   id:
@@ -1773,6 +1797,7 @@ export interface FileRouteTypes {
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/due-diligence'
+    | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
     | '/agent/authorizations/$id/commission'
@@ -1780,6 +1805,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
   fileRoutesById: FileRoutesById
@@ -1854,6 +1880,7 @@ export interface RootRouteChildren {
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
+  OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
 }
 
@@ -2811,6 +2838,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesIdDueDiligenceRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
+    '/admin/properties/$id/governance': {
+      id: '/admin/properties/$id/governance'
+      path: '/$id/governance'
+      fullPath: '/admin/properties/$id/governance'
+      preLoaderRoute: typeof AdminPropertiesIdGovernanceRouteImport
+      parentRoute: typeof AdminPropertiesRoute
+    }
     '/admin/properties/$id/insurance': {
       id: '/admin/properties/$id/insurance'
       path: '/$id/insurance'
@@ -2874,12 +2908,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdSectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/llc': {
+      id: '/owner/properties/$propertyId/llc'
+      path: '/owner/properties/$propertyId/llc'
+      fullPath: '/owner/properties/$propertyId/llc'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdLlcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AdminPropertiesRouteChildren {
   AdminPropertiesIndexRoute: typeof AdminPropertiesIndexRoute
   AdminPropertiesIdDueDiligenceRoute: typeof AdminPropertiesIdDueDiligenceRoute
+  AdminPropertiesIdGovernanceRoute: typeof AdminPropertiesIdGovernanceRoute
   AdminPropertiesIdInsuranceRoute: typeof AdminPropertiesIdInsuranceRoute
   AdminPropertiesIdReportsRoute: typeof AdminPropertiesIdReportsRoute
 }
@@ -2887,6 +2929,7 @@ interface AdminPropertiesRouteChildren {
 const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
   AdminPropertiesIndexRoute: AdminPropertiesIndexRoute,
   AdminPropertiesIdDueDiligenceRoute: AdminPropertiesIdDueDiligenceRoute,
+  AdminPropertiesIdGovernanceRoute: AdminPropertiesIdGovernanceRoute,
   AdminPropertiesIdInsuranceRoute: AdminPropertiesIdInsuranceRoute,
   AdminPropertiesIdReportsRoute: AdminPropertiesIdReportsRoute,
 }
@@ -3171,6 +3214,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
   ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
+  OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
 }
 export const routeTree = rootRouteImport

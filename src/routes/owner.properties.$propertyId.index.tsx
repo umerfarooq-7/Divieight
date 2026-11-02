@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Building2, CalendarDays, Lock } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
-import { OWNER_SECTIONS } from "@/lib/owner-sections";
+import { OWNER_LLC_LINKS, OWNER_SECTIONS } from "@/lib/owner-sections";
 import type { OwnerPropertyDetail } from "@/lib/owner.functions";
 import {
   OwnerLoading,
@@ -49,7 +49,7 @@ function OwnerPropertyPage() {
             <OwnerLoading />
           )
         ) : data.access === "inactive" ? (
-          <OwnershipPendingNotice label={data.property.label} />
+          <OwnershipPendingNotice label={data.property.label} propertyId={propertyId} />
         ) : (
           <Dashboard property={data.property} />
         )}
@@ -132,6 +132,17 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
       </div>
 
       <nav aria-label="Owner sections" className="mt-6 flex flex-wrap gap-2">
+        {OWNER_LLC_LINKS.map((l) => (
+          <Link
+            key={l.tab}
+            to="/owner/properties/$propertyId/llc"
+            params={{ propertyId: p.propertyId }}
+            search={{ tab: l.tab }}
+            className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            {l.label}
+          </Link>
+        ))}
         {OWNER_SECTIONS.map((s) => (
           <Link
             key={s.slug}

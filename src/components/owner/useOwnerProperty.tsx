@@ -42,7 +42,7 @@ export function OwnerLoading() {
 }
 
 /** Shown to a shareholder until closing has completed. */
-export function OwnershipPendingNotice({ label }: { label: string }) {
+export function OwnershipPendingNotice({ label, propertyId }: { label: string; propertyId?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-8 text-center shadow-sm">
       <KeyRound className="mx-auto h-6 w-6 text-accent" aria-hidden />
@@ -51,9 +51,17 @@ export function OwnershipPendingNotice({ label }: { label: string }) {
         {label}. Your owner dashboard opens once the Operating Agreement is executed and your Digital Key is issued at
         closing.
       </p>
-      <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
-        Back to my properties
-      </Link>
+      <div className="mt-5 flex flex-wrap justify-center gap-4 text-sm font-medium">
+        {/* Governing documents and notices are never hidden from an owner. */}
+        {propertyId ? (
+          <Link to="/owner/properties/$propertyId/llc" params={{ propertyId }} className="text-primary hover:underline">
+            Operating Agreement, rules &amp; notices
+          </Link>
+        ) : null}
+        <Link to="/owner" className="text-primary hover:underline">
+          Back to my properties
+        </Link>
+      </div>
     </div>
   );
 }
