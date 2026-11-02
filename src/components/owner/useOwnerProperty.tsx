@@ -58,6 +58,11 @@ export function OwnershipPendingNotice({ label, propertyId }: { label: string; p
             Operating Agreement, rules &amp; notices
           </Link>
         ) : null}
+        {propertyId ? (
+          <Link to="/owner/properties/$propertyId/votes" params={{ propertyId }} className="text-primary hover:underline">
+            Votes
+          </Link>
+        ) : null}
         <Link to="/owner" className="text-primary hover:underline">
           Back to my properties
         </Link>

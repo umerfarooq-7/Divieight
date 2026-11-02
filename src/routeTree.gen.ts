@@ -148,6 +148,7 @@ import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admi
 import { Route as AdminPropertiesIdGovernanceRouteImport } from './routes/admin.properties.$id.governance'
 import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
 import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.properties.$id.reports'
+import { Route as AdminPropertiesIdVotesRouteImport } from './routes/admin.properties.$id.votes'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
 import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
@@ -156,6 +157,8 @@ import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.p
 import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
+import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
+import { Route as OwnerPropertiesPropertyIdVotesVoteIdRouteImport } from './routes/owner.properties.$propertyId.votes.$voteId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -879,6 +882,11 @@ const AdminPropertiesIdReportsRoute =
     path: '/$id/reports',
     getParentRoute: () => AdminPropertiesRoute,
   } as any)
+const AdminPropertiesIdVotesRoute = AdminPropertiesIdVotesRouteImport.update({
+  id: '/$id/votes',
+  path: '/$id/votes',
+  getParentRoute: () => AdminPropertiesRoute,
+} as any)
 const AgentAuthorizationsIdCommissionRoute =
   AgentAuthorizationsIdCommissionRouteImport.update({
     id: '/$id/commission',
@@ -923,6 +931,18 @@ const OwnerPropertiesPropertyIdLlcRoute =
   OwnerPropertiesPropertyIdLlcRouteImport.update({
     id: '/owner/properties/$propertyId/llc',
     path: '/owner/properties/$propertyId/llc',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdVotesIndexRoute =
+  OwnerPropertiesPropertyIdVotesIndexRouteImport.update({
+    id: '/owner/properties/$propertyId/votes/',
+    path: '/owner/properties/$propertyId/votes/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdVotesVoteIdRoute =
+  OwnerPropertiesPropertyIdVotesVoteIdRouteImport.update({
+    id: '/owner/properties/$propertyId/votes/$voteId',
+    path: '/owner/properties/$propertyId/votes/$voteId',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -1066,6 +1086,7 @@ export interface FileRoutesByFullPath {
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
+  '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -1074,6 +1095,8 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/votes/': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1208,6 +1231,7 @@ export interface FileRoutesByTo {
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
+  '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -1216,6 +1240,8 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/votes': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1358,6 +1384,7 @@ export interface FileRoutesById {
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
+  '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
@@ -1366,6 +1393,8 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/votes/': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1509,6 +1538,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
+    | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1517,6 +1547,8 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
+    | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/votes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1651,6 +1683,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
+    | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1659,6 +1692,8 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
+    | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/votes'
   id:
     | '__root__'
     | '/'
@@ -1800,6 +1835,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
     | '/admin/properties/$id/reports'
+    | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
@@ -1808,6 +1844,8 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
+    | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/votes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1882,6 +1920,8 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
+  OwnerPropertiesPropertyIdVotesVoteIdRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  OwnerPropertiesPropertyIdVotesIndexRoute: typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2859,6 +2899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPropertiesIdReportsRouteImport
       parentRoute: typeof AdminPropertiesRoute
     }
+    '/admin/properties/$id/votes': {
+      id: '/admin/properties/$id/votes'
+      path: '/$id/votes'
+      fullPath: '/admin/properties/$id/votes'
+      preLoaderRoute: typeof AdminPropertiesIdVotesRouteImport
+      parentRoute: typeof AdminPropertiesRoute
+    }
     '/agent/authorizations/$id/commission': {
       id: '/agent/authorizations/$id/commission'
       path: '/$id/commission'
@@ -2915,6 +2962,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdLlcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/votes/': {
+      id: '/owner/properties/$propertyId/votes/'
+      path: '/owner/properties/$propertyId/votes'
+      fullPath: '/owner/properties/$propertyId/votes/'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdVotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/properties/$propertyId/votes/$voteId': {
+      id: '/owner/properties/$propertyId/votes/$voteId'
+      path: '/owner/properties/$propertyId/votes/$voteId'
+      fullPath: '/owner/properties/$propertyId/votes/$voteId'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2924,6 +2985,7 @@ interface AdminPropertiesRouteChildren {
   AdminPropertiesIdGovernanceRoute: typeof AdminPropertiesIdGovernanceRoute
   AdminPropertiesIdInsuranceRoute: typeof AdminPropertiesIdInsuranceRoute
   AdminPropertiesIdReportsRoute: typeof AdminPropertiesIdReportsRoute
+  AdminPropertiesIdVotesRoute: typeof AdminPropertiesIdVotesRoute
 }
 
 const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
@@ -2932,6 +2994,7 @@ const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
   AdminPropertiesIdGovernanceRoute: AdminPropertiesIdGovernanceRoute,
   AdminPropertiesIdInsuranceRoute: AdminPropertiesIdInsuranceRoute,
   AdminPropertiesIdReportsRoute: AdminPropertiesIdReportsRoute,
+  AdminPropertiesIdVotesRoute: AdminPropertiesIdVotesRoute,
 }
 
 const AdminPropertiesRouteWithChildren = AdminPropertiesRoute._addFileChildren(
@@ -3216,6 +3279,10 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
+  OwnerPropertiesPropertyIdVotesVoteIdRoute:
+    OwnerPropertiesPropertyIdVotesVoteIdRoute,
+  OwnerPropertiesPropertyIdVotesIndexRoute:
+    OwnerPropertiesPropertyIdVotesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

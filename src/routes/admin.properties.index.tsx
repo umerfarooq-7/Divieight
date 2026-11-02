@@ -166,6 +166,13 @@ function AdminProperties() {
                       >
                         Governance →
                       </Link>
+                      <Link
+                        to="/admin/properties/$id/votes"
+                        params={{ id: r.id }}
+                        className="ml-3 font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        Votes →
+                      </Link>
                     </td>
                   </tr>
                 ))

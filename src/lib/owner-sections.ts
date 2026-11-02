@@ -7,7 +7,6 @@ export const OWNER_LLC_LINKS = [
 ] as const;
 
 export const OWNER_SECTIONS = [
-  { slug: "voting", label: "Voting" },
   { slug: "maintenance", label: "Maintenance" },
   { slug: "expenses", label: "Expenses" },
   { slug: "resale-shop", label: "Resale Shop" },
