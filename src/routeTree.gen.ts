@@ -127,6 +127,7 @@ import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
+import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
 import { Route as BrokerOnboardingComplianceRouteImport } from './routes/broker.onboarding.compliance'
 import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.onboarding.insurance'
@@ -144,6 +145,7 @@ import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
 import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
+import { Route as AdminPropertiesIdCalendarRouteImport } from './routes/admin.properties.$id.calendar'
 import { Route as AdminPropertiesIdDueDiligenceRouteImport } from './routes/admin.properties.$id.due-diligence'
 import { Route as AdminPropertiesIdGovernanceRouteImport } from './routes/admin.properties.$id.governance'
 import { Route as AdminPropertiesIdInsuranceRouteImport } from './routes/admin.properties.$id.insurance'
@@ -156,6 +158,7 @@ import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pod
 import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
 import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
+import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
 import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
 import { Route as OwnerPropertiesPropertyIdVotesVoteIdRouteImport } from './routes/owner.properties.$propertyId.votes.$voteId'
@@ -766,6 +769,12 @@ const ApiPublicSubstitutionSweepRoute =
     path: '/api/public/substitution-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicUseCalendarSweepRoute =
+  ApiPublicUseCalendarSweepRouteImport.update({
+    id: '/api/public/use-calendar-sweep',
+    path: '/api/public/use-calendar-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BrokerOnboardingBankingRoute = BrokerOnboardingBankingRouteImport.update({
   id: '/onboarding/banking',
   path: '/onboarding/banking',
@@ -858,6 +867,12 @@ const AdminPodsIdSelectHeavyLifterRoute =
     path: '/pods/$id/select-heavy-lifter',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminPropertiesIdCalendarRoute =
+  AdminPropertiesIdCalendarRouteImport.update({
+    id: '/$id/calendar',
+    path: '/$id/calendar',
+    getParentRoute: () => AdminPropertiesRoute,
+  } as any)
 const AdminPropertiesIdDueDiligenceRoute =
   AdminPropertiesIdDueDiligenceRouteImport.update({
     id: '/$id/due-diligence',
@@ -925,6 +940,12 @@ const OwnerPropertiesPropertyIdSectionRoute =
   OwnerPropertiesPropertyIdSectionRouteImport.update({
     id: '/owner/properties/$propertyId/$section',
     path: '/owner/properties/$propertyId/$section',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdCalendarRoute =
+  OwnerPropertiesPropertyIdCalendarRouteImport.update({
+    id: '/owner/properties/$propertyId/calendar',
+    path: '/owner/properties/$propertyId/calendar',
     getParentRoute: () => rootRouteImport,
   } as any)
 const OwnerPropertiesPropertyIdLlcRoute =
@@ -1060,6 +1081,7 @@ export interface FileRoutesByFullPath {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -1082,6 +1104,7 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding/': typeof BuyerOnboardingIndexRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
+  '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
@@ -1092,6 +1115,7 @@ export interface FileRoutesByFullPath {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
@@ -1205,6 +1229,7 @@ export interface FileRoutesByTo {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -1227,6 +1252,7 @@ export interface FileRoutesByTo {
   '/buyer/onboarding': typeof BuyerOnboardingIndexRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
+  '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
@@ -1237,6 +1263,7 @@ export interface FileRoutesByTo {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
@@ -1358,6 +1385,7 @@ export interface FileRoutesById {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -1380,6 +1408,7 @@ export interface FileRoutesById {
   '/buyer/onboarding/': typeof BuyerOnboardingIndexRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
+  '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
   '/admin/properties/$id/due-diligence': typeof AdminPropertiesIdDueDiligenceRoute
   '/admin/properties/$id/governance': typeof AdminPropertiesIdGovernanceRoute
   '/admin/properties/$id/insurance': typeof AdminPropertiesIdInsuranceRoute
@@ -1390,6 +1419,7 @@ export interface FileRoutesById {
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
+  '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
@@ -1512,6 +1542,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -1534,6 +1565,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
+    | '/admin/properties/$id/calendar'
     | '/admin/properties/$id/due-diligence'
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
@@ -1544,6 +1576,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
@@ -1657,6 +1690,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -1679,6 +1713,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
+    | '/admin/properties/$id/calendar'
     | '/admin/properties/$id/due-diligence'
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
@@ -1689,6 +1724,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
@@ -1809,6 +1845,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -1831,6 +1868,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
+    | '/admin/properties/$id/calendar'
     | '/admin/properties/$id/due-diligence'
     | '/admin/properties/$id/governance'
     | '/admin/properties/$id/insurance'
@@ -1841,6 +1879,7 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
+    | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
@@ -1908,6 +1947,7 @@ export interface RootRouteChildren {
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
+  ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
   BuyerOnboardingIdentityRoute: typeof BuyerOnboardingIdentityRoute
   BuyerOnboardingLifestyleRoute: typeof BuyerOnboardingLifestyleRoute
@@ -1918,6 +1958,7 @@ export interface RootRouteChildren {
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
+  OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
   OwnerPropertiesPropertyIdVotesVoteIdRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -2752,6 +2793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSubstitutionSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/use-calendar-sweep': {
+      id: '/api/public/use-calendar-sweep'
+      path: '/api/public/use-calendar-sweep'
+      fullPath: '/api/public/use-calendar-sweep'
+      preLoaderRoute: typeof ApiPublicUseCalendarSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/broker/onboarding/banking': {
       id: '/broker/onboarding/banking'
       path: '/onboarding/banking'
@@ -2871,6 +2919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPodsIdSelectHeavyLifterRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/properties/$id/calendar': {
+      id: '/admin/properties/$id/calendar'
+      path: '/$id/calendar'
+      fullPath: '/admin/properties/$id/calendar'
+      preLoaderRoute: typeof AdminPropertiesIdCalendarRouteImport
+      parentRoute: typeof AdminPropertiesRoute
+    }
     '/admin/properties/$id/due-diligence': {
       id: '/admin/properties/$id/due-diligence'
       path: '/$id/due-diligence'
@@ -2955,6 +3010,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdSectionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/calendar': {
+      id: '/owner/properties/$propertyId/calendar'
+      path: '/owner/properties/$propertyId/calendar'
+      fullPath: '/owner/properties/$propertyId/calendar'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/llc': {
       id: '/owner/properties/$propertyId/llc'
       path: '/owner/properties/$propertyId/llc'
@@ -2981,6 +3043,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminPropertiesRouteChildren {
   AdminPropertiesIndexRoute: typeof AdminPropertiesIndexRoute
+  AdminPropertiesIdCalendarRoute: typeof AdminPropertiesIdCalendarRoute
   AdminPropertiesIdDueDiligenceRoute: typeof AdminPropertiesIdDueDiligenceRoute
   AdminPropertiesIdGovernanceRoute: typeof AdminPropertiesIdGovernanceRoute
   AdminPropertiesIdInsuranceRoute: typeof AdminPropertiesIdInsuranceRoute
@@ -2990,6 +3053,7 @@ interface AdminPropertiesRouteChildren {
 
 const AdminPropertiesRouteChildren: AdminPropertiesRouteChildren = {
   AdminPropertiesIndexRoute: AdminPropertiesIndexRoute,
+  AdminPropertiesIdCalendarRoute: AdminPropertiesIdCalendarRoute,
   AdminPropertiesIdDueDiligenceRoute: AdminPropertiesIdDueDiligenceRoute,
   AdminPropertiesIdGovernanceRoute: AdminPropertiesIdGovernanceRoute,
   AdminPropertiesIdInsuranceRoute: AdminPropertiesIdInsuranceRoute,
@@ -3267,6 +3331,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,
   ApiPublicNarCertSweepRoute: ApiPublicNarCertSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
+  ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
   BuyerOnboardingIdentityRoute: BuyerOnboardingIdentityRoute,
   BuyerOnboardingLifestyleRoute: BuyerOnboardingLifestyleRoute,
@@ -3277,6 +3342,8 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
   ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
+  OwnerPropertiesPropertyIdCalendarRoute:
+    OwnerPropertiesPropertyIdCalendarRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
   OwnerPropertiesPropertyIdVotesVoteIdRoute:

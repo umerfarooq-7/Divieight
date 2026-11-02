@@ -55,7 +55,7 @@ async function capRows(db: Db, propertyId: string): Promise<CapRow[]> {
 }
 
 /** The user's holder on this property, or null if they aren't an owner of it. */
-async function holderFor(db: Db, userId: string, propertyId: string): Promise<Holder | null> {
+export async function holderFor(db: Db, userId: string, propertyId: string): Promise<Holder | null> {
   const { data: buyer } = await db.from("buyer_accounts").select("id").eq("auth_user_id", userId).maybeSingle();
   const buyerId = (buyer?.id as string | undefined) ?? null;
   const rows = await capRows(db, propertyId);

@@ -173,6 +173,13 @@ function AdminProperties() {
                       >
                         Votes →
                       </Link>
+                      <Link
+                        to="/admin/properties/$id/calendar"
+                        params={{ id: r.id }}
+                        className="ml-3 font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        Calendar →
+                      </Link>
                     </td>
                   </tr>
                 ))

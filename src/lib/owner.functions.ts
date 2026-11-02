@@ -43,6 +43,8 @@ export interface OwnerPropertyDetail extends OwnerPropertySummary {
   /** The latest Retention Lock across this owner's shares. */
   retentionLockExpiresAt: string | null;
   capital: { contributed: number; distributions: number; net: number } | null;
+  /** This holder's next Use Calendar weeks. */
+  upcomingStays: Array<{ weekNumber: number; startDate: string; endDate: string }>;
 }
 
 export type OwnerPropertyResult =
@@ -172,6 +174,11 @@ export async function loadOwnerProperty(db: Db, userId: string, propertyId: stri
       acquisitionDate: earliest(rows.map((r) => r.acquisition_date)),
       retentionLockExpiresAt: latest(rows.map((r) => r.retention_lock_expires_at)),
       capital: capitalRow ? { contributed, distributions, net: contributed - distributions } : null,
+      upcomingStays: await (await import("@/lib/use-calendar.server")).nextStays(
+        db,
+        propertyId,
+        rows[0]!.holder_type === "retained_seller" ? `seller:${userId}` : (buyerAccountId as string),
+      ),
     },
   };
 }

@@ -14,7 +14,7 @@ export function VoteStatusChip({ status }: { status: VoteStatus }) {
   return <span className={cn("shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium", chip.className)}>{chip.label}</span>;
 }
 
-function timeLeft(until: number, now: number): string {
+export function timeLeft(until: number, now: number): string {
   const minutes = Math.max(1, Math.round((until - now) / 60000));
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);

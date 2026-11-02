@@ -120,14 +120,28 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
         </Card>
 
         <Card title="Use calendar">
-          <p className="text-sm text-muted-foreground">Next 3 upcoming stays: none yet.</p>
-          <span
-            aria-disabled="true"
-            className="mt-3 inline-flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-muted-foreground"
+          {p.upcomingStays.length > 0 ? (
+            <ul className="space-y-1.5 text-sm">
+              {p.upcomingStays.map((s) => (
+                <li key={s.startDate} className="flex flex-wrap justify-between gap-2 text-foreground">
+                  <span>Week {s.weekNumber}</span>
+                  <span className="text-muted-foreground">
+                    {formatDate(s.startDate)} to {formatDate(s.endDate)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No upcoming stays yet.</p>
+          )}
+          <Link
+            to="/owner/properties/$propertyId/calendar"
+            params={{ propertyId: p.propertyId }}
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             <CalendarDays className="h-4 w-4" aria-hidden />
-            Open calendar (coming soon)
-          </span>
+            Open calendar
+          </Link>
         </Card>
       </div>
 
