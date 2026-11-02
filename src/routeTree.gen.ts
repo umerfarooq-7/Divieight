@@ -92,6 +92,7 @@ import { Route as OnboardingListingRouteImport } from './routes/onboarding.listi
 import { Route as OnboardingListingAgentRouteImport } from './routes/onboarding.listing-agent'
 import { Route as OnboardingMediaRouteImport } from './routes/onboarding.media'
 import { Route as OnboardingPropertyRouteImport } from './routes/onboarding.property'
+import { Route as OwnerIndexRouteImport } from './routes/owner.index'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as RTokenRouteImport } from './routes/r.$token'
@@ -151,6 +152,8 @@ import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.in
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
 import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
 import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
+import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
+import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -568,6 +571,11 @@ const OnboardingPropertyRoute = OnboardingPropertyRouteImport.update({
   path: '/onboarding/property',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OwnerIndexRoute = OwnerIndexRouteImport.update({
+  id: '/owner/',
+  path: '/owner/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -891,6 +899,18 @@ const ApiPublicTitleEscrowProviderRoute =
     path: '/api/public/title-escrow/$provider',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdIndexRoute =
+  OwnerPropertiesPropertyIdIndexRouteImport.update({
+    id: '/owner/properties/$propertyId/',
+    path: '/owner/properties/$propertyId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdSectionRoute =
+  OwnerPropertiesPropertyIdSectionRouteImport.update({
+    id: '/owner/properties/$propertyId/$section',
+    path: '/owner/properties/$propertyId/$section',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -980,6 +1000,7 @@ export interface FileRoutesByFullPath {
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1034,7 +1055,9 @@ export interface FileRoutesByFullPath {
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
+  '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
+  '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1117,6 +1140,7 @@ export interface FileRoutesByTo {
   '/agent': typeof AgentIndexRoute
   '/broker': typeof BrokerIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/owner': typeof OwnerIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/reset-password': typeof ResetPasswordIndexRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1171,7 +1195,9 @@ export interface FileRoutesByTo {
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
+  '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
+  '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1262,6 +1288,7 @@ export interface FileRoutesById {
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
   '/admin/entity-genesis_/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1316,7 +1343,9 @@ export interface FileRoutesById {
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
+  '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
+  '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1408,6 +1437,7 @@ export interface FileRouteTypes {
     | '/agent/'
     | '/broker/'
     | '/onboarding/'
+    | '/owner/'
     | '/properties/'
     | '/reset-password/'
     | '/admin/entity-genesis/$propertyId'
@@ -1462,7 +1492,9 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
+    | '/owner/properties/$propertyId/$section'
     | '/agent/pods/$id/'
+    | '/owner/properties/$propertyId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1545,6 +1577,7 @@ export interface FileRouteTypes {
     | '/agent'
     | '/broker'
     | '/onboarding'
+    | '/owner'
     | '/properties'
     | '/reset-password'
     | '/admin/entity-genesis/$propertyId'
@@ -1599,7 +1632,9 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
+    | '/owner/properties/$propertyId/$section'
     | '/agent/pods/$id'
+    | '/owner/properties/$propertyId'
   id:
     | '__root__'
     | '/'
@@ -1689,6 +1724,7 @@ export interface FileRouteTypes {
     | '/agent/'
     | '/broker/'
     | '/onboarding/'
+    | '/owner/'
     | '/properties/'
     | '/reset-password/'
     | '/admin/entity-genesis_/$propertyId'
@@ -1743,7 +1779,9 @@ export interface FileRouteTypes {
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
+    | '/owner/properties/$propertyId/$section'
     | '/agent/pods/$id/'
+    | '/owner/properties/$propertyId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1789,6 +1827,7 @@ export interface RootRouteChildren {
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
+  OwnerIndexRoute: typeof OwnerIndexRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
   ApiPublicArelloRetryRoute: typeof ApiPublicArelloRetryRoute
   ApiPublicAuthorizationEscalationRoute: typeof ApiPublicAuthorizationEscalationRoute
@@ -1814,6 +1853,8 @@ export interface RootRouteChildren {
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
+  OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
+  OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2399,6 +2440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingPropertyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/': {
+      id: '/owner/'
+      path: '/owner'
+      fullPath: '/owner/'
+      preLoaderRoute: typeof OwnerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/properties/': {
       id: '/properties/'
       path: '/properties'
@@ -2812,6 +2860,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTitleEscrowProviderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/': {
+      id: '/owner/properties/$propertyId/'
+      path: '/owner/properties/$propertyId'
+      fullPath: '/owner/properties/$propertyId/'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/properties/$propertyId/$section': {
+      id: '/owner/properties/$propertyId/$section'
+      path: '/owner/properties/$propertyId/$section'
+      fullPath: '/owner/properties/$propertyId/$section'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -3081,6 +3143,7 @@ const rootRouteChildren: RootRouteChildren = {
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
+  OwnerIndexRoute: OwnerIndexRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
   ApiPublicArelloRetryRoute: ApiPublicArelloRetryRoute,
   ApiPublicAuthorizationEscalationRoute: ApiPublicAuthorizationEscalationRoute,
@@ -3107,6 +3170,8 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerPodsIdRoute: BuyerPodsIdRoute,
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
   ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
+  OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
+  OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCircle2, LogOut, LayoutDashboard } from "lucide-react";
+import { UserCircle2, LogOut, LayoutDashboard, KeyRound } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAdmin } from "@/lib/admin";
 import { getBuyerAccount } from "@/lib/buyer";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { NotificationsBell } from "./NotificationsBell";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyOwnership } from "@/lib/ownership.functions";
+import { getOwnerNavState } from "@/lib/owner.functions";
 
 export function NavBar() {
   const { user, loading } = useAuth();
@@ -19,6 +20,22 @@ export function NavBar() {
   const [portal, setPortal] = useState<"buyer" | "seller" | "agent" | null>(null);
   const [isCoOwner, setIsCoOwner] = useState(false);
   const loadOwnership = useServerFn(getMyOwnership);
+  const [isOwner, setIsOwner] = useState(false);
+  const loadOwnerNav = useServerFn(getOwnerNavState);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setIsOwner(false);
+      return;
+    }
+    loadOwnerNav()
+      .then((o) => !cancelled && setIsOwner(o.isOwner))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loadOwnerNav]);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,6 +171,16 @@ export function NavBar() {
                   </Link>
                 )
               )}
+              {isOwner && !isAdmin ? (
+                <Link
+                  to="/owner"
+                  aria-label="Owner"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+                >
+                  <KeyRound className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden sm:inline">Owner</span>
+                </Link>
+              ) : null}
               <span className="hidden max-w-[180px] truncate text-xs text-muted-foreground sm:inline">
                 {user.email}
               </span>

@@ -1,0 +1,170 @@
+import type { ReactNode } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Building2, CalendarDays, Lock } from "lucide-react";
+import { formatDate } from "@/lib/format-date";
+import { OWNER_SECTIONS } from "@/lib/owner-sections";
+import type { OwnerPropertyDetail } from "@/lib/owner.functions";
+import {
+  OwnerLoading,
+  OwnerPageShell,
+  OwnershipPendingNotice,
+  useOwnerProperty,
+} from "@/components/owner/useOwnerProperty";
+
+export const Route = createFileRoute("/owner/properties/$propertyId/")({
+  head: () => ({
+    meta: [
+      { title: "Owner dashboard — divieight" },
+      { name: "description", content: "Your shares, capital account and calendar for this home." },
+      { property: "og:title", content: "Owner dashboard — divieight" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: OwnerPropertyPage,
+});
+
+const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+const EIN_LABELS: Record<string, string> = { pending: "Pending", issued: "Issued", verified: "Verified" };
+
+function OwnerPropertyPage() {
+  const { propertyId } = Route.useParams();
+  const { data, isLoading, isError, refetch } = useOwnerProperty(propertyId);
+
+  return (
+    <OwnerPageShell>
+      <Link to="/owner" className="text-sm text-muted-foreground hover:text-foreground">
+        ← My properties
+      </Link>
+      <div className="mt-4">
+        {isLoading || !data || data.access === "none" ? (
+          isError ? (
+            <p className="text-sm text-muted-foreground">
+              We couldn't load this property.{" "}
+              <button type="button" onClick={() => void refetch()} className="font-medium text-primary hover:underline">
+                Try again
+              </button>
+            </p>
+          ) : (
+            <OwnerLoading />
+          )
+        ) : data.access === "inactive" ? (
+          <OwnershipPendingNotice label={data.property.label} />
+        ) : (
+          <Dashboard property={data.property} />
+        )}
+      </div>
+    </OwnerPageShell>
+  );
+}
+
+function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
+  const locked = p.retentionLockExpiresAt && new Date(p.retentionLockExpiresAt).getTime() > Date.now();
+  return (
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Owner dashboard</p>
+          <h1 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">{p.label}</h1>
+        </div>
+        {locked ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground">
+            <Lock className="h-3.5 w-3.5 text-accent" aria-hidden />
+            Resale locked until {formatDate(p.retentionLockExpiresAt)}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Card title="Property overview">
+          {p.photo ? (
+            <img src={p.photo} alt="" className="mb-3 h-40 w-full rounded-lg object-cover" />
+          ) : (
+            <div className="mb-3 flex h-40 items-center justify-center rounded-lg bg-muted">
+              <Building2 className="h-8 w-8 text-muted-foreground" aria-hidden />
+            </div>
+          )}
+          <Facts
+            rows={[
+              ["Market", p.market || "—"],
+              ["LLC", p.llcName ?? "—"],
+              ["EIN status", p.einStatus ? (EIN_LABELS[p.einStatus] ?? p.einStatus) : "—"],
+            ]}
+          />
+        </Card>
+
+        <Card title="My shares">
+          <p className="font-display text-3xl font-semibold text-foreground">{p.shareCount} of 8</p>
+          <div className="mt-3">
+            <Facts
+              rows={[
+                [`Share number${p.shareNumbers.length === 1 ? "" : "s"}`, p.shareNumbers.join(", ")],
+                ["Acquired", formatDate(p.acquisitionDate)],
+              ]}
+            />
+          </div>
+        </Card>
+
+        <Card title="Capital account">
+          {p.capital ? (
+            <Facts
+              rows={[
+                ["Contributed", money(p.capital.contributed)],
+                ["Distributions", money(p.capital.distributions)],
+                ["Net", money(p.capital.net)],
+              ]}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">No capital account activity yet.</p>
+          )}
+        </Card>
+
+        <Card title="Use calendar">
+          <p className="text-sm text-muted-foreground">Next 3 upcoming stays: none yet.</p>
+          <span
+            aria-disabled="true"
+            className="mt-3 inline-flex cursor-not-allowed items-center gap-1.5 text-sm font-medium text-muted-foreground"
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden />
+            Open calendar (coming soon)
+          </span>
+        </Card>
+      </div>
+
+      <nav aria-label="Owner sections" className="mt-6 flex flex-wrap gap-2">
+        {OWNER_SECTIONS.map((s) => (
+          <Link
+            key={s.slug}
+            to="/owner/properties/$propertyId/$section"
+            params={{ propertyId: p.propertyId, section: s.slug }}
+            className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            {s.label}
+          </Link>
+        ))}
+      </nav>
+    </>
+  );
+}
+
+function Card({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Facts({ rows }: { rows: Array<[string, string]> }) {
+  return (
+    <dl className="space-y-1.5 text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex flex-wrap justify-between gap-2">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="min-w-0 break-words font-medium text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
