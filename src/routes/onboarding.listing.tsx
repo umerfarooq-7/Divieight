@@ -9,6 +9,7 @@ import { Field } from "@/components/Field";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { EightSlicesTracker } from "@/components/EightSlicesTracker";
 import { markListingStep } from "@/lib/listing-progress";
+import { DEFAULT_AMENITIES, knownAmenities } from "@/lib/amenities";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding/listing")({
@@ -31,19 +32,6 @@ const USAGE_TAGS = [
   { value: "owner_occupied", label: "Owner-Occupied / Lifestyle" },
   { value: "short_term_rental", label: "Short-Term Rental" },
 ] as const;
-const DEFAULT_AMENITIES = [
-  "Pool",
-  "Home Office",
-  "Pet-Friendly",
-  "Waterfront",
-  "Mountain View",
-  "Gated Community",
-  "Hot Tub",
-  "Garage",
-  "Fireplace",
-  "Air Conditioning",
-] as const;
-
 type UsageTag = (typeof USAGE_TAGS)[number]["value"];
 
 type Errors = Partial<Record<
@@ -78,8 +66,9 @@ function ListingScreen() {
   const [sqft, setSqft] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
+  // May hold values from when free-text amenities were allowed: they stay stored but aren't shown.
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [customAmenity, setCustomAmenity] = useState<string>("");
+  const shownAmenities = knownAmenities(selectedAmenities);
 
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -141,15 +130,6 @@ function ListingScreen() {
     setSelectedAmenities((s) =>
       s.includes(tag) ? s.filter((t) => t !== tag) : [...s, tag],
     );
-  }
-
-  function addCustomAmenity() {
-    const t = customAmenity.trim();
-    if (!t) return;
-    if (!selectedAmenities.includes(t)) {
-      setSelectedAmenities((s) => [...s, t]);
-    }
-    setCustomAmenity("");
   }
 
   function validate(): boolean {
@@ -381,12 +361,10 @@ function ListingScreen() {
           {/* Amenities */}
           <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="font-display text-lg font-semibold text-foreground">Amenities</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Tap to toggle. Add your own if you don't see it.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Tap to toggle.</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {Array.from(new Set([...DEFAULT_AMENITIES, ...selectedAmenities])).map((tag) => {
+              {DEFAULT_AMENITIES.map((tag) => {
                 const active = selectedAmenities.includes(tag);
                 return (
                   <button
@@ -404,28 +382,6 @@ function ListingScreen() {
                   </button>
                 );
               })}
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              <input
-                value={customAmenity}
-                onChange={(e) => setCustomAmenity(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCustomAmenity();
-                  }
-                }}
-                placeholder="Add a custom amenity"
-                className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-              />
-              <button
-                type="button"
-                onClick={addCustomAmenity}
-                className="inline-flex h-10 items-center rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted"
-              >
-                Add
-              </button>
             </div>
           </section>
 
@@ -488,9 +444,9 @@ function ListingScreen() {
               <div className="mt-5 border-t border-border pt-4">
                 <EightSlicesTracker retainedShares={retainedShares} reservedShares={0} compact />
               </div>
-              {selectedAmenities.length > 0 ? (
+              {shownAmenities.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-1.5">
-                  {selectedAmenities.slice(0, 6).map((a) => (
+                  {shownAmenities.slice(0, 6).map((a) => (
                     <span
                       key={a}
                       className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-foreground"
@@ -498,9 +454,9 @@ function ListingScreen() {
                       {a}
                     </span>
                   ))}
-                  {selectedAmenities.length > 6 ? (
+                  {shownAmenities.length > 6 ? (
                     <span className="text-[10px] text-muted-foreground">
-                      +{selectedAmenities.length - 6} more
+                      +{shownAmenities.length - 6} more
                     </span>
                   ) : null}
                 </div>

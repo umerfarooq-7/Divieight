@@ -15,3 +15,11 @@ export const DEFAULT_AMENITIES = [
   "Fireplace",
   "Air Conditioning",
 ] as const;
+
+/**
+ * Only the shared amenities, for display. Records saved when free-text amenities
+ * were allowed keep those values in the database; they are simply not shown.
+ */
+export function knownAmenities(stored: readonly string[]): string[] {
+  return stored.filter((a) => (DEFAULT_AMENITIES as readonly string[]).includes(a));
+}

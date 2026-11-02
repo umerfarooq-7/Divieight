@@ -39,8 +39,8 @@ function LifestyleScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const [locations, setLocations] = useState<TargetLocation[]>([{ zip: "", area: "" }]);
+  // May hold values from when free-text amenities were allowed: they stay stored but aren't shown.
   const [amenities, setAmenities] = useState<string[]>([]);
-  const [customAmenity, setCustomAmenity] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -95,13 +95,6 @@ function LifestyleScreen() {
 
   function toggleAmenity(tag: string) {
     setAmenities((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  }
-
-  function addCustomAmenity() {
-    const tag = customAmenity.trim();
-    if (!tag) return;
-    if (!amenities.includes(tag)) setAmenities((prev) => [...prev, tag]);
-    setCustomAmenity("");
   }
 
   function cleanedLocations() {
@@ -165,8 +158,6 @@ function LifestyleScreen() {
       </div>
     );
   }
-
-  const allTags = Array.from(new Set([...DEFAULT_AMENITIES, ...amenities]));
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
@@ -262,12 +253,10 @@ function LifestyleScreen() {
         <h2 className="font-display text-lg font-semibold text-foreground">
           Non-negotiable amenities
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tap to toggle. Add your own if you don't see it.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Tap to toggle.</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {allTags.map((tag) => {
+          {DEFAULT_AMENITIES.map((tag) => {
             const active = amenities.includes(tag);
             return (
               <button
@@ -285,29 +274,6 @@ function LifestyleScreen() {
               </button>
             );
           })}
-        </div>
-
-        <div className="mt-4 flex gap-2">
-          <input
-            value={customAmenity}
-            maxLength={40}
-            onChange={(e) => setCustomAmenity(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addCustomAmenity();
-              }
-            }}
-            placeholder="Add a custom amenity"
-            className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
-          />
-          <button
-            type="button"
-            onClick={addCustomAmenity}
-            className="inline-flex h-10 items-center rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted"
-          >
-            Add
-          </button>
         </div>
       </section>
 

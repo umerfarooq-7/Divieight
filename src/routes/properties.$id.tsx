@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { EightSlicesTracker } from "@/components/EightSlicesTracker";
 import { getMarketplaceProperty } from "@/lib/marketplace.functions";
+import { knownAmenities } from "@/lib/amenities";
 import { getPodComposition } from "@/lib/reservations.functions";
 import { PodCompositionPanel } from "@/components/PodCompositionPanel";
 import { getBuyerAccount } from "@/lib/buyer";
@@ -299,11 +300,11 @@ function PropertyDetailPage() {
             </section>
           ) : null}
 
-          {property.amenities.length > 0 ? (
+          {knownAmenities(property.amenities).length > 0 ? (
             <section className="mt-8">
               <h2 className="font-display text-lg font-semibold text-foreground">Amenities</h2>
               <ul className="mt-3 flex flex-wrap gap-2">
-                {property.amenities.map((a) => (
+                {knownAmenities(property.amenities).map((a) => (
                   <li
                     key={a}
                     className="rounded-full border border-border bg-card px-3 py-1 text-xs text-foreground"
