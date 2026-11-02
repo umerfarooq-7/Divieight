@@ -56,6 +56,7 @@ const NAV = [
   { to: "/admin/saga-poc", label: "Saga PoC", icon: FileSignature },
   { to: "/admin/pods", label: "Pods & HLA", icon: Boxes },
   { to: "/admin/entity-genesis", label: "Entity Genesis", icon: Building2 },
+  { to: "/admin/agent-assignments", label: "Agent assignments", icon: Users2 },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
   { to: "/admin/listing-compliance", label: "Listing compliance", icon: ShieldCheck },

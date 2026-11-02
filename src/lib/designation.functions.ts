@@ -32,6 +32,8 @@ export interface DesignationState {
   designationDeadlineAt: string | null;
   designationExpired: boolean;
   tetheredAgentName: string | null;
+  /** The buyer asked divieight to choose; null for self-selected accounts. */
+  platformAssignment: { requestId: string; status: string; agentName: string | null } | null;
 }
 
 export interface DesignationRequest {
@@ -151,7 +153,11 @@ export const getDesignationState = createServerFn({ method: "POST" })
       tetheredAgentName = a?.full_name ?? null;
     }
 
+    const { assignmentView, openAssignmentRequest } = await import("@/lib/agent-assignment.server");
+    const platformAssignment = await assignmentView(db, await openAssignmentRequest(db, buyer.id, null));
+
     return {
+      platformAssignment,
       tetherStatus: buyer.tether_status ?? "pending",
       designatedAgentId: buyer.designated_agent_id ?? null,
       designatedAgentName: buyer.designated_agent_name ?? null,
@@ -423,6 +429,10 @@ export const respondToDesignation = createServerFn({ method: "POST" })
     }
 
     if (!data.accept) {
+      // A divieight-assigned agent declining puts the request back in the queue.
+      const { platformDesignationEnded } = await import("@/lib/agent-assignment.server");
+      if (await platformDesignationEnded(db, { buyerAccountId: buyer.id, actorId: context.userId, reason: "declined" }))
+        return { tethered: false };
       await db
         .from("buyer_accounts")
         .update({
@@ -499,6 +509,8 @@ export const respondToDesignation = createServerFn({ method: "POST" })
       .from("buyer_accounts")
       .update({ designation_deadline_at: null, designation_expired: false })
       .eq("id", buyer.id);
+    const { platformDesignationAccepted } = await import("@/lib/agent-assignment.server");
+    await platformDesignationAccepted(db, buyer.id);
     await db.from("notifications").insert({
       seller_id: buyer.auth_user_id,
       message: `${agent.full_name} accepted your designation — you're now tethered.`,
@@ -656,7 +668,13 @@ export async function runDesignationSweep(
 
   let expired = 0;
   let undeliverable = 0;
+  const { platformDesignationEnded } = await import("@/lib/agent-assignment.server");
   for (const b of rows ?? []) {
+    // A divieight-assigned agent who didn't answer: back to the queue.
+    if (await platformDesignationEnded(db, { buyerAccountId: b.id, actorId: null, reason: "expired" })) {
+      expired += 1;
+      continue;
+    }
     await db.from("notifications").insert({
       seller_id: b.auth_user_id,
       message: EXPIRY_NOTICE,

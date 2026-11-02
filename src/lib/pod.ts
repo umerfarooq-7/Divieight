@@ -17,6 +17,7 @@ export interface ReservationEligibility {
     | "no_buyer_account"
     | "not_liquidity_verified"
     | "not_tethered"
+    | "awaiting_platform_assignment"
     | "not_found"
     | "sold_out"
     | "already_reserved";
@@ -24,6 +25,8 @@ export interface ReservationEligibility {
   targetBudget: number | null;
   existingShares: number;
   composition: PodComposition | null;
+  /** Present with reason "awaiting_platform_assignment". */
+  platformAssignment?: { requestId: string; status: string; agentName: string | null } | null;
 }
 
 export interface ReservationResult {
@@ -33,8 +36,7 @@ export interface ReservationResult {
     | "error"
     // The buyer's agent holds this property's listing — choose another agent.
     | "dual_agency_conflict"
-    | "invalid_replacement_agent"
-    | "no_replacement_agent";
+    | "invalid_replacement_agent";
   reservationId: string | null;
   composition: PodComposition | null;
   systemLocked: boolean;
@@ -45,7 +47,7 @@ export interface ReservationResult {
     conflicting_agent_name: string | null;
     referring_agent_id_same: boolean;
   } | null;
-  /** Explanation for invalid_replacement_agent / no_replacement_agent. */
+  /** Explanation for invalid_replacement_agent / error. */
   message?: string | null;
   /** Present when the reservation finalized with a per-property agent. */
   agentChange?: { newAgentId: string; newAgentName: string | null; referralPreserved: boolean } | null;
@@ -80,6 +82,10 @@ export const RESERVATION_BLOCK_COPY: Record<
   not_tethered: {
     title: "Agent tethering required",
     body: "You can keep browsing every listing, but committing to a home waits until you're tethered to a Resident Agent. Name your agent or accept a platform assignment from your dashboard.",
+  },
+  awaiting_platform_assignment: {
+    title: "Waiting for divieight to assign your agent",
+    body: "You can keep browsing every listing. You'll be notified as soon as your agent is assigned, and can finish your reservation then.",
   },
   not_found: {
     title: "Listing unavailable",

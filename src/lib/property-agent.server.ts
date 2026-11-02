@@ -162,27 +162,6 @@ export async function replacementAgentProblem(db: Db, agentId: string, listingAg
   return null;
 }
 
-/**
- * "Let divieight choose": the most-tenured eligible agent, preferring one who
- * covers the buyer's market; never the Listing Agent.
- */
-export async function pickReplacementAgent(
-  db: Db,
-  params: { listingAgentId: string; market: string | null },
-): Promise<string | null> {
-  const { data: agents } = await db
-    .from("agents")
-    .select("id, markets, created_at, eo_lapsed, eo_expires_at")
-    .order("created_at", { ascending: true });
-  const { eoBlocksNewWork } = await import("@/lib/eo-expiry");
-  const { parseMarkets, marketCoversArea } = await import("@/lib/markets");
-  const eligible = ((agents ?? []) as Array<{ id: string; markets: unknown; eo_lapsed?: boolean | null; eo_expires_at?: string | null }>)
-    .filter((a) => a.id !== params.listingAgentId && !eoBlocksNewWork(a));
-  const market = (params.market ?? "").trim();
-  const local = market ? eligible.find((a) => parseMarkets(a.markets).some((m) => marketCoversArea(m, market))) : undefined;
-  return (local ?? eligible[0])?.id ?? null;
-}
-
 /** Notices and audit once the reservation is finalized with a per-property agent. */
 export async function announcePropertyAgentChange(
   db: Db,
@@ -190,7 +169,7 @@ export async function announcePropertyAgentChange(
     actorId: string;
     buyerAccountId: string;
     propertyId: string;
-    reservationId: string;
+    reservationId: string | null;
     replacedAgentId: string;
     newAgentId: string;
     referralPreserved: boolean;
@@ -212,7 +191,7 @@ export async function announcePropertyAgentChange(
   if (oldAgent)
     await deliver(db as never, { authUserId: oldAgent.auth_user_id, email: oldAgent.email }, {
       subject: "A buyer needs a different agent for one of your listings",
-      message: `One of your buyers reserved a share in ${where}, where you hold the listing, so a different Resident Agent represents them on that property. Your representation on their other properties is unchanged.${params.referralPreserved ? " You keep your referral share on that property." : ""}`,
+      message: `One of your buyers is joining the pod at ${where}, where you hold the listing, so a different Resident Agent represents them on that property. Your representation on their other properties is unchanged.${params.referralPreserved ? " You keep your referral share on that property." : ""}`,
       link: "/agent/dashboard",
     });
   // New agent: assignment for this one property.
@@ -225,7 +204,7 @@ export async function announcePropertyAgentChange(
   for (const admin of await adminRecipients(db as never))
     await deliver(db as never, admin, {
       subject: "Dual-agency conflict resolved at reservation",
-      message: `A reservation on ${where} was finalized with a per-property Resident Agent (${newAgent?.full_name ?? params.newAgentId}) because the buyer's agent (${oldAgent?.full_name ?? params.replacedAgentId}) holds the listing.${params.referralPreserved ? " The original agent keeps the referral share." : ""}`,
+      message: `A buyer on ${where} now has a per-property Resident Agent (${newAgent?.full_name ?? params.newAgentId}) because the buyer's agent (${oldAgent?.full_name ?? params.replacedAgentId}) holds the listing.${params.referralPreserved ? " The original agent keeps the referral share." : ""}`,
       link: "/admin/audit-log",
     });
 

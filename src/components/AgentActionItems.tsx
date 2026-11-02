@@ -19,6 +19,7 @@ import {
 import type { ListingAgentProperty } from "@/lib/listing-approval";
 import type { HlaInvitation } from "@/lib/hla";
 import { Link } from "@tanstack/react-router";
+import { listPropertyAssignmentOffers, respondToPropertyAssignment } from "@/lib/agent-assignment.functions";
 
 /**
  * Action-required queue: buyer designations awaiting a 3-day response, and
@@ -43,8 +44,12 @@ export function AgentActionItems() {
   const [listingReviews, setListingReviews] = useState<ListingAgentProperty[]>([]);
   const [engagements, setEngagements] = useState<ListingEngagementInvitation[]>([]);
   const [busy, setBusy] = useState(false);
+  const loadOffers = useServerFn(listPropertyAssignmentOffers);
+  const respondOffer = useServerFn(respondToPropertyAssignment);
+  const [offers, setOffers] = useState<Array<{ requestId: string; propertyLabel: string }>>([]);
 
   const refresh = useCallback(async () => {
+    setOffers(await loadOffers({}).catch(() => []));
     const [d, e, h, l, g] = await Promise.all([
       loadDesignations({}),
       loadElections({}),
@@ -57,7 +62,7 @@ export function AgentActionItems() {
     setHlaInvites(h);
     setListingReviews((l ?? []).filter((p) => p.pending_items > 0));
     setEngagements(g ?? []);
-  }, [loadDesignations, loadElections, loadHlaInvites, loadListings, loadEngagements]);
+  }, [loadDesignations, loadElections, loadHlaInvites, loadListings, loadEngagements, loadOffers]);
 
   useEffect(() => {
     void refresh();
@@ -65,6 +70,7 @@ export function AgentActionItems() {
 
   if (
     designations.length === 0 &&
+    offers.length === 0 &&
     elections.length === 0 &&
     hlaInvites.length === 0 &&
     listingReviews.length === 0 &&
@@ -183,6 +189,39 @@ export function AgentActionItems() {
               >
                 Decline
               </button>
+            </div>
+          </li>
+        ))}
+
+        {offers.map((o) => (
+          <li key={o.requestId} className="rounded-lg border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">
+              divieight assigned you as Resident Agent for a buyer on one property
+            </p>
+            <p className="mt-1 break-words text-xs text-muted-foreground">{o.propertyLabel}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[true, false].map((accept) => (
+                <button
+                  key={String(accept)}
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    const r = await respondOffer({ data: { requestId: o.requestId, accept } });
+                    setBusy(false);
+                    if (r.error) toast.error(r.error);
+                    else toast.success(accept ? "You're this buyer's agent on this property." : "Declined.");
+                    void refresh();
+                  }}
+                  className={
+                    accept
+                      ? "h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+                      : "h-9 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted"
+                  }
+                >
+                  {accept ? "Accept" : "Decline"}
+                </button>
+              ))}
             </div>
           </li>
         ))}

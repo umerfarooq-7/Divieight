@@ -164,15 +164,6 @@ describe("reservation-time dual-agency checkpoint", () => {
     expect(reservationsOn(B)).toEqual([]);
   });
 
-  it("'let divieight choose' assigns an eligible agent other than the Listing Agent", async () => {
-    seed();
-    const r = await reserveB({ autoAssignAgent: true });
-    expect(r.ok).toBe(true);
-    expect(r.agentChange?.newAgentId).toBeTruthy();
-    expect(r.agentChange?.newAgentId).not.toBe(IDS.ra);
-    expect(db().audits("buyer.property_agent_assigned")[0]!.metadata.chosen_by).toBe("platform");
-  });
-
   it("withPropertyAgents rewrites only the overridden property", async () => {
     seed();
     await reserveB({ replacementAgentId: IDS.ra2 });

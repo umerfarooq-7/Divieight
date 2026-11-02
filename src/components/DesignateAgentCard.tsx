@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { UserPlus, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatMarkets } from "@/lib/markets";
+import { AgentChoice, PLATFORM_CHOICE_EXPLANATION } from "@/components/AgentChoice";
+import { cancelAgentAssignment, requestAgentAssignment } from "@/lib/agent-assignment.functions";
 import {
   acceptPlatformAssignment,
   clearDesignation,
@@ -27,6 +29,8 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
   const resend = useServerFn(resendDesignationInvite);
   const clear = useServerFn(clearDesignation);
   const acceptPlatform = useServerFn(acceptPlatformAssignment);
+  const requestAssignment = useServerFn(requestAgentAssignment);
+  const cancelAssignment = useServerFn(cancelAgentAssignment);
 
   const [state, setState] = useState<DesignationState | null>(null);
   const [open, setOpen] = useState(false);
@@ -35,6 +39,7 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"self" | "platform">("self");
 
   const refresh = useCallback(async () => {
     const s = await loadState({ data: { buyerAccountId } });
@@ -97,6 +102,41 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
     );
   }
 
+  // The buyer asked divieight to choose: waiting on admin, then on the agent.
+  if (state.platformAssignment) {
+    const assigned = state.platformAssignment.status === "assigned";
+    return (
+      <section className="mt-6 rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-accent" />
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            {assigned ? "Your agent has been assigned" : "Waiting for divieight to assign your agent"}
+          </h2>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {assigned
+            ? `divieight assigned ${state.platformAssignment.agentName ?? "an agent"} as your agent. We'll confirm as soon as they accept.`
+            : "We will match you with a verified Resident Agent in your market. You will be notified and can see who was assigned."}
+        </p>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            const r = await cancelAssignment({ data: { requestId: state.platformAssignment!.requestId } });
+            setBusy(false);
+            if (r.error) toast.error(r.error);
+            setMode("self");
+            void refresh();
+          }}
+          className="mt-3 inline-flex h-9 items-center rounded-md border border-border px-3 text-sm font-medium text-foreground hover:bg-muted"
+        >
+          Choose my own agent instead
+        </button>
+      </section>
+    );
+  }
+
   const pendingDesignation =
     state.tetherStatus === "awaiting_designation" &&
     (state.designatedAgentId || state.designatedAgentEmail);
@@ -106,7 +146,7 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
       <div className="flex items-center gap-2">
         <UserPlus className="h-5 w-5 text-accent" />
         <h2 className="font-display text-lg font-semibold text-foreground">
-          Have a specific agent in mind? Name them here
+          Choose your agent
         </h2>
       </div>
 
@@ -181,9 +221,30 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
         </div>
       ) : (
         <>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <AgentChoice mode={mode} onChange={setMode} />
+          {mode === "platform" ? (
+            <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4">
+              <p className="text-sm text-foreground">{PLATFORM_CHOICE_EXPLANATION}</p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  const r = await requestAssignment();
+                  setBusy(false);
+                  if (r.error) toast.error(r.error);
+                  else toast.success("Request sent. We'll notify you when your agent is assigned.");
+                  void refresh();
+                }}
+                className="mt-3 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                Ask divieight to choose
+              </button>
+            </div>
+          ) : (
+          <>
+          <p className="mt-3 text-sm text-muted-foreground">
             Search for a licensed agent already on divieight, or invite your own agent by email.
-            Otherwise we'll assign the most-tenured Resident Agent in your target market.
           </p>
           {!open ? (
             <button
@@ -265,6 +326,8 @@ export function DesignateAgentCard({ buyerAccountId }: { buyerAccountId: string 
                 </button>
               </div>
             </div>
+          )}
+          </>
           )}
         </>
       )}

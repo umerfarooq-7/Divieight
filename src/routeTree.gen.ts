@@ -23,6 +23,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAgentAssignmentsRouteImport } from './routes/admin.agent-assignments'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
@@ -219,6 +220,11 @@ const SupportRoute = SupportRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAgentAssignmentsRoute = AdminAgentAssignmentsRouteImport.update({
+  id: '/agent-assignments',
+  path: '/agent-assignments',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAgentsRoute = AdminAgentsRouteImport.update({
@@ -900,6 +906,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
+  '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
@@ -1039,6 +1046,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
+  '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
@@ -1180,6 +1188,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
+  '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
@@ -1325,6 +1334,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/support'
+    | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
@@ -1464,6 +1474,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/register'
     | '/support'
+    | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
@@ -1604,6 +1615,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/support'
+    | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
@@ -1902,6 +1914,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/agent-assignments': {
+      id: '/admin/agent-assignments'
+      path: '/agent-assignments'
+      fullPath: '/admin/agent-assignments'
+      preLoaderRoute: typeof AdminAgentAssignmentsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/agents': {
@@ -2815,6 +2834,7 @@ const AdminPropertiesRouteWithChildren = AdminPropertiesRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminAgentAssignmentsRoute: typeof AdminAgentAssignmentsRoute
   AdminAgentsRoute: typeof AdminAgentsRoute
   AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminAuthorizationsRoute: typeof AdminAuthorizationsRoute
@@ -2847,6 +2867,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAgentAssignmentsRoute: AdminAgentAssignmentsRoute,
   AdminAgentsRoute: AdminAgentsRoute,
   AdminAuditLogRoute: AdminAuditLogRoute,
   AdminAuthorizationsRoute: AdminAuthorizationsRoute,

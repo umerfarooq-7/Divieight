@@ -13,7 +13,9 @@ import {
 } from "@/lib/reservations.functions";
 import { RESERVATION_BLOCK_COPY, type ReservationResult } from "@/lib/pod";
 import { searchAgents } from "@/lib/designation.functions";
+import { cancelAgentAssignment } from "@/lib/agent-assignment.functions";
 import { formatMarkets } from "@/lib/markets";
+import { AgentChoice, PLATFORM_CHOICE_EXPLANATION } from "@/components/AgentChoice";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -53,6 +55,7 @@ function ReservePage() {
   const fetchProperty = useServerFn(getMarketplaceProperty);
   const checkEligibility = useServerFn(checkReservationEligibility);
   const reserve = useServerFn(createReservation);
+  const cancelAssignment = useServerFn(cancelAgentAssignment);
 
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ systemLocked: boolean; agentChange: ReservationResult["agentChange"] } | null>(null);
@@ -111,7 +114,13 @@ function ReservePage() {
       setConflict(result.conflict ?? null);
       return;
     }
-    if (!result.ok && (result.reason === "invalid_replacement_agent" || result.reason === "no_replacement_agent")) {
+    if (!result.ok && result.reason === "awaiting_platform_assignment") {
+      setConflict(null);
+      toast.success("Request sent", { description: "We'll notify you as soon as your agent is assigned." });
+      void refetch();
+      return;
+    }
+    if (!result.ok && result.reason === "invalid_replacement_agent") {
       toast.error("Choose a different agent", { description: result.message ?? undefined });
       return;
     }
@@ -207,9 +216,27 @@ function ReservePage() {
         <Notice
           tone={blocked === "already_reserved" ? "ok" : "warn"}
           title={RESERVATION_BLOCK_COPY[blocked].title}
-          body={RESERVATION_BLOCK_COPY[blocked].body}
+          body={
+            blocked === "awaiting_platform_assignment" && eligibility?.platformAssignment?.agentName
+              ? `divieight assigned ${eligibility.platformAssignment.agentName} as your agent. You can finish your reservation as soon as they accept.`
+              : RESERVATION_BLOCK_COPY[blocked].body
+          }
           action={
-            blocked === "not_liquidity_verified" ? (
+            blocked === "awaiting_platform_assignment" ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const requestId = eligibility?.platformAssignment?.requestId;
+                  if (!requestId) return;
+                  const r = await cancelAssignment({ data: { requestId } });
+                  if (r.error) toast.error(r.error);
+                  void refetch();
+                }}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground"
+              >
+                Choose my own agent instead
+              </button>
+            ) : blocked === "not_liquidity_verified" ? (
               <Link
                 to="/buyer/onboarding/liquidity"
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
@@ -345,6 +372,7 @@ function AgentChangeStep({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Array<{ id: string; full_name: string; email: string; markets: unknown }>>([]);
   const [searching, setSearching] = useState(false);
+  const [mode, setMode] = useState<"self" | "platform">("self");
 
   async function search(e: React.FormEvent) {
     e.preventDefault();
@@ -371,6 +399,22 @@ function AgentChangeStep({
       ) : null}
       <p className="mt-2 text-xs text-muted-foreground">Nothing is reserved until you confirm an agent below.</p>
 
+      <AgentChoice mode={mode} onChange={setMode} />
+
+      {mode === "platform" ? (
+        <div className="mt-4 rounded-lg border border-border bg-card p-4">
+          <p className="text-sm text-foreground">{PLATFORM_CHOICE_EXPLANATION}</p>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onAutoAssign}
+            className="mt-3 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground disabled:opacity-60"
+          >
+            {submitting ? "Sending…" : "Ask divieight to choose"}
+          </button>
+        </div>
+      ) : (
+      <>
       <form onSubmit={search} className="mt-4 flex flex-wrap gap-2">
         <input
           value={query}
@@ -409,16 +453,10 @@ function AgentChangeStep({
           ))}
         </ul>
       ) : null}
+      </>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={onAutoAssign}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground disabled:opacity-60"
-        >
-          {submitting ? "Reserving…" : "Let divieight choose an agent for me"}
-        </button>
         <button
           type="button"
           disabled={submitting}

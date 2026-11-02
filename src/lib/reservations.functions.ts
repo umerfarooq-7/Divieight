@@ -60,8 +60,22 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
 
     if (!buyer.liquidity_verified) return { ok: false, reason: "not_liquidity_verified", ...info };
     // Browsing stays open in Pending Tether; only commitment waits on the tether.
-    if ((buyer as { tether_status?: string | null }).tether_status !== "tethered")
-      return { ok: false, reason: "not_tethered", ...info };
+    const assignment = await import("@/lib/agent-assignment.server");
+    const { supabaseAdmin: assignmentDb } = await import("@/integrations/supabase/admin.server");
+    const tethered = (buyer as { tether_status?: string | null }).tether_status === "tethered";
+    const waitingOn = await assignment.openAssignmentRequest(
+      assignmentDb as never,
+      buyer.id,
+      tethered ? data.propertyId : null,
+    );
+    if (waitingOn)
+      return {
+        ok: false,
+        reason: "awaiting_platform_assignment",
+        ...info,
+        platformAssignment: await assignment.assignmentView(assignmentDb as never, waitingOn),
+      };
+    if (!tethered) return { ok: false, reason: "not_tethered", ...info };
     if (info.existingShares > 0) return { ok: false, reason: "already_reserved", ...info };
     if (composition.availableShares < 1) return { ok: false, reason: "sold_out", ...info };
 
@@ -80,6 +94,7 @@ export const createReservation = createServerFn({ method: "POST" })
       propertyId: String(data.propertyId),
       // Only used to resolve a dual-agency conflict on this property.
       replacementAgentId: data.replacementAgentId ? String(data.replacementAgentId) : null,
+      // "Let divieight choose": queues a request; nothing is reserved until assigned.
       autoAssignAgent: data.autoAssignAgent === true,
     }),
   )
@@ -102,8 +117,11 @@ export const createReservation = createServerFn({ method: "POST" })
     if (!buyer) return fail("no_buyer_account");
     if (!buyer.liquidity_verified) return fail("not_liquidity_verified");
     // Browsing stays open in Pending Tether; only commitment waits on the tether.
-    if ((buyer as { tether_status?: string | null }).tether_status !== "tethered")
-      return fail("not_tethered");
+    if ((buyer as { tether_status?: string | null }).tether_status !== "tethered") {
+      const { openAssignmentRequest } = await import("@/lib/agent-assignment.server");
+      const { supabaseAdmin: assignmentDb } = await import("@/integrations/supabase/admin.server");
+      return fail((await openAssignmentRequest(assignmentDb as never, buyer.id, null)) ? "awaiting_platform_assignment" : "not_tethered");
+    }
 
     const before = await fetchPodComposition(data.propertyId);
     if (!before) return fail("not_found");
@@ -125,7 +143,7 @@ export const createReservation = createServerFn({ method: "POST" })
     const propertyAgent = await import("@/lib/property-agent.server");
     const { data: agentInfo } = await (adminDb as any)
       .from("buyer_accounts")
-      .select("id, tethered_resident_agent_id, referring_agent_id, primary_target_market")
+      .select("id, tethered_resident_agent_id, referring_agent_id")
       .eq("id", buyer.id)
       .maybeSingle();
     const conflict = agentInfo
@@ -135,6 +153,10 @@ export const createReservation = createServerFn({ method: "POST" })
     let inserted: { id: string } | null = null;
     let agentChange: ReservationResult["agentChange"] = null;
     if (conflict) {
+      const assignment = await import("@/lib/agent-assignment.server");
+      const openRequest = await assignment.openAssignmentRequest(adminDb as never, buyer.id, data.propertyId);
+      if (openRequest && !data.replacementAgentId) return { ...fail("awaiting_platform_assignment"), conflict };
+
       const resolving = Boolean(data.replacementAgentId) || data.autoAssignAgent;
       const { logDualAgency } = await import("@/lib/dual-agency");
       await logDualAgency(adminDb as never, {
@@ -143,24 +165,30 @@ export const createReservation = createServerFn({ method: "POST" })
         agentId: conflict.conflicting_agent_id,
         propertyId: data.propertyId,
         buyerAccountId: buyer.id,
-        resolution: resolving
+        resolution: data.replacementAgentId
           ? "buyer re-tethered for this property before the reservation finalized"
-          : "reservation paused — buyer asked to choose a different agent for this property",
+          : data.autoAssignAgent
+            ? "reservation paused — buyer asked divieight to choose an agent for this property"
+            : "reservation paused — buyer asked to choose a different agent for this property",
       });
       if (!resolving) return { ...fail("dual_agency_conflict"), conflict };
 
-      const newAgentId =
-        data.replacementAgentId ??
-        (await propertyAgent.pickReplacementAgent(adminDb as never, {
-          listingAgentId: conflict.conflicting_agent_id,
-          market: agentInfo?.primary_target_market ?? null,
-        }));
-      if (!newAgentId)
-        return {
-          ...fail("no_replacement_agent"),
-          conflict,
-          message: "No eligible agent is available right now — choose an agent yourself or contact support.",
-        };
+      if (!data.replacementAgentId) {
+        try {
+          await assignment.requestPlatformAssignment(adminDb as never, {
+            actorId: userId,
+            buyerAccountId: buyer.id,
+            propertyId: data.propertyId,
+            replacedAgentId: conflict.conflicting_agent_id,
+            referralPreserved: conflict.referring_agent_id_same,
+          });
+        } catch (e) {
+          return { ...fail("error"), message: e instanceof Error ? e.message : null };
+        }
+        return { ...fail("awaiting_platform_assignment"), conflict };
+      }
+
+      const newAgentId = data.replacementAgentId;
       const problem = await propertyAgent.replacementAgentProblem(adminDb as never, newAgentId, conflict.conflicting_agent_id);
       if (problem) return { ...fail("invalid_replacement_agent"), conflict, message: problem };
 
@@ -173,6 +201,13 @@ export const createReservation = createServerFn({ method: "POST" })
       });
       if (rpcError || !reservationId) return { ...fail("error"), message: rpcError?.message ?? null };
       inserted = { id: String(reservationId) };
+      // They chose their own agent after asking divieight: the request is over.
+      if (openRequest)
+        await assignment.cancelPlatformAssignment(adminDb as never, {
+          actorId: userId,
+          buyerAccountId: buyer.id,
+          requestId: openRequest.id,
+        });
       const { data: newAgent } = await (adminDb as any).from("agents").select("full_name").eq("id", newAgentId).maybeSingle();
       agentChange = {
         newAgentId,
@@ -187,7 +222,7 @@ export const createReservation = createServerFn({ method: "POST" })
         replacedAgentId: conflict.conflicting_agent_id,
         newAgentId,
         referralPreserved: conflict.referring_agent_id_same,
-        chosenBy: data.replacementAgentId ? "buyer" : "platform",
+        chosenBy: "buyer",
       });
     } else {
       const { data: row, error } = await supabase
