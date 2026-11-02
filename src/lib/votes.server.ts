@@ -130,7 +130,9 @@ export async function closeVote(db: Db, voteId: string, actor: { id: string | nu
     vote,
     extra: { passed: summary.passed, voted_shares: summary.votedShares, required_shares: summary.requiredShares, placeholder_thresholds: VOTE_THRESHOLDS_ARE_PLACEHOLDER },
   });
-  return { ...vote, status: "closed", result_summary: summary };
+  const closed: VoteRow = { ...vote, status: "closed", result_summary: summary };
+  await (await import("@/lib/retention.server")).applyVoteOutcome(db, closed);
+  return closed;
 }
 
 /** A vote past its closing time closes the first time anyone looks. */
@@ -365,7 +367,7 @@ export async function listPropertyVotes(db: Db, propertyId: string) {
 
 export async function createVote(
   db: Db,
-  params: { actorId: string; propertyId: string; title: string; description: string | null; voteType: VoteType; options: string[]; opensAt: string; closesAt: string },
+  params: { actorId: string; actorType?: string; propertyId: string; title: string; description: string | null; voteType: VoteType; options: string[]; opensAt: string; closesAt: string },
 ): Promise<VoteRow> {
   const { data: property } = await db.from("properties").select("id").eq("id", params.propertyId).maybeSingle();
   if (!property) throw new Error("Property not found");
@@ -385,17 +387,17 @@ export async function createVote(
     .select("*")
     .maybeSingle();
   if (error || !data) throw new Error("Database is missing votes — run votes.sql in Supabase.");
-  await audit(db, { actorId: params.actorId, actorType: "admin", action: "vote.created", vote: data as VoteRow, extra: { vote_type: params.voteType } });
+  await audit(db, { actorId: params.actorId, actorType: params.actorType ?? "admin", action: "vote.created", vote: data as VoteRow, extra: { vote_type: params.voteType } });
   return data as VoteRow;
 }
 
-export async function openVote(db: Db, actorId: string, voteId: string) {
+export async function openVote(db: Db, actorId: string, voteId: string, actorType = "admin") {
   const vote = await loadVote(db, voteId);
   if (!vote) throw new Error("Vote not found");
   if (vote.status !== "draft") throw new Error("Only a draft can be opened.");
   if (Date.now() >= new Date(vote.closes_at).getTime()) throw new Error("This vote's closing time has already passed.");
   await db.from("votes").update({ status: "open" }).eq("id", vote.id).eq("status", "draft");
-  await audit(db, { actorId, actorType: "admin", action: "vote.opened", vote });
+  await audit(db, { actorId, actorType, action: "vote.opened", vote });
 
   // Tell every holder once, whatever kind of holder they are.
   const rows = await capRows(db, vote.property_id);
@@ -416,10 +418,11 @@ export async function openVote(db: Db, actorId: string, voteId: string) {
   }
 }
 
-export async function cancelVote(db: Db, actorId: string, voteId: string) {
+export async function cancelVote(db: Db, actorId: string, voteId: string, actorType = "admin") {
   const vote = await loadVote(db, voteId);
   if (!vote) throw new Error("Vote not found");
   if (vote.status !== "draft" && vote.status !== "open") throw new Error("Only a draft or open vote can be cancelled.");
   await db.from("votes").update({ status: "cancelled" }).eq("id", vote.id);
-  await audit(db, { actorId, actorType: "admin", action: "vote.cancelled", vote });
+  await audit(db, { actorId, actorType, action: "vote.cancelled", vote });
+  await (await import("@/lib/retention.server")).applyVoteOutcome(db, { ...vote, status: "cancelled" });
 }

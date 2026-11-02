@@ -41,6 +41,7 @@ import { Route as AdminListingComplianceRouteImport } from './routes/admin.listi
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
+import { Route as AdminRetentionExceptionsRouteImport } from './routes/admin.retention-exceptions'
 import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
 import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
 import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
@@ -126,6 +127,7 @@ import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
+import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
 import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
@@ -160,6 +162,7 @@ import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/own
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
+import { Route as OwnerPropertiesPropertyIdRetentionRouteImport } from './routes/owner.properties.$propertyId.retention'
 import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
 import { Route as OwnerPropertiesPropertyIdVotesVoteIdRouteImport } from './routes/owner.properties.$propertyId.votes.$voteId'
 
@@ -324,6 +327,12 @@ const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   path: '/properties',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRetentionExceptionsRoute =
+  AdminRetentionExceptionsRouteImport.update({
+    id: '/retention-exceptions',
+    path: '/retention-exceptions',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminSagaPocRoute = AdminSagaPocRouteImport.update({
   id: '/saga-poc',
   path: '/saga-poc',
@@ -763,6 +772,11 @@ const ApiPublicNarCertSweepRoute = ApiPublicNarCertSweepRouteImport.update({
   path: '/api/public/nar-cert-sweep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRetentionSweepRoute = ApiPublicRetentionSweepRouteImport.update({
+  id: '/api/public/retention-sweep',
+  path: '/api/public/retention-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSubstitutionSweepRoute =
   ApiPublicSubstitutionSweepRouteImport.update({
     id: '/api/public/substitution-sweep',
@@ -954,6 +968,12 @@ const OwnerPropertiesPropertyIdLlcRoute =
     path: '/owner/properties/$propertyId/llc',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdRetentionRoute =
+  OwnerPropertiesPropertyIdRetentionRouteImport.update({
+    id: '/owner/properties/$propertyId/retention',
+    path: '/owner/properties/$propertyId/retention',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdVotesIndexRoute =
   OwnerPropertiesPropertyIdVotesIndexRouteImport.update({
     id: '/owner/properties/$propertyId/votes/',
@@ -999,6 +1019,7 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
@@ -1080,6 +1101,7 @@ export interface FileRoutesByFullPath {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1117,6 +1139,7 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -1149,6 +1172,7 @@ export interface FileRoutesByTo {
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
@@ -1228,6 +1252,7 @@ export interface FileRoutesByTo {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1265,6 +1290,7 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -1303,6 +1329,7 @@ export interface FileRoutesById {
   '/admin/login': typeof AdminLoginRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
@@ -1384,6 +1411,7 @@ export interface FileRoutesById {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1421,6 +1449,7 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -1460,6 +1489,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
@@ -1541,6 +1571,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -1578,6 +1609,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -1610,6 +1642,7 @@ export interface FileRouteTypes {
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/payments'
+    | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
@@ -1689,6 +1722,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -1726,6 +1760,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -1763,6 +1798,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
@@ -1844,6 +1880,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -1881,6 +1918,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -1946,6 +1984,7 @@ export interface RootRouteChildren {
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
+  ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
@@ -1960,6 +1999,7 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
+  OwnerPropertiesPropertyIdRetentionRoute: typeof OwnerPropertiesPropertyIdRetentionRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
   OwnerPropertiesPropertyIdVotesVoteIdRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
   OwnerPropertiesPropertyIdVotesIndexRoute: typeof OwnerPropertiesPropertyIdVotesIndexRoute
@@ -2189,6 +2229,13 @@ declare module '@tanstack/react-router' {
       path: '/properties'
       fullPath: '/admin/properties'
       preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/retention-exceptions': {
+      id: '/admin/retention-exceptions'
+      path: '/retention-exceptions'
+      fullPath: '/admin/retention-exceptions'
+      preLoaderRoute: typeof AdminRetentionExceptionsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/saga-poc': {
@@ -2786,6 +2833,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNarCertSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/retention-sweep': {
+      id: '/api/public/retention-sweep'
+      path: '/api/public/retention-sweep'
+      fullPath: '/api/public/retention-sweep'
+      preLoaderRoute: typeof ApiPublicRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/substitution-sweep': {
       id: '/api/public/substitution-sweep'
       path: '/api/public/substitution-sweep'
@@ -3024,6 +3078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdLlcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/retention': {
+      id: '/owner/properties/$propertyId/retention'
+      path: '/owner/properties/$propertyId/retention'
+      fullPath: '/owner/properties/$propertyId/retention'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdRetentionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/votes/': {
       id: '/owner/properties/$propertyId/votes/'
       path: '/owner/properties/$propertyId/votes'
@@ -3084,6 +3145,7 @@ interface AdminRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
+  AdminRetentionExceptionsRoute: typeof AdminRetentionExceptionsRoute
   AdminSagaPocRoute: typeof AdminSagaPocRoute
   AdminSellersRoute: typeof AdminSellersRoute
   AdminSettlementRoute: typeof AdminSettlementRoute
@@ -3117,6 +3179,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
+  AdminRetentionExceptionsRoute: AdminRetentionExceptionsRoute,
   AdminSagaPocRoute: AdminSagaPocRoute,
   AdminSellersRoute: AdminSellersRoute,
   AdminSettlementRoute: AdminSettlementRoute,
@@ -3330,6 +3393,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicListingApprovalEscalationRoute,
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,
   ApiPublicNarCertSweepRoute: ApiPublicNarCertSweepRoute,
+  ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
@@ -3345,6 +3409,8 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdCalendarRoute:
     OwnerPropertiesPropertyIdCalendarRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
+  OwnerPropertiesPropertyIdRetentionRoute:
+    OwnerPropertiesPropertyIdRetentionRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
   OwnerPropertiesPropertyIdVotesVoteIdRoute:
     OwnerPropertiesPropertyIdVotesVoteIdRoute,

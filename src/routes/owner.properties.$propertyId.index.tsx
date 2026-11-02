@@ -68,10 +68,14 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
           <h1 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">{p.label}</h1>
         </div>
         {locked ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground">
+          <Link
+            to="/owner/properties/$propertyId/retention"
+            params={{ propertyId: p.propertyId }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary"
+          >
             <Lock className="h-3.5 w-3.5 text-accent" aria-hidden />
             Resale locked until {formatDate(p.retentionLockExpiresAt)}
-          </span>
+          </Link>
         ) : null}
       </div>
 
