@@ -37,7 +37,7 @@ function AdminMaintenancePage() {
       <h1 className="font-display text-2xl font-semibold text-foreground">Maintenance</h1>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
         Owners are told about every status change. A completed request with an actual cost can be attributed to the LLC operating
-        account: it waits in a queue until the Expense system is built, then becomes an expense.
+        account: that makes a draft on the Expenses page for you to review and post.
       </p>
       <div className="mt-6 space-y-4">
         {isLoading ? (
@@ -77,7 +77,7 @@ function RequestCard({ row }: { row: AdminMaintenanceRequest }) {
   const attributeMut = useMutation({
     mutationFn: () => attribute({ data: { requestId: row.id } }),
     onSuccess: () => {
-      toast.success("Attributed and queued as an expense.");
+      toast.success("Attributed: a draft expense is ready on the Expenses page.");
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),

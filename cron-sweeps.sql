@@ -37,6 +37,7 @@ BEGIN
       ('divieight-use-calendar-sweep',       'use-calendar-sweep',        '15 * * * *',   'secret'),
       ('divieight-retention-sweep',          'retention-sweep',           '25 * * * *',   'secret'),
       ('divieight-resale-sweep',             'resale-sweep',              '35 * * * *',   'secret'),
+      ('divieight-capital-call-sweep',       'capital-call-sweep',        '5 13 * * *',   'secret'),
       ('divieight-broker-relationship',      'broker-relationship-sweep', '0 14 * * 1',   'apikey')
     ) AS t(name, path, schedule, auth)
   LOOP

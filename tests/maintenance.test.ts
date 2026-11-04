@@ -22,6 +22,15 @@ const LOCK = new Date(Date.now() + 86_400_000 * 200).toISOString();
 /** A: B1, B2 and the retained seller. B: B3. Nobody here has a Digital Key. */
 function seed() {
   seedPod(db());
+  // Stands in for create_expense_from_maintenance in expenses.sql.
+  db().rpcResults.create_expense_from_maintenance = (a: { _request: string; _actor: string }) => {
+    const r = db().table("maintenance_requests").find((x) => x.id === a._request)!;
+    if (r.expense_id) return { applied: false, expense_id: r.expense_id };
+    r.expense_id = `expense-${r.id}`;
+    r.expense_queued_at = new Date().toISOString();
+    r.expense_queued_by = a._actor;
+    return { applied: true, expense_id: r.expense_id };
+  };
   db().seed("properties", [{ id: B, address: "77 Second St", city: "Casper", state: "WY", zip: "82601", seller_id: "seller-2" }]);
   const cap = (property_id: string, share_number: number, holder: Record<string, unknown>) =>
     db().seed("cap_table_entries", [{ property_id, share_number, buyer_account_id: null, seller_id: null, acquisition_date: LOCK, retention_lock_expires_at: LOCK, ...holder }]);
@@ -264,7 +273,7 @@ describe("notifications", () => {
 });
 
 describe("attributing to the LLC", () => {
-  it("a completed request with a cost is queued as an expense, once, with expense_id left for the Expense system", async () => {
+  it("a completed request with a cost becomes one linked expense, once", async () => {
     seed();
     const { id } = await submit(USERS.b1);
     await toCompleted(id!);
@@ -272,12 +281,12 @@ describe("attributing to the LLC", () => {
     await attribute(id!);
     expect(row(id!).expense_queued_at).toBeTruthy();
     expect(row(id!).expense_queued_by).toBe(USERS.admin);
-    expect(row(id!).expense_id).toBeNull();
+    expect(row(id!).expense_id).toBeTruthy();
     expect(db().audits("maintenance.expense_queued")[0]!.metadata.actual_cost).toBe(450);
     await expect(attribute(id!)).rejects.toThrow("already queued");
     expect(db().audits("maintenance.expense_queued")).toHaveLength(1);
     as(USERS.admin);
-    expect((await listMaintenanceForAdmin()).rows[0]).toMatchObject({ canAttribute: false, expenseLinked: false });
+    expect((await listMaintenanceForAdmin()).rows[0]).toMatchObject({ canAttribute: false, expenseLinked: true });
   });
 
   it("is refused before completion, with no cost, with a zero cost, or after rejection", async () => {

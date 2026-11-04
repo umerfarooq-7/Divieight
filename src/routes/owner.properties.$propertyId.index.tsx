@@ -4,6 +4,7 @@ import { Building2, CalendarDays, Lock } from "lucide-react";
 import { formatDate } from "@/lib/format-date";
 import { OWNER_LLC_LINKS, OWNER_SECTIONS } from "@/lib/owner-sections";
 import type { OwnerPropertyDetail } from "@/lib/owner.functions";
+import { OverduePaymentNotice } from "@/components/owner/PaymentBits";
 import {
   OwnerLoading,
   OwnerPageShell,
@@ -37,6 +38,7 @@ function OwnerPropertyPage() {
         ← My properties
       </Link>
       <div className="mt-4">
+        <OverduePaymentNotice propertyId={propertyId} />
         {isLoading || !data || data.access === "none" ? (
           isError ? (
             <p className="text-sm text-muted-foreground">
@@ -191,6 +193,20 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
           className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
         >
           Maintenance
+        </Link>
+        <Link
+          to="/owner/properties/$propertyId/expenses"
+          params={{ propertyId: p.propertyId }}
+          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          Expenses
+        </Link>
+        <Link
+          to="/owner/properties/$propertyId/capital-calls"
+          params={{ propertyId: p.propertyId }}
+          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          Capital calls
         </Link>
         {OWNER_SECTIONS.map((s) => (
           <Link

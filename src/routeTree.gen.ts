@@ -37,6 +37,7 @@ import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminDisbursementCheckRouteImport } from './routes/admin.disbursement-check'
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
+import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -120,6 +121,7 @@ import { Route as AgentOnboardingLicenseDetailsRouteImport } from './routes/agen
 import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
 import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
 import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
+import { Route as ApiPublicCapitalCallSweepRouteImport } from './routes/api.public.capital-call-sweep'
 import { Route as ApiPublicClosingFundsSweepRouteImport } from './routes/api.public.closing-funds-sweep'
 import { Route as ApiPublicDesignationSweepRouteImport } from './routes/api.public.designation-sweep'
 import { Route as ApiPublicDiligenceEscalationRouteImport } from './routes/api.public.diligence-escalation'
@@ -166,6 +168,8 @@ import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.p
 import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
+import { Route as OwnerPropertiesPropertyIdCapitalCallsRouteImport } from './routes/owner.properties.$propertyId.capital-calls'
+import { Route as OwnerPropertiesPropertyIdExpensesRouteImport } from './routes/owner.properties.$propertyId.expenses'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
 import { Route as OwnerPropertiesPropertyIdMaintenanceRouteImport } from './routes/owner.properties.$propertyId.maintenance'
 import { Route as OwnerPropertiesPropertyIdResaleRouteImport } from './routes/owner.properties.$propertyId.resale'
@@ -311,6 +315,11 @@ const AdminEarnestMoneyRoute = AdminEarnestMoneyRouteImport.update({
 const AdminEntityGenesisRoute = AdminEntityGenesisRouteImport.update({
   id: '/entity-genesis',
   path: '/entity-genesis',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminExpensesRoute = AdminExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInsuranceRequirementsRoute =
@@ -738,6 +747,12 @@ const ApiPublicBrokerRelationshipSweepRoute =
     path: '/api/public/broker-relationship-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCapitalCallSweepRoute =
+  ApiPublicCapitalCallSweepRouteImport.update({
+    id: '/api/public/capital-call-sweep',
+    path: '/api/public/capital-call-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicClosingFundsSweepRoute =
   ApiPublicClosingFundsSweepRouteImport.update({
     id: '/api/public/closing-funds-sweep',
@@ -994,6 +1009,18 @@ const OwnerPropertiesPropertyIdCalendarRoute =
     path: '/owner/properties/$propertyId/calendar',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdCapitalCallsRoute =
+  OwnerPropertiesPropertyIdCapitalCallsRouteImport.update({
+    id: '/owner/properties/$propertyId/capital-calls',
+    path: '/owner/properties/$propertyId/capital-calls',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdExpensesRoute =
+  OwnerPropertiesPropertyIdExpensesRouteImport.update({
+    id: '/owner/properties/$propertyId/expenses',
+    path: '/owner/properties/$propertyId/expenses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdLlcRoute =
   OwnerPropertiesPropertyIdLlcRouteImport.update({
     id: '/owner/properties/$propertyId/llc',
@@ -1059,6 +1086,7 @@ export interface FileRoutesByFullPath {
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/expenses': typeof AdminExpensesRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1138,6 +1166,7 @@ export interface FileRoutesByFullPath {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
@@ -1187,6 +1216,8 @@ export interface FileRoutesByFullPath {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -1220,6 +1251,7 @@ export interface FileRoutesByTo {
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/expenses': typeof AdminExpensesRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1296,6 +1328,7 @@ export interface FileRoutesByTo {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
@@ -1345,6 +1378,8 @@ export interface FileRoutesByTo {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -1383,6 +1418,7 @@ export interface FileRoutesById {
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
+  '/admin/expenses': typeof AdminExpensesRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1462,6 +1498,7 @@ export interface FileRoutesById {
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
+  '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
   '/api/public/designation-sweep': typeof ApiPublicDesignationSweepRoute
   '/api/public/diligence-escalation': typeof ApiPublicDiligenceEscalationRoute
@@ -1511,6 +1548,8 @@ export interface FileRoutesById {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -1550,6 +1589,7 @@ export interface FileRouteTypes {
     | '/admin/disbursement-check'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/expenses'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -1629,6 +1669,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
@@ -1678,6 +1719,8 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -1711,6 +1754,7 @@ export interface FileRouteTypes {
     | '/admin/disbursement-check'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/expenses'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -1787,6 +1831,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
@@ -1836,6 +1881,8 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -1873,6 +1920,7 @@ export interface FileRouteTypes {
     | '/admin/disbursement-check'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
+    | '/admin/expenses'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -1952,6 +2000,7 @@ export interface FileRouteTypes {
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
     | '/api/public/broker-relationship-sweep'
+    | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
     | '/api/public/designation-sweep'
     | '/api/public/diligence-escalation'
@@ -2001,6 +2050,8 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -2061,6 +2112,7 @@ export interface RootRouteChildren {
   ApiPublicArelloRetryRoute: typeof ApiPublicArelloRetryRoute
   ApiPublicAuthorizationEscalationRoute: typeof ApiPublicAuthorizationEscalationRoute
   ApiPublicBrokerRelationshipSweepRoute: typeof ApiPublicBrokerRelationshipSweepRoute
+  ApiPublicCapitalCallSweepRoute: typeof ApiPublicCapitalCallSweepRoute
   ApiPublicClosingFundsSweepRoute: typeof ApiPublicClosingFundsSweepRoute
   ApiPublicDesignationSweepRoute: typeof ApiPublicDesignationSweepRoute
   ApiPublicDiligenceEscalationRoute: typeof ApiPublicDiligenceEscalationRoute
@@ -2087,6 +2139,8 @@ export interface RootRouteChildren {
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
+  OwnerPropertiesPropertyIdCapitalCallsRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  OwnerPropertiesPropertyIdExpensesRoute: typeof OwnerPropertiesPropertyIdExpensesRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
   OwnerPropertiesPropertyIdMaintenanceRoute: typeof OwnerPropertiesPropertyIdMaintenanceRoute
   OwnerPropertiesPropertyIdResaleRoute: typeof OwnerPropertiesPropertyIdResaleRoute
@@ -2292,6 +2346,13 @@ declare module '@tanstack/react-router' {
       path: '/entity-genesis'
       fullPath: '/admin/entity-genesis'
       preLoaderRoute: typeof AdminEntityGenesisRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/expenses': {
+      id: '/admin/expenses'
+      path: '/expenses'
+      fullPath: '/admin/expenses'
+      preLoaderRoute: typeof AdminExpensesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/insurance-requirements': {
@@ -2875,6 +2936,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBrokerRelationshipSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/capital-call-sweep': {
+      id: '/api/public/capital-call-sweep'
+      path: '/api/public/capital-call-sweep'
+      fullPath: '/api/public/capital-call-sweep'
+      preLoaderRoute: typeof ApiPublicCapitalCallSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/closing-funds-sweep': {
       id: '/api/public/closing-funds-sweep'
       path: '/api/public/closing-funds-sweep'
@@ -3197,6 +3265,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdCalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/capital-calls': {
+      id: '/owner/properties/$propertyId/capital-calls'
+      path: '/owner/properties/$propertyId/capital-calls'
+      fullPath: '/owner/properties/$propertyId/capital-calls'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/properties/$propertyId/expenses': {
+      id: '/owner/properties/$propertyId/expenses'
+      path: '/owner/properties/$propertyId/expenses'
+      fullPath: '/owner/properties/$propertyId/expenses'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdExpensesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/llc': {
       id: '/owner/properties/$propertyId/llc'
       path: '/owner/properties/$propertyId/llc'
@@ -3280,6 +3362,7 @@ interface AdminRouteChildren {
   AdminDisbursementCheckRoute: typeof AdminDisbursementCheckRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
+  AdminExpensesRoute: typeof AdminExpensesRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -3316,6 +3399,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDisbursementCheckRoute: AdminDisbursementCheckRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
+  AdminExpensesRoute: AdminExpensesRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
@@ -3527,6 +3611,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicArelloRetryRoute: ApiPublicArelloRetryRoute,
   ApiPublicAuthorizationEscalationRoute: ApiPublicAuthorizationEscalationRoute,
   ApiPublicBrokerRelationshipSweepRoute: ApiPublicBrokerRelationshipSweepRoute,
+  ApiPublicCapitalCallSweepRoute: ApiPublicCapitalCallSweepRoute,
   ApiPublicClosingFundsSweepRoute: ApiPublicClosingFundsSweepRoute,
   ApiPublicDesignationSweepRoute: ApiPublicDesignationSweepRoute,
   ApiPublicDiligenceEscalationRoute: ApiPublicDiligenceEscalationRoute,
@@ -3555,6 +3640,10 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
   OwnerPropertiesPropertyIdCalendarRoute:
     OwnerPropertiesPropertyIdCalendarRoute,
+  OwnerPropertiesPropertyIdCapitalCallsRoute:
+    OwnerPropertiesPropertyIdCapitalCallsRoute,
+  OwnerPropertiesPropertyIdExpensesRoute:
+    OwnerPropertiesPropertyIdExpensesRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
   OwnerPropertiesPropertyIdMaintenanceRoute:
     OwnerPropertiesPropertyIdMaintenanceRoute,

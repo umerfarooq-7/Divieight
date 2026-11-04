@@ -284,23 +284,16 @@ export async function updateRequest(
 }
 
 /**
- * "Attributed to LLC operating account". The Expense system isn't built yet, so
- * this queues the request: Prompt 11 picks up rows with expense_queued_at set and
- * expense_id empty through create_expense_from_maintenance, and fills expense_id.
+ * "Attributed to LLC operating account": a draft expense for the admin to review
+ * and post, linked to this request in one transaction.
  */
 export async function attributeToLlc(db: Db, params: { adminId: string; requestId: string }) {
   const row = await loadRequest(db, params.requestId);
   if (row.expense_queued_at) throw new Error("This request is already queued as an expense.");
   if (!canAttributeToLlc(row)) throw new Error("Only a completed request with an actual cost above zero can be attributed.");
-  const { data } = await db
-    .from("maintenance_requests")
-    .update({ expense_queued_at: new Date().toISOString(), expense_queued_by: params.adminId, updated_at: new Date().toISOString() })
-    .eq("id", row.id)
-    .eq("status", "completed")
-    .is("expense_queued_at", null)
-    .select("*")
-    .maybeSingle();
-  if (!data) throw new Error("This request is already queued as an expense.");
+  const { data, error } = await (db as any).rpc("create_expense_from_maintenance", { _request: row.id, _actor: params.adminId });
+  if (error) throw new Error(/does not exist|schema cache/i.test(error.message) ? "Database is missing expenses — run expenses.sql in Supabase." : error.message);
+  if (!data?.applied) throw new Error("This request is already queued as an expense.");
   await addUpdate(db, row.id, params.adminId, "Attributed to the LLC operating account.", null);
-  await audit(db, { id: params.adminId, type: "admin" }, "maintenance.expense_queued", row, { actual_cost: row.actual_cost });
+  await audit(db, { id: params.adminId, type: "admin" }, "maintenance.expense_queued", row, { actual_cost: row.actual_cost, expense_id: data.expense_id });
 }
