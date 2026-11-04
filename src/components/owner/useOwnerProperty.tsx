@@ -73,6 +73,11 @@ export function OwnershipPendingNotice({ label, propertyId }: { label: string; p
             Retention Lock
           </Link>
         ) : null}
+        {propertyId ? (
+          <Link to="/owner/properties/$propertyId/resale" params={{ propertyId }} className="text-primary hover:underline">
+            Resale Shop
+          </Link>
+        ) : null}
         <Link to="/owner" className="text-primary hover:underline">
           Back to my properties
         </Link>

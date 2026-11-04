@@ -86,7 +86,7 @@ async function ownerFeaturesActive(db: Db, propertyId: string, userId: string, b
   );
 }
 
-async function propertyCard(db: Db, propertyId: string) {
+export async function propertyCard(db: Db, propertyId: string) {
   const { data: p } = await db.from("properties").select("id, address, city, state").eq("id", propertyId).maybeSingle();
   const { data: media } = await db
     .from("property_media")

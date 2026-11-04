@@ -31,6 +31,9 @@ const UNIQUE: Record<string, string[][]> = {
   commission_ledger: [["settlement_document_id", "share_number", "agent_id", "role"]],
   saga_notifications_sent: [["idempotency_key"]],
   owner_activation_notices: [["user_id", "property_id"]],
+  resale_rofr_elections: [["listing_id", "holder_key"]],
+  resale_rofr_member_positions: [["listing_id", "account_member_id"]],
+  resale_interest_requests: [["listing_id", "buyer_account_id"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
@@ -63,6 +66,7 @@ const DEFAULTS: Record<string, Row> = {
   pods: { governance_status: "inactive" },
   saga_notifications_sent: { status: "pending" },
   co_owner_digital_keys: { status: "active" },
+  resale_listings: { flat_fee: 500 },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */

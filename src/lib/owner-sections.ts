@@ -15,6 +15,5 @@ export function safeOwnerRedirect(path: string | null | undefined): string {
 export const OWNER_SECTIONS = [
   { slug: "maintenance", label: "Maintenance" },
   { slug: "expenses", label: "Expenses" },
-  { slug: "resale-shop", label: "Resale Shop" },
   { slug: "documents", label: "Documents" },
 ] as const;

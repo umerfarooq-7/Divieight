@@ -112,6 +112,15 @@ export function NavBar() {
           >
             Properties
           </Link>
+          {portal === "buyer" ? (
+            <Link
+              to="/resale"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: "text-foreground" }}
+            >
+              Resale
+            </Link>
+          ) : null}
           <Link
             to="/about"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

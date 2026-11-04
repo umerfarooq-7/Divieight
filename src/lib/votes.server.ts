@@ -68,6 +68,18 @@ export async function holderFor(db: Db, userId: string, propertyId: string): Pro
   return null;
 }
 
+/** Every holder on this property once, whatever kind of holder they are. */
+export async function holderRecipients(db: Db, propertyId: string): Promise<Array<{ authUserId: string; email: string | null }>> {
+  const rows = await capRows(db, propertyId);
+  const buyerIds = [...new Set(rows.map((r) => r.buyer_account_id).filter(Boolean))] as string[];
+  const sellerIds = [...new Set(rows.map((r) => (r.holder_type === "retained_seller" ? r.seller_id : null)).filter(Boolean))] as string[];
+  const { data: buyers } = buyerIds.length ? await db.from("buyer_accounts").select("auth_user_id, email").in("id", buyerIds) : { data: [] };
+  return [
+    ...((buyers ?? []) as Array<{ auth_user_id: string; email: string | null }>).map((b) => ({ authUserId: b.auth_user_id, email: b.email })),
+    ...sellerIds.map((id) => ({ authUserId: id, email: null })),
+  ];
+}
+
 async function audit(
   db: Db,
   params: { actorId: string | null; actorType: string; action: string; vote: Pick<VoteRow, "id" | "property_id">; holderKey?: string; weight?: number; extra?: Record<string, unknown> },
@@ -399,16 +411,7 @@ export async function openVote(db: Db, actorId: string, voteId: string, actorTyp
   await db.from("votes").update({ status: "open" }).eq("id", vote.id).eq("status", "draft");
   await audit(db, { actorId, actorType, action: "vote.opened", vote });
 
-  // Tell every holder once, whatever kind of holder they are.
-  const rows = await capRows(db, vote.property_id);
-  const buyerIds = [...new Set(rows.map((r) => r.buyer_account_id).filter(Boolean))] as string[];
-  const sellerIds = [...new Set(rows.map((r) => (r.holder_type === "retained_seller" ? r.seller_id : null)).filter(Boolean))] as string[];
-  const { data: buyers } = buyerIds.length ? await db.from("buyer_accounts").select("auth_user_id, email").in("id", buyerIds) : { data: [] };
-  const recipients = [
-    ...((buyers ?? []) as Array<{ auth_user_id: string; email: string | null }>).map((b) => ({ authUserId: b.auth_user_id, email: b.email })),
-    ...sellerIds.map((id) => ({ authUserId: id, email: null })),
-  ];
-  for (const recipient of recipients) {
+  for (const recipient of await holderRecipients(db, vote.property_id)) {
     await deliver(db as never, recipient, {
       subject: "A vote is open on your property",
       message: `A vote is open: "${vote.title}". Cast your ballot from your owner dashboard.`,
