@@ -43,7 +43,7 @@ function OwnerLlcPage() {
   const [active, setActive] = useState<Tab>(tab ?? "operating-agreement");
 
   useEffect(() => {
-    if (!authLoading && !user) navigate({ to: "/buyer/login" });
+    if (!authLoading && !user) navigate({ to: "/owner/login", search: { redirect: window.location.pathname } });
   }, [authLoading, user, navigate]);
 
   const denied = data?.access === "none";

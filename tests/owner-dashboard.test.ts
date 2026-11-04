@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { harness } from "./setup";
 import { seedPod, IDS, USERS } from "./fixtures";
 import { getOwnerNavState, getOwnerProperty, listOwnerProperties } from "@/lib/owner.functions";
+import { safeOwnerRedirect } from "@/lib/owner-sections";
 
 const as = (user: string) => (harness.userId = user);
 const db = () => harness.db;
@@ -46,6 +47,19 @@ function seed() {
 }
 
 const open = (propertyId: string) => getOwnerProperty({ data: { propertyId } });
+
+describe("after owner sign-in", () => {
+  it("returns to the owner page that was asked for", () => {
+    expect(safeOwnerRedirect("/owner/properties/8b1f-2c/votes/9d3a-11")).toBe("/owner/properties/8b1f-2c/votes/9d3a-11");
+    expect(safeOwnerRedirect("/owner")).toBe("/owner");
+  });
+
+  it("falls back to /owner for anything outside the owner area or a loop", () => {
+    for (const bad of [null, undefined, "", "https://evil.test/owner", "//evil.test/owner", "/owner/../admin", "/owners", "/admin", "/owner/x?y=1", "/owner\\evil", "/owner/login", "/owner/login/"]) {
+      expect(safeOwnerRedirect(bad)).toBe("/owner");
+    }
+  });
+});
 
 describe("who can open an owner property", () => {
   it("(1) a user with no cap table row gets nothing about the property", async () => {

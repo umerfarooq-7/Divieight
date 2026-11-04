@@ -94,6 +94,7 @@ import { Route as OnboardingListingAgentRouteImport } from './routes/onboarding.
 import { Route as OnboardingMediaRouteImport } from './routes/onboarding.media'
 import { Route as OnboardingPropertyRouteImport } from './routes/onboarding.property'
 import { Route as OwnerIndexRouteImport } from './routes/owner.index'
+import { Route as OwnerLoginRouteImport } from './routes/owner.login'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as RTokenRouteImport } from './routes/r.$token'
@@ -593,6 +594,11 @@ const OwnerIndexRoute = OwnerIndexRouteImport.update({
   path: '/owner/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OwnerLoginRoute = OwnerLoginRouteImport.update({
+  id: '/owner/login',
+  path: '/owner/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -1068,6 +1074,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/listing-agent': typeof OnboardingListingAgentRoute
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
+  '/owner/login': typeof OwnerLoginRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1219,6 +1226,7 @@ export interface FileRoutesByTo {
   '/onboarding/listing-agent': typeof OnboardingListingAgentRoute
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
+  '/owner/login': typeof OwnerLoginRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1378,6 +1386,7 @@ export interface FileRoutesById {
   '/onboarding/listing-agent': typeof OnboardingListingAgentRoute
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
+  '/owner/login': typeof OwnerLoginRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1538,6 +1547,7 @@ export interface FileRouteTypes {
     | '/onboarding/listing-agent'
     | '/onboarding/media'
     | '/onboarding/property'
+    | '/owner/login'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -1689,6 +1699,7 @@ export interface FileRouteTypes {
     | '/onboarding/listing-agent'
     | '/onboarding/media'
     | '/onboarding/property'
+    | '/owner/login'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -1847,6 +1858,7 @@ export interface FileRouteTypes {
     | '/onboarding/listing-agent'
     | '/onboarding/media'
     | '/onboarding/property'
+    | '/owner/login'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -1964,6 +1976,7 @@ export interface RootRouteChildren {
   OnboardingListingAgentRoute: typeof OnboardingListingAgentRoute
   OnboardingMediaRoute: typeof OnboardingMediaRoute
   OnboardingPropertyRoute: typeof OnboardingPropertyRoute
+  OwnerLoginRoute: typeof OwnerLoginRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
@@ -2600,6 +2613,13 @@ declare module '@tanstack/react-router' {
       path: '/owner'
       fullPath: '/owner/'
       preLoaderRoute: typeof OwnerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/login': {
+      id: '/owner/login'
+      path: '/owner/login'
+      fullPath: '/owner/login'
+      preLoaderRoute: typeof OwnerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties/': {
@@ -3372,6 +3392,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingListingAgentRoute: OnboardingListingAgentRoute,
   OnboardingMediaRoute: OnboardingMediaRoute,
   OnboardingPropertyRoute: OnboardingPropertyRoute,
+  OwnerLoginRoute: OwnerLoginRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,

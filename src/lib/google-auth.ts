@@ -6,8 +6,8 @@ import { setOAuthRole, type AccountRole } from "@/lib/account-routing";
  * Always a full-page redirect back to /auth/callback, where the session is
  * hydrated and the role routing happens.
  */
-export async function signInWithGoogle(role: AccountRole): Promise<{ error?: string }> {
-  setOAuthRole(role);
+export async function signInWithGoogle(role: AccountRole | null): Promise<{ error?: string }> {
+  if (role) setOAuthRole(role);
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
