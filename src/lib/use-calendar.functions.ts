@@ -115,6 +115,19 @@ export const overrideCalendarWeek = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const transferCalendarWeeks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { yearId: string; fromHolderKey: string; toHolderKey: string; reason: string }) => ({
+    yearId: required(input?.yearId, "year"),
+    fromHolderKey: required(input?.fromHolderKey, "holder to move from"),
+    toHolderKey: required(input?.toHolderKey, "holder to move to"),
+    reason: required(input?.reason, "reason"),
+  }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    return (await server()).transferUpcomingWeeks(await adminDb(), { actorId: context.userId, ...data });
+  });
+
 export const lockCalendarYear = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { yearId: string }) => ({ yearId: required(input?.yearId, "year") }))

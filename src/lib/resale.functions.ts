@@ -82,10 +82,34 @@ export const expressResaleInterest = createServerFn({ method: "POST" })
   .inputValidator((input: { listingId: string }) => ({ listingId: required(input?.listingId, "listing") }))
   .handler(async ({ data, context }) => (await server()).expressInterest(await adminDb(), { userId: context.userId, ...data }));
 
+async function requireAdmin(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (!data) throw new Error("Not authorized");
+}
+
 export const listResaleForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await (context.supabase as any).rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (!data) throw new Error("Not authorized");
+    await requireAdmin(context);
     return (await server()).adminResale(await adminDb());
+  });
+
+export const completeResaleSale = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { transactionId: string }) => ({ transactionId: required(input?.transactionId, "sale") }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    return (await server()).completeSale(await adminDb(), context.userId, data.transactionId);
+  });
+
+export const cancelResaleSale = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { transactionId: string; reason: string }) => ({
+    transactionId: required(input?.transactionId, "sale"),
+    reason: required(input?.reason, "reason").slice(0, 2000),
+  }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    await (await server()).cancelSale(await adminDb(), { adminId: context.userId, ...data });
+    return { ok: true };
   });

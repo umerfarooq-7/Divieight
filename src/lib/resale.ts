@@ -19,6 +19,29 @@ export const RESALE_STATUS_LABELS: Record<ResaleStatus, string> = {
   expired: "Expired",
 };
 
+export type ResaleTransactionStatus = "pending_closing" | "completed" | "cancelled";
+
+export const ROFR_WINNER_RULE = "Higher priority rank wins";
+
+export interface RofrCandidate {
+  id: string;
+  priority_rank_at_election: number | null;
+  elected_at: string;
+}
+
+/** Best (lowest) rank wins. A tie shouldn't occur; if it does, the earliest election wins. */
+export function pickRofrWinner<T extends RofrCandidate>(elections: T[]): T | null {
+  const rank = (e: T) => e.priority_rank_at_election ?? Number.POSITIVE_INFINITY;
+  return (
+    [...elections].sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        new Date(a.elected_at).getTime() - new Date(b.elected_at).getTime() ||
+        a.id.localeCompare(b.id),
+    )[0] ?? null
+  );
+}
+
 export function rofrCloseAt(opensAt: Date): Date {
   return new Date(opensAt.getTime() + RESALE_ROFR_HOURS * 3_600_000);
 }

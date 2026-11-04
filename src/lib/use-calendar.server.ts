@@ -23,6 +23,7 @@ import { holderFor } from "@/lib/votes.server";
 type Db = { from: (t: string) => any; rpc?: (fn: string, args: Record<string, unknown>) => any };
 
 const MISSING_SCHEMA = "Database is missing the Use Calendar — run use-calendar.sql in Supabase.";
+const FORMER_HOLDER = "Former holder";
 
 export interface YearRow {
   id: string;
@@ -147,10 +148,13 @@ async function yearWeeks(db: Db, year: Pick<YearRow, "property_id" | "year">): P
 
 async function turnContext(db: Db, year: YearRow, weeks: WeekRow[]): Promise<TurnContext> {
   const { data } = await db.from("use_calendar_priority").select("holder_key, priority_rank").eq("property_id", year.property_id);
+  // Someone who sold all their shares takes no more turns, but keeps what they picked.
+  const { data: cap } = await db.from("cap_table_entries").select("holder_type, buyer_account_id, seller_id").eq("property_id", year.property_id);
+  const current = new Set(((cap ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null }>).map((c) => (c.holder_type === "retained_seller" ? `seller:${c.seller_id}` : String(c.buyer_account_id))));
   const order = ((data ?? []) as Array<{ holder_key: string; priority_rank: number }>)
     .sort((a, b) => a.priority_rank - b.priority_rank)
     .map((p) => p.holder_key)
-    .filter((key) => key in year.quotas);
+    .filter((key) => key in year.quotas && current.has(key));
   const picks: Record<string, number> = {};
   for (const w of weeks) if (w.holder_key) picks[w.holder_key] = (picks[w.holder_key] ?? 0) + 1;
   return {
@@ -396,7 +400,7 @@ export async function adminCalendar(db: Db, propertyId: string) {
       status: year.status,
       rotationOffset: year.rotation_offset,
       turnHours: year.turn_hours,
-      turnHolderName: year.turn_holder_key ? (nameOf.get(year.turn_holder_key) ?? year.turn_holder_key) : null,
+      turnHolderName: year.turn_holder_key ? (nameOf.get(year.turn_holder_key) ?? FORMER_HOLDER) : null,
       turnPhase: year.turn_phase,
       turnRound: year.turn_round,
       deadlineAt: year.turn_deadline_at,
@@ -409,8 +413,9 @@ export async function adminCalendar(db: Db, propertyId: string) {
         endDate: w.end_date,
         isHoliday: w.is_holiday,
         holderKey: w.holder_key,
-        holderName: w.holder_key ? (nameOf.get(w.holder_key) ?? w.holder_key) : null,
+        holderName: w.holder_key ? (nameOf.get(w.holder_key) ?? FORMER_HOLDER) : null,
       })),
+      weekHolders: [...new Set(weeks.map((w) => w.holder_key).filter(Boolean))].map((key) => ({ holderKey: key as string, name: nameOf.get(key as string) ?? FORMER_HOLDER })),
     });
   }
   return {
@@ -560,6 +565,47 @@ export async function overrideWeek(
   const next = nextTurn(ctx, current);
   if (next?.holderKey === current?.holderKey && next?.phase === current?.phase && next?.round === current?.round) return;
   if ((await moveTurn(db, year, next)) && next) await notifyTurn(db, year, next.holderKey);
+}
+
+/**
+ * After a resale the old holder keeps their picked weeks until the year ends.
+ * This moves their upcoming weeks, and the quota for them, to a current holder.
+ */
+export async function transferUpcomingWeeks(
+  db: Db,
+  params: { actorId: string; yearId: string; fromHolderKey: string; toHolderKey: string; reason: string },
+): Promise<{ moved: number }> {
+  const year = await loadYear(db, params.yearId);
+  if (!year) throw new Error("Year not found");
+  if (year.status === "draft") throw new Error("Open selection before transferring weeks.");
+  if (params.fromHolderKey === params.toHolderKey) throw new Error("Choose two different holders.");
+  if (!(await rankedHolders(db, year.property_id)).some((h) => h.holderKey === params.toHolderKey)) throw new Error("That holder isn't on this property's cap table.");
+  const today = new Date().toISOString().slice(0, 10);
+  const moving = (await yearWeeks(db, year)).filter((w) => w.holder_key === params.fromHolderKey && w.end_date >= today);
+  if (moving.length === 0) throw new Error("That holder has no upcoming weeks in this year.");
+  for (const w of moving) {
+    await db
+      .from("use_calendar_weeks")
+      .update({ holder_key: params.toHolderKey, selected_by_user_id: params.actorId, selected_at: new Date().toISOString(), selection_round: null })
+      .eq("property_id", year.property_id)
+      .eq("year", year.year)
+      .eq("week_number", w.week_number)
+      .eq("holder_key", params.fromHolderKey);
+  }
+  const quotas = { ...year.quotas };
+  if (params.fromHolderKey in quotas) quotas[params.fromHolderKey] = Math.max(0, (quotas[params.fromHolderKey] ?? 0) - moving.length);
+  quotas[params.toHolderKey] = (quotas[params.toHolderKey] ?? 0) + moving.length;
+  await db.from("use_calendar_years").update({ quotas }).eq("id", year.id);
+  await audit(db, { id: params.actorId, type: "admin" }, "use_calendar.weeks_transferred", year, {
+    from_holder_key: params.fromHolderKey,
+    to_holder_key: params.toHolderKey,
+    weeks: moving.map((w) => w.week_number),
+    reason: params.reason,
+  });
+  const text = `${moving.length} ${year.year} Use Calendar week${moving.length === 1 ? "" : "s"} moved by divieight. Reason: ${params.reason}`;
+  await notifyHolder(db, params.fromHolderKey, year.property_id, "Use Calendar weeks moved", text);
+  await notifyHolder(db, params.toHolderKey, year.property_id, "Use Calendar weeks moved", text);
+  return { moved: moving.length };
 }
 
 export async function lockYear(db: Db, actorId: string, yearId: string) {

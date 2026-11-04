@@ -147,6 +147,11 @@ export async function syncCapTable(
   db: Db,
   params: { propertyId: string; actorId: string; reason: string },
 ): Promise<{ rows: CapTableRow[]; changed: boolean }> {
+  // Once a resale has changed the cap table it is the source of truth: rebuilding
+  // from reservations would hand sold shares back to their old holders.
+  const { data: resold } = await db.from("cap_table_history").select("id").eq("property_id", params.propertyId).limit(1);
+  if ((resold ?? []).length > 0) return { rows: [], changed: false };
+
   const desired = await buildCapTable(db, params.propertyId);
 
   const { data: existingRaw } = await db

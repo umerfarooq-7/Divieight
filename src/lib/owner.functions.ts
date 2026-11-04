@@ -115,12 +115,17 @@ export async function propertyCard(db: Db, propertyId: string) {
  * one belongs to the listing the seller created most recently before paying.
  */
 async function retainedShareLabels(db: Db, propertyId: string, userId: string, rows: CapRow[]): Promise<Array<{ shareNumber: number; label: string }>> {
-  const retained = rows
+  const held = rows
     .filter((r) => r.holder_type === "retained_seller")
     .map((r) => r.share_number)
     .sort((a, b) => a - b);
+  if (held.length === 0) return [];
+  // Retained shares are numbered first, so a sale or a later purchase can't relabel them.
+  const { data: property } = await db.from("properties").select("retained_shares").eq("id", propertyId).maybeSingle();
+  const originallyRetained = (property?.retained_shares as number | null) ?? held.length;
+  const retained = held.filter((n) => n <= originallyRetained);
   if (retained.length === 0) return [];
-  const extras = retained.length - 1;
+  const extras = originallyRetained - 1;
 
   const { data: payments } = await db
     .from("enrollment_payments")
@@ -132,13 +137,13 @@ async function retainedShareLabels(db: Db, propertyId: string, userId: string, r
   const listingOf = (paidAt: string) =>
     created.filter((l) => l.at <= new Date(paidAt).getTime()).sort((a, b) => b.at - a.at)[0]?.id ?? null;
   const payment = ((payments ?? []) as Array<{ property_id: string | null; retained_shares: number; amount_cents: number; created_at: string }>).find(
-    (p) => p.retained_shares === retained.length && (p.property_id ?? listingOf(p.created_at)) === propertyId,
+    (p) => p.retained_shares === originallyRetained && (p.property_id ?? listingOf(p.created_at)) === propertyId,
   );
 
-  return retained.map((shareNumber, index) => ({
+  return retained.map((shareNumber) => ({
     shareNumber,
     label:
-      index === 0
+      shareNumber === 1
         ? "Legacy Seat (free)"
         : payment
           ? `Extra retained share (paid ${formatUsd(payment.amount_cents / extras)})`

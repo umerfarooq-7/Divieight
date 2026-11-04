@@ -12,6 +12,7 @@ import {
   overrideCalendarWeek,
   setCalendarHolidays,
   setCalendarTurnHours,
+  transferCalendarWeeks,
 } from "@/lib/use-calendar.functions";
 import { DEFAULT_TURN_HOURS } from "@/lib/use-calendar";
 import { cn } from "@/lib/utils";
@@ -125,12 +126,16 @@ function YearCard({ propertyId, year, holders }: { propertyId: string; year: Yea
   const open = useServerFn(openCalendarSelection);
   const lock = useServerFn(lockCalendarYear);
   const override = useServerFn(overrideCalendarWeek);
+  const transfer = useServerFn(transferCalendarWeeks);
 
   const [holidayText, setHolidayText] = useState(year.holidayWeeks.join(", "));
   const [hours, setHours] = useState(String(year.turnHours));
   const [week, setWeek] = useState("1");
   const [holderKey, setHolderKey] = useState("");
   const [reason, setReason] = useState("");
+  const [fromKey, setFromKey] = useState("");
+  const [toKey, setToKey] = useState("");
+  const [transferReason, setTransferReason] = useState("");
 
   const act = useMutation({
     mutationFn: (fn: () => Promise<unknown>) => fn(),
@@ -253,6 +258,45 @@ function YearCard({ propertyId, year, holders }: { propertyId: string; year: Yea
               className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground disabled:opacity-50"
             >
               Apply
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {year.status !== "draft" && year.weekHolders.length > 0 ? (
+        <div className="mt-3 rounded-lg border border-border p-3">
+          <p className="text-xs font-semibold text-foreground">Transfer upcoming weeks (logged)</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            After a resale the old holder keeps their picked weeks until the year ends. Use this to move them to another holder.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <select value={fromKey} onChange={(e) => setFromKey(e.target.value)} aria-label="From holder" className={FIELD}>
+              <option value="">From…</option>
+              {year.weekHolders.map((h) => (
+                <option key={h.holderKey} value={h.holderKey}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+            <select value={toKey} onChange={(e) => setToKey(e.target.value)} aria-label="To holder" className={FIELD}>
+              <option value="">To…</option>
+              {holders.map((h) => (
+                <option key={h.holderKey} value={h.holderKey}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+            <input value={transferReason} onChange={(e) => setTransferReason(e.target.value)} placeholder="Reason (required)" aria-label="Transfer reason" className={`${FIELD} min-w-0 flex-1`} />
+            <button
+              type="button"
+              disabled={act.isPending || !fromKey || !toKey || !transferReason.trim()}
+              onClick={() => {
+                act.mutate(() => transfer({ data: { yearId: year.id, fromHolderKey: fromKey, toHolderKey: toKey, reason: transferReason } }));
+                setTransferReason("");
+              }}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground disabled:opacity-50"
+            >
+              Transfer
             </button>
           </div>
         </div>

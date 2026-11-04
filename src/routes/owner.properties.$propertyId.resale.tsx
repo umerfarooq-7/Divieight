@@ -8,7 +8,7 @@ import { timeLeft } from "@/components/owner/VoteBits";
 import { OwnerLoading, OwnerPageShell } from "@/components/owner/useOwnerProperty";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDate } from "@/lib/format-date";
-import { RESALE_FLAT_FEE, RESALE_ROFR_HOURS, RESALE_STATUS_LABELS, resaleMoney, type RofrPosition } from "@/lib/resale";
+import { RESALE_FLAT_FEE, RESALE_ROFR_HOURS, RESALE_STATUS_LABELS, resaleMoney, ROFR_WINNER_RULE, type RofrPosition } from "@/lib/resale";
 import {
   createResaleListing,
   exerciseResaleRofr,
@@ -74,6 +74,7 @@ function OwnerResalePage() {
       <h1 className="mt-4 font-display text-2xl font-semibold text-foreground sm:text-3xl">Resale Shop</h1>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
         Co-owners get the first chance to buy a listed share. If none of them does within 10 days, it goes on the open market.
+        If more than one co-owner elects to buy: {ROFR_WINNER_RULE.toLowerCase()}.
       </p>
       <div className="mt-6 space-y-6">
         {isError ? (
@@ -250,6 +251,7 @@ function MyListing({ propertyId, listing: l }: { propertyId: string; listing: Ow
         {resaleMoney(l.flatFee)} technology-service fee at sale.
         {l.status === "rofr_open" ? ` Window closes in ${untilClose(l.rofrClosesAt)}.` : ""}
         {l.electionCount > 0 ? ` ${l.electionCount} co-owner election${l.electionCount === 1 ? "" : "s"}.` : ""}
+        {l.saleStatus === "pending_closing" ? " A co-owner is confirmed as the buyer; divieight will contact you about closing." : ""}
       </p>
       {l.canWithdraw ? (
         <button type="button" disabled={mut.isPending} onClick={() => mut.mutate()} className={`mt-3 ${quietButton}`}>
@@ -290,11 +292,13 @@ function CoOwnerListing({ propertyId, listing: l }: { propertyId: string; listin
       </div>
 
       {l.myElection === "active" ? (
-        <p className="mt-2 text-sm text-foreground">You exercised your right of first refusal. The outcome is confirmed after the window closes.</p>
+        <p className="mt-2 text-sm text-foreground">You exercised your right of first refusal. The outcome is confirmed after the window closes. {ROFR_WINNER_RULE}.</p>
       ) : l.myElection === "won" ? (
-        <p className="mt-2 text-sm text-foreground">You've been confirmed as the buyer.</p>
+        <p className="mt-2 text-sm text-foreground">
+          {l.saleStatus === "completed" ? "This purchase is complete. The share is now yours." : "You've been confirmed as the buyer. divieight will contact you about closing."}
+        </p>
       ) : l.myElection === "lost" ? (
-        <p className="mt-2 text-sm text-muted-foreground">This share went another way.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Another co-owner was confirmed as the buyer, or the listing closed. {ROFR_WINNER_RULE}.</p>
       ) : null}
 
       {l.canElect && multiMember ? (
@@ -311,7 +315,7 @@ function CoOwnerListing({ propertyId, listing: l }: { propertyId: string; listin
         confirming ? (
           <div className="mt-3 space-y-2">
             <p className="text-sm text-foreground">
-              Elect to buy share #{l.shareNumber} at {resaleMoney(l.askingPrice)}? If more than one co-owner elects, divieight confirms who buys.
+              Elect to buy share #{l.shareNumber} at {resaleMoney(l.askingPrice)}? If more than one co-owner elects: {ROFR_WINNER_RULE.toLowerCase()}.
             </p>
             <div className="flex flex-wrap gap-2">
               <button type="button" disabled={exerciseMut.isPending} onClick={() => exerciseMut.mutate()} className={primaryButton}>

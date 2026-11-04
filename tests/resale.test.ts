@@ -214,12 +214,12 @@ describe("when the window closes", () => {
   it("no elections: goes open_market, once, telling the seller", async () => {
     seed();
     const { id } = await list(USERS.b2, 2);
-    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 0 });
+    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 0, resolved: 0 });
     expect(row(id!).status).toBe("rofr_open");
     pastWindow(id!);
-    expect(await settleRofr(db())).toEqual({ openMarket: 1, exercised: 0 });
+    expect(await settleRofr(db())).toEqual({ openMarket: 1, exercised: 0, resolved: 0 });
     expect(row(id!).status).toBe("open_market");
-    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 0 });
+    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 0, resolved: 0 });
     expect(db().audits("resale.rofr_closed")).toHaveLength(1);
     expect(db().notificationsFor(USERS.b2).filter((n) => /open market/.test(n.message))).toHaveLength(1);
   });
@@ -229,9 +229,9 @@ describe("when the window closes", () => {
     const { id } = await list(IDS.seller, 4);
     await exercise(USERS.b2, id!);
     pastWindow(id!);
-    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 1 });
+    expect(await settleRofr(db())).toEqual({ openMarket: 0, exercised: 1, resolved: 1 });
     expect(row(id!).status).toBe("rofr_exercised");
-    expect(db().table("resale_rofr_elections")[0]!.status).toBe("active");
+    expect(db().table("resale_rofr_elections")[0]!.status).toBe("won");
   });
 
   it("only withdrawn elections count as none", async () => {
@@ -280,7 +280,7 @@ describe("withdrawing a listing", () => {
     expect((await list(USERS.b2, 2)).error).toBeUndefined();
   });
 
-  it("is allowed while elections are unresolved, refused once a winner is confirmed", async () => {
+  it("is refused once a winner is confirmed", async () => {
     seed();
     const open = await list(USERS.b2, 2);
     await agreeB1(open.id!);
@@ -288,12 +288,8 @@ describe("withdrawing a listing", () => {
     pastWindow(open.id!);
     await settleRofr(db());
     as(USERS.b2);
-    let view = await getOwnerResale({ data: { propertyId: A } });
-    expect(view.mine[0]).toMatchObject({ status: "rofr_exercised", canWithdraw: true, electionCount: 1 });
-
-    db().table("resale_rofr_elections")[0]!.status = "won";
-    view = await getOwnerResale({ data: { propertyId: A } });
-    expect(view.mine[0]!.canWithdraw).toBe(false);
+    const view = await getOwnerResale({ data: { propertyId: A } });
+    expect(view.mine[0]).toMatchObject({ status: "rofr_exercised", canWithdraw: false });
     expect((await withdrawResaleListing({ data: { propertyId: A, listingId: open.id! } })).error).toMatch(/can't be withdrawn/);
     expect(row(open.id!).status).toBe("rofr_exercised");
   });

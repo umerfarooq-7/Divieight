@@ -67,6 +67,7 @@ const DEFAULTS: Record<string, Row> = {
   saga_notifications_sent: { status: "pending" },
   co_owner_digital_keys: { status: "active" },
   resale_listings: { flat_fee: 500 },
+  resale_transactions: { flat_fee: 500 },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */
