@@ -59,6 +59,7 @@ const NAV = [
   { to: "/admin/agent-assignments", label: "Agent assignments", icon: Users2 },
   { to: "/admin/retention-exceptions", label: "Retention exceptions", icon: ShieldCheck },
   { to: "/admin/resale", label: "Resale Shop", icon: Home },
+  { to: "/admin/maintenance", label: "Maintenance", icon: Home },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
   { to: "/admin/listing-compliance", label: "Listing compliance", icon: ShieldCheck },

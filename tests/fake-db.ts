@@ -68,6 +68,7 @@ const DEFAULTS: Record<string, Row> = {
   co_owner_digital_keys: { status: "active" },
   resale_listings: { flat_fee: 500 },
   resale_transactions: { flat_fee: 500 },
+  maintenance_requests: { expense_id: null, expense_queued_at: null, estimated_cost: null, actual_cost: null, vendor_name: null },
 };
 
 /** Timestamp columns that DEFAULT now() in the schema. */

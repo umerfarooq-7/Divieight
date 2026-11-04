@@ -40,6 +40,7 @@ import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-ge
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminResaleRouteImport } from './routes/admin.resale'
@@ -166,6 +167,7 @@ import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/own
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
+import { Route as OwnerPropertiesPropertyIdMaintenanceRouteImport } from './routes/owner.properties.$propertyId.maintenance'
 import { Route as OwnerPropertiesPropertyIdResaleRouteImport } from './routes/owner.properties.$propertyId.resale'
 import { Route as OwnerPropertiesPropertyIdRetentionRouteImport } from './routes/owner.properties.$propertyId.retention'
 import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
@@ -325,6 +327,11 @@ const AdminListingComplianceRoute = AdminListingComplianceRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
@@ -993,6 +1000,12 @@ const OwnerPropertiesPropertyIdLlcRoute =
     path: '/owner/properties/$propertyId/llc',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdMaintenanceRoute =
+  OwnerPropertiesPropertyIdMaintenanceRouteImport.update({
+    id: '/owner/properties/$propertyId/maintenance',
+    path: '/owner/properties/$propertyId/maintenance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdResaleRoute =
   OwnerPropertiesPropertyIdResaleRouteImport.update({
     id: '/owner/properties/$propertyId/resale',
@@ -1049,6 +1062,7 @@ export interface FileRoutesByFullPath {
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/resale': typeof AdminResaleRoute
@@ -1174,6 +1188,7 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
@@ -1208,6 +1223,7 @@ export interface FileRoutesByTo {
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/resale': typeof AdminResaleRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
@@ -1330,6 +1346,7 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
@@ -1369,6 +1386,7 @@ export interface FileRoutesById {
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/resale': typeof AdminResaleRoute
@@ -1494,6 +1512,7 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
+  '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
@@ -1534,6 +1553,7 @@ export interface FileRouteTypes {
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
+    | '/admin/maintenance'
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/resale'
@@ -1659,6 +1679,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id/'
@@ -1693,6 +1714,7 @@ export interface FileRouteTypes {
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
+    | '/admin/maintenance'
     | '/admin/payments'
     | '/admin/resale'
     | '/admin/retention-exceptions'
@@ -1815,6 +1837,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id'
@@ -1853,6 +1876,7 @@ export interface FileRouteTypes {
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
+    | '/admin/maintenance'
     | '/admin/payments'
     | '/admin/properties'
     | '/admin/resale'
@@ -1978,6 +2002,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/llc'
+    | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
     | '/agent/pods/$id/'
@@ -2063,6 +2088,7 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
+  OwnerPropertiesPropertyIdMaintenanceRoute: typeof OwnerPropertiesPropertyIdMaintenanceRoute
   OwnerPropertiesPropertyIdResaleRoute: typeof OwnerPropertiesPropertyIdResaleRoute
   OwnerPropertiesPropertyIdRetentionRoute: typeof OwnerPropertiesPropertyIdRetentionRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
@@ -2287,6 +2313,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/maintenance': {
+      id: '/admin/maintenance'
+      path: '/maintenance'
+      fullPath: '/admin/maintenance'
+      preLoaderRoute: typeof AdminMaintenanceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/payments': {
@@ -3171,6 +3204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdLlcRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/maintenance': {
+      id: '/owner/properties/$propertyId/maintenance'
+      path: '/owner/properties/$propertyId/maintenance'
+      fullPath: '/owner/properties/$propertyId/maintenance'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/resale': {
       id: '/owner/properties/$propertyId/resale'
       path: '/owner/properties/$propertyId/resale'
@@ -3243,6 +3283,7 @@ interface AdminRouteChildren {
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminMaintenanceRoute: typeof AdminMaintenanceRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
   AdminResaleRoute: typeof AdminResaleRoute
@@ -3278,6 +3319,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminMaintenanceRoute: AdminMaintenanceRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
   AdminResaleRoute: AdminResaleRoute,
@@ -3514,6 +3556,8 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdCalendarRoute:
     OwnerPropertiesPropertyIdCalendarRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
+  OwnerPropertiesPropertyIdMaintenanceRoute:
+    OwnerPropertiesPropertyIdMaintenanceRoute,
   OwnerPropertiesPropertyIdResaleRoute: OwnerPropertiesPropertyIdResaleRoute,
   OwnerPropertiesPropertyIdRetentionRoute:
     OwnerPropertiesPropertyIdRetentionRoute,
