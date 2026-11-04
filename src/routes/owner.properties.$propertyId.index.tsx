@@ -107,6 +107,16 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
               ]}
             />
           </div>
+          {p.shareLabels.length > 0 ? (
+            <ul className="mt-3 space-y-1.5 border-t border-border pt-3 text-sm">
+              {p.shareLabels.map((s) => (
+                <li key={s.shareNumber} className="flex flex-wrap justify-between gap-2">
+                  <span className="text-muted-foreground">Share #{s.shareNumber}</span>
+                  <span className="font-medium text-foreground">{s.label}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </Card>
 
         <Card title="Capital account">

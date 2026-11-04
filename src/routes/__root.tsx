@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { NavBar } from "@/components/NavBar";
+import { CoOwnerBanner } from "@/components/owner/CoOwnerBanner";
 import { Toaster } from "sonner";
 import { SiteFooter } from "@/components/SiteFooter";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,6 +166,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background">
         {!isPortal && <NavBar />}
+        {!isPortal && <CoOwnerBanner />}
         <main className="flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />

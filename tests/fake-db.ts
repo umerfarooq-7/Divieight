@@ -30,6 +30,7 @@ const UNIQUE: Record<string, string[][]> = {
   saga_test_log: [["idempotency_key"]],
   commission_ledger: [["settlement_document_id", "share_number", "agent_id", "role"]],
   saga_notifications_sent: [["idempotency_key"]],
+  owner_activation_notices: [["user_id", "property_id"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */

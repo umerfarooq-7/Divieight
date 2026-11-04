@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { isListingLocked, LISTING_LOCKED_MESSAGE } from "@/lib/listing-lock";
 import { TitleStatusTracker } from "@/components/TitleStatusTracker";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getOwnerNavState } from "@/lib/owner.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { EightSlicesTracker } from "@/components/EightSlicesTracker";
@@ -77,6 +80,13 @@ function Dashboard() {
   const [seller, setSeller] = useState<SellerInfo | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const loadOwnerNav = useServerFn(getOwnerNavState);
+  const { data: ownerNav } = useQuery({
+    queryKey: ["owner-nav", user?.id],
+    enabled: !!user,
+    retry: false,
+    queryFn: () => loadOwnerNav(),
+  });
 
   useEffect(() => {
     if (authLoading) return;
@@ -209,6 +219,14 @@ function Dashboard() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
+          {ownerNav?.isOwner ? (
+            <Link
+              to="/owner"
+              className="inline-flex h-10 items-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+            >
+              Owner view
+            </Link>
+          ) : null}
           <Link
             to="/onboarding"
             className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"

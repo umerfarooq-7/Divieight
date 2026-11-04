@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { formatUsd } from "@/lib/stripe";
 
 /**
  * Post-closing Owner Dashboard. An owner is a user with a cap table row for the
@@ -39,6 +40,8 @@ export interface OwnerPropertyDetail extends OwnerPropertySummary {
   market: string;
   einStatus: string | null;
   shareNumbers: number[];
+  /** Which kind of retained share each one is; buyer shares have no label. */
+  shareLabels: Array<{ shareNumber: number; label: string }>;
   acquisitionDate: string | null;
   /** The latest Retention Lock across this owner's shares. */
   retentionLockExpiresAt: string | null;
@@ -104,6 +107,79 @@ async function propertyCard(db: Db, propertyId: string) {
     photo,
   };
 }
+
+/**
+ * What a retained seller's shares are: the first is the free Legacy Seat, each
+ * other is an extra share with its enrollment fee. The fee is read from the
+ * seller's payment, never worked out here. Payments carry no property today, so
+ * one belongs to the listing the seller created most recently before paying.
+ */
+async function retainedShareLabels(db: Db, propertyId: string, userId: string, rows: CapRow[]): Promise<Array<{ shareNumber: number; label: string }>> {
+  const retained = rows
+    .filter((r) => r.holder_type === "retained_seller")
+    .map((r) => r.share_number)
+    .sort((a, b) => a - b);
+  if (retained.length === 0) return [];
+  const extras = retained.length - 1;
+
+  const { data: payments } = await db
+    .from("enrollment_payments")
+    .select("property_id, retained_shares, amount_cents, created_at")
+    .eq("seller_id", userId)
+    .eq("status", "paid");
+  const { data: listings } = await db.from("properties").select("id, created_at").eq("seller_id", userId);
+  const created = ((listings ?? []) as Array<{ id: string; created_at: string }>).map((l) => ({ id: l.id, at: new Date(l.created_at).getTime() }));
+  const listingOf = (paidAt: string) =>
+    created.filter((l) => l.at <= new Date(paidAt).getTime()).sort((a, b) => b.at - a.at)[0]?.id ?? null;
+  const payment = ((payments ?? []) as Array<{ property_id: string | null; retained_shares: number; amount_cents: number; created_at: string }>).find(
+    (p) => p.retained_shares === retained.length && (p.property_id ?? listingOf(p.created_at)) === propertyId,
+  );
+
+  return retained.map((shareNumber, index) => ({
+    shareNumber,
+    label:
+      index === 0
+        ? "Legacy Seat (free)"
+        : payment
+          ? `Extra retained share (paid ${formatUsd(payment.amount_cents / extras)})`
+          : "Extra retained share (payment not on record)",
+  }));
+}
+
+export interface CoOwnerBanner {
+  propertyId: string;
+  llcName: string;
+  shareCount: number;
+}
+
+/**
+ * The "you are now a co-owner" banners due to this retained seller: properties
+ * that are active and haven't shown one. Claiming the row is what makes it
+ * one-time, even across two tabs; if it can't be claimed nothing is shown.
+ */
+export async function claimBanners(db: Db, userId: string): Promise<CoOwnerBanner[]> {
+  const { rows, buyerAccountId } = await myCapRows(db, userId);
+  const retained = rows.filter((r) => r.holder_type === "retained_seller");
+  const banners: CoOwnerBanner[] = [];
+  for (const propertyId of [...new Set(retained.map((r) => r.property_id))]) {
+    if (!(await ownerFeaturesActive(db, propertyId, userId, buyerAccountId))) continue;
+    const { error } = await db.from("owner_activation_notices").insert({ user_id: userId, property_id: propertyId });
+    if (error) continue;
+    const { data: genesis } = await db.from("entity_genesis").select("llc_name").eq("property_id", propertyId).maybeSingle();
+    banners.push({
+      propertyId,
+      llcName: (genesis?.llc_name as string | null) ?? (await propertyCard(db, propertyId)).label,
+      shareCount: retained.filter((r) => r.property_id === propertyId).length,
+    });
+  }
+  return banners;
+}
+
+export const claimCoOwnerBanners = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ banners: CoOwnerBanner[] }> => ({
+    banners: await claimBanners(await adminDb(), context.userId),
+  }));
 
 /** Whether to show the Owner entry in the header. */
 export const getOwnerNavState = createServerFn({ method: "GET" })
@@ -171,6 +247,7 @@ export async function loadOwnerProperty(db: Db, userId: string, propertyId: stri
       llcName: (genesis?.llc_name as string | null) ?? null,
       einStatus: (genesis?.ein_status as string | null) ?? null,
       shareNumbers: rows.map((r) => r.share_number).sort((a, b) => a - b),
+      shareLabels: await retainedShareLabels(db, propertyId, userId, rows),
       acquisitionDate: earliest(rows.map((r) => r.acquisition_date)),
       retentionLockExpiresAt: latest(rows.map((r) => r.retention_lock_expires_at)),
       capital: capitalRow ? { contributed, distributions, net: contributed - distributions } : null,
