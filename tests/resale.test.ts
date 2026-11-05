@@ -114,7 +114,7 @@ describe("creating a listing", () => {
   it("notifies the other co-owners of that property only", async () => {
     seed();
     await list(USERS.b2, 2);
-    const told = (user: string) => db().notificationsFor(user).filter((n) => n.type === "resale").length;
+    const told = (user: string) => db().notificationsFor(user).filter((n) => n.type === "resale_activity").length;
     expect(told(USERS.b1)).toBe(1);
     expect(told(IDS.seller)).toBe(1);
     expect(told(USERS.b2)).toBe(0);

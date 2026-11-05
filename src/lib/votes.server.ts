@@ -416,7 +416,9 @@ export async function openVote(db: Db, actorId: string, voteId: string, actorTyp
       subject: "A vote is open on your property",
       message: `A vote is open: "${vote.title}". Cast your ballot from your owner dashboard.`,
       link: `/owner/properties/${vote.property_id}/votes/${vote.id}`,
-      type: "vote",
+      type: "governance_vote_window",
+      propertyId: vote.property_id,
+      dedupeKey: `vote_opened:${vote.id}`,
     });
   }
 }

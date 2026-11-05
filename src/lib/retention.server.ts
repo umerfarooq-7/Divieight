@@ -141,10 +141,12 @@ async function notifyBoth(db: Db, row: RetentionExceptionRow, subject: string, m
     subject,
     message,
     link: `/owner/properties/${row.property_id}/retention`,
-    type: "retention",
+    type: "retention_exception_update",
+    propertyId: row.property_id,
+    dedupeKey: `retention:${row.id}:${subject}`,
   });
   for (const admin of await adminRecipients(db as never)) {
-    await deliver(db as never, admin, { subject, message, link: "/admin/retention-exceptions", type: "retention" });
+    await deliver(db as never, admin, { subject, message, link: "/admin/retention-exceptions", type: "retention", propertyId: row.property_id });
   }
 }
 

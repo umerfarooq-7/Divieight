@@ -54,9 +54,9 @@ async function audit(db: Db, actor: { id: string | null; type: string }, action:
 
 const ownerLink = (propertyId: string) => `/owner/properties/${propertyId}/resale`;
 
-async function tell(db: Db, listing: ResaleListingRow, recipients: Array<{ authUserId: string; email: string | null }>, subject: string, message: string) {
+async function tell(db: Db, listing: ResaleListingRow, recipients: Array<{ authUserId: string; email: string | null }>, subject: string, message: string, dedupeKey?: string) {
   for (const r of recipients) {
-    await deliver(db as never, r, { subject, message, link: ownerLink(listing.property_id), type: "resale" });
+    await deliver(db as never, r, { subject, message, link: ownerLink(listing.property_id), type: "resale_activity", propertyId: listing.property_id, dedupeKey });
   }
 }
 
@@ -146,6 +146,7 @@ async function resolveElections(db: Db, listing: ResaleListingRow): Promise<bool
   if (!won) return false;
 
   const losers = (lost ?? []) as ElectionRow[];
+  const winnerKey = `resale_winner:${listing.id}:${sale.id}`;
   await audit(db, { id: null, type: "system" }, "resale.winner_confirmed", listing, {
     transaction_id: sale.id,
     winner_holder_key: sale.buyer_holder_key,
@@ -153,10 +154,12 @@ async function resolveElections(db: Db, listing: ResaleListingRow): Promise<bool
     losers: losers.map((e) => ({ holder_key: e.holder_key, rank: e.priority_rank_at_election })),
     rule: ROFR_WINNER_RULE,
   });
-  await tell(db, listing, [await userRecipient(db, sale.buyer_user_id)], "You won the right of first refusal", `You are confirmed as the buyer of share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`);
+  await tell(db, listing, [await userRecipient(db, sale.buyer_user_id)], "You won the right of first refusal", `You are confirmed as the buyer of share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`, winnerKey);
   const loserRecipients = await Promise.all(losers.filter((e) => e.user_id).map((e) => userRecipient(db, e.user_id!)));
-  await tell(db, listing, loserRecipients, "Right of first refusal: another co-owner was confirmed", `Another co-owner was confirmed as the buyer of share #${listing.share_number}. ${ROFR_WINNER_RULE}.`);
-  await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "A co-owner is buying your share", `A co-owner is confirmed as the buyer of share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`);
+  await tell(db, listing, loserRecipients, "Right of first refusal: another co-owner was confirmed", `Another co-owner was confirmed as the buyer of share #${listing.share_number}. ${ROFR_WINNER_RULE}.`, winnerKey);
+  await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "A co-owner is buying your share", `A co-owner is confirmed as the buyer of share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`, winnerKey);
+  // Same key throughout: each owner hears this once, the most specific message first.
+  await tell(db, listing, await holderRecipients(db, listing.property_id) as Array<{ authUserId: string; email: string | null }>, "A co-owner was confirmed as a resale buyer", `A co-owner was confirmed as the buyer of share #${listing.share_number}.`, winnerKey);
   await tellAdmins(db, "Resale winner confirmed", `Share #${listing.share_number} has a confirmed buyer and is ready for closing.`);
   return true;
 }
@@ -360,6 +363,7 @@ export async function createListing(
     await otherCoOwners(db, listing),
     "A co-owner's share is for sale",
     `Share #${listing.share_number} is offered at ${resaleMoney(listing.asking_price)}. As a co-owner you have 10 days to exercise your right of first refusal.`,
+    `resale_listed:${listing.id}`,
   );
   return { id: listing.id, rofrClosesAt: listing.rofr_closes_at };
 }

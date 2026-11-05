@@ -61,6 +61,7 @@ const NAV = [
   { to: "/admin/resale", label: "Resale Shop", icon: Home },
   { to: "/admin/maintenance", label: "Maintenance", icon: Home },
   { to: "/admin/expenses", label: "Expenses", icon: CreditCard },
+  { to: "/admin/distributions", label: "Distributions", icon: CreditCard },
   { to: "/admin/conversions", label: "Conversions", icon: ScrollText },
   { to: "/admin/founder", label: "Founder dashboard", icon: ScrollText },
   { to: "/admin/library", label: "Library", icon: FileSignature },

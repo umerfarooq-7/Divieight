@@ -290,12 +290,16 @@ export const postOwnerNotice = createServerFn({ method: "POST" })
     const db = await adminDb();
     const { data: property } = await db.from("properties").select("id").eq("id", data.propertyId).maybeSingle();
     if (!property) throw new Error("Property not found");
-    const { error } = await db.from("owner_notices").insert({
-      property_id: data.propertyId,
-      title: data.title,
-      body: data.body,
-      created_by: context.userId,
-    });
+    const { data: notice, error } = await db
+      .from("owner_notices")
+      .insert({
+        property_id: data.propertyId,
+        title: data.title,
+        body: data.body,
+        created_by: context.userId,
+      })
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(/owner_notices/.test(error.message) ? "Database is missing owner_notices — run owner-llc.sql in Supabase." : error.message);
     await db.from("audit_log").insert({
       actor_id: context.userId,
@@ -304,6 +308,14 @@ export const postOwnerNotice = createServerFn({ method: "POST" })
       entity_type: "property",
       entity_id: data.propertyId,
       metadata: { title: data.title },
+    });
+    const { notifyOwners } = await import("@/lib/owner-notifications.server");
+    await notifyOwners(db as never, data.propertyId, {
+      type: "notice_posted",
+      subject: "A new notice for your property",
+      message: `A new notice was posted: "${data.title}".`,
+      link: `/owner/properties/${data.propertyId}/llc?tab=notices`,
+      dedupeKey: `notice:${notice?.id ?? data.title}`,
     });
     return { ok: true };
   });

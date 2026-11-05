@@ -125,6 +125,11 @@ describe("turns", () => {
     as(USERS.b1);
     expect((await getOwnerCalendar({ data: { propertyId: A } })).year).toMatchObject({ isMyTurn: true, myPicked: 0, myQuota: 13 });
     expect(db().notificationsFor(USERS.b1).at(-1)!.message).toContain("your turn");
+    const turn = (user: string) => db().notificationsFor(user).filter((n) => n.type === "calendar_turn");
+    expect(turn(USERS.b1)).toHaveLength(1);
+    expect(turn(USERS.b1)[0]!.property_id).toBe(A);
+    expect(turn(USERS.b1)[0]!.dedupe_key).toMatch(/^calendar_turn:/);
+    for (const user of [USERS.b2, IDS.seller, USERS.b3]) expect(turn(user)).toEqual([]);
   });
 
   it("an explicit priority rank outranks the timestamp", async () => {

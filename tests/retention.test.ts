@@ -125,7 +125,9 @@ describe("hardship", () => {
     await expect(listable(USERS.b1, 1)).resolves.toBeUndefined();
     expect(db().audits("retention_exception.requested")).toHaveLength(1);
     expect(db().audits("retention_exception.approved")).toHaveLength(1);
-    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "retention")).toHaveLength(2);
+    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "retention_exception_update")).toHaveLength(2);
+    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "retention_exception_update").every((n) => n.property_id === A)).toBe(true);
+    for (const user of [USERS.b2, IDS.seller]) expect(db().notificationsFor(user).filter((n) => n.type === "retention_exception_update")).toEqual([]);
   });
 
   it("rejected leaves the share locked and the owner can ask again", async () => {
@@ -198,7 +200,7 @@ describe("unanimous consent", () => {
     expect(vote).toMatchObject({ vote_type: "unanimous", title: "Retention Lock release: share #1", status: "open", property_id: A });
     expect(db().audits("retention_exception.vote_opened")).toHaveLength(1);
     expect(db().audits("vote.created")[0]!.actor_type).toBe("buyer");
-    for (const user of [USERS.b2, IDS.seller]) expect(db().notificationsFor(user).map((n) => n.type)).toContain("vote");
+    for (const user of [USERS.b2, IDS.seller]) expect(db().notificationsFor(user).map((n) => n.type)).toContain("governance_vote_window");
     as(USERS.b2);
     expect((await getVoteForOwner({ data: { propertyId: A, voteId: voteId! } }))?.vote.voteType).toBe("unanimous");
   });

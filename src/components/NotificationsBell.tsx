@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Bell, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { groupByProperty } from "@/lib/owner-notifications";
+import { getNotificationPropertyLabels } from "@/lib/owner-notifications.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +13,7 @@ type Notification = {
   type: string;
   is_read: boolean;
   created_at: string;
+  property_id?: string | null;
 };
 
 export function NotificationsBell() {
@@ -18,18 +21,20 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [labels, setLabels] = useState<Record<string, string>>({});
 
   async function load() {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("notifications")
-      .select("id, message, type, is_read, created_at")
-      .eq("seller_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    setItems((data as Notification[]) ?? []);
+    const read = (columns: string) =>
+      (supabase as any).from("notifications").select(columns).eq("seller_id", user.id).order("created_at", { ascending: false }).limit(10);
+    let { data, error } = await read("id, message, type, is_read, created_at, property_id");
+    if (error) ({ data } = await read("id, message, type, is_read, created_at")); // before owner-notifications.sql is run
+    const rows = (data as Notification[]) ?? [];
+    setItems(rows);
     setLoading(false);
+    const propertyIds = [...new Set(rows.map((n) => n.property_id).filter(Boolean))] as string[];
+    if (propertyIds.length) setLabels(await getNotificationPropertyLabels({ data: { propertyIds } }).catch(() => ({})));
   }
 
   useEffect(() => {
@@ -90,7 +95,15 @@ export function NotificationsBell() {
               ) : items.length === 0 ? (
                 <p className="px-4 py-6 text-sm text-muted-foreground">No notifications yet.</p>
               ) : (
-                items.map((n) => (
+                groupByProperty(items, labels).flatMap((group) => [
+                  ...(group.label
+                    ? [
+                        <p key={`group-${group.key}`} className="border-b border-border/60 bg-muted/40 px-4 py-1.5 text-[11px] font-semibold text-muted-foreground">
+                          {group.label}
+                        </p>,
+                      ]
+                    : []),
+                  ...group.items.map((n) => (
                   <button
                     key={n.id}
                     type="button"
@@ -119,7 +132,8 @@ export function NotificationsBell() {
                       {new Date(n.created_at).toLocaleString()}
                     </p>
                   </button>
-                ))
+                  )),
+                ])
               )}
             </div>
             <Link

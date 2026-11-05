@@ -122,7 +122,7 @@ async function audit(db: Db, actor: { id: string | null; type: string }, action:
   });
 }
 
-async function notifyHolder(db: Db, holderKey: string, propertyId: string, subject: string, message: string) {
+async function notifyHolder(db: Db, holderKey: string, propertyId: string, subject: string, message: string, dedupeKey?: string) {
   let recipient: { authUserId: string; email: string | null } | null = null;
   if (holderKey.startsWith("seller:")) recipient = { authUserId: holderKey.slice("seller:".length), email: null };
   else {
@@ -130,11 +130,12 @@ async function notifyHolder(db: Db, holderKey: string, propertyId: string, subje
     if (data) recipient = { authUserId: data.auth_user_id, email: data.email ?? null };
   }
   if (recipient)
-    await deliver(db as never, recipient, { subject, message, link: `/owner/properties/${propertyId}/calendar`, type: "use_calendar" });
+    await deliver(db as never, recipient, { subject, message, link: `/owner/properties/${propertyId}/calendar`, type: "calendar_turn", propertyId, dedupeKey });
 }
 
-const notifyTurn = (db: Db, year: YearRow, holderKey: string) =>
-  notifyHolder(db, holderKey, year.property_id, "It's your turn to pick a week", `It's your turn to pick a ${year.year} Use Calendar week.`);
+/** turnSeq is the turn this starts: each one is told once, however it came about. */
+const notifyTurn = (db: Db, year: YearRow, holderKey: string, turnSeq = year.turn_seq + 1) =>
+  notifyHolder(db, holderKey, year.property_id, "It's your turn to pick a week", `It's your turn to pick a ${year.year} Use Calendar week.`, `calendar_turn:${year.id}:${turnSeq}`);
 
 async function yearWeeks(db: Db, year: Pick<YearRow, "property_id" | "year">): Promise<WeekRow[]> {
   const { data } = await db
@@ -520,7 +521,7 @@ export async function openSelection(db: Db, actorId: string, yearId: string) {
     .eq("id", year.id)
     .eq("status", "draft");
   await audit(db, { id: actorId, type: "admin" }, "use_calendar.selection_opened", year, { quotas, first_holder: first?.holderKey ?? null });
-  if (first) await notifyTurn(db, year, first.holderKey);
+  if (first) await notifyTurn(db, year, first.holderKey, year.turn_seq);
 }
 
 /** Force-assign or clear a week. The reason is required and logged; quotas don't bind an override. */

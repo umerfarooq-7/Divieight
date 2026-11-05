@@ -11,6 +11,7 @@ type Filter = (r: Row) => boolean;
 /** Composite unique keys enforced on insert/upsert (mirrors the SQL indexes). */
 const UNIQUE: Record<string, string[][]> = {
   buyer_attribution: [["buyer_user_id"]],
+  notifications: [["seller_id", "dedupe_key"]],
   library_videos: [["slug"]],
   agent_attribution_tokens: [["token"]],
   authorization_responses: [["request_id", "account_member_id"]],
@@ -317,6 +318,7 @@ export class FakeDb {
 
   uniqueClash(table: string, row: Row): string | null {
     for (const keys of UNIQUE[table] ?? []) {
+      if (keys.some((k) => row[k] == null)) continue; // NULLs don't clash in a unique index
       if (this.table(table).some((r) => keys.every((k) => r[k] === row[k])))
         return keys.join(",");
     }

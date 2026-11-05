@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { groupByProperty, isOwnerNotificationType, OWNER_NOTIFICATION_TYPES } from "@/lib/owner-notifications";
+import { getNotificationPropertyLabels } from "@/lib/owner-notifications.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Bell, Check } from "lucide-react";
@@ -11,6 +13,7 @@ type Notification = {
   type: string;
   is_read: boolean;
   created_at: string;
+  property_id?: string | null;
 };
 
 export const Route = createFileRoute("/notifications")({
@@ -29,18 +32,21 @@ function NotificationsPage() {
   const { user, loading } = useAuth();
   const [items, setItems] = useState<Notification[]>([]);
   const [busy, setBusy] = useState(true);
+  const [labels, setLabels] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       setBusy(true);
-      const { data } = await supabase
-        .from("notifications")
-        .select("id, message, type, is_read, created_at")
-        .eq("seller_id", user.id)
-        .order("created_at", { ascending: false });
-      setItems((data as Notification[]) ?? []);
+      const read = (columns: string) =>
+        (supabase as any).from("notifications").select(columns).eq("seller_id", user.id).order("created_at", { ascending: false });
+      let { data, error } = await read("id, message, type, is_read, created_at, property_id");
+      if (error) ({ data } = await read("id, message, type, is_read, created_at")); // before owner-notifications.sql is run
+      const rows = (data as Notification[]) ?? [];
+      setItems(rows);
       setBusy(false);
+      const propertyIds = [...new Set(rows.map((n) => n.property_id).filter(Boolean))] as string[];
+      if (propertyIds.length) setLabels(await getNotificationPropertyLabels({ data: { propertyIds } }).catch(() => ({})));
     })();
   }, [user]);
 
@@ -102,7 +108,15 @@ function NotificationsPage() {
             No notifications yet. We'll let you know when something happens.
           </p>
         ) : (
-          items.map((n) => (
+          groupByProperty(items, labels).flatMap((group) => [
+            ...(group.label
+              ? [
+                  <p key={`group-${group.key}`} className="border-b border-border/60 bg-muted/40 px-5 py-2 text-xs font-semibold text-muted-foreground">
+                    {group.label}
+                  </p>,
+                ]
+              : []),
+            ...group.items.map((n) => (
             <button
               key={n.id}
               type="button"
@@ -121,11 +135,12 @@ function NotificationsPage() {
               <div className="flex-1">
                 <p className="text-sm text-foreground">{n.message}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(n.created_at).toLocaleString()} · {n.type}
+                  {new Date(n.created_at).toLocaleString()} · {isOwnerNotificationType(n.type) ? OWNER_NOTIFICATION_TYPES[n.type].label : n.type}
                 </p>
               </div>
             </button>
-          ))
+            )),
+          ])
         )}
       </div>
     </div>

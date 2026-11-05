@@ -162,6 +162,7 @@ describe("conflict resolution", () => {
 
   it("notifies the seller, the winner and the losers, once, with the rule; two sweeps make one sale", async () => {
     seed();
+    db().seed("cap_table_entries", [{ property_id: A, share_number: 8, holder_type: "buyer_account", buyer_account_id: IDS.b3, seller_id: null, acquisition_date: PAST, retention_lock_expires_at: PAST }]);
     const id = await list(IDS.seller, 4);
     await elect(USERS.b2, id);
     await agreeB1(id);
@@ -176,6 +177,14 @@ describe("conflict resolution", () => {
     expect(mentions(IDS.seller, /confirmed as the buyer/)).toBe(1);
     expect(db().audits("resale.winner_confirmed")).toHaveLength(1);
     expect(db().audits("resale.winner_confirmed")[0]!.metadata).toMatchObject({ winner_holder_key: IDS.b1, winner_rank: 1, rule: ROFR_WINNER_RULE });
+    // Every owner hears "winner decided" once, the bystander included, and nobody off the property.
+    for (const user of [USERS.b1, USERS.b2, IDS.seller, USERS.b3]) {
+      const decided = db().notificationsFor(user).filter((n) => /^resale_winner:/.test(n.dedupe_key ?? ""));
+      expect(decided, user).toHaveLength(1);
+      expect(decided[0]!.property_id).toBe(A);
+      expect(decided[0]!.type).toBe("resale_activity");
+    }
+    expect(db().notificationsFor(USERS.b3).filter((n) => /^resale_winner:/.test(n.dedupe_key ?? ""))[0]!.message).toContain("A co-owner was confirmed");
   });
 
   it("finishes a listing that stopped between creating the sale and marking elections", async () => {

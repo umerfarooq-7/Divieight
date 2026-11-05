@@ -51,7 +51,7 @@ const update = (requestId: string, data: Record<string, unknown>) => {
   return updateMaintenanceRequest({ data: { requestId, ...data } as never });
 };
 const row = (id: string) => db().table("maintenance_requests").find((r) => r.id === id)!;
-const told = (user: string) => db().notificationsFor(user).filter((n) => n.type === "maintenance");
+const told = (user: string) => db().notificationsFor(user).filter((n) => n.type === "maintenance_update" || n.type === "maintenance");
 const toCompleted = async (id: string, actualCost: number | null = 450) => {
   await update(id, { status: "triaged", estimatedCost: 300 });
   await update(id, { status: "approved", estimatedCost: 300 });

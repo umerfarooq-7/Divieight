@@ -86,7 +86,7 @@ async function audit(db: Db, actor: { id: string | null; type: string }, action:
 }
 
 /** The holder key's own login. Only ever used to tell that holder about their own allocation. */
-async function holderRecipient(db: Db, holderKey: string): Promise<{ authUserId: string; email: string | null } | null> {
+export async function holderRecipient(db: Db, holderKey: string): Promise<{ authUserId: string; email: string | null } | null> {
   if (holderKey.startsWith("seller:")) return { authUserId: holderKey.slice("seller:".length), email: null };
   const { data } = await db.from("buyer_accounts").select("auth_user_id, email").eq("id", holderKey).maybeSingle();
   return data?.auth_user_id ? { authUserId: data.auth_user_id as string, email: (data.email as string | null) ?? null } : null;
@@ -134,7 +134,9 @@ export async function settleOverdue(db: Db, propertyId?: string): Promise<{ over
           subject: "A capital call is overdue",
           message: `Your ${expenseMoney(allocation.amount)} share of "${call.title}" is overdue. This is a notice only: your vote, calendar and other owner rights are not affected.`,
           link: `/owner/properties/${call.property_id}/capital-calls`,
-          type: "capital_call",
+          type: "capital_call_alert",
+          propertyId: call.property_id,
+          dedupeKey: `call_overdue:${call.id}`,
         });
       }
     }
@@ -525,7 +527,7 @@ async function loadExpense(db: Db, expenseId: string): Promise<ExpenseRow> {
 }
 
 /** Each holder is told their own amount only. */
-async function tellHolders(db: Db, lines: SplitLine[], build: (line: SplitLine) => { subject: string; message: string; link: string; type: string }) {
+async function tellHolders(db: Db, lines: SplitLine[], build: (line: SplitLine) => { subject: string; message: string; link: string; type: string; propertyId: string; dedupeKey: string }) {
   for (const line of lines) {
     const recipient = await holderRecipient(db, line.holder_key);
     if (recipient) await deliver(db as never, recipient, build(line));
@@ -543,6 +545,8 @@ export async function postExpense(db: Db, params: { adminId: string; expenseId: 
     message: `"${expense.description}" was posted to your home. Your share is ${expenseMoney(line.amount)} (${line.share_count} of the issued shares).`,
     link: `/owner/properties/${expense.property_id}/expenses`,
     type: "expense",
+    propertyId: expense.property_id,
+    dedupeKey: `expense_posted:${expense.id}`,
   }));
 }
 
@@ -557,6 +561,8 @@ export async function voidExpense(db: Db, params: { adminId: string; expenseId: 
     message: `"${expense.description}" was voided, so nothing is owed for it. Reason: ${params.reason}`,
     link: `/owner/properties/${expense.property_id}/expenses`,
     type: "expense",
+    propertyId: expense.property_id,
+    dedupeKey: `expense_voided:${expense.id}`,
   }));
 }
 
@@ -572,7 +578,8 @@ export async function confirmPayment(db: Db, params: { adminId: string; kind: Pa
       subject: "Your payment was confirmed",
       message: `Your ${expenseMoney(found.allocation.amount)} payment on "${parentName(kind, found.parent)}" was confirmed and added to your capital account.`,
       link: `/owner/properties/${found.parent.property_id}/${OWNER_PAGE[kind]}`,
-      type: kind,
+      type: kind === "capital_call" ? "capital_call_alert" : kind,
+      propertyId: found.parent.property_id,
     });
   }
 }
@@ -599,7 +606,8 @@ export async function rejectPaymentMark(db: Db, params: { adminId: string; kind:
       subject: "Your payment wasn't confirmed",
       message: `Your ${expenseMoney(allocation.amount)} payment on "${parentName(kind, parent)}" hasn't been received. Note: ${params.note}`,
       link: `/owner/properties/${parent.property_id}/${OWNER_PAGE[kind]}`,
-      type: kind,
+      type: kind === "capital_call" ? "capital_call_alert" : kind,
+      propertyId: parent.property_id,
     });
   }
 }
@@ -683,7 +691,9 @@ export async function issueCapitalCall(db: Db, params: { adminId: string; callId
     subject: "A capital call was issued",
     message: `A capital call "${call.title}" was issued. Your share is ${expenseMoney(line.amount)}, due ${params.dueDate}.`,
     link: `/owner/properties/${call.property_id}/capital-calls`,
-    type: "capital_call",
+    type: "capital_call_alert",
+    propertyId: call.property_id,
+    dedupeKey: `call_issued:${call.id}`,
   }));
 }
 

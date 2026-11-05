@@ -37,6 +37,7 @@ import { Route as AdminClosingReadinessRouteImport } from './routes/admin.closin
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminConversionsRouteImport } from './routes/admin.conversions'
 import { Route as AdminDisbursementCheckRouteImport } from './routes/admin.disbursement-check'
+import { Route as AdminDistributionsRouteImport } from './routes/admin.distributions'
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
@@ -106,6 +107,7 @@ import { Route as OnboardingMediaRouteImport } from './routes/onboarding.media'
 import { Route as OnboardingPropertyRouteImport } from './routes/onboarding.property'
 import { Route as OwnerIndexRouteImport } from './routes/owner.index'
 import { Route as OwnerLoginRouteImport } from './routes/owner.login'
+import { Route as OwnerNotificationsRouteImport } from './routes/owner.notifications'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesIdRouteImport } from './routes/properties.$id'
 import { Route as RTokenRouteImport } from './routes/r.$token'
@@ -142,6 +144,7 @@ import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
+import { Route as ApiPublicOwnerRemindersSweepRouteImport } from './routes/api.public.owner-reminders-sweep'
 import { Route as ApiPublicResaleSweepRouteImport } from './routes/api.public.resale-sweep'
 import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
@@ -325,6 +328,11 @@ const AdminConversionsRoute = AdminConversionsRouteImport.update({
 const AdminDisbursementCheckRoute = AdminDisbursementCheckRouteImport.update({
   id: '/disbursement-check',
   path: '/disbursement-check',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDistributionsRoute = AdminDistributionsRouteImport.update({
+  id: '/distributions',
+  path: '/distributions',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEarnestMoneyRoute = AdminEarnestMoneyRouteImport.update({
@@ -674,6 +682,11 @@ const OwnerLoginRoute = OwnerLoginRouteImport.update({
   path: '/owner/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OwnerNotificationsRoute = OwnerNotificationsRouteImport.update({
+  id: '/owner/notifications',
+  path: '/owner/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -870,6 +883,12 @@ const ApiPublicNarCertSweepRoute = ApiPublicNarCertSweepRouteImport.update({
   path: '/api/public/nar-cert-sweep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOwnerRemindersSweepRoute =
+  ApiPublicOwnerRemindersSweepRouteImport.update({
+    id: '/api/public/owner-reminders-sweep',
+    path: '/api/public/owner-reminders-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResaleSweepRoute = ApiPublicResaleSweepRouteImport.update({
   id: '/api/public/resale-sweep',
   path: '/api/public/resale-sweep',
@@ -1147,6 +1166,7 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
+  '/admin/distributions': typeof AdminDistributionsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
@@ -1211,6 +1231,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
   '/owner/login': typeof OwnerLoginRoute
+  '/owner/notifications': typeof OwnerNotificationsRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1248,6 +1269,7 @@ export interface FileRoutesByFullPath {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1322,6 +1344,7 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
+  '/admin/distributions': typeof AdminDistributionsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
@@ -1383,6 +1406,7 @@ export interface FileRoutesByTo {
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
   '/owner/login': typeof OwnerLoginRoute
+  '/owner/notifications': typeof OwnerNotificationsRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1420,6 +1444,7 @@ export interface FileRoutesByTo {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1499,6 +1524,7 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/conversions': typeof AdminConversionsRoute
   '/admin/disbursement-check': typeof AdminDisbursementCheckRoute
+  '/admin/distributions': typeof AdminDistributionsRoute
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
@@ -1563,6 +1589,7 @@ export interface FileRoutesById {
   '/onboarding/media': typeof OnboardingMediaRoute
   '/onboarding/property': typeof OnboardingPropertyRoute
   '/owner/login': typeof OwnerLoginRoute
+  '/owner/notifications': typeof OwnerNotificationsRoute
   '/properties/$id': typeof PropertiesIdRoute
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
@@ -1600,6 +1627,7 @@ export interface FileRoutesById {
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
+  '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1680,6 +1708,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/conversions'
     | '/admin/disbursement-check'
+    | '/admin/distributions'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
@@ -1744,6 +1773,7 @@ export interface FileRouteTypes {
     | '/onboarding/media'
     | '/onboarding/property'
     | '/owner/login'
+    | '/owner/notifications'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -1781,6 +1811,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/owner-reminders-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -1855,6 +1886,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/conversions'
     | '/admin/disbursement-check'
+    | '/admin/distributions'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
@@ -1916,6 +1948,7 @@ export interface FileRouteTypes {
     | '/onboarding/media'
     | '/onboarding/property'
     | '/owner/login'
+    | '/owner/notifications'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -1953,6 +1986,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/owner-reminders-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -2031,6 +2065,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/conversions'
     | '/admin/disbursement-check'
+    | '/admin/distributions'
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
@@ -2095,6 +2130,7 @@ export interface FileRouteTypes {
     | '/onboarding/media'
     | '/onboarding/property'
     | '/owner/login'
+    | '/owner/notifications'
     | '/properties/$id'
     | '/r/$token'
     | '/reserve/$id'
@@ -2132,6 +2168,7 @@ export interface FileRouteTypes {
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
+    | '/api/public/owner-reminders-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -2226,6 +2263,7 @@ export interface RootRouteChildren {
   OnboardingMediaRoute: typeof OnboardingMediaRoute
   OnboardingPropertyRoute: typeof OnboardingPropertyRoute
   OwnerLoginRoute: typeof OwnerLoginRoute
+  OwnerNotificationsRoute: typeof OwnerNotificationsRoute
   PropertiesIdRoute: typeof PropertiesIdRoute
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
@@ -2250,6 +2288,7 @@ export interface RootRouteChildren {
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
+  ApiPublicOwnerRemindersSweepRoute: typeof ApiPublicOwnerRemindersSweepRoute
   ApiPublicResaleSweepRoute: typeof ApiPublicResaleSweepRoute
   ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
@@ -2473,6 +2512,13 @@ declare module '@tanstack/react-router' {
       path: '/disbursement-check'
       fullPath: '/admin/disbursement-check'
       preLoaderRoute: typeof AdminDisbursementCheckRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/distributions': {
+      id: '/admin/distributions'
+      path: '/distributions'
+      fullPath: '/admin/distributions'
+      preLoaderRoute: typeof AdminDistributionsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/earnest-money': {
@@ -2958,6 +3004,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/notifications': {
+      id: '/owner/notifications'
+      path: '/owner/notifications'
+      fullPath: '/owner/notifications'
+      preLoaderRoute: typeof OwnerNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/properties/': {
       id: '/properties/'
       path: '/properties'
@@ -3208,6 +3261,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/nar-cert-sweep'
       fullPath: '/api/public/nar-cert-sweep'
       preLoaderRoute: typeof ApiPublicNarCertSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/owner-reminders-sweep': {
+      id: '/api/public/owner-reminders-sweep'
+      path: '/api/public/owner-reminders-sweep'
+      fullPath: '/api/public/owner-reminders-sweep'
+      preLoaderRoute: typeof ApiPublicOwnerRemindersSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/resale-sweep': {
@@ -3558,6 +3618,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminConversionsRoute: typeof AdminConversionsRoute
   AdminDisbursementCheckRoute: typeof AdminDisbursementCheckRoute
+  AdminDistributionsRoute: typeof AdminDistributionsRoute
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
   AdminExpensesRoute: typeof AdminExpensesRoute
@@ -3598,6 +3659,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminConversionsRoute: AdminConversionsRoute,
   AdminDisbursementCheckRoute: AdminDisbursementCheckRoute,
+  AdminDistributionsRoute: AdminDistributionsRoute,
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
   AdminExpensesRoute: AdminExpensesRoute,
@@ -3809,6 +3871,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingMediaRoute: OnboardingMediaRoute,
   OnboardingPropertyRoute: OnboardingPropertyRoute,
   OwnerLoginRoute: OwnerLoginRoute,
+  OwnerNotificationsRoute: OwnerNotificationsRoute,
   PropertiesIdRoute: PropertiesIdRoute,
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,
@@ -3834,6 +3897,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicListingApprovalEscalationRoute,
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,
   ApiPublicNarCertSweepRoute: ApiPublicNarCertSweepRoute,
+  ApiPublicOwnerRemindersSweepRoute: ApiPublicOwnerRemindersSweepRoute,
   ApiPublicResaleSweepRoute: ApiPublicResaleSweepRoute,
   ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,

@@ -619,7 +619,13 @@ describe("capital call votes", () => {
     await issue(id);
     expect(db().table("capital_calls").find((c) => c.id === id)!.status).toBe("issued");
     expect(toCents(db().table("capital_call_allocations").filter((a) => a.capital_call_id === id).reduce((s, a) => s + a.amount, 0))).toBe(toCents(above));
-    expect(db().notificationsFor(USERS.b2).some((n) => n.type === "capital_call" && /Your share/.test(n.message))).toBe(true);
+    expect(db().notificationsFor(USERS.b2).some((n) => n.type === "capital_call_alert" && /Your share/.test(n.message))).toBe(true);
+    for (const user of [USERS.b1, USERS.b2, IDS.seller]) {
+      const issued = db().notificationsFor(user).filter((n) => n.type === "capital_call_alert");
+      expect(issued).toHaveLength(1);
+      expect(issued[0]!.property_id).toBe(A);
+    }
+    expect(db().notificationsFor(USERS.b3).filter((n) => n.type === "capital_call_alert")).toEqual([]);
   });
 
   it("a real vote, cast by the owners, passes and closes on its own past its time", async () => {

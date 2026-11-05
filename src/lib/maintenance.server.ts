@@ -169,18 +169,19 @@ export async function submitRequest(
       message: `New maintenance request: "${row.title}" (${row.urgency}).`,
       link: "/admin/maintenance",
       type: "maintenance",
+      propertyId: row.property_id,
     });
   }
   if (row.urgency === "urgent") {
     const others = (await holderRecipients(db, row.property_id)).filter((r) => r.authUserId !== params.userId);
-    await tellOwners(db, row, others, "Urgent maintenance request", `A co-owner reported an urgent issue: "${row.title}".`);
+    await tellOwners(db, row, others, "Urgent maintenance request", `A co-owner reported an urgent issue: "${row.title}".`, `maintenance_urgent:${row.id}`);
   }
   return { id: row.id };
 }
 
-async function tellOwners(db: Db, row: MaintenanceRow, recipients: Array<{ authUserId: string; email: string | null }>, subject: string, message: string) {
+async function tellOwners(db: Db, row: MaintenanceRow, recipients: Array<{ authUserId: string; email: string | null }>, subject: string, message: string, dedupeKey: string) {
   for (const recipient of recipients) {
-    await deliver(db as never, recipient, { subject, message, link: `/owner/properties/${row.property_id}/maintenance`, type: "maintenance" });
+    await deliver(db as never, recipient, { subject, message, link: `/owner/properties/${row.property_id}/maintenance`, type: "maintenance_update", propertyId: row.property_id, dedupeKey });
   }
 }
 
@@ -279,6 +280,7 @@ export async function updateRequest(
       await holderRecipients(db, updated.property_id),
       "Maintenance update",
       `"${updated.title}" is now ${MAINTENANCE_STATUS_LABELS[moving].toLowerCase()}.${params.note ? ` Note: ${params.note}` : ""}`,
+      `maintenance:${updated.id}:${moving}`,
     );
   }
 }
