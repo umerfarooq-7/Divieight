@@ -10,6 +10,8 @@ type Filter = (r: Row) => boolean;
 
 /** Composite unique keys enforced on insert/upsert (mirrors the SQL indexes). */
 const UNIQUE: Record<string, string[][]> = {
+  buyer_attribution: [["buyer_user_id"]],
+  agent_attribution_tokens: [["token"]],
   authorization_responses: [["request_id", "account_member_id"]],
   authorization_commission_items: [["request_id"]],
   authorization_commission_responses: [["item_id", "account_member_id"]],
@@ -99,13 +101,15 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
   private lim: number | null = null;
   private mode: "many" | "maybeSingle" | "single" = "many";
   private returning = false;
+  private wantCount = false;
 
   constructor(
     private db: FakeDb,
     private table: string,
   ) {}
 
-  select(_cols?: string) {
+  select(_cols?: string, opts?: { count?: string; head?: boolean }) {
+    if (opts?.count) this.wantCount = true;
     if (this.op !== "select") this.returning = true;
     return this;
   }
@@ -193,6 +197,7 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
   ): PromiseLike<T1 | T2> {
     return Promise.resolve()
       .then(() => this.run())
+      .then((r: any) => (this.wantCount ? { ...r, data: null, count: Array.isArray(r.data) ? r.data.length : 0 } : r))
       .then(onful, onrej);
   }
 

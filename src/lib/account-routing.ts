@@ -5,6 +5,7 @@ import { getPostLoginRedirect } from "@/lib/post-login";
 import { agentRedirect, consumeAgentDraft, createAgentProfile, getAgentProfile } from "@/lib/agent";
 import { brokerRedirect, createBrokerProfile, getBrokerProfile } from "@/lib/broker";
 import { applyReferralTag } from "@/lib/attribution";
+import { stampStoredAttribution } from "@/lib/agent-qr";
 import { parseMarkets } from "@/lib/markets";
 
 export type AccountRole = "buyer" | "seller" | "agent" | "broker";
@@ -144,6 +145,8 @@ export async function resolveSignIn(
     const account = buyer ?? (await ensureBuyerAccount({ userId: user.id, email, phone, fullName }));
     // Lead Attribution Tag: stamp the referring agent (or 'direct') once.
     if (account) await applyReferralTag(account.id, user.id);
+    // QR / deep-link stamp: a suggestion for the admin, kept apart from the tag above.
+    if (account) await stampStoredAttribution();
     return { to: account ? buyerRedirect(account.onboarding_status) : "/buyer/onboarding" };
   }
 

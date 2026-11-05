@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { listBuyerAttributionsForAdmin } from "@/lib/agent-qr.functions";
 import { StatusToneClass, when } from "@/lib/admin";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 
@@ -10,6 +13,7 @@ export const Route = createFileRoute("/admin/buyers")({
 
 type BuyerRow = {
   id: string;
+  auth_user_id: string;
   email: string;
   phone: string | null;
   onboarding_status: string;
@@ -38,6 +42,8 @@ function AdminBuyers() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
+  const loadAttributions = useServerFn(listBuyerAttributionsForAdmin);
+  const { data: attributions } = useQuery({ queryKey: ["admin-buyer-attributions"], retry: false, queryFn: () => loadAttributions() });
 
   useEffect(() => {
     (async () => {
@@ -45,7 +51,7 @@ function AdminBuyers() {
         supabase
           .from("buyer_accounts")
           .select(
-            "id,email,phone,onboarding_status,intent,target_budget,target_budget_bucket,priority_rank_timestamp,golden_ticket_issued,liquidity_status,liquidity_verified,last_activity_at,created_at",
+            "id,auth_user_id,email,phone,onboarding_status,intent,target_budget,target_budget_bucket,priority_rank_timestamp,golden_ticket_issued,liquidity_status,liquidity_verified,last_activity_at,created_at",
           )
           .order("created_at", { ascending: false }),
         supabase
@@ -115,6 +121,7 @@ function AdminBuyers() {
               ) : (
                 filtered.map((r) => {
                   const mine = members.filter((m) => m.buyer_account_id === r.id);
+                  const attribution = attributions?.[r.auth_user_id];
                   return (
                     <Fragment key={r.id}>
                       <tr
@@ -127,6 +134,7 @@ function AdminBuyers() {
                           <div className="text-xs text-muted-foreground">
                             {r.phone || "—"} · {r.intent ?? "no intent"}
                           </div>
+                          {attribution ? <div className="text-xs font-medium text-accent">Attributed to {attribution.agentName}</div> : null}
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -164,6 +172,12 @@ function AdminBuyers() {
                       {open === r.id && (
                         <tr key={`${r.id}-members`} className="bg-muted/20">
                           <td colSpan={7} className="px-4 py-3">
+                            {attribution ? (
+                              <p className="mb-2 text-xs text-foreground">
+                                Attributed to {attribution.agentName}
+                                {attribution.agentEmail ? ` (${attribution.agentEmail})` : ""} via a QR code or link, {when(attribution.stampedAt)}. A suggestion only: it doesn't tether the buyer or set a referring agent.
+                              </p>
+                            ) : null}
                             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Account members
                             </p>

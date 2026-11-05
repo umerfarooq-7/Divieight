@@ -13,6 +13,7 @@ import {
   ListChecks,
   Lock,
   Share2,
+  QrCode,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const PORTAL_NAV = [
   { to: "/agent/leads", label: "My buyers", icon: Users },
   { to: "/agent/pools", label: "Market pools", icon: Layers },
   { to: "/agent/attribution", label: "Attribution tokens", icon: Share2 },
+  { to: "/agent/qr", label: "QR code & link", icon: QrCode },
   { to: "/agent/listings", label: "My listings", icon: ListChecks },
   { to: "/agent/documents", label: "Agreements", icon: FileSignature },
   { to: "/agent/due-diligence", label: "Due diligence", icon: FileCheck2 },
