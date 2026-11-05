@@ -44,6 +44,7 @@ vi.mock("@tanstack/react-start", () => {
 vi.mock("@tanstack/react-start/server", () => ({
   getRequestIP: () => harness.ip,
   getRequest: () => new Request("http://test.local"),
+  setResponseStatus: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));

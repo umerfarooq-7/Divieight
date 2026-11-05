@@ -62,6 +62,7 @@ const NAV = [
   { to: "/admin/maintenance", label: "Maintenance", icon: Home },
   { to: "/admin/expenses", label: "Expenses", icon: CreditCard },
   { to: "/admin/conversions", label: "Conversions", icon: ScrollText },
+  { to: "/admin/founder", label: "Founder dashboard", icon: ScrollText },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
   { to: "/admin/listing-compliance", label: "Listing compliance", icon: ShieldCheck },
@@ -73,11 +74,12 @@ function AdminLayout() {
   const navigate = useNavigate();
   const { user, loading, isAdmin } = useAdmin();
   const isLoginRoute = pathname.startsWith("/admin/login");
+  const isFounderRoute = pathname.startsWith("/admin/founder");
 
   useEffect(() => {
     if (isLoginRoute || loading) return;
-    if (!user || !isAdmin) navigate({ to: "/admin/login", replace: true });
-  }, [isLoginRoute, loading, user, isAdmin, navigate]);
+    if (!user || (!isAdmin && !isFounderRoute)) navigate({ to: "/admin/login", replace: true });
+  }, [isLoginRoute, isFounderRoute, loading, user, isAdmin, navigate]);
 
   if (isLoginRoute) return <Outlet />;
 
@@ -85,6 +87,15 @@ function AdminLayout() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
         Checking admin access…
+      </div>
+    );
+  }
+
+  if (!isAdmin && user && isFounderRoute) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+        <p className="font-display text-3xl font-semibold text-foreground">403</p>
+        <p className="mt-2 text-sm text-muted-foreground">You don't have access to this page.</p>
       </div>
     );
   }

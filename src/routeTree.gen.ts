@@ -40,6 +40,7 @@ import { Route as AdminDisbursementCheckRouteImport } from './routes/admin.disbu
 import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-money'
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
+import { Route as AdminFounderRouteImport } from './routes/admin.founder'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -132,6 +133,7 @@ import { Route as ApiPublicDiligenceEscalationRouteImport } from './routes/api.p
 import { Route as ApiPublicEarnestMoneySweepRouteImport } from './routes/api.public.earnest-money-sweep'
 import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api.public.enrollment-maintenance'
 import { Route as ApiPublicEoExpirySweepRouteImport } from './routes/api.public.eo-expiry-sweep'
+import { Route as ApiPublicFounderRefreshRouteImport } from './routes/api.public.founder-refresh'
 import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
 import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
@@ -334,6 +336,11 @@ const AdminEntityGenesisRoute = AdminEntityGenesisRouteImport.update({
 const AdminExpensesRoute = AdminExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFounderRoute = AdminFounderRouteImport.update({
+  id: '/founder',
+  path: '/founder',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInsuranceRequirementsRoute =
@@ -813,6 +820,11 @@ const ApiPublicEoExpirySweepRoute = ApiPublicEoExpirySweepRouteImport.update({
   path: '/api/public/eo-expiry-sweep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFounderRefreshRoute = ApiPublicFounderRefreshRouteImport.update({
+  id: '/api/public/founder-refresh',
+  path: '/api/public/founder-refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHlaSweepRoute = ApiPublicHlaSweepRouteImport.update({
   id: '/api/public/hla-sweep',
   path: '/api/public/hla-sweep',
@@ -1114,6 +1126,7 @@ export interface FileRoutesByFullPath {
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
+  '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1202,6 +1215,7 @@ export interface FileRoutesByFullPath {
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
+  '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1283,6 +1297,7 @@ export interface FileRoutesByTo {
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
+  '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1368,6 +1383,7 @@ export interface FileRoutesByTo {
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
+  '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1454,6 +1470,7 @@ export interface FileRoutesById {
   '/admin/earnest-money': typeof AdminEarnestMoneyRoute
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
+  '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1542,6 +1559,7 @@ export interface FileRoutesById {
   '/api/public/earnest-money-sweep': typeof ApiPublicEarnestMoneySweepRoute
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
+  '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1629,6 +1647,7 @@ export interface FileRouteTypes {
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
+    | '/admin/founder'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -1717,6 +1736,7 @@ export interface FileRouteTypes {
     | '/api/public/earnest-money-sweep'
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
+    | '/api/public/founder-refresh'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -1798,6 +1818,7 @@ export interface FileRouteTypes {
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
+    | '/admin/founder'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -1883,6 +1904,7 @@ export interface FileRouteTypes {
     | '/api/public/earnest-money-sweep'
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
+    | '/api/public/founder-refresh'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -1968,6 +1990,7 @@ export interface FileRouteTypes {
     | '/admin/earnest-money'
     | '/admin/entity-genesis'
     | '/admin/expenses'
+    | '/admin/founder'
     | '/admin/insurance-requirements'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -2056,6 +2079,7 @@ export interface FileRouteTypes {
     | '/api/public/earnest-money-sweep'
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
+    | '/api/public/founder-refresh'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -2170,6 +2194,7 @@ export interface RootRouteChildren {
   ApiPublicEarnestMoneySweepRoute: typeof ApiPublicEarnestMoneySweepRoute
   ApiPublicEnrollmentMaintenanceRoute: typeof ApiPublicEnrollmentMaintenanceRoute
   ApiPublicEoExpirySweepRoute: typeof ApiPublicEoExpirySweepRoute
+  ApiPublicFounderRefreshRoute: typeof ApiPublicFounderRefreshRoute
   ApiPublicHlaSweepRoute: typeof ApiPublicHlaSweepRoute
   ApiPublicInsuranceSweepRoute: typeof ApiPublicInsuranceSweepRoute
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
@@ -2418,6 +2443,13 @@ declare module '@tanstack/react-router' {
       path: '/expenses'
       fullPath: '/admin/expenses'
       preLoaderRoute: typeof AdminExpensesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/founder': {
+      id: '/admin/founder'
+      path: '/founder'
+      fullPath: '/admin/founder'
+      preLoaderRoute: typeof AdminFounderRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/insurance-requirements': {
@@ -3064,6 +3096,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEoExpirySweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/founder-refresh': {
+      id: '/api/public/founder-refresh'
+      path: '/api/public/founder-refresh'
+      fullPath: '/api/public/founder-refresh'
+      preLoaderRoute: typeof ApiPublicFounderRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hla-sweep': {
       id: '/api/public/hla-sweep'
       path: '/api/public/hla-sweep'
@@ -3443,6 +3482,7 @@ interface AdminRouteChildren {
   AdminEarnestMoneyRoute: typeof AdminEarnestMoneyRoute
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
   AdminExpensesRoute: typeof AdminExpensesRoute
+  AdminFounderRoute: typeof AdminFounderRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -3481,6 +3521,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEarnestMoneyRoute: AdminEarnestMoneyRoute,
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
   AdminExpensesRoute: AdminExpensesRoute,
+  AdminFounderRoute: AdminFounderRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
@@ -3703,6 +3744,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEarnestMoneySweepRoute: ApiPublicEarnestMoneySweepRoute,
   ApiPublicEnrollmentMaintenanceRoute: ApiPublicEnrollmentMaintenanceRoute,
   ApiPublicEoExpirySweepRoute: ApiPublicEoExpirySweepRoute,
+  ApiPublicFounderRefreshRoute: ApiPublicFounderRefreshRoute,
   ApiPublicHlaSweepRoute: ApiPublicHlaSweepRoute,
   ApiPublicInsuranceSweepRoute: ApiPublicInsuranceSweepRoute,
   ApiPublicListingApprovalEscalationRoute:

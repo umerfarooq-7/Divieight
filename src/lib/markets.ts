@@ -48,6 +48,26 @@ export function stateForZip(zip: string): string | null {
   return ZIP_PREFIX_STATES.find(([lo, hi]) => prefix >= lo && prefix <= hi)?.[2] ?? null;
 }
 
+/**
+ * The state a free-typed market names, or null. Whole words only, so "Austin" isn't
+ * "IN" and "Indiana Dunes area" isn't guessed at. For counting: tethering and
+ * residency keep using marketMatches below.
+ */
+export function stateForMarket(market: string | null | undefined): string | null {
+  const text = (market ?? "").trim();
+  if (!text) return null;
+  const zip = /\b\d{5}(?:-\d{4})?\b/.exec(text);
+  if (zip) return stateForZip(zip[0]);
+  const clean = text.toLowerCase().replace(/\./g, "");
+  const named = (value: string) => Object.keys(STATE_NAMES).find((code) => code.toLowerCase() === value || STATE_NAMES[code] === value) ?? null;
+  if (named(clean)) return named(clean);
+  // "Austin, TX" or "Charleston, West Virginia": whatever follows the last comma.
+  if (clean.includes(",")) return named(clean.slice(clean.lastIndexOf(",") + 1).trim());
+  // "Austin TX": a capitalised code at the very end.
+  const last = text.split(/\s+/).pop()!;
+  return /^[A-Z]{2}$/.test(last) ? named(last.toLowerCase()) : null;
+}
+
 /** A zip matches a market that names its state, by code ("CA") or name ("California"). */
 function zipInMarket(zip: string, market: string): boolean {
   const state = stateForZip(zip);

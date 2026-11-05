@@ -102,6 +102,7 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
   private mode: "many" | "maybeSingle" | "single" = "many";
   private returning = false;
   private wantCount = false;
+  private rangeFrom = 0;
 
   constructor(
     private db: FakeDb,
@@ -178,6 +179,11 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
     this.orders.push({ col, asc: opts?.ascending !== false });
     return this;
   }
+  range(from: number, to: number) {
+    this.rangeFrom = from;
+    this.lim = to - from + 1;
+    return this;
+  }
   limit(n: number) {
     this.lim = n;
     return this;
@@ -219,7 +225,7 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
       let out = rows.filter(match);
       for (const o of [...this.orders].reverse())
         out = [...out].sort((a, b) => (o.asc ? 1 : -1) * cmp(norm(a[o.col]), norm(b[o.col])));
-      if (this.lim != null) out = out.slice(0, this.lim);
+      if (this.lim != null) out = out.slice(this.rangeFrom, this.rangeFrom + this.lim);
       return this.shape(out);
     }
 
