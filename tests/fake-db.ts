@@ -11,6 +11,7 @@ type Filter = (r: Row) => boolean;
 /** Composite unique keys enforced on insert/upsert (mirrors the SQL indexes). */
 const UNIQUE: Record<string, string[][]> = {
   buyer_attribution: [["buyer_user_id"]],
+  library_videos: [["slug"]],
   agent_attribution_tokens: [["token"]],
   authorization_responses: [["request_id", "account_member_id"]],
   authorization_commission_items: [["request_id"]],
@@ -70,6 +71,7 @@ const DEFAULTS: Record<string, Row> = {
   co_owner_digital_keys: { status: "active" },
   resale_listings: { flat_fee: 500 },
   resale_transactions: { flat_fee: 500 },
+  library_videos: { compliance_approved_by: null, compliance_approved_at: null },
   maintenance_requests: { expense_id: null, expense_queued_at: null, estimated_cost: null, actual_cost: null, vendor_name: null },
 };
 

@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { rememberToken, stampStoredAttribution } from "@/lib/agent-qr";
 import { recordAttributionVisit } from "@/lib/agent-qr.functions";
 
-/** Where a link lands. Becomes /library once the Buyer Library is built. */
-const LANDING = "/";
+/** Where a link lands. The stored token carries on from the Library to registration. */
+const LANDING = "/library";
 
 export const Route = createFileRoute("/a/$token")({
   head: () => ({

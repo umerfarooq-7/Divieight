@@ -63,6 +63,7 @@ const NAV = [
   { to: "/admin/expenses", label: "Expenses", icon: CreditCard },
   { to: "/admin/conversions", label: "Conversions", icon: ScrollText },
   { to: "/admin/founder", label: "Founder dashboard", icon: ScrollText },
+  { to: "/admin/library", label: "Library", icon: FileSignature },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
   { to: "/admin/listing-compliance", label: "Listing compliance", icon: ShieldCheck },

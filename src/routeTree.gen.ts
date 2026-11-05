@@ -42,6 +42,7 @@ import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-ge
 import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
 import { Route as AdminFounderRouteImport } from './routes/admin.founder'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
+import { Route as AdminLibraryRouteImport } from './routes/admin.library'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
@@ -91,6 +92,8 @@ import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
 import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
 import { Route as DataRoomIdRouteImport } from './routes/data-room.$id'
+import { Route as LibraryIndexRouteImport } from './routes/library.index'
+import { Route as LibrarySlugRouteImport } from './routes/library.$slug'
 import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 import { Route as ListingsNewRouteImport } from './routes/listings.new'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
@@ -157,6 +160,7 @@ import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onb
 import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
 import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
 import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
+import { Route as EmbedLibrarySlugRouteImport } from './routes/embed.library.$slug'
 import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
@@ -349,6 +353,11 @@ const AdminInsuranceRequirementsRoute =
     path: '/insurance-requirements',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminLibraryRoute = AdminLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminListingComplianceRoute = AdminListingComplianceRouteImport.update({
   id: '/listing-compliance',
   path: '/listing-compliance',
@@ -593,6 +602,16 @@ const BuyerWishlistRoute = BuyerWishlistRouteImport.update({
 const DataRoomIdRoute = DataRoomIdRouteImport.update({
   id: '/data-room/$id',
   path: '/data-room/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryIndexRoute = LibraryIndexRouteImport.update({
+  id: '/library/',
+  path: '/library/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibrarySlugRoute = LibrarySlugRouteImport.update({
+  id: '/library/$slug',
+  path: '/library/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListingsIdRoute = ListingsIdRouteImport.update({
@@ -949,6 +968,11 @@ const BuyerPodsIdRoute = BuyerPodsIdRouteImport.update({
   path: '/buyer/pods/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbedLibrarySlugRoute = EmbedLibrarySlugRouteImport.update({
+  id: '/embed/library/$slug',
+  path: '/embed/library/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingsIdEditRoute = ListingsIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -1128,6 +1152,7 @@ export interface FileRoutesByFullPath {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
@@ -1175,6 +1200,7 @@ export interface FileRoutesByFullPath {
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
+  '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
@@ -1192,6 +1218,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
+  '/library/': typeof LibraryIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -1237,6 +1264,7 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
+  '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
   '/admin/pods/': typeof AdminPodsIndexRoute
   '/admin/properties/': typeof AdminPropertiesIndexRoute
@@ -1299,6 +1327,7 @@ export interface FileRoutesByTo {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
@@ -1343,6 +1372,7 @@ export interface FileRoutesByTo {
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
+  '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
@@ -1360,6 +1390,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
   '/broker': typeof BrokerIndexRoute
+  '/library': typeof LibraryIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/owner': typeof OwnerIndexRoute
   '/properties': typeof PropertiesIndexRoute
@@ -1405,6 +1436,7 @@ export interface FileRoutesByTo {
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
+  '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
   '/admin/pods': typeof AdminPodsIndexRoute
   '/admin/properties': typeof AdminPropertiesIndexRoute
@@ -1472,6 +1504,7 @@ export interface FileRoutesById {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
@@ -1519,6 +1552,7 @@ export interface FileRoutesById {
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
   '/data-room/$id': typeof DataRoomIdRoute
+  '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
@@ -1536,6 +1570,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
+  '/library/': typeof LibraryIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -1581,6 +1616,7 @@ export interface FileRoutesById {
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
+  '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
   '/admin/pods/': typeof AdminPodsIndexRoute
   '/admin/properties/': typeof AdminPropertiesIndexRoute
@@ -1649,6 +1685,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/insurance-requirements'
+    | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/maintenance'
@@ -1696,6 +1733,7 @@ export interface FileRouteTypes {
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
+    | '/library/$slug'
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
@@ -1713,6 +1751,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/broker/'
+    | '/library/'
     | '/onboarding/'
     | '/owner/'
     | '/properties/'
@@ -1758,6 +1797,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
+    | '/embed/library/$slug'
     | '/listings/$id/edit'
     | '/admin/pods/'
     | '/admin/properties/'
@@ -1820,6 +1860,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/insurance-requirements'
+    | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/maintenance'
@@ -1864,6 +1905,7 @@ export interface FileRouteTypes {
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
+    | '/library/$slug'
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
@@ -1881,6 +1923,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/broker'
+    | '/library'
     | '/onboarding'
     | '/owner'
     | '/properties'
@@ -1926,6 +1969,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
+    | '/embed/library/$slug'
     | '/listings/$id/edit'
     | '/admin/pods'
     | '/admin/properties'
@@ -1992,6 +2036,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/insurance-requirements'
+    | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
     | '/admin/maintenance'
@@ -2039,6 +2084,7 @@ export interface FileRouteTypes {
     | '/buyer/verification'
     | '/buyer/wishlist'
     | '/data-room/$id'
+    | '/library/$slug'
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
@@ -2056,6 +2102,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/broker/'
+    | '/library/'
     | '/onboarding/'
     | '/owner/'
     | '/properties/'
@@ -2101,6 +2148,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
+    | '/embed/library/$slug'
     | '/listings/$id/edit'
     | '/admin/pods/'
     | '/admin/properties/'
@@ -2167,6 +2215,7 @@ export interface RootRouteChildren {
   BuyerVerificationRoute: typeof BuyerVerificationRoute
   BuyerWishlistRoute: typeof BuyerWishlistRoute
   DataRoomIdRoute: typeof DataRoomIdRoute
+  LibrarySlugRoute: typeof LibrarySlugRoute
   ListingsIdRoute: typeof ListingsIdRouteWithChildren
   ListingsNewRoute: typeof ListingsNewRoute
   OnboardingAgreementRoute: typeof OnboardingAgreementRoute
@@ -2180,6 +2229,7 @@ export interface RootRouteChildren {
   PropertiesIdRoute: typeof PropertiesIdRoute
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
+  LibraryIndexRoute: typeof LibraryIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   OwnerIndexRoute: typeof OwnerIndexRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
@@ -2211,6 +2261,7 @@ export interface RootRouteChildren {
   BuyerOnboardingPaymentRoute: typeof BuyerOnboardingPaymentRoute
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
+  EmbedLibrarySlugRoute: typeof EmbedLibrarySlugRoute
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
@@ -2457,6 +2508,13 @@ declare module '@tanstack/react-router' {
       path: '/insurance-requirements'
       fullPath: '/admin/insurance-requirements'
       preLoaderRoute: typeof AdminInsuranceRequirementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/library': {
+      id: '/admin/library'
+      path: '/library'
+      fullPath: '/admin/library'
+      preLoaderRoute: typeof AdminLibraryRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/listing-compliance': {
@@ -2800,6 +2858,20 @@ declare module '@tanstack/react-router' {
       path: '/data-room/$id'
       fullPath: '/data-room/$id'
       preLoaderRoute: typeof DataRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library/': {
+      id: '/library/'
+      path: '/library'
+      fullPath: '/library/'
+      preLoaderRoute: typeof LibraryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library/$slug': {
+      id: '/library/$slug'
+      path: '/library/$slug'
+      fullPath: '/library/$slug'
+      preLoaderRoute: typeof LibrarySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/listings/$id': {
@@ -3264,6 +3336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerPodsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embed/library/$slug': {
+      id: '/embed/library/$slug'
+      path: '/embed/library/$slug'
+      fullPath: '/embed/library/$slug'
+      preLoaderRoute: typeof EmbedLibrarySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listings/$id/edit': {
       id: '/listings/$id/edit'
       path: '/edit'
@@ -3484,6 +3563,7 @@ interface AdminRouteChildren {
   AdminExpensesRoute: typeof AdminExpensesRoute
   AdminFounderRoute: typeof AdminFounderRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
+  AdminLibraryRoute: typeof AdminLibraryRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMaintenanceRoute: typeof AdminMaintenanceRoute
@@ -3523,6 +3603,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExpensesRoute: AdminExpensesRoute,
   AdminFounderRoute: AdminFounderRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
+  AdminLibraryRoute: AdminLibraryRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMaintenanceRoute: AdminMaintenanceRoute,
@@ -3717,6 +3798,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerVerificationRoute: BuyerVerificationRoute,
   BuyerWishlistRoute: BuyerWishlistRoute,
   DataRoomIdRoute: DataRoomIdRoute,
+  LibrarySlugRoute: LibrarySlugRoute,
   ListingsIdRoute: ListingsIdRouteWithChildren,
   ListingsNewRoute: ListingsNewRoute,
   OnboardingAgreementRoute: OnboardingAgreementRoute,
@@ -3730,6 +3812,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesIdRoute: PropertiesIdRoute,
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,
+  LibraryIndexRoute: LibraryIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   OwnerIndexRoute: OwnerIndexRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
@@ -3762,6 +3845,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingPaymentRoute: BuyerOnboardingPaymentRoute,
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,
   BuyerPodsIdRoute: BuyerPodsIdRoute,
+  EmbedLibrarySlugRoute: EmbedLibrarySlugRoute,
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
   ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,

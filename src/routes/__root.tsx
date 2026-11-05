@@ -161,17 +161,19 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Agent/Broker portals render their own header + footer.
   const isPortal = pathname.startsWith("/agent") || pathname.startsWith("/broker");
+  // Embeds go on other sites: the page holds the player and nothing of ours.
+  const isEmbed = pathname.startsWith("/embed/");
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background">
-        {!isPortal && <NavBar />}
-        {!isPortal && <CoOwnerBanner />}
+        {!isPortal && !isEmbed && <NavBar />}
+        {!isPortal && !isEmbed && <CoOwnerBanner />}
         <main className="flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        {!isPortal && <SiteFooter />}
+        {!isPortal && !isEmbed && <SiteFooter />}
       </div>
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
