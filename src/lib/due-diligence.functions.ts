@@ -145,7 +145,8 @@ async function loadMembers(db: Db, buyerAccountId: string): Promise<DdMember[]> 
   const { data } = await db
     .from("account_members")
     .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId);
+    .eq("buyer_account_id", buyerAccountId)
+    .eq("status", "active");
   return (data ?? []) as DdMember[];
 }
 
@@ -283,6 +284,7 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
       .select("id, full_name")
       .eq("id", data.accountMemberId ?? "")
       .eq("buyer_account_id", buyer.id)
+      .eq("status", "active")
       .maybeSingle();
     if (!member) return { ok: false, error: "Account Member not found on this account." };
 

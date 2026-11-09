@@ -31,6 +31,12 @@ export type Database = {
           updated_at: string
           verification_documents: Json
           vetting_status: string
+          status: string
+          email: string | null
+          phone: string | null
+          added_at: string
+          removed_at: string | null
+          id_document_number: string | null
         }
         Insert: {
           address?: string | null
@@ -48,6 +54,12 @@ export type Database = {
           updated_at?: string
           verification_documents?: Json
           vetting_status?: string
+          status?: string
+          email?: string | null
+          phone?: string | null
+          added_at?: string
+          removed_at?: string | null
+          id_document_number?: string | null
         }
         Update: {
           address?: string | null
@@ -65,6 +77,12 @@ export type Database = {
           updated_at?: string
           verification_documents?: Json
           vetting_status?: string
+          status?: string
+          email?: string | null
+          phone?: string | null
+          added_at?: string
+          removed_at?: string | null
+          id_document_number?: string | null
         }
         Relationships: [
           {
@@ -662,6 +680,7 @@ export type Database = {
           property_id: string | null
           seller_id: string | null
           signed_name: string
+          account_member_id: string | null
         }
         Insert: {
           buyer_account_id?: string | null
@@ -674,6 +693,7 @@ export type Database = {
           property_id?: string | null
           seller_id?: string | null
           signed_name: string
+          account_member_id?: string | null
         }
         Update: {
           buyer_account_id?: string | null
@@ -686,6 +706,7 @@ export type Database = {
           property_id?: string | null
           seller_id?: string | null
           signed_name?: string
+          account_member_id?: string | null
         }
         Relationships: [
           {

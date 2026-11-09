@@ -71,7 +71,8 @@ export async function runAuthorizationEscalationSweep(
     const { data: members } = await db
       .from("account_members")
       .select("id, full_name, role")
-      .eq("buyer_account_id", row.buyer_account_id);
+      .eq("buyer_account_id", row.buyer_account_id)
+      .eq("status", "active");
     const { data: responses } = await db
       .from("authorization_responses")
       .select(

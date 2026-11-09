@@ -121,7 +121,7 @@ export async function buyerActionItems(db: Db, buyerAccountId: string): Promise<
   };
   const earnest = await obligations("earnest_money_obligations");
   const closing = await obligations("closing_funds_obligations");
-  const { data: memberRows } = await db.from("account_members").select("id").eq("buyer_account_id", buyerAccountId);
+  const { data: memberRows } = await db.from("account_members").select("id").eq("buyer_account_id", buyerAccountId).eq("status", "active");
   const memberIds = ((memberRows ?? []) as Array<{ id: string }>).map((m) => m.id);
 
   for (const pid of propertyIds) {

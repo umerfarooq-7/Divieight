@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
 import { cn } from "@/lib/utils";
+import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
 
 export const Route = createFileRoute("/buyer/onboarding/vetting")({
   head: () => ({
@@ -60,6 +61,14 @@ interface MemberRow {
 }
 
 function VettingScreen() {
+  return (
+    <ActingMemberGate step="Step 5 · Vetting">
+      {({ member, switchPerson }) => <VettingForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+    </ActingMemberGate>
+  );
+}
+
+function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -107,8 +116,13 @@ function VettingScreen() {
         .from("account_members")
         .select("id, full_name, vetting_status, background_check_result")
         .eq("buyer_account_id", b.id)
-        .eq("role", "primary")
+        .eq("id", actingMemberId)
+        .eq("status", "active")
         .maybeSingle();
+      // This member's own hold harmless, if already signed.
+      const { data: hh } = m
+        ? await supabase.from("signed_documents").select("id").eq("buyer_account_id", b.id).eq("document_type", "HOLD_HARMLESS").eq("account_member_id", m.id).limit(1)
+        : { data: [] };
       if (cancelled) return;
       setBuyer(b as BuyerRow);
       setMember((m as MemberRow) ?? null);
@@ -117,13 +131,17 @@ function VettingScreen() {
         setOutcome(m.background_check_result as Outcome);
       }
       setSignedName(m?.full_name ?? "");
+      if ((hh ?? []).length) {
+        setSigned(true);
+        setHhChecked(true);
+      }
       setReady(true);
     })();
     return () => {
       cancelled = true;
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, actingMemberId]);
 
   const canStart = consent && !checking && !outcome;
   const holdHarmlessHash = useMemo(
@@ -168,12 +186,12 @@ function VettingScreen() {
       actionType: "buyer.background_check_completed",
       entityType: "buyer_account",
       entityId: buyer.id,
-      metadata: { result, member_id: member.id, simulated: true },
+      metadata: { result, member_id: member.id, simulated: true, ...actingAuditMeta(member.id) },
     });
   }
 
   async function handleSign() {
-    if (!user || !buyer) return;
+    if (!user || !buyer || !member) return;
     const typed = signedName.trim();
     if (typed.length < 3) {
       toast.error("Please type your full legal name.");
@@ -192,6 +210,7 @@ function VettingScreen() {
     const { error } = await supabase.from("signed_documents").insert({
       buyer_account_id: buyer.id,
       document_type: "HOLD_HARMLESS",
+      account_member_id: member.id,
       document_version: HOLD_HARMLESS_VERSION,
       signed_name: typed,
       document_hash: holdHarmlessHash,
@@ -208,7 +227,7 @@ function VettingScreen() {
       actionType: "buyer.hold_harmless_signed",
       entityType: "buyer_account",
       entityId: buyer.id,
-      metadata: { document_hash: holdHarmlessHash },
+      metadata: { document_hash: holdHarmlessHash, member_id: member.id, ...actingAuditMeta(member.id, ip) },
     });
 
     setSubmitting(false);
@@ -220,6 +239,26 @@ function VettingScreen() {
   async function continueFromOutcome() {
     if (!buyer) return;
     if (outcome === "cleared") {
+      // Every active member clears, each with their own hold harmless, before the account moves on.
+      const { data: everyone } = await supabase
+        .from("account_members")
+        .select("id, full_name, role, vetting_status")
+        .eq("buyer_account_id", buyer.id)
+        .eq("status", "active");
+      const { data: hhRows } = await supabase
+        .from("signed_documents")
+        .select("account_member_id")
+        .eq("buyer_account_id", buyer.id)
+        .eq("document_type", "HOLD_HARMLESS");
+      const signedIds = new Set(((hhRows ?? []) as Array<{ account_member_id: string | null }>).map((r) => r.account_member_id));
+      const waiting = ((everyone ?? []) as Array<{ id: string; full_name: string; role: string; vetting_status: string }>).filter(
+        (m) => m.vetting_status !== "cleared" || !signedIds.has(m.id),
+      );
+      if (waiting.length > 0) {
+        toast.success(`Done for you. Next: ${waiting.map((m) => m.full_name || (m.role === "primary" ? "the account holder" : "the second member")).join(" and ")} completes vetting.`);
+        onSwitch();
+        return;
+      }
       // Cleared buyers now pass through the Plaid liquidity gate before the
       // Golden Ticket can be issued.
       await supabase
@@ -268,7 +307,7 @@ function VettingScreen() {
 
       <div className="mt-10">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 4 · Vetting
+          Step 5 · Vetting
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Member vetting & background check
@@ -394,7 +433,7 @@ function VettingScreen() {
           <DialogHeader>
             <DialogTitle>Sign the acknowledgment</DialogTitle>
             <DialogDescription>
-              Type your full legal name. We record your name, IP address, and a timestamp.
+              Type {member?.full_name ? `${member.full_name}'s` : "your"} full legal name. We record the name, IP address, and a timestamp.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

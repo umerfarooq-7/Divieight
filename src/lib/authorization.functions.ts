@@ -99,7 +99,8 @@ export async function diligenceGateStatus(
   const { data: members } = await db
     .from("account_members")
     .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId);
+    .eq("buyer_account_id", buyerAccountId)
+    .eq("status", "active");
   const memberRows = (members ?? []) as Array<{ id: string }>;
   const { currentAgentAcks } = await import("@/lib/due-diligence.functions");
   const liveAcks = await currentAgentAcks(db, buyerAccountId, (acks ?? []) as any[]);
@@ -179,7 +180,8 @@ async function loadMembers(db: Db, buyerAccountId: string): Promise<Authorizatio
   const { data } = await db
     .from("account_members")
     .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId);
+    .eq("buyer_account_id", buyerAccountId)
+    .eq("status", "active");
   return (data ?? []) as AuthorizationMember[];
 }
 

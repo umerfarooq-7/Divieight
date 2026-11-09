@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listBuyerAttributionsForAdmin } from "@/lib/agent-qr.functions";
+import { listReadTheStandardForAdmin } from "@/lib/eligibility-standard.functions";
 import { StatusToneClass, when } from "@/lib/admin";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
+import { AdminMemberActions } from "@/components/AdminMemberActions";
 
 export const Route = createFileRoute("/admin/buyers")({
   component: AdminBuyers,
@@ -34,6 +36,8 @@ type MemberRow = {
   full_name: string;
   role: string;
   vetting_status: string;
+  status?: string;
+  email?: string | null;
 };
 
 function AdminBuyers() {
@@ -44,6 +48,13 @@ function AdminBuyers() {
   const [open, setOpen] = useState<string | null>(null);
   const loadAttributions = useServerFn(listBuyerAttributionsForAdmin);
   const { data: attributions } = useQuery({ queryKey: ["admin-buyer-attributions"], retry: false, queryFn: () => loadAttributions() });
+  const loadReadStandard = useServerFn(listReadTheStandardForAdmin);
+  const { data: readStandard } = useQuery({
+    queryKey: ["admin-read-the-standard", rows.map((r) => r.id).join(",")],
+    enabled: rows.length > 0,
+    retry: false,
+    queryFn: () => loadReadStandard({ data: { accountIds: rows.map((r) => r.id) } }),
+  });
 
   useEffect(() => {
     (async () => {
@@ -56,7 +67,7 @@ function AdminBuyers() {
           .order("created_at", { ascending: false }),
         supabase
           .from("account_members")
-          .select("id,buyer_account_id,full_name,role,vetting_status"),
+          .select("id,buyer_account_id,full_name,role,vetting_status,status,email"),
       ]);
       if (b.error) console.error(b.error);
       setRows((b.data as BuyerRow[] | null) ?? []);
@@ -190,12 +201,20 @@ function AdminBuyers() {
                                     <span className="font-medium text-foreground">
                                       {m.full_name || "Unnamed"}
                                     </span>
-                                    <span className="text-muted-foreground">({m.role})</span>
+                                    <span className="text-muted-foreground">({m.role}{m.email ? ` · ${m.email}` : ""})</span>
+                                    {m.status === "removed" ? <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">removed</span> : null}
                                     <span
                                       className={`inline-flex rounded-full px-2 py-0.5 font-medium ${StatusToneClass(m.vetting_status)}`}
                                     >
                                       {m.vetting_status}
                                     </span>
+                                    {/* "Read the Standard" is not the declaration: never shown as one. */}
+                                    {(readStandard ?? []).filter((a) => a.account_member_id === m.id).map((a) => (
+                                      <span key={a.standard_version + a.page_spec_version} className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                                        Read the Standard v{a.standard_version} · {when(a.acknowledged_at)}
+                                      </span>
+                                    ))}
+                                    {m.status !== "removed" ? <AdminMemberActions member={{ id: m.id, role: m.role, email: m.email ?? null }} onChanged={() => window.location.reload()} /> : null}
                                   </li>
                                 ))
                               )}

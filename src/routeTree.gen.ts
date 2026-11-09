@@ -84,6 +84,7 @@ import { Route as BuyerClosingFundsRouteImport } from './routes/buyer.closing-fu
 import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
 import { Route as BuyerDocumentsRouteImport } from './routes/buyer.documents'
 import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-money'
+import { Route as BuyerEligibilityStandardRouteImport } from './routes/buyer.eligibility-standard'
 import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
 import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
@@ -157,9 +158,11 @@ import { Route as BuyerAuthorizationsIndexRouteImport } from './routes/buyer.aut
 import { Route as BuyerAuthorizationsIdRouteImport } from './routes/buyer.authorizations.$id'
 import { Route as BuyerDueDiligenceIdRouteImport } from './routes/buyer.due-diligence.$id'
 import { Route as BuyerOnboardingIndexRouteImport } from './routes/buyer.onboarding.index'
+import { Route as BuyerOnboardingEligibilityRouteImport } from './routes/buyer.onboarding.eligibility'
 import { Route as BuyerOnboardingIdentityRouteImport } from './routes/buyer.onboarding.identity'
 import { Route as BuyerOnboardingLifestyleRouteImport } from './routes/buyer.onboarding.lifestyle'
 import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onboarding.liquidity'
+import { Route as BuyerOnboardingMembersRouteImport } from './routes/buyer.onboarding.members'
 import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
 import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
 import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
@@ -567,6 +570,12 @@ const BuyerEarnestMoneyRoute = BuyerEarnestMoneyRouteImport.update({
   path: '/buyer/earnest-money',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerEligibilityStandardRoute =
+  BuyerEligibilityStandardRouteImport.update({
+    id: '/buyer/eligibility-standard',
+    path: '/buyer/eligibility-standard',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BuyerGoldenTicketRoute = BuyerGoldenTicketRouteImport.update({
   id: '/buyer/golden-ticket',
   path: '/buyer/golden-ticket',
@@ -955,6 +964,12 @@ const BuyerOnboardingIndexRoute = BuyerOnboardingIndexRouteImport.update({
   path: '/buyer/onboarding/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerOnboardingEligibilityRoute =
+  BuyerOnboardingEligibilityRouteImport.update({
+    id: '/buyer/onboarding/eligibility',
+    path: '/buyer/onboarding/eligibility',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BuyerOnboardingIdentityRoute = BuyerOnboardingIdentityRouteImport.update({
   id: '/buyer/onboarding/identity',
   path: '/buyer/onboarding/identity',
@@ -972,6 +987,11 @@ const BuyerOnboardingLiquidityRoute =
     path: '/buyer/onboarding/liquidity',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BuyerOnboardingMembersRoute = BuyerOnboardingMembersRouteImport.update({
+  id: '/buyer/onboarding/members',
+  path: '/buyer/onboarding/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerOnboardingPaymentRoute = BuyerOnboardingPaymentRouteImport.update({
   id: '/buyer/onboarding/payment',
   path: '/buyer/onboarding/payment',
@@ -1211,6 +1231,7 @@ export interface FileRoutesByFullPath {
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
+  '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
@@ -1280,9 +1301,11 @@ export interface FileRoutesByFullPath {
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
+  '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -1386,6 +1409,7 @@ export interface FileRoutesByTo {
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
+  '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
@@ -1455,9 +1479,11 @@ export interface FileRoutesByTo {
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
+  '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -1569,6 +1595,7 @@ export interface FileRoutesById {
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
   '/buyer/earnest-money': typeof BuyerEarnestMoneyRoute
+  '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
   '/buyer/login': typeof BuyerLoginRoute
@@ -1638,9 +1665,11 @@ export interface FileRoutesById {
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
+  '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -1753,6 +1782,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
+    | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
@@ -1822,9 +1852,11 @@ export interface FileRouteTypes {
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
     | '/buyer/due-diligence/$id'
+    | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
@@ -1928,6 +1960,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
+    | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
@@ -1997,9 +2030,11 @@ export interface FileRouteTypes {
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
     | '/buyer/due-diligence/$id'
+    | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
@@ -2110,6 +2145,7 @@ export interface FileRouteTypes {
     | '/buyer/dashboard'
     | '/buyer/documents'
     | '/buyer/earnest-money'
+    | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
     | '/buyer/login'
@@ -2179,9 +2215,11 @@ export interface FileRouteTypes {
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
     | '/buyer/due-diligence/$id'
+    | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
     | '/buyer/pods/$id'
@@ -2243,6 +2281,7 @@ export interface RootRouteChildren {
   BuyerDashboardRoute: typeof BuyerDashboardRoute
   BuyerDocumentsRoute: typeof BuyerDocumentsRoute
   BuyerEarnestMoneyRoute: typeof BuyerEarnestMoneyRoute
+  BuyerEligibilityStandardRoute: typeof BuyerEligibilityStandardRoute
   BuyerGoldenTicketRoute: typeof BuyerGoldenTicketRoute
   BuyerInsuranceRoute: typeof BuyerInsuranceRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
@@ -2294,9 +2333,11 @@ export interface RootRouteChildren {
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
+  BuyerOnboardingEligibilityRoute: typeof BuyerOnboardingEligibilityRoute
   BuyerOnboardingIdentityRoute: typeof BuyerOnboardingIdentityRoute
   BuyerOnboardingLifestyleRoute: typeof BuyerOnboardingLifestyleRoute
   BuyerOnboardingLiquidityRoute: typeof BuyerOnboardingLiquidityRoute
+  BuyerOnboardingMembersRoute: typeof BuyerOnboardingMembersRoute
   BuyerOnboardingPaymentRoute: typeof BuyerOnboardingPaymentRoute
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
@@ -2843,6 +2884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerEarnestMoneyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/eligibility-standard': {
+      id: '/buyer/eligibility-standard'
+      path: '/buyer/eligibility-standard'
+      fullPath: '/buyer/eligibility-standard'
+      preLoaderRoute: typeof BuyerEligibilityStandardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/golden-ticket': {
       id: '/buyer/golden-ticket'
       path: '/buyer/golden-ticket'
@@ -3354,6 +3402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerOnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/onboarding/eligibility': {
+      id: '/buyer/onboarding/eligibility'
+      path: '/buyer/onboarding/eligibility'
+      fullPath: '/buyer/onboarding/eligibility'
+      preLoaderRoute: typeof BuyerOnboardingEligibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/onboarding/identity': {
       id: '/buyer/onboarding/identity'
       path: '/buyer/onboarding/identity'
@@ -3373,6 +3428,13 @@ declare module '@tanstack/react-router' {
       path: '/buyer/onboarding/liquidity'
       fullPath: '/buyer/onboarding/liquidity'
       preLoaderRoute: typeof BuyerOnboardingLiquidityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/members': {
+      id: '/buyer/onboarding/members'
+      path: '/buyer/onboarding/members'
+      fullPath: '/buyer/onboarding/members'
+      preLoaderRoute: typeof BuyerOnboardingMembersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/onboarding/payment': {
@@ -3851,6 +3913,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerDashboardRoute: BuyerDashboardRoute,
   BuyerDocumentsRoute: BuyerDocumentsRoute,
   BuyerEarnestMoneyRoute: BuyerEarnestMoneyRoute,
+  BuyerEligibilityStandardRoute: BuyerEligibilityStandardRoute,
   BuyerGoldenTicketRoute: BuyerGoldenTicketRoute,
   BuyerInsuranceRoute: BuyerInsuranceRoute,
   BuyerLoginRoute: BuyerLoginRoute,
@@ -3903,9 +3966,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
+  BuyerOnboardingEligibilityRoute: BuyerOnboardingEligibilityRoute,
   BuyerOnboardingIdentityRoute: BuyerOnboardingIdentityRoute,
   BuyerOnboardingLifestyleRoute: BuyerOnboardingLifestyleRoute,
   BuyerOnboardingLiquidityRoute: BuyerOnboardingLiquidityRoute,
+  BuyerOnboardingMembersRoute: BuyerOnboardingMembersRoute,
   BuyerOnboardingPaymentRoute: BuyerOnboardingPaymentRoute,
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,
   BuyerPodsIdRoute: BuyerPodsIdRoute,

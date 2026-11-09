@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
+import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
 
 // ⚠️ COMPLIANCE-SENSITIVE FLOW — FLAGGED FOR LEGAL REVIEW BEFORE PRODUCTION.
 // Adjudication of flagged consumer-report results must follow FCRA pre-adverse
@@ -42,6 +43,14 @@ interface DocEntry {
 }
 
 function VerificationRequestPage() {
+  return (
+    <ActingMemberGate step="Verification">
+      {({ member }) => <VerificationForMember key={member.id} actingMemberId={member.id} />}
+    </ActingMemberGate>
+  );
+}
+
+function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -73,7 +82,8 @@ function VerificationRequestPage() {
         .from("account_members")
         .select("id, verification_documents")
         .eq("buyer_account_id", b.id)
-        .eq("role", "primary")
+        .eq("id", actingMemberId)
+        .eq("status", "active")
         .maybeSingle();
       if (cancelled) return;
       setAccountId(b.id);
@@ -137,7 +147,7 @@ function VerificationRequestPage() {
           actionType: "buyer.verification_documents_submitted",
           entityType: "buyer_account",
           entityId: accountId,
-          metadata: { member_id: memberId, files: added.map((d) => d.name) },
+          metadata: { member_id: memberId, files: added.map((d) => d.name), ...actingAuditMeta(memberId) },
         });
         toast.success(`${added.length} document(s) submitted for review.`);
       }

@@ -332,7 +332,8 @@ describe("what an owner can see", () => {
     const text = JSON.stringify(rows);
     expect(text).not.toContain(IDS.b2);
     expect(text).not.toContain(SELLER_KEY);
-    expect(text).not.toContain("50");
+    expect(JSON.stringify(rows.map((r) => r.mine))).not.toMatch(/"amount":50(?![\d.])/);
+    expect(rows.every((r) => Object.keys(r).every((k) => !/allocations|holder/i.test(k)))).toBe(true);
     expect(text).not.toContain("allocations");
   });
 

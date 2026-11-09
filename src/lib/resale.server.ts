@@ -202,7 +202,7 @@ export async function settleRofr(db: Db, propertyId?: string): Promise<{ openMar
 
 async function members(db: Db, holder: { type: string; buyerAccountId: string | null; holderKey: string }, listingId: string): Promise<MemberPosition[]> {
   if (holder.type !== "buyer" || !holder.buyerAccountId) return [];
-  const { data: rows } = await db.from("account_members").select("id, full_name").eq("buyer_account_id", holder.buyerAccountId);
+  const { data: rows } = await db.from("account_members").select("id, full_name").eq("buyer_account_id", holder.buyerAccountId).eq("status", "active");
   const { data: positions } = await db.from("resale_rofr_member_positions").select("account_member_id, position").eq("listing_id", listingId).eq("holder_key", holder.holderKey);
   const byMember = new Map(((positions ?? []) as Array<{ account_member_id: string; position: string }>).map((p) => [p.account_member_id, p.position]));
   return ((rows ?? []) as Array<{ id: string; full_name: string | null }>).map((m) => ({

@@ -304,7 +304,8 @@ export async function oaSigners(db: Db, propertyId: string): Promise<Stage2Signe
   const { data } = await db
     .from("account_members")
     .select("id, buyer_account_id, full_name")
-    .in("buyer_account_id", accounts);
+    .in("buyer_account_id", accounts)
+    .eq("status", "active");
   return ((data ?? []) as Array<{ id: string; buyer_account_id: string; full_name: string | null }>)
     .map((m) => ({ buyerAccountId: m.buyer_account_id, accountMemberId: m.id, name: (m.full_name ?? "").trim() || "Account Member" }))
     .sort((a, b) => accounts.indexOf(a.buyerAccountId) - accounts.indexOf(b.buyerAccountId));

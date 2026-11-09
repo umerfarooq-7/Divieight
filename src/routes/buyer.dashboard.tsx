@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { enrollmentDaysRemaining, enrollmentEndDate } from "@/lib/golden-ticket";
 import { formatDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
+import { AccountMembersCard } from "@/components/AccountMembersCard";
 import { LifestylePerksConsent } from "@/components/LifestylePerksConsent";
 import { SubstitutionInvitations } from "@/components/SubstitutionInvitations";
 
@@ -220,6 +221,7 @@ function BuyerDashboardPage() {
           .from("account_members")
           .select("id, full_name, role, vetting_status")
           .eq("buyer_account_id", acct.id)
+          .eq("status", "active")
           .order("created_at", { ascending: true }),
         supabase
           .from("signed_documents")
@@ -602,43 +604,7 @@ function BuyerDashboardPage() {
         />
       </section>
 
-      <section>
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Account members
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            ({members.length} {members.length === 1 ? "member" : "members"} · up to 2 per account)
-          </span>
-        </h2>
-        <div className="mt-4 space-y-3">
-          {members.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              No members on this account yet.
-            </p>
-          ) : (
-            members.map((m) => (
-              <div
-                key={m.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border border-border bg-card p-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {m.full_name || "Unnamed member"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{humanize(m.role)} member</p>
-                </div>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-                    vettingTone(m.vetting_status),
-                  )}
-                >
-                  {vettingLabel(m.vetting_status)}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+      <AccountMembersCard />
     </div>
   );
 }

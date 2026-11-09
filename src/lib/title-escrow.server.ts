@@ -67,7 +67,7 @@ export async function buildClosingBundle(db: Db, propertyId: string, sourceReque
   const reservations = (res ?? []) as Array<{ buyer_account_id: string; shares_reserved: number }>;
   const ids = reservations.map((r) => r.buyer_account_id);
   const { data: members } = ids.length
-    ? await db.from("account_members").select("buyer_account_id, full_name").in("buyer_account_id", ids)
+    ? await db.from("account_members").select("buyer_account_id, full_name").in("buyer_account_id", ids).eq("status", "active")
     : { data: [] };
   const { data: accountRows } = ids.length
     ? await db.from("buyer_accounts").select("id, tethered_resident_agent_id").in("id", ids)

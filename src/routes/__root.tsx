@@ -163,17 +163,19 @@ function RootComponent() {
   const isPortal = pathname.startsWith("/agent") || pathname.startsWith("/broker");
   // Embeds go on other sites: the page holds the player and nothing of ours.
   const isEmbed = pathname.startsWith("/embed/");
+  // The Eligibility Decision Page carries only its own wordmark: no site navigation.
+  const isStandalone = isEmbed || pathname === "/buyer/onboarding/eligibility" || pathname === "/buyer/eligibility-standard";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col bg-background">
-        {!isPortal && !isEmbed && <NavBar />}
-        {!isPortal && !isEmbed && <CoOwnerBanner />}
+        {!isPortal && !isStandalone && <NavBar />}
+        {!isPortal && !isStandalone && <CoOwnerBanner />}
         <main className="flex-1">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        {!isPortal && !isEmbed && <SiteFooter />}
+        {!isPortal && !isStandalone && <SiteFooter />}
       </div>
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>

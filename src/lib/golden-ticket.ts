@@ -69,7 +69,8 @@ export async function issueGoldenTicketIfEligible(params: {
     supabase
       .from("account_members")
       .select("vetting_status")
-      .eq("buyer_account_id", buyerAccountId),
+      .eq("buyer_account_id", buyerAccountId)
+      .eq("status", "active"),
     supabase
       .from("signed_documents")
       .select("id")

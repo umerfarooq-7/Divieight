@@ -46,6 +46,7 @@ export async function ensureBuyerAccount(params: {
     buyer_account_id: data.id,
     full_name: params.fullName ?? "",
     role: "primary",
+    email: params.email,
   });
 
   return data;
@@ -55,11 +56,11 @@ export async function ensureBuyerAccount(params: {
 export function buyerRedirect(onboardingStatus: string): string {
   switch (onboardingStatus) {
     case "not_started":
-      return "/buyer/onboarding/identity";
+      return "/buyer/onboarding/members";
     case "lifestyle_survey_pending":
       return "/buyer/onboarding/lifestyle";
     case "payment_pending":
-      return "/buyer/onboarding/payment";
+      return "/buyer/onboarding/eligibility";
     case "vetting_pending":
       return "/buyer/onboarding/vetting";
     case "liquidity_pending":

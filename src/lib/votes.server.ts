@@ -213,7 +213,7 @@ export interface OwnerVoteDetail {
 
 async function membersWithPositions(db: Db, holder: Holder, voteId: string): Promise<MemberPosition[]> {
   if (holder.type !== "buyer" || !holder.buyerAccountId) return [];
-  const { data: members } = await db.from("account_members").select("id, full_name").eq("buyer_account_id", holder.buyerAccountId);
+  const { data: members } = await db.from("account_members").select("id, full_name").eq("buyer_account_id", holder.buyerAccountId).eq("status", "active");
   const { data: positions } = await db
     .from("vote_member_positions")
     .select("account_member_id, position")

@@ -121,6 +121,15 @@ export function NavBar() {
           </Link>
           {portal === "buyer" ? (
             <Link
+              to="/buyer/eligibility-standard"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: "text-foreground" }}
+            >
+              Participant Eligibility Standard
+            </Link>
+          ) : null}
+          {portal === "buyer" ? (
+            <Link
               to="/resale"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               activeProps={{ className: "text-foreground" }}

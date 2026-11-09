@@ -49,7 +49,8 @@ export async function findCandidates(
     .in(
       "buyer_account_id",
       pool.map((b) => b.id),
-    );
+    )
+    .eq("status", "active");
   const nameByAccount = new Map<string, string>();
   (members ?? []).forEach((m) => {
     if (m.full_name && (m.role === "primary" || !nameByAccount.has(m.buyer_account_id)))

@@ -1,14 +1,17 @@
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
+const STEPS = ["Members", "Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
 
-export type BuyerOnboardingStep = 1 | 2 | 3 | 4 | 5;
+/** 0 is Members; the others keep their old numbers, so each page still passes the same value. */
+export type BuyerOnboardingStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingStep }) {
   return (
+    <>
     <ol className="mx-auto flex w-full max-w-3xl items-center gap-1.5 sm:gap-2">
       {STEPS.map((label, i) => {
-        const step = (i + 1) as BuyerOnboardingStep;
+        const step = i as BuyerOnboardingStep;
         const isActive = step === current;
         const isDone = step < current;
         return (
@@ -22,7 +25,7 @@ export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingSt
                   !isActive && !isDone && "border-border bg-background text-muted-foreground",
                 )}
               >
-                {step}
+                {i + 1}
               </span>
               <span
                 className={cn(
@@ -40,5 +43,11 @@ export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingSt
         );
       })}
     </ol>
+    <p className="mx-auto mt-2 w-full max-w-3xl text-right text-xs">
+      <Link to="/buyer/eligibility-standard" className="font-medium text-muted-foreground hover:text-foreground hover:underline">
+        Participant Eligibility Standard
+      </Link>
+    </p>
+    </>
   );
 }

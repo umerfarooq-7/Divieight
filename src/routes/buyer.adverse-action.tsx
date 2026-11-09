@@ -68,7 +68,10 @@ function AdverseActionPage() {
         .from("account_members")
         .select("id, background_check_result, adverse_action_issued_at")
         .eq("buyer_account_id", b.id)
-        .eq("role", "primary")
+        .eq("status", "active")
+        .eq("background_check_result", "failed")
+        .order("created_at", { ascending: true })
+        .limit(1)
         .maybeSingle();
       if (cancelled) return;
 

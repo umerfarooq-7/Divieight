@@ -8,6 +8,9 @@ import { Field } from "@/components/Field";
 import { BUDGET_BUCKETS, bucketById, bucketForAmount, liquidityBasisFor } from "@/lib/budget-buckets";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
+import { useServerFn } from "@tanstack/react-start";
+import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
+import { saveMemberIdentityFn } from "@/lib/account-members.functions";
 
 export const Route = createFileRoute("/buyer/onboarding/identity")({
   head: () => ({
@@ -68,7 +71,17 @@ const INTENTS = [
 ] as const;
 
 function BuyerIdentityScreen() {
+  return (
+    <ActingMemberGate step="Step 2 · Identity">
+      {({ member }) => <IdentityForMember key={member.id} actingMemberId={member.id} isPrimary={member.role === "primary"} />}
+    </ActingMemberGate>
+  );
+}
+
+function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: string; isPrimary: boolean }) {
   const navigate = useNavigate();
+  const saveIdentity = useServerFn(saveMemberIdentityFn);
+  const [idNumber, setIdNumber] = useState("");
   const { user, loading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,13 +135,15 @@ function BuyerIdentityScreen() {
 
       const { data: member } = await supabase
         .from("account_members")
-        .select("id, full_name, address, date_of_birth")
+        .select("id, full_name, address, date_of_birth, id_document_number")
         .eq("buyer_account_id", account.id)
-        .eq("role", "primary")
+        .eq("id", actingMemberId)
+        .eq("status", "active")
         .maybeSingle();
       if (cancelled) return;
       if (member) {
         setMemberId(member.id);
+        setIdNumber((member as { id_document_number?: string | null }).id_document_number ?? "");
         if (member.full_name || member.address || member.date_of_birth) {
           setFields({
             full_name: member.full_name ?? "",
@@ -142,7 +157,7 @@ function BuyerIdentityScreen() {
     return () => {
       cancelled = true;
     };
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, actingMemberId]);
 
   async function handleFile(f: File) {
     if (!f.type.startsWith("image/")) {
@@ -174,9 +189,12 @@ function BuyerIdentityScreen() {
     if (!fields.full_name.trim()) next.full_name = "Full name is required.";
     if (!fields.address.trim()) next.address = "Address is required.";
     if (!fields.date_of_birth.trim()) next.date_of_birth = "Date of birth is required.";
-    if (!intent) next.intent = "Select how you plan to use your shares.";
-    if (!bucketById(budgetBucket)) next.budget = "Select your target budget range.";
-    if (!reserveConfirmed) next.reserve = "Please confirm your 20% reserve.";
+    if (!idNumber.trim()) next.id_number = "ID document number is required.";
+    if (isPrimary) {
+      if (!intent) next.intent = "Select how you plan to use your shares.";
+      if (!bucketById(budgetBucket)) next.budget = "Select your target budget range.";
+      if (!reserveConfirmed) next.reserve = "Please confirm your 20% reserve.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -202,36 +220,41 @@ function BuyerIdentityScreen() {
       idDocumentUrl = path;
     }
 
-    const memberPayload = {
-      full_name: fields.full_name,
-      address: fields.address,
-      date_of_birth: fields.date_of_birth,
-      vetting_status: "identity_submitted",
-      ...(idDocumentUrl ? { id_document_url: idDocumentUrl } : {}),
-    };
-
-    const memberResult = memberId
-      ? await supabase.from("account_members").update(memberPayload).eq("id", memberId)
-      : await supabase
-          .from("account_members")
-          .insert({ ...memberPayload, buyer_account_id: accountId, role: "primary" });
-
-    if (memberResult.error) {
+    // The member's own record, through the server: it must be an active member of this account.
+    let pending: string[];
+    try {
+      ({ pending } = await saveIdentity({
+        data: {
+          actingMemberId: memberId ?? actingMemberId,
+          fullName: fields.full_name,
+          address: fields.address,
+          dateOfBirth: fields.date_of_birth,
+          idDocumentNumber: idNumber,
+          idDocumentPath: idDocumentUrl,
+        },
+      }));
+    } catch (e) {
       setSubmitting(false);
-      toast.error(memberResult.error.message);
+      toast.error((e as Error).message);
       return;
     }
 
+    // The account moves on once every member's identity is in.
+    const everyoneIn = pending.length === 0;
     const { error } = await supabase
       .from("buyer_accounts")
       .update({
-        intent,
-        target_budget_bucket: budgetBucket,
-        // Internal Liquidity Gate basis only — never displayed to a human.
-        target_budget: liquidityBasisFor(bucketById(budgetBucket)!),
+        ...(isPrimary
+          ? {
+              intent,
+              target_budget_bucket: budgetBucket,
+              // Internal Liquidity Gate basis only — never displayed to a human.
+              target_budget: liquidityBasisFor(bucketById(budgetBucket)!),
+            }
+          : {}),
         last_activity_at: new Date().toISOString(),
         stall_warning_sent_at: null,
-        onboarding_status: "lifestyle_survey_pending",
+        ...(everyoneIn ? { onboarding_status: "lifestyle_survey_pending" } : {}),
       })
       .eq("id", accountId);
 
@@ -247,9 +270,13 @@ function BuyerIdentityScreen() {
       actionType: "buyer.identity_submitted",
       entityType: "buyer_account",
       entityId: accountId,
-      metadata: { has_document: Boolean(idDocumentUrl), manual_mode: manualMode, intent },
+      metadata: { has_document: Boolean(idDocumentUrl), manual_mode: manualMode, intent: isPrimary ? intent : undefined, ...actingAuditMeta(memberId ?? actingMemberId) },
     });
 
+    if (!everyoneIn) {
+      toast.success(`Saved. Next: ${pending.join(" and ")} completes their identity. Use "Switch person".`);
+      return;
+    }
     navigate({ to: "/buyer/onboarding/lifestyle" });
   }
 
@@ -269,7 +296,7 @@ function BuyerIdentityScreen() {
 
       <div className="mt-10 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 1 · Identity
+          Step 2 · Identity
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Verify your identity
@@ -381,10 +408,21 @@ function BuyerIdentityScreen() {
               onChange={(e) => setFields((s) => ({ ...s, date_of_birth: e.target.value }))}
               error={errors.date_of_birth}
             />
+            <Field
+              label="ID document number"
+              name="id_document_number"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value)}
+              error={errors.id_number}
+              placeholder="As shown on the license"
+              autoComplete="off"
+            />
           </div>
         </div>
       ) : null}
 
+      {isPrimary ? (
+      <>
       {/* Intent check */}
       <div className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="font-display text-lg font-semibold text-foreground">Intent check</h2>
@@ -490,6 +528,8 @@ function BuyerIdentityScreen() {
           {errors.reserve ? <p className="text-xs text-destructive">{errors.reserve}</p> : null}
         </div>
       </div>
+      </>
+      ) : null}
 
       <div className="mt-8 flex justify-end">
         <button

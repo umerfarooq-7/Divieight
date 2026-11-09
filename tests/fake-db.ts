@@ -73,6 +73,7 @@ const DEFAULTS: Record<string, Row> = {
   resale_listings: { flat_fee: 500 },
   resale_transactions: { flat_fee: 500 },
   library_videos: { compliance_approved_by: null, compliance_approved_at: null },
+  account_members: { status: "active" },
   maintenance_requests: { expense_id: null, expense_queued_at: null, estimated_cost: null, actual_cost: null, vendor_name: null },
 };
 

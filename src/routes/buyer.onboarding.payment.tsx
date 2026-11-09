@@ -170,6 +170,7 @@ function PaymentScreen() {
           .from("account_members")
           .select("id, full_name, role")
           .eq("buyer_account_id", account.id)
+          .eq("status", "active")
           .order("created_at", { ascending: true }),
         supabase
           .from("signed_documents")
@@ -310,7 +311,7 @@ function PaymentScreen() {
 
         <div className="mt-10 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-            Step 3 · Agreement & payment
+            Step 4 · Agreement & payment
           </p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Priority Reservation Agreement

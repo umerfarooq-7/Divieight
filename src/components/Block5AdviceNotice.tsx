@@ -58,6 +58,7 @@ export function Block5AdviceNotice({
 
     const rows = roster.map((m) => ({
       buyer_account_id: buyerAccountId,
+      account_member_id: m.id,
       document_type: BLOCK_5_DOCUMENT_TYPE,
       document_version: BLOCK_5_VERSION,
       signed_name: (m.full_name ?? "Account Member").trim(),
@@ -82,6 +83,8 @@ export function Block5AdviceNotice({
         document_hash: BLOCK_5_HASH,
         members: roster.map((m) => m.id),
         secondary_verification_method: "checkbox_attestation",
+        user_agent: typeof navigator === "undefined" ? null : navigator.userAgent,
+        ip_address: ip,
       },
     });
 

@@ -305,7 +305,7 @@ function LiquidityGatePage() {
 
       <div className="mt-10">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 5 · Liquidity
+          Step 6 · Liquidity
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Liquidity verification

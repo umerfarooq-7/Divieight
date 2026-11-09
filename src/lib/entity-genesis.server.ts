@@ -97,7 +97,8 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
     const { data: members } = await db
       .from("account_members")
       .select("buyer_account_id, full_name")
-      .in("buyer_account_id", buyerIds);
+      .in("buyer_account_id", buyerIds)
+      .eq("status", "active");
     for (const m of (members ?? []) as any[]) {
       const list = namesByBuyer.get(m.buyer_account_id) ?? [];
       if (m.full_name) list.push(m.full_name);
