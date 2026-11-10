@@ -13,10 +13,20 @@ export const ELIGIBILITY_LABELS: Record<MemberEligibility, string> = {
   pending: "Pending",
 };
 
-export function eligibilityOf(vettingStatus: string | null | undefined): MemberEligibility {
+/**
+ * A member's eligibility from their vetting and, when given, their latest liveness result
+ * (null = no attempt yet). A failed liveness makes that member — and only that member — not eligible.
+ */
+export function eligibilityOf(vettingStatus: string | null | undefined, livenessStatus?: string | null): MemberEligibility {
+  if (livenessStatus !== undefined) {
+    if (livenessStatus === "failed" || vettingStatus === "failed") return "not_eligible";
+    const vetting = eligibilityOf(vettingStatus);
+    if (livenessStatus === "inconclusive" || vetting === "held") return "held";
+    return vetting === "eligible" && livenessStatus === "passed" ? "eligible" : "pending";
+  }
   if (vettingStatus === "cleared") return "eligible";
   if (vettingStatus === "failed") return "not_eligible";
-  if (vettingStatus === "flagged_needs_review" || vettingStatus === "verification_pending") return "held";
+  if (vettingStatus === "flagged_needs_review" || vettingStatus === "verification_pending" || vettingStatus === "held_for_review") return "held";
   return "pending";
 }
 

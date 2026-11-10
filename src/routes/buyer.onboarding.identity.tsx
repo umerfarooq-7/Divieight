@@ -239,8 +239,8 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
       return;
     }
 
-    // The account moves on once every member's identity is in.
-    const everyoneIn = pending.length === 0;
+    // The account moves on to the persona survey once every member has their identity in and has passed
+    // the liveness check (the liveness step moves it). Next for this member: their selfie.
     const { error } = await supabase
       .from("buyer_accounts")
       .update({
@@ -254,7 +254,6 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
           : {}),
         last_activity_at: new Date().toISOString(),
         stall_warning_sent_at: null,
-        ...(everyoneIn ? { onboarding_status: "lifestyle_survey_pending" } : {}),
       })
       .eq("id", accountId);
 
@@ -273,11 +272,8 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
       metadata: { has_document: Boolean(idDocumentUrl), manual_mode: manualMode, intent: isPrimary ? intent : undefined, ...actingAuditMeta(memberId ?? actingMemberId) },
     });
 
-    if (!everyoneIn) {
-      toast.success(`Saved. Next: ${pending.join(" and ")} completes their identity. Use "Switch person".`);
-      return;
-    }
-    navigate({ to: "/buyer/onboarding/lifestyle" });
+    toast.success(pending.length ? `Saved. Next: this member's selfie, then ${pending.join(" and ")} completes their identity.` : "Saved. Next: your selfie.");
+    navigate({ to: "/buyer/onboarding/liveness" });
   }
 
   if (loading || bootstrapping) {

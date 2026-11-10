@@ -162,6 +162,7 @@ import { Route as BuyerOnboardingEligibilityRouteImport } from './routes/buyer.o
 import { Route as BuyerOnboardingIdentityRouteImport } from './routes/buyer.onboarding.identity'
 import { Route as BuyerOnboardingLifestyleRouteImport } from './routes/buyer.onboarding.lifestyle'
 import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onboarding.liquidity'
+import { Route as BuyerOnboardingLivenessRouteImport } from './routes/buyer.onboarding.liveness'
 import { Route as BuyerOnboardingMembersRouteImport } from './routes/buyer.onboarding.members'
 import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
 import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
@@ -987,6 +988,11 @@ const BuyerOnboardingLiquidityRoute =
     path: '/buyer/onboarding/liquidity',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BuyerOnboardingLivenessRoute = BuyerOnboardingLivenessRouteImport.update({
+  id: '/buyer/onboarding/liveness',
+  path: '/buyer/onboarding/liveness',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerOnboardingMembersRoute = BuyerOnboardingMembersRouteImport.update({
   id: '/buyer/onboarding/members',
   path: '/buyer/onboarding/members',
@@ -1305,6 +1311,7 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
@@ -1483,6 +1490,7 @@ export interface FileRoutesByTo {
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
@@ -1669,6 +1677,7 @@ export interface FileRoutesById {
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
   '/buyer/onboarding/lifestyle': typeof BuyerOnboardingLifestyleRoute
   '/buyer/onboarding/liquidity': typeof BuyerOnboardingLiquidityRoute
+  '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
@@ -1856,6 +1865,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
@@ -2034,6 +2044,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
@@ -2219,6 +2230,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/identity'
     | '/buyer/onboarding/lifestyle'
     | '/buyer/onboarding/liquidity'
+    | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
@@ -2337,6 +2349,7 @@ export interface RootRouteChildren {
   BuyerOnboardingIdentityRoute: typeof BuyerOnboardingIdentityRoute
   BuyerOnboardingLifestyleRoute: typeof BuyerOnboardingLifestyleRoute
   BuyerOnboardingLiquidityRoute: typeof BuyerOnboardingLiquidityRoute
+  BuyerOnboardingLivenessRoute: typeof BuyerOnboardingLivenessRoute
   BuyerOnboardingMembersRoute: typeof BuyerOnboardingMembersRoute
   BuyerOnboardingPaymentRoute: typeof BuyerOnboardingPaymentRoute
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
@@ -3430,6 +3443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerOnboardingLiquidityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/onboarding/liveness': {
+      id: '/buyer/onboarding/liveness'
+      path: '/buyer/onboarding/liveness'
+      fullPath: '/buyer/onboarding/liveness'
+      preLoaderRoute: typeof BuyerOnboardingLivenessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/onboarding/members': {
       id: '/buyer/onboarding/members'
       path: '/buyer/onboarding/members'
@@ -3970,6 +3990,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingIdentityRoute: BuyerOnboardingIdentityRoute,
   BuyerOnboardingLifestyleRoute: BuyerOnboardingLifestyleRoute,
   BuyerOnboardingLiquidityRoute: BuyerOnboardingLiquidityRoute,
+  BuyerOnboardingLivenessRoute: BuyerOnboardingLivenessRoute,
   BuyerOnboardingMembersRoute: BuyerOnboardingMembersRoute,
   BuyerOnboardingPaymentRoute: BuyerOnboardingPaymentRoute,
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Circle } from "lucide-react";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
 import { SecondMemberManager } from "@/components/SecondMemberManager";
@@ -60,6 +61,11 @@ export function AccountMembersCard() {
                         {c.done ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden /> : <Circle className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />}
                         <span className={c.done ? "" : "text-muted-foreground"}>{c.label}</span>
                         <span className="sr-only">{c.done ? "done" : "not done"}</span>
+                        {c.key === "liveness" && !c.done ? (
+                          <Link to="/buyer/onboarding/liveness" className="font-medium text-accent hover:underline">
+                            Take selfie
+                          </Link>
+                        ) : null}
                       </li>
                     ))}
                   </ul>

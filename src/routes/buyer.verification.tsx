@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
 import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
+import { latestLiveness } from "@/lib/liveness";
 
 // ⚠️ COMPLIANCE-SENSITIVE FLOW — FLAGGED FOR LEGAL REVIEW BEFORE PRODUCTION.
 // Adjudication of flagged consumer-report results must follow FCRA pre-adverse
@@ -60,6 +61,8 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
   const [docs, setDocs] = useState<DocEntry[]>([]);
   const [ready, setReady] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // A Verification Request opened by an inconclusive liveness check reads as such.
+  const [livenessInconclusive, setLivenessInconclusive] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -85,7 +88,11 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
         .eq("id", actingMemberId)
         .eq("status", "active")
         .maybeSingle();
+      const { data: checks } = m?.id
+        ? await supabase.from("member_liveness_checks").select("account_member_id, status, created_at").eq("account_member_id", m.id)
+        : { data: [] };
       if (cancelled) return;
+      setLivenessInconclusive(latestLiveness((checks ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>, m?.id ?? "")?.status === "inconclusive");
       setAccountId(b.id);
       setMemberId(m?.id ?? null);
       setDocs(((m?.verification_documents as unknown as DocEntry[]) ?? []).slice());
@@ -171,14 +178,26 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
         Verification request
       </p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-        We need additional information to verify your background check results
+        {livenessInconclusive ? "We couldn't complete your liveness check" : "We need additional information to verify your background check results"}
       </h1>
+      {livenessInconclusive ? (
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+          The selfie check was inconclusive, so we couldn't confirm that the ID document is yours. This is not a decision on your
+          account. You can{" "}
+          <Link to="/buyer/onboarding/liveness" className="font-medium text-accent underline-offset-4 hover:underline">
+            try another selfie
+          </Link>
+          , and you can upload a second government-issued ID below.
+        </p>
+      ) : null}
+      {!livenessInconclusive ? (
       <p className="mt-4 text-base leading-relaxed text-muted-foreground">
         Your screening returned one or more items we could not confirm automatically. This is
         not a decision on your account — we simply need documentation to complete the review.
         Helpful documents include a government-issued ID, proof of address, court
         dispositions, or a written explanation of any item you believe is inaccurate.
       </p>
+      ) : null}
 
       <div className="mt-8 rounded-xl border border-accent/50 bg-accent/10 p-5">
         <p className="font-display text-base font-semibold text-foreground">

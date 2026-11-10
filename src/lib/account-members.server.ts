@@ -39,6 +39,7 @@ interface MemberRow {
   address: string | null;
   date_of_birth: string | null;
   id_document_number: string | null;
+  id_document_url?: string | null;
   vetting_status: string | null;
   fcra_consent_at: string | null;
   background_check_result: string | null;
@@ -110,6 +111,11 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
   const members = await activeMembers(db, account.id);
   const { data: docs } = await db.from("signed_documents").select("document_type, account_member_id, signed_name").eq("buyer_account_id", account.id);
   const signed = (docs ?? []) as Array<{ document_type: string; account_member_id: string | null; signed_name: string | null }>;
+  // Block 4: each member's own Eligibility Declaration (complete). Missing table → nothing declared yet.
+  const { data: declRows } = await db.from("eligibility_declarations").select("account_member_id").eq("buyer_account_id", account.id).eq("status", "complete");
+  const declared = new Set(((declRows ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id));
+  const { livenessByMember } = await import("@/lib/liveness.server");
+  const liveness = await livenessByMember(db, account.id);
   // Signatures from before members were named on them belong to the account holder.
   const signedBy = (type: string, m: MemberRow) =>
     signed.some((d) => d.document_type === type && (d.account_member_id === m.id || (!d.account_member_id && (m.role === "primary" || (d.signed_name ?? "").trim().toLowerCase() === (m.full_name ?? "").trim().toLowerCase()))));
@@ -124,11 +130,11 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
       fullName: m.full_name ?? "",
       email: m.email,
       phone: m.phone,
-      eligibility: eligibilityOf(m.vetting_status),
+      eligibility: eligibilityOf(m.vetting_status, liveness[m.id] ?? null),
       checklist: [
         { key: "identity", label: "Identity", done: identityComplete(m) },
-        { key: "fcra", label: "Background check consent", done: Boolean(m.fcra_consent_at) },
-        { key: "background", label: "Background check", done: Boolean(m.background_check_result) },
+        { key: "liveness", label: "Liveness check", done: liveness[m.id] === "passed" },
+        { key: "declaration", label: "Eligibility declaration", done: declared.has(m.id) },
         { key: "hold_harmless", label: "Hold harmless", done: signedBy("HOLD_HARMLESS", m) },
         { key: "independent_advice", label: "Independent advice notice", done: signedBy("block_5_independent_advice", m) },
       ],

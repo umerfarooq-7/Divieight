@@ -5,6 +5,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listBuyerAttributionsForAdmin } from "@/lib/agent-qr.functions";
 import { listReadTheStandardForAdmin } from "@/lib/eligibility-standard.functions";
+import { listDeclarationsForAdmin } from "@/lib/eligibility-declaration.functions";
+import { listLivenessForAdmin } from "@/lib/liveness.functions";
+import { latestLiveness } from "@/lib/liveness";
+import { LivenessTestSwitch } from "@/components/LivenessTestSwitch";
 import { StatusToneClass, when } from "@/lib/admin";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 import { AdminMemberActions } from "@/components/AdminMemberActions";
@@ -56,6 +60,21 @@ function AdminBuyers() {
     queryFn: () => loadReadStandard({ data: { accountIds: rows.map((r) => r.id) } }),
   });
 
+  const loadLiveness = useServerFn(listLivenessForAdmin);
+  const { data: liveness } = useQuery({
+    queryKey: ["admin-liveness", rows.map((r) => r.id).join(",")],
+    enabled: rows.length > 0,
+    retry: false,
+    queryFn: () => loadLiveness({ data: { accountIds: rows.map((r) => r.id) } }),
+  });
+  const loadDeclarations = useServerFn(listDeclarationsForAdmin);
+  const { data: declarations } = useQuery({
+    queryKey: ["admin-eligibility-declarations", rows.map((r) => r.id).join(",")],
+    enabled: rows.length > 0,
+    retry: false,
+    queryFn: () => loadDeclarations({ data: { accountIds: rows.map((r) => r.id) } }),
+  });
+
   useEffect(() => {
     (async () => {
       const [b, m] = await Promise.all([
@@ -101,6 +120,8 @@ function AdminBuyers() {
           className="h-10 w-72 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
+
+      <LivenessTestSwitch />
 
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
@@ -214,6 +235,35 @@ function AdminBuyers() {
                                         Read the Standard v{a.standard_version} · {when(a.acknowledged_at)}
                                       </span>
                                     ))}
+                                    {(() => {
+                                      const all = liveness ?? [];
+                                      const last = latestLiveness(all, m.id);
+                                      if (!last) return <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Liveness: none</span>;
+                                      const n = all.filter((x) => x.account_member_id === m.id).length;
+                                      return (
+                                        <span className={`rounded-full px-2 py-0.5 ${last.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
+                                          Liveness: {last.status}{last.reason_code ? ` (${last.reason_code})` : ""}{n > 1 ? ` · ${n} attempts` : ""}
+                                        </span>
+                                      );
+                                    })()}
+                                    {(() => {
+                                      const mineDecl = (declarations ?? []).filter((d) => d.account_member_id === m.id);
+                                      const cur = mineDecl.find((d) => d.status === "complete" || d.status === "incomplete");
+                                      const legacy = mineDecl.some((d) => d.status === "legacy");
+                                      const noes = cur?.answers ? Object.entries(cur.answers as Record<string, string>).filter(([, v]) => v === "no").map(([k]) => k.toUpperCase()) : [];
+                                      return (
+                                        <>
+                                          {cur ? (
+                                            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground" title={cur.declaration_hash}>
+                                              Declaration v{cur.standard_version} · {cur.status} · {when(cur.declared_at)}
+                                              {mineDecl.filter((d) => d.status === "superseded").length ? ` · ${mineDecl.filter((d) => d.status === "superseded").length} earlier` : ""}
+                                              {noes.length ? ` · No: ${noes.join(", ")}` : ""}
+                                            </span>
+                                          ) : null}
+                                          {legacy ? <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">legacy consent</span> : null}
+                                        </>
+                                      );
+                                    })()}
                                     {m.status !== "removed" ? <AdminMemberActions member={{ id: m.id, role: m.role, email: m.email ?? null }} onChanged={() => window.location.reload()} /> : null}
                                   </li>
                                 ))

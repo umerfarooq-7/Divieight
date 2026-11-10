@@ -94,6 +94,99 @@ export type Database = {
           },
         ]
       }
+      eligibility_declarations: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          standard_version: string
+          answers: Json | null
+          rendered_text_snapshot: string
+          declaration_hash: string
+          declared_at: string
+          signed_name: string | null
+          attested_personally: boolean
+          ip: string | null
+          user_agent: string | null
+          supersedes_id: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          standard_version: string
+          answers?: Json | null
+          rendered_text_snapshot: string
+          declaration_hash: string
+          declared_at?: string
+          signed_name?: string | null
+          attested_personally?: boolean
+          ip?: string | null
+          user_agent?: string | null
+          supersedes_id?: string | null
+          status: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          standard_version?: string
+          answers?: Json | null
+          rendered_text_snapshot?: string
+          declaration_hash?: string
+          declared_at?: string
+          signed_name?: string | null
+          attested_personally?: boolean
+          ip?: string | null
+          user_agent?: string | null
+          supersedes_id?: string | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      member_liveness_checks: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          id_document_ref: string
+          selfie_url: string
+          provider: string
+          status: string
+          reason_code: string | null
+          checked_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          id_document_ref: string
+          selfie_url: string
+          provider?: string
+          status: string
+          reason_code?: string | null
+          checked_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          id_document_ref?: string
+          selfie_url?: string
+          provider?: string
+          status?: string
+          reason_code?: string | null
+          checked_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

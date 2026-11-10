@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
 import { notifyBuyer } from "@/lib/notify";
 import { tetherResidentAgent } from "@/lib/tethering.functions";
+import { latestLiveness } from "@/lib/liveness";
 
 /** Enrollment period covered by the Digital Key. */
 export const ENROLLMENT_DAYS = 365;
@@ -19,6 +20,8 @@ export interface GoldenTicketInputs {
   liquidityStatus: string;
   praSigned: boolean;
   memberStatuses: string[];
+  /** Each active member's latest liveness result (null = none yet), in any order. */
+  livenessStatuses: Array<string | null>;
 }
 
 /**
@@ -36,6 +39,9 @@ export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketSta
     missing.push("Add at least one Account Member");
   } else if (input.memberStatuses.some((s) => s !== "cleared")) {
     missing.push("All Account Members must clear vetting");
+  }
+  if (input.memberStatuses.length > 0 && (input.livenessStatuses.length < input.memberStatuses.length || input.livenessStatuses.some((s) => s !== "passed"))) {
+    missing.push("Every Account Member must pass the liveness check");
   }
 
   const liquidityOk =
@@ -68,7 +74,7 @@ export async function issueGoldenTicketIfEligible(params: {
       .maybeSingle(),
     supabase
       .from("account_members")
-      .select("vetting_status")
+      .select("id, vetting_status")
       .eq("buyer_account_id", buyerAccountId)
       .eq("status", "active"),
     supabase
@@ -82,6 +88,13 @@ export async function issueGoldenTicketIfEligible(params: {
   if (!account) {
     return { issued: false, eligible: false, missing: ["Buyer account not found"], issuedNow: false, issuedAt: null };
   }
+  // Liveness is a member-level gate: each active member's latest attempt must have passed.
+  const { data: checks } = await supabase
+    .from("member_liveness_checks")
+    .select("account_member_id, status, created_at")
+    .eq("buyer_account_id", buyerAccountId);
+  const livenessRows = (checks ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>;
+  const livenessStatuses = (members ?? []).map((m) => latestLiveness(livenessRows, (m as { id: string }).id)?.status ?? null);
 
   const status = evaluateGoldenTicket({
     goldenTicketIssued: account.golden_ticket_issued,
@@ -89,6 +102,7 @@ export async function issueGoldenTicketIfEligible(params: {
     liquidityStatus: account.liquidity_status,
     praSigned: (pra?.length ?? 0) > 0,
     memberStatuses: (members ?? []).map((m) => m.vetting_status),
+    livenessStatuses,
   });
 
   if (account.golden_ticket_issued) {
