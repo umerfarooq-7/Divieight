@@ -13,7 +13,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { harness } from "./setup";
-import { seedPod, IDS, USERS, hoursFromNow } from "./fixtures";
+import { seedPod, IDS, USERS, hoursFromNow, acceptBlock2ForAll } from "./fixtures";
 import { ensureDigitalGenesis } from "@/lib/entity-genesis.server";
 import { placeDiligenceDocument, acknowledgeAsMember, acknowledgeAsAgent } from "@/lib/due-diligence.functions";
 import { INDEPENDENT_REVIEW_NOTICE } from "@/lib/due-diligence";
@@ -40,6 +40,7 @@ const CLOSING = "2026-10-15";
 
 function seedWorld() {
   seedPod(db());
+  acceptBlock2ForAll(db());
   Object.assign(db().table("properties")[0], {
     exit_type: "hybrid_exit",
     retained_shares: 5,

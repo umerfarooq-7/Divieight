@@ -21,6 +21,7 @@ import {
   type AccountMemberView,
   type MemberEligibility,
 } from "@/lib/account-members";
+import { accountRollup, loadMemberSteps, type AccountStatus } from "@/lib/account-rollup";
 
 type Db = { from: (t: string) => any };
 
@@ -107,7 +108,7 @@ export async function recordActingMember(db: Db, params: { userId: string; membe
 // The account's members, with each one's checklist
 // ---------------------------------------------------------------------------
 
-export async function myAccountMembers(db: Db, userId: string): Promise<{ accountId: string; locked: boolean; canAdd: boolean; members: AccountMemberView[] }> {
+export async function myAccountMembers(db: Db, userId: string): Promise<{ accountId: string; locked: boolean; canAdd: boolean; members: AccountMemberView[]; accountStatus: AccountStatus }> {
   const account = await accountFor(db, userId);
   const members = await activeMembers(db, account.id);
   const { data: docs } = await db.from("signed_documents").select("document_type, account_member_id, signed_name").eq("buyer_account_id", account.id);
@@ -130,9 +131,13 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
   const signedBy = (type: string, m: MemberRow) =>
     signed.some((d) => d.document_type === type && (d.account_member_id === m.id || (!d.account_member_id && (m.role === "primary" || (d.signed_name ?? "").trim().toLowerCase() === (m.full_name ?? "").trim().toLowerCase()))));
   const locked = await membersLocked(db, account);
+  // Every member-level step, from the same roll-up the Golden Ticket uses.
+  const steps = await loadMemberSteps(db, account.id);
+  const stepsOf = (id: string) => steps.find((s) => s.memberId === id);
   return {
     accountId: account.id,
     locked,
+    accountStatus: accountRollup(steps).status,
     canAdd: !locked && members.length < MAX_ACTIVE_MEMBERS,
     members: members.map((m) => ({
       id: m.id,
@@ -144,8 +149,13 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
       checklist: [
         { key: "identity", label: "Identity", done: identityComplete(m) },
         { key: "liveness", label: "Liveness check", done: liveness[m.id] === "passed" },
+        { key: "standard", label: "Read the Eligibility Standard", done: Boolean(stepsOf(m.id)?.standardRead) },
         { key: "declaration", label: "Eligibility declaration", done: declared.has(m.id) },
+        { key: "block1", label: "Account linking consent", done: Boolean(stepsOf(m.id)?.block1) },
+        { key: "block2", label: "Entity formation authorization", done: Boolean(stepsOf(m.id)?.block2) },
+        { key: "pra", label: "Priority Reservation Agreement", done: Boolean(stepsOf(m.id)?.pra) },
         { key: "hold_harmless", label: "Hold harmless", done: signedBy("HOLD_HARMLESS", m) },
+        { key: "w9", label: "W-9", done: Boolean(stepsOf(m.id)?.w9) },
         { key: "independent_advice", label: "Independent advice notice", done: signedBy("block_5_independent_advice", m) },
       ],
     })),

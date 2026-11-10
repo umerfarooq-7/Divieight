@@ -334,6 +334,120 @@ export type Database = {
         }
         Relationships: []
       }
+      member_w9: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          legal_name: string
+          tax_classification: string
+          address: string
+          tin_kind: string
+          tin_last4: string
+          signed_name: string
+          signed_at: string
+          ip: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          legal_name: string
+          tax_classification: string
+          address: string
+          tin_kind: string
+          tin_last4: string
+          signed_name: string
+          signed_at?: string
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          legal_name?: string
+          tax_classification?: string
+          address?: string
+          tin_kind?: string
+          tin_last4?: string
+          signed_name?: string
+          signed_at?: string
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      member_plaid_consents: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          text_version: string
+          text_hash: string
+          accepted_at: string
+          ip: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          text_version: string
+          text_hash: string
+          accepted_at?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          text_version?: string
+          text_hash?: string
+          accepted_at?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      member_block2_authorizations: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          text_version: string
+          text_hash: string
+          accepted_at: string
+          ip: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          text_version: string
+          text_hash: string
+          accepted_at?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          text_version?: string
+          text_hash?: string
+          accepted_at?: string
+          ip?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { harness } from "./setup";
-import { seedPod, IDS, USERS } from "./fixtures";
+import { seedPod, IDS, USERS, steps } from "./fixtures";
 import { getLivenessState, submitLivenessSelfie, setLivenessTestSwitchFn, getLivenessTestSwitch } from "@/lib/liveness.functions";
 import { getLivenessAdapter, setLivenessAdapterForTesting, type LivenessAdapter } from "@/lib/liveness-adapters";
 import { SimulatedLivenessAdapter } from "@/lib/liveness-adapters/simulated";
@@ -146,10 +146,11 @@ describe("a failed liveness blocks eligibility for that member only", () => {
   });
 
   it("feeds the Golden Ticket check: every active member's latest attempt must have passed", async () => {
-    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified", praSigned: true, memberStatuses: ["cleared", "cleared"], eligibilityResults: ["eligible", "eligible"] };
-    expect(evaluateGoldenTicket({ ...base, livenessStatuses: ["passed", "passed"] }).eligible).toBe(true);
-    for (const s of [["passed", "failed"], ["passed", null], ["passed", "inconclusive"], ["passed"]])
-      expect(evaluateGoldenTicket({ ...base, livenessStatuses: s }).missing).toContain("Every Account Member must pass the liveness check");
+    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified" };
+    const two = (liveB: boolean) => ({ ...base, members: [steps({ memberId: "a" }), steps({ memberId: "b", liveness: liveB })] });
+    expect(evaluateGoldenTicket(two(true)).eligible).toBe(true);
+    expect(evaluateGoldenTicket(two(false)).missing).toContain("Every Account Member must pass the liveness check");
+    expect(evaluateGoldenTicket({ ...base, members: [steps({ memberId: "a" })] }).eligible).toBe(true);
 
     seed();
     declared();
@@ -158,7 +159,8 @@ describe("a failed liveness blocks eligibility for that member only", () => {
     await selfie(IDS.b1m1);
     await selfie(IDS.b1m2, "liveness-fail.jpg");
     const gt = await issueGoldenTicketIfEligible({ authUserId: USERS.b1, buyerAccountId: IDS.b1 });
-    expect(gt.missing).toEqual(["All Account Members must be eligible under the Participant Eligibility Standard", "Every Account Member must pass the liveness check"]);
+    expect(gt.missing).toContain("All Account Members must be eligible under the Participant Eligibility Standard");
+    expect(gt.missing).toContain("Every Account Member must pass the liveness check");
     expect(account(IDS.b1).golden_ticket_issued).toBe(false);
   });
 });

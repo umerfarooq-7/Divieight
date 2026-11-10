@@ -231,6 +231,7 @@ describe("the Account Members card", () => {
     db().table("account_members").find((m) => m.id === B3M)!.vetting_status = "cleared";
     db().seed("signed_documents", [{ buyer_account_id: B3, document_type: "PRA", signed_name: "Dan Three" }]);
     const gt = await issueGoldenTicketIfEligible({ authUserId: USERS.b3, buyerAccountId: B3 });
-    expect(gt.missing).not.toContain("All Account Members must clear vetting");
+    // Only the active member is evaluated: the removed one neither blocks nor appears.
+    expect(gt.members.map((m) => m.memberId)).toEqual([B3M]);
   });
 });

@@ -90,3 +90,23 @@ export function seedPod(db: FakeDb) {
 export function hoursFromNow(h: number) {
   return new Date(Date.now() + h * 3600_000).toISOString();
 }
+
+/** Every active member of every buyer account has accepted Block 2 (the LPOA), as Entity Genesis Stage 2 requires. */
+export function acceptBlock2ForAll(db: FakeDb) {
+  db.seed(
+    "member_block2_authorizations",
+    db.table("account_members").map((m) => ({ account_member_id: m.id, buyer_account_id: m.buyer_account_id, text_version: "block2-v1", text_hash: "sha256_test", accepted_at: "2026-11-01T00:00:00Z" })),
+  );
+}
+
+import type { MemberSteps } from "@/lib/account-rollup";
+
+/** A member with every required step done and an eligible result; override what a test needs to break. */
+export function steps(overrides: Partial<MemberSteps> = {}): MemberSteps {
+  return {
+    memberId: "m", name: "Member", role: "member",
+    idScan: true, liveness: true, standardRead: true, declaration: true, block1: true, block2: true, holdHarmless: true, w9: true, pra: true,
+    result: "eligible",
+    ...overrides,
+  };
+}

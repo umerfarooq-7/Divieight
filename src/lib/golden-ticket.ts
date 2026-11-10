@@ -2,8 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
 import { notifyBuyer } from "@/lib/notify";
 import { tetherResidentAgent } from "@/lib/tethering.functions";
-import { latestLiveness } from "@/lib/liveness";
-import { currentResultOf } from "@/lib/eligibility-engine";
+import { loadMemberSteps, type MemberSteps, type RequiredStep } from "@/lib/account-rollup";
 
 /** Enrollment period covered by the Digital Key. */
 export const ENROLLMENT_DAYS = 365;
@@ -19,42 +18,44 @@ export interface GoldenTicketInputs {
   goldenTicketIssued: boolean;
   liquidityVerified: boolean;
   liquidityStatus: string;
-  praSigned: boolean;
-  memberStatuses: string[];
-  /** Each active member's latest liveness result (null = none yet), in any order. */
-  livenessStatuses: Array<string | null>;
-  /** Each active member's current eligibility result from the engine (null = no result yet). */
-  eligibilityResults: Array<string | null>;
+  /** Every active Account Member's steps (account-rollup.ts). */
+  members: MemberSteps[];
 }
 
+/** Each condition is checked for every active member; the ticket belongs to the account. */
+const PER_MEMBER: Array<{ step: RequiredStep; message: string }> = [
+  { step: "idScan", message: "Every Account Member must complete their ID scan" },
+  { step: "liveness", message: "Every Account Member must pass the liveness check" },
+  { step: "standardRead", message: "Every Account Member must read the Participant Eligibility Standard" },
+  { step: "declaration", message: "Every Account Member must make their Eligibility Declaration" },
+  { step: "block1", message: "Every Account Member must consent to account linking (Block 1)" },
+  { step: "pra", message: "Priority Reservation Agreement must be signed by every Account Member" },
+  { step: "holdHarmless", message: "Every Account Member must sign the Hold Harmless" },
+  { step: "w9", message: "Every Account Member must complete their W-9" },
+];
+
 /**
- * Pure eligibility rule so it stays testable:
- * - every Account Member is eligible under the engine (a held member blocks the account)
- * - liquidity auto-verified OR manually approved by a Broker of Record
- *   ('manually_approved' is stubbed today — the broker review UI ships with
- *   the Month 3 Agent/Broker Module)
- * - the Priority Reservation Agreement is signed
+ * Pure eligibility rule so it stays testable. For every active Account Member: an eligible result
+ * from the engine (a held member blocks the account), and every required member step done. Plus,
+ * for the account: liquidity auto-verified OR manually approved by a Broker of Record.
  */
 export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketStatus {
   const missing: string[] = [];
+  const results = input.members.map((m) => m.result);
 
-  if (input.memberStatuses.length === 0) {
+  if (input.members.length === 0) {
     missing.push("Add at least one Account Member");
-  } else if (input.eligibilityResults.some((r) => r === "held")) {
+  } else if (results.some((r) => r === "held")) {
     // A held member keeps the whole account from the Golden Ticket until the charge is resolved.
     missing.push("An Account Member's application is held until the disclosed charge is resolved");
-  } else if (input.eligibilityResults.length < input.memberStatuses.length || input.eligibilityResults.some((r) => r !== "eligible")) {
+  } else if (results.some((r) => r !== "eligible")) {
     missing.push("All Account Members must be eligible under the Participant Eligibility Standard");
   }
-  if (input.memberStatuses.length > 0 && (input.livenessStatuses.length < input.memberStatuses.length || input.livenessStatuses.some((s) => s !== "passed"))) {
-    missing.push("Every Account Member must pass the liveness check");
-  }
+  for (const c of PER_MEMBER) if (input.members.some((m) => !m[c.step])) missing.push(c.message);
 
   const liquidityOk =
     input.liquidityVerified || input.liquidityStatus === "manually_approved";
   if (!liquidityOk) missing.push("Liquidity verification must be complete");
-
-  if (!input.praSigned) missing.push("Priority Reservation Agreement must be signed");
 
   return { issued: input.goldenTicketIssued, eligible: missing.length === 0, missing };
 }
@@ -67,65 +68,31 @@ export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketSta
 export async function issueGoldenTicketIfEligible(params: {
   authUserId: string;
   buyerAccountId: string;
-}): Promise<GoldenTicketStatus & { issuedNow: boolean; issuedAt: string | null }> {
+}): Promise<GoldenTicketStatus & { issuedNow: boolean; issuedAt: string | null; members: MemberSteps[] }> {
   const { authUserId, buyerAccountId } = params;
 
-  const [{ data: account }, { data: members }, { data: pra }] = await Promise.all([
-    supabase
-      .from("buyer_accounts")
-      .select(
-        "id, golden_ticket_issued, golden_ticket_issued_at, liquidity_verified, liquidity_status",
-      )
-      .eq("id", buyerAccountId)
-      .maybeSingle(),
-    supabase
-      .from("account_members")
-      .select("id, vetting_status")
-      .eq("buyer_account_id", buyerAccountId)
-      .eq("status", "active"),
-    supabase
-      .from("signed_documents")
-      .select("id")
-      .eq("buyer_account_id", buyerAccountId)
-      .eq("document_type", "PRA")
-      .limit(1),
-  ]);
+  const { data: account } = await supabase
+    .from("buyer_accounts")
+    .select("id, golden_ticket_issued, golden_ticket_issued_at, liquidity_verified, liquidity_status")
+    .eq("id", buyerAccountId)
+    .maybeSingle();
 
   if (!account) {
-    return { issued: false, eligible: false, missing: ["Buyer account not found"], issuedNow: false, issuedAt: null };
+    return { issued: false, eligible: false, missing: ["Buyer account not found"], issuedNow: false, issuedAt: null, members: [] };
   }
-  // Liveness is a member-level gate: each active member's latest attempt must have passed.
-  const { data: checks } = await supabase
-    .from("member_liveness_checks")
-    .select("account_member_id, status, created_at")
-    .eq("buyer_account_id", buyerAccountId);
-  const livenessRows = (checks ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>;
-  const livenessStatuses = (members ?? []).map((m) => latestLiveness(livenessRows, (m as { id: string }).id)?.status ?? null);
-  // The engine's current result per member: the latest result on their current (complete) declaration.
-  const [{ data: resultRows }, { data: declRows }] = await Promise.all([
-    supabase.from("eligibility_results").select("account_member_id, declaration_id, determined_at, result").eq("buyer_account_id", buyerAccountId),
-    supabase.from("eligibility_declarations").select("id, account_member_id").eq("buyer_account_id", buyerAccountId).eq("status", "complete"),
-  ]);
-  const decls = (declRows ?? []) as Array<{ id: string; account_member_id: string }>;
-  const eligibilityResults = (members ?? []).map((m) => {
-    const id = (m as { id: string }).id;
-    return currentResultOf((resultRows ?? []) as Array<{ account_member_id: string; declaration_id: string; determined_at: string; result: string }>, id, decls.find((d) => d.account_member_id === id)?.id ?? null)?.result ?? null;
-  });
+  const members = await loadMemberSteps(supabase, buyerAccountId);
 
   const status = evaluateGoldenTicket({
     goldenTicketIssued: account.golden_ticket_issued,
     liquidityVerified: account.liquidity_verified,
     liquidityStatus: account.liquidity_status,
-    praSigned: (pra?.length ?? 0) > 0,
-    memberStatuses: (members ?? []).map((m) => m.vetting_status),
-    livenessStatuses,
-    eligibilityResults,
+    members,
   });
 
   if (account.golden_ticket_issued) {
-    return { ...status, issued: true, issuedNow: false, issuedAt: account.golden_ticket_issued_at };
+    return { ...status, issued: true, issuedNow: false, issuedAt: account.golden_ticket_issued_at, members };
   }
-  if (!status.eligible) return { ...status, issuedNow: false, issuedAt: null };
+  if (!status.eligible) return { ...status, issuedNow: false, issuedAt: null, members };
 
   const now = new Date().toISOString();
   const { error } = await supabase
@@ -137,7 +104,7 @@ export async function issueGoldenTicketIfEligible(params: {
     })
     .eq("id", buyerAccountId);
 
-  if (error) return { ...status, issuedNow: false, issuedAt: null };
+  if (error) return { ...status, issuedNow: false, issuedAt: null, members };
 
   await logAudit({
     actorId: authUserId,
@@ -155,7 +122,7 @@ export async function issueGoldenTicketIfEligible(params: {
     console.error("[golden-ticket] resident agent tethering failed", e);
   }
 
-  return { ...status, issued: true, issuedNow: true, issuedAt: now };
+  return { ...status, issued: true, issuedNow: true, issuedAt: now, members };
 }
 
 /** Days left in the 12-month enrollment period. */

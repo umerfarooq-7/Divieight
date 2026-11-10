@@ -21,6 +21,7 @@ import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate
 import { EligibilityDeclaration, type DeclarationSubmit, type DeclarationSummary } from "@/components/EligibilityDeclaration";
 import { getDeclarationState, submitEligibilityDeclaration } from "@/lib/eligibility-declaration.functions";
 import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
+import { signMemberDocumentFn } from "@/lib/member-steps.functions";
 
 export const Route = createFileRoute("/buyer/onboarding/vetting")({
   head: () => ({
@@ -182,36 +183,14 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     }
     setSubmitting(true);
 
-    let ip: string | null = null;
+    // Checked on the server against this member's own name; recorded against this member only.
     try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      if (res.ok) ip = (await res.json()).ip ?? null;
-    } catch {
-      ip = null;
-    }
-
-    const { error } = await supabase.from("signed_documents").insert({
-      buyer_account_id: buyer.id,
-      document_type: "HOLD_HARMLESS",
-      account_member_id: member.id,
-      document_version: HOLD_HARMLESS_VERSION,
-      signed_name: typed,
-      document_hash: holdHarmlessHash,
-      ip_address: ip,
-    });
-    if (error) {
+      await signMemberDocumentFn({ data: { actingMemberId: member.id, documentType: "HOLD_HARMLESS", documentVersion: HOLD_HARMLESS_VERSION, documentHash: holdHarmlessHash, typedName: typed } });
+    } catch (e) {
       setSubmitting(false);
-      toast.error(error.message);
+      toast.error(e instanceof Error ? e.message : "The acknowledgment wasn't signed.");
       return;
     }
-
-    await logAudit({
-      actorId: user.id,
-      actionType: "buyer.hold_harmless_signed",
-      entityType: "buyer_account",
-      entityId: buyer.id,
-      metadata: { document_hash: holdHarmlessHash, member_id: member.id, ...actingAuditMeta(member.id, ip) },
-    });
 
     setSubmitting(false);
     setModalOpen(false);

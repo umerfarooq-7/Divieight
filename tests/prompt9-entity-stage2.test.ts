@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { harness } from "./setup";
-import { seedPod, IDS, USERS } from "./fixtures";
+import { seedPod, IDS, USERS, acceptBlock2ForAll } from "./fixtures";
 import { ensureDigitalGenesis, syncCapTable } from "@/lib/entity-genesis.server";
 import { getStage2, runStage2Action, listMyOperatingAgreements, signMyOperatingAgreement } from "@/lib/entity-genesis-stage2.functions";
 import { disbursementPreconditions } from "@/lib/closing-gates.server";
@@ -19,6 +19,7 @@ const act = (action: any) => {
 /** 5 retained seller shares (Hybrid Exit) + B1 (1) + B2 (2) = 8/8 with only 2 Buyer Accounts. */
 async function seedFullPod() {
   seedPod(db());
+  acceptBlock2ForAll(db());
   Object.assign(db().table("properties")[0], { exit_type: "hybrid_exit", retained_shares: 5, listing_status: "system_lock" });
   await ensureDigitalGenesis(db(), { propertyId: IDS.property, actorId: USERS.b1, reason: "hard_lock" });
 }

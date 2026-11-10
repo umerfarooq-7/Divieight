@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
+import { ActingMemberGate } from "@/components/ActingMemberGate";
 
 // ⚠️ COMPLIANCE-SENSITIVE FLOW — FLAGGED FOR LEGAL REVIEW BEFORE PRODUCTION.
 // This screen is the FCRA adverse-action notice. Before launch, counsel must
@@ -40,10 +41,24 @@ const AGENCY = {
   phone: "[Agency Toll-Free Number]",
 };
 
+/** The notice is the affected member's own: shown to them, through the picker, and issued to them. */
 function AdverseActionPage() {
+  return (
+    <ActingMemberGate step="Adverse action notice">
+      {({ member, switchPerson }) => <AdverseActionForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+    </ActingMemberGate>
+  );
+}
+
+/** A member is affected when their legacy background check failed or the engine found them not eligible. */
+export const isAdverselyAffected = (m: { background_check_result: string | null; vetting_status: string | null }) =>
+  m.background_check_result === "failed" || m.vetting_status === "not_eligible";
+
+function AdverseActionForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [ready, setReady] = useState(false);
+  const [notForMe, setNotForMe] = useState<string | null>(null);
   const [issuedAt, setIssuedAt] = useState<string | null>(null);
   const logged = useRef(false);
 
@@ -64,19 +79,24 @@ function AdverseActionPage() {
         if (!cancelled) navigate({ to: "/buyer/dashboard", replace: true });
         return;
       }
-      const { data: m } = await supabase
+      const { data: all } = await supabase
         .from("account_members")
-        .select("id, background_check_result, adverse_action_issued_at")
+        .select("id, full_name, background_check_result, vetting_status, adverse_action_issued_at")
         .eq("buyer_account_id", b.id)
-        .eq("status", "active")
-        .eq("background_check_result", "failed")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .eq("status", "active");
       if (cancelled) return;
+      const everyone = (all ?? []) as Array<{ id: string; full_name: string; background_check_result: string | null; vetting_status: string | null; adverse_action_issued_at: string | null }>;
+      const affected = everyone.filter(isAdverselyAffected);
+      const m = everyone.find((x) => x.id === actingMemberId) ?? null;
 
-      if (!m || m.background_check_result !== "failed") {
+      if (affected.length === 0) {
         navigate({ to: "/buyer/dashboard", replace: true });
+        return;
+      }
+      if (!m || !isAdverselyAffected(m)) {
+        // The notice belongs to the affected member; nobody else sees it.
+        setNotForMe(affected.map((a) => a.full_name || "the other member").join(" and "));
+        setReady(true);
         return;
       }
 
@@ -86,10 +106,13 @@ function AdverseActionPage() {
           .from("account_members")
           .update({ adverse_action_issued_at: stamp })
           .eq("id", m.id);
-        await supabase
-          .from("buyer_accounts")
-          .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "adverse_action" })
-          .eq("id", b.id);
+        // The account itself is parked only when every member is affected; otherwise it may continue without them.
+        if (affected.length === everyone.length) {
+          await supabase
+            .from("buyer_accounts")
+            .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "adverse_action" })
+            .eq("id", b.id);
+        }
       }
       if (!logged.current) {
         logged.current = true;
@@ -101,6 +124,7 @@ function AdverseActionPage() {
           metadata: {
             member_id: m.id,
             background_check_result: m.background_check_result,
+            vetting_status: m.vetting_status,
             issued_at: stamp,
           },
         });
@@ -111,7 +135,7 @@ function AdverseActionPage() {
     return () => {
       cancelled = true;
     };
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, actingMemberId]);
 
   function downloadPlaceholderReport() {
     // TODO: replace with a signed URL to the consumer report PDF returned by
@@ -134,7 +158,22 @@ function AdverseActionPage() {
   }
 
   if (loading || !ready) {
+    if (notForMe) {
     return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6">
+        <h1 className="font-display text-2xl font-semibold text-foreground">This notice is for {notForMe}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">An adverse action notice is addressed to the member it concerns. Switch to that member to read it.</p>
+        <div className="mt-6 flex justify-center gap-3">
+          <Button onClick={onSwitch}>Switch person</Button>
+          <Button asChild variant="outline">
+            <Link to="/buyer/dashboard">Back to dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-muted-foreground">
         Loading notice…
       </div>

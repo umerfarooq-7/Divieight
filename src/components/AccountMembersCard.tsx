@@ -67,6 +67,19 @@ export function AccountMembersCard() {
                     ))}
                   </ul>
                   {m.eligibility === "held" ? <p className="mt-3 text-sm text-foreground">{HELD_BUYER_TEXT}</p> : null}
+                  {m.checklist.find((c) => c.key === "w9" && !c.done) ? (
+                    <Link to="/buyer/onboarding/w9" className="mt-2 inline-block text-xs font-medium text-accent hover:underline">
+                      Complete W-9
+                    </Link>
+                  ) : null}
+                  {m.role === "member" && !data.locked && m.eligibility !== "eligible" ? (
+                    <div className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                      The account can continue without this member: the account holder removes them, and the account is evaluated on the account holder alone. The fee isn't affected.
+                      <button type="button" onClick={() => setManaging(true)} className="ml-2 font-medium text-accent hover:underline">
+                        Continue without this member
+                      </button>
+                    </div>
+                  ) : null}
                   {m.checklist.find((c) => c.key === "declaration")?.done ? (
                     <div className="mt-3">
                       {/* Q6: tell divieight within ten days if a statement stops being true. Opens a new declaration version. */}

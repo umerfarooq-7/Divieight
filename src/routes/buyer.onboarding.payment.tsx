@@ -9,6 +9,8 @@ import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
 import { confirmBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { logAudit } from "@/lib/audit";
+import { ActingMemberGate } from "@/components/ActingMemberGate";
+import { getSignatureState, signMemberDocumentFn } from "@/lib/member-steps.functions";
 import {
   Block5AdviceNotice,
   BLOCK_5_DOCUMENT_TYPE,
@@ -114,8 +116,19 @@ function hashDocument(text: string) {
   return `djb2_${(hash >>> 0).toString(16)}_${text.length}`;
 }
 
+/** Every active member signs their own PRA (through the picker). The fee is the account's, paid once. */
 function PaymentScreen() {
+  return (
+    <ActingMemberGate step="Step 4 · Agreement">
+      {({ member, switchPerson }) => <PaymentForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+    </ActingMemberGate>
+  );
+}
+
+function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
   const navigate = useNavigate();
+  const [praSigned, setPraSigned] = useState(false);
+  const [praWaitingOn, setPraWaitingOn] = useState<string[]>([]);
   const { user, loading } = useAuth();
   const { session_id: sessionId } = Route.useSearch();
 
@@ -181,17 +194,25 @@ function PaymentScreen() {
       ]);
       if (cancelled) return;
       const list = (roster as Block5Member[]) ?? [];
-      const primary = list.find((m) => m.role === "primary") ?? list[0];
+      const me = list.find((m) => m.id === actingMemberId) ?? list[0];
       setMembers(list);
       setAdviceAccepted((block5?.length ?? 0) > 0);
-      setMemberName(primary?.full_name ?? "");
-      setSignedName((primary?.full_name ?? "").trim());
+      setMemberName(me?.full_name ?? "");
+      setSignedName("");
+      try {
+        const sig = await getSignatureState({ data: { actingMemberId, documentType: "PRA" } });
+        if (cancelled) return;
+        setPraSigned(sig.signed);
+        setPraWaitingOn(sig.waitingOn);
+      } catch {
+        // Shown as not signed; signing reports any problem.
+      }
       setChecking(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, actingMemberId]);
 
   // Returning from Stripe — confirm server-side; the priority rank timestamp
   // is stamped only when Stripe reports the payment as actually paid.
@@ -255,49 +276,24 @@ function PaymentScreen() {
     }
     setSubmitting(true);
 
-    let ip: string | null = null;
+    // Checked on the server against this member's own name; recorded against this member only.
+    let waitingOn: string[] = [];
     try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      if (res.ok) ip = (await res.json()).ip ?? null;
-    } catch {
-      ip = null;
-    }
-
-    const { error: signErr } = await supabase.from("signed_documents").insert({
-      buyer_account_id: buyer.id,
-      document_type: "PRA",
-      document_version: DOCUMENT_VERSION,
-      signed_name: typed,
-      document_hash: documentHash,
-      ip_address: ip,
-    });
-    if (signErr) {
+      ({ waitingOn } = await signMemberDocumentFn({ data: { actingMemberId, documentType: "PRA", documentVersion: DOCUMENT_VERSION, documentHash, typedName: typed } }));
+    } catch (e) {
       setSubmitting(false);
-      toast.error(signErr.message);
+      toast.error(e instanceof Error ? e.message : "The PRA wasn't signed.");
       return;
     }
-
-    const { error: statusErr } = await supabase
-      .from("buyer_accounts")
-      .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "vetting_pending" })
-      .eq("id", buyer.id);
-    if (statusErr) {
-      setSubmitting(false);
-      toast.error(statusErr.message);
-      return;
-    }
-
-    await logAudit({
-      actorId: user.id,
-      actionType: "buyer.pra_signed",
-      entityType: "buyer_account",
-      entityId: buyer.id,
-      metadata: { document_hash: documentHash, priority_rank_timestamp: rankStamp },
-    });
-
+    setPraSigned(true);
+    setPraWaitingOn(waitingOn);
     setSubmitting(false);
     setModalOpen(false);
-    toast.success("Priority Reservation Agreement executed.");
+    if (waitingOn.length) {
+      toast.success(`Signed. Next: ${waitingOn.join(" and ")} signs their own PRA.`);
+      return;
+    }
+    toast.success("Priority Reservation Agreement executed by every member.");
     navigate({ to: "/buyer/onboarding/vetting" });
   }
 
@@ -363,13 +359,21 @@ function PaymentScreen() {
                   </p>
                 ) : null}
                 <p className="mt-3 text-sm text-muted-foreground">
-                  Final step: execute the Priority Reservation Agreement with your legal
-                  signature.
+                  {praSigned
+                    ? praWaitingOn.length
+                      ? `You've signed. Each member signs their own PRA — waiting on ${praWaitingOn.join(" and ")}.`
+                      : "Every member has signed the Priority Reservation Agreement."
+                    : "Final step: execute the Priority Reservation Agreement with your own legal signature. Each member signs their own."}
                 </p>
+                {praSigned && praWaitingOn.length ? (
+                  <button type="button" onClick={onSwitch} className="mt-3 mr-3 inline-flex h-11 items-center justify-center rounded-md border border-border px-6 text-sm font-medium">
+                    Switch person
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setModalOpen(true)}
-                  disabled={!scrolledEnd}
+                  disabled={!scrolledEnd || praSigned}
                   className="mt-4 inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Sign the PRA

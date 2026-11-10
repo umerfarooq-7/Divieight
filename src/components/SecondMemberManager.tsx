@@ -73,7 +73,7 @@ export function SecondMemberManager({ actingMemberId, members, locked, onDone }:
           </>
         ) : (
           <Button variant="ghost" onClick={() => setConfirmRemove(true)}>
-            Remove second member
+            Remove second member (continue without them)
           </Button>
         )}
       </div>

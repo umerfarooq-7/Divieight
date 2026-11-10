@@ -4,6 +4,8 @@ import { CheckCircle2, Sparkles, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { issueGoldenTicketIfEligible } from "@/lib/golden-ticket";
+import { missingSteps, type MemberSteps } from "@/lib/account-rollup";
+import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
 
 export const Route = createFileRoute("/buyer/golden-ticket")({
   head: () => ({
@@ -31,6 +33,7 @@ function GoldenTicketPage() {
   const { user, loading } = useAuth();
   const [state, setState] = useState<"checking" | "issued" | "blocked">("checking");
   const [missing, setMissing] = useState<string[]>([]);
+  const [members, setMembers] = useState<MemberSteps[]>([]);
 
   useEffect(() => {
     if (loading) return;
@@ -56,6 +59,7 @@ function GoldenTicketPage() {
       });
       if (cancelled) return;
       setMissing(result.missing);
+      setMembers(result.members);
       setState(result.issued ? "issued" : "blocked");
     })();
     return () => {
@@ -90,6 +94,7 @@ function GoldenTicketPage() {
             </li>
           ))}
         </ul>
+        <MemberStatuses members={members} />
         <Link
           to="/buyer/dashboard"
           className="mt-8 inline-block rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
@@ -132,6 +137,8 @@ function GoldenTicketPage() {
         ))}
       </ul>
 
+      <MemberStatuses members={members} />
+
       <div className="mt-10 flex flex-wrap justify-center gap-3">
         <Link
           to="/buyer/dashboard"
@@ -147,5 +154,28 @@ function GoldenTicketPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+/** The ticket belongs to the account; each member's own status is shown beneath it. */
+function MemberStatuses({ members }: { members: MemberSteps[] }) {
+  if (!members.length) return null;
+  return (
+    <ul className="mx-auto mt-8 grid max-w-md gap-3 text-left">
+      {members.map((m) => {
+        const todo = missingSteps(m);
+        const label = m.result ? RESULT_LABELS[m.result] : "Pending";
+        return (
+          <li key={m.memberId} className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium text-foreground">{m.name}</span>
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${RESULT_TONES[m.result ?? "pending"]}`}>{label}</span>
+            </div>
+            {m.result === "held" ? <p className="mt-1 text-xs text-foreground">{HELD_BUYER_TEXT}</p> : null}
+            {todo.length ? <p className="mt-1 text-xs text-muted-foreground">Still to do: {todo.map((t) => t.label).join(", ")}</p> : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

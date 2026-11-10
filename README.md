@@ -62,3 +62,14 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## W-9 TIN encryption key
+
+Buyer W-9s store the TIN encrypted with AES-256-GCM. The key comes from a secret environment variable, `W9_TIN_ENCRYPTION_KEY` (32 bytes, base64). If it is missing or the wrong length, the server **refuses to save a W-9**; it never falls back to plaintext.
+
+1. Generate the key: `openssl rand -base64 32`
+2. Set `W9_TIN_ENCRYPTION_KEY` in Vercel for **all environments** (Production, Preview, Development), and in your local `.env`. Never commit it.
+3. Use **fake TINs only in test mode** (for example `123-45-6789`). Never put a real taxpayer number in a test environment.
+4. Rotation: each encrypted TIN records its `key_version`. To rotate, add `W9_TIN_ENCRYPTION_KEY_V2` and bump `CURRENT_KEY_VERSION` in `src/lib/pii-crypto.server.ts`; older rows keep decrypting with their own version.
+
+The encrypted TIN lives in `member_w9_tin_secrets`, which has no client-facing policies: only server functions using the service role can read it. The full TIN is never returned to the browser, logged, or put in an audit payload; the only decryption is the admin/finance tax-export function, which writes an audit row (who, when, why).

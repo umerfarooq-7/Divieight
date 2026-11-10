@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { harness } from "./setup";
-import { seedPod, IDS, USERS } from "./fixtures";
+import { seedPod, IDS, USERS, steps } from "./fixtures";
 import {
   HELD_BUYER_TEXT,
   RESULT_LABELS,
@@ -208,10 +208,11 @@ describe("results are per member, appended, and recomputed", () => {
 
 describe("held", () => {
   it("a held member stops the whole account getting a Golden Ticket; the account is pending, the member held", async () => {
-    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified", praSigned: true, memberStatuses: ["cleared", "held"], livenessStatuses: ["passed", "passed"] };
-    expect(evaluateGoldenTicket({ ...base, eligibilityResults: ["eligible", "held"] }).missing).toEqual(["An Account Member's application is held until the disclosed charge is resolved"]);
-    expect(evaluateGoldenTicket({ ...base, eligibilityResults: ["eligible", "eligible"] }).eligible).toBe(true);
-    expect(evaluateGoldenTicket({ ...base, eligibilityResults: ["eligible", null] }).eligible).toBe(false);
+    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified" };
+    const of = (a: Parameters<typeof steps>[0], b: Parameters<typeof steps>[0]) => ({ ...base, members: [steps({ memberId: "a", ...a }), steps({ memberId: "b", ...b })] });
+    expect(evaluateGoldenTicket(of({}, { result: "held" })).missing).toEqual(["An Account Member's application is held until the disclosed charge is resolved"]);
+    expect(evaluateGoldenTicket(of({}, {})).eligible).toBe(true);
+    expect(evaluateGoldenTicket(of({}, { result: null })).eligible).toBe(false);
 
     seed();
     db().seed("signed_documents", [{ buyer_account_id: IDS.b1, document_type: "PRA", signed_name: "Alice One" }]);

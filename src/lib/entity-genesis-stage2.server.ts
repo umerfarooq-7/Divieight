@@ -109,6 +109,15 @@ export async function markClosingReady(db: Db, actorId: string, propertyId: stri
       `Not Closing-Ready: ${pod.retained} retained + ${pod.reserved} reserved = ${pod.total}/8 shares.`,
     );
 
+  // The lock fixes membership: every active member of every buyer account must be named on it.
+  const { data: res } = await db.from("pod_reservations").select("buyer_account_id").eq("property_id", propertyId).eq("status", "reserved");
+  const accountIds = [...new Set(((res ?? []) as Array<{ buyer_account_id: string | null }>).map((r) => r.buyer_account_id).filter(Boolean))] as string[];
+  if (accountIds.length) {
+    const { data: unnamed } = await db.from("account_members").select("id, buyer_account_id, full_name").in("buyer_account_id", accountIds).eq("status", "active");
+    const gaps = ((unnamed ?? []) as Array<{ full_name: string | null }>).filter((m) => !(m.full_name ?? "").trim());
+    if (gaps.length) throw new Error(`Not Closing-Ready: ${gaps.length} Account Member${gaps.length === 1 ? " has" : "s have"} no legal name on file, so they can't be named on the cap table.`);
+  }
+
   const { syncCapTable } = await import("@/lib/entity-genesis.server");
   await syncCapTable(db as never, { propertyId, actorId, reason: "closing_ready" });
   const now = new Date().toISOString();
@@ -164,6 +173,11 @@ export async function requestAtlas(db: Db, actorId: string, propertyId: string, 
   const g = await genesis(db, propertyId);
   requireClosingReady(g);
   if (g.atlas_request_status !== "not_requested") throw new Error("Stripe Atlas was already requested for this LLC.");
+  // Block 2 (LPOA): every active member of every Buyer Account on the cap table authorizes the filing first.
+  const signers = await oaSigners(db, propertyId);
+  const { block2MissingFor } = await import("@/lib/member-steps.server");
+  const missingLpoa = await block2MissingFor(db, [...new Set(signers.map((s) => s.buyerAccountId))]);
+  if (missingLpoa.length) throw new Error(`Every Account Member must give the entity formation authorization (Block 2) first. Waiting on: ${missingLpoa.join(", ")}.`);
   await update(db, propertyId, {
     atlas_request_status: "requested",
     atlas_requested_at: new Date().toISOString(),

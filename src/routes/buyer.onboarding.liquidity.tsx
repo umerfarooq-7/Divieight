@@ -18,12 +18,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
-import {
-  LIQUIDITY_MULTIPLIER,
-  PLAID_SANDBOX,
-  meetsLiquidityThreshold,
-  sandboxBalanceFor,
-} from "@/lib/liquidity";
+import { LIQUIDITY_MULTIPLIER, PLAID_SANDBOX } from "@/lib/liquidity";
+import { ActingMemberGate } from "@/components/ActingMemberGate";
+import { block1ConsentText, block2AuthorizationText } from "@/constants/authorizationsCopy";
+import { acceptAuthorizationFn, getAuthorizationState, recordPlaidLinkFn } from "@/lib/member-steps.functions";
 
 export const Route = createFileRoute("/buyer/onboarding/liquidity")({
   head: () => ({
@@ -66,8 +64,21 @@ interface BuyerRow {
 }
 
 
+/** Block 1 and Block 2 are given by each member (through the picker); the Plaid link is the account's. */
 function LiquidityGatePage() {
+  return (
+    <ActingMemberGate step="Step 6 · Liquidity">
+      {({ member, switchPerson }) => <LiquidityForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+    </ActingMemberGate>
+  );
+}
+
+type AuthState = Awaited<ReturnType<typeof getAuthorizationState>>;
+
+function LiquidityForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
   const navigate = useNavigate();
+  const [auth, setAuth] = useState<AuthState | null>(null);
+  const [savingBlock2, setSavingBlock2] = useState(false);
   const { user, loading } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -116,7 +127,14 @@ function LiquidityGatePage() {
         return;
       }
       setBuyer(b as unknown as BuyerRow);
-      setConsent(!!b.plaid_consent_at);
+      try {
+        const a = await getAuthorizationState({ data: { actingMemberId } });
+        if (cancelled) return;
+        setAuth(a);
+        setConsent(Boolean(a.block1.acceptedAt));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Couldn't load your consents.");
+      }
       setDocs(((b.liquidity_documents as unknown as DocEntry[]) ?? []).slice());
       if (b.liquidity_status === "manual_review_pending") setShowFallback(true);
       setReady(true);
@@ -124,7 +142,7 @@ function LiquidityGatePage() {
     return () => {
       cancelled = true;
     };
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, actingMemberId]);
 
   // Internal Liquidity Gate basis only — never rendered as a figure.
   const budget = buyer?.target_budget ?? 0;
@@ -132,28 +150,36 @@ function LiquidityGatePage() {
   
 
   async function saveConsent(next: boolean) {
-    setConsent(next);
-    if (!next || !buyer || !user || buyer.plaid_consent_at) return;
+    if (!next || !buyer || auth?.block1.acceptedAt) return;
+    setConsent(true);
     setSavingConsent(true);
-    const at = new Date().toISOString();
-    const { error } = await supabase
-      .from("buyer_accounts")
-      .update({ plaid_consent_at: at })
-      .eq("id", buyer.id);
-    setSavingConsent(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      const r = await acceptAuthorizationFn({ data: { actingMemberId, block: "block1" } });
+      setAuth((a) => (a ? { ...a, block1: { acceptedAt: r.acceptedAt, waitingOn: r.waitingOn } } : a));
+      if (r.waitingOn.length) toast.message(`Recorded. Next: ${r.waitingOn.join(" and ")} gives their own consent.`);
+    } catch (e) {
       setConsent(false);
-      return;
+      toast.error(e instanceof Error ? e.message : "Consent wasn't recorded.");
+    } finally {
+      setSavingConsent(false);
     }
-    setBuyer({ ...buyer, plaid_consent_at: at });
-    await logAudit({
-      actorId: user.id,
-      actionType: "buyer.plaid_consent_given",
-      entityType: "buyer_account",
-      entityId: buyer.id,
-    });
   }
+
+  async function saveBlock2() {
+    if (auth?.block2.acceptedAt) return;
+    setSavingBlock2(true);
+    try {
+      const r = await acceptAuthorizationFn({ data: { actingMemberId, block: "block2" } });
+      setAuth((a) => (a ? { ...a, block2: { acceptedAt: r.acceptedAt, waitingOn: r.waitingOn } } : a));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "The authorization wasn't recorded.");
+    } finally {
+      setSavingBlock2(false);
+    }
+  }
+
+  // Every active member must consent (Block 1) before the account's Plaid link is allowed.
+  const everyoneConsented = Boolean(auth && auth.block1.acceptedAt && auth.block1.waitingOn.length === 0);
 
   // TODO: replace this simulated Link handshake with the real Plaid Link SDK
   // (link_token created server-side, public_token exchanged for an access_token,
@@ -186,22 +212,14 @@ function LiquidityGatePage() {
       return;
     }
 
-    // Balances exist only inside this comparison and are discarded immediately.
-    const passed = meetsLiquidityThreshold(sandboxBalanceFor(budget), budget);
-    const now = new Date().toISOString();
-
-    const { error } = await supabase
-      .from("buyer_accounts")
-      .update({
-        liquidity_verified: passed,
-        liquidity_verified_at: passed ? now : null,
-        liquidity_status: passed ? "verified" : "insufficient",
-        liquidity_institution: PLAID_SANDBOX.institution,
-        last_activity_at: new Date().toISOString(),
-        stall_warning_sent_at: null,
-        onboarding_status: passed ? "golden_ticket_pending" : "liquidity_pending",
-      })
-      .eq("id", buyer.id);
+    // The server records the link and checks the account's combined assets across every link.
+    let passed = false;
+    let error: { message: string } | null = null;
+    try {
+      ({ passed } = await recordPlaidLinkFn({ data: { actingMemberId } }));
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : "The link wasn't recorded." };
+    }
 
     setLinking(false);
     setLinkOpen(false);
@@ -217,18 +235,6 @@ function LiquidityGatePage() {
       liquidity_institution: PLAID_SANDBOX.institution,
     });
     if (!passed) setShowFallback(true);
-    await logAudit({
-      actorId: user.id,
-      actionType: passed ? "buyer.liquidity_verified" : "buyer.liquidity_insufficient",
-      entityType: "buyer_account",
-      entityId: buyer.id,
-      // Binary outcome only — no balance, threshold, or margin figure is logged.
-      metadata: {
-        institution: PLAID_SANDBOX.institution,
-        result: passed ? "verified" : "insufficient",
-        simulated: true,
-      },
-    });
     toast[passed ? "success" : "error"](
       passed ? "Liquidity verified." : "Connected accounts don't meet the liquidity threshold.",
     );
@@ -327,20 +333,34 @@ function LiquidityGatePage() {
           <Checkbox
             checked={consent}
             onCheckedChange={(v) => saveConsent(v === true)}
-            disabled={savingConsent || verified || !!buyer.plaid_consent_at}
+            disabled={savingConsent || Boolean(auth?.block1.acceptedAt)}
             className="mt-0.5"
           />
-          <span className="text-sm text-foreground">
-            I authorize divieight to securely link my financial accounts via Plaid to verify my
-            liquidity. divieight uses secure, tokenized access and does not store my bank login
-            credentials.
-          </span>
+          <span className="text-sm text-foreground">{block1ConsentText}</span>
         </label>
-        {buyer.plaid_consent_at ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Consent recorded {new Date(buyer.plaid_consent_at).toLocaleString()}.
-          </p>
+        {auth?.block1.acceptedAt ? (
+          <p className="mt-2 text-xs text-muted-foreground">Your consent was recorded {new Date(auth.block1.acceptedAt).toLocaleString()}.</p>
         ) : null}
+        {auth && auth.block1.waitingOn.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span>Each member gives their own consent. Waiting on: {auth.block1.waitingOn.join(" and ")}.</span>
+            {auth.block1.acceptedAt ? (
+              <Button size="sm" variant="outline" onClick={onSwitch}>
+                Switch person
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      {/* Block 2 — Limited Power of Attorney for entity formation (each member; needed before the LLC is filed) */}
+      <section className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="font-display text-lg font-semibold text-foreground">Entity formation authorization</h2>
+        <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-4">
+          <Checkbox checked={Boolean(auth?.block2.acceptedAt)} onCheckedChange={(v) => v === true && void saveBlock2()} disabled={savingBlock2 || Boolean(auth?.block2.acceptedAt)} className="mt-0.5" />
+          <span className="text-sm text-foreground">{block2AuthorizationText}</span>
+        </label>
+        {auth?.block2.acceptedAt ? <p className="mt-2 text-xs text-muted-foreground">Recorded {new Date(auth.block2.acceptedAt).toLocaleString()}.</p> : null}
       </section>
 
       {/* Plaid Link */}
@@ -355,8 +375,8 @@ function LiquidityGatePage() {
             <code className="rounded bg-muted px-1">{PLAID_SANDBOX.password}</code>.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button onClick={() => setLinkOpen(true)} disabled={!consent}>
-              Link account with Plaid
+            <Button onClick={() => setLinkOpen(true)} disabled={!everyoneConsented}>
+              {verified ? "Link another account" : "Link account with Plaid"}
             </Button>
             <Button variant="outline" onClick={() => setShowFallback(true)}>
               Bank not found?

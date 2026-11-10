@@ -168,6 +168,7 @@ import { Route as BuyerOnboardingLivenessRouteImport } from './routes/buyer.onbo
 import { Route as BuyerOnboardingMembersRouteImport } from './routes/buyer.onboarding.members'
 import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
 import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
+import { Route as BuyerOnboardingW9RouteImport } from './routes/buyer.onboarding.w9'
 import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
 import { Route as EmbedLibrarySlugRouteImport } from './routes/embed.library.$slug'
 import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
@@ -1021,6 +1022,11 @@ const BuyerOnboardingVettingRoute = BuyerOnboardingVettingRouteImport.update({
   path: '/buyer/onboarding/vetting',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerOnboardingW9Route = BuyerOnboardingW9RouteImport.update({
+  id: '/buyer/onboarding/w9',
+  path: '/buyer/onboarding/w9',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerPodsIdRoute = BuyerPodsIdRouteImport.update({
   id: '/buyer/pods/$id',
   path: '/buyer/pods/$id',
@@ -1330,6 +1336,7 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
+  '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
@@ -1511,6 +1518,7 @@ export interface FileRoutesByTo {
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
+  '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
@@ -1700,6 +1708,7 @@ export interface FileRoutesById {
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
+  '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
@@ -1890,6 +1899,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
+    | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
@@ -2071,6 +2081,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
+    | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
@@ -2259,6 +2270,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
     | '/buyer/onboarding/vetting'
+    | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
@@ -2378,6 +2390,7 @@ export interface RootRouteChildren {
   BuyerOnboardingMembersRoute: typeof BuyerOnboardingMembersRoute
   BuyerOnboardingPaymentRoute: typeof BuyerOnboardingPaymentRoute
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
+  BuyerOnboardingW9Route: typeof BuyerOnboardingW9Route
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
   EmbedLibrarySlugRoute: typeof EmbedLibrarySlugRoute
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
@@ -3510,6 +3523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerOnboardingVettingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/onboarding/w9': {
+      id: '/buyer/onboarding/w9'
+      path: '/buyer/onboarding/w9'
+      fullPath: '/buyer/onboarding/w9'
+      preLoaderRoute: typeof BuyerOnboardingW9RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/pods/$id': {
       id: '/buyer/pods/$id'
       path: '/buyer/pods/$id'
@@ -4037,6 +4057,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingMembersRoute: BuyerOnboardingMembersRoute,
   BuyerOnboardingPaymentRoute: BuyerOnboardingPaymentRoute,
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,
+  BuyerOnboardingW9Route: BuyerOnboardingW9Route,
   BuyerPodsIdRoute: BuyerPodsIdRoute,
   EmbedLibrarySlugRoute: EmbedLibrarySlugRoute,
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
