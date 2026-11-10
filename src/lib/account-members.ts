@@ -25,7 +25,8 @@ export function eligibilityOf(vettingStatus: string | null | undefined, liveness
     return vetting === "eligible" && livenessStatus === "passed" ? "eligible" : "pending";
   }
   if (vettingStatus === "cleared") return "eligible";
-  if (vettingStatus === "failed") return "not_eligible";
+  if (vettingStatus === "failed" || vettingStatus === "not_eligible") return "not_eligible";
+  if (vettingStatus === "held") return "held";
   if (vettingStatus === "flagged_needs_review" || vettingStatus === "verification_pending" || vettingStatus === "held_for_review") return "held";
   return "pending";
 }

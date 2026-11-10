@@ -33,6 +33,7 @@ export interface DeclarationSummary {
 }
 
 export interface DeclarationSubmit {
+  kind?: "correction" | "change_report";
   answers: DeclarationAnswers;
   attestedPersonally: boolean;
   signedName: string;
@@ -45,20 +46,26 @@ export function EligibilityDeclaration({
   memberName,
   verifiedName,
   current,
+  reportChange = false,
   onSubmit,
 }: {
   memberName: string;
   /** The name from this member's verified ID. Null until the identity step is done. */
   verifiedName: string | null;
   current: DeclarationSummary | null;
+  /** Opened from "Report a change" (Q6): start a new version straight away. */
+  reportChange?: boolean;
   onSubmit: (input: DeclarationSubmit) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<"summary" | "questions" | "confirm">(current ? "summary" : "questions");
+  const changing = reportChange && Boolean(current);
+  const [mode, setMode] = useState<"summary" | "questions" | "confirm">(current && !changing ? "summary" : "questions");
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Partial6>({});
-  const [correcting, setCorrecting] = useState(false);
+  const [answers, setAnswers] = useState<Partial6>(changing ? (current?.answers ?? {}) : {});
+  const [correcting, setCorrecting] = useState(changing);
+  const [kind, setKind] = useState<"correction" | "change_report">(changing ? "change_report" : "correction");
 
-  function start(fromStep: number, prefill: Partial6, isCorrection: boolean) {
+  function start(fromStep: number, prefill: Partial6, isCorrection: boolean, as: "correction" | "change_report" = "correction") {
+    setKind(as);
     setAnswers(prefill);
     setStep(fromStep);
     setCorrecting(isCorrection);
@@ -79,6 +86,7 @@ export function EligibilityDeclaration({
         <Summary
           record={current}
           onCorrect={() => start(0, current.answers ?? {}, true)}
+          onReportChange={() => start(0, current.answers ?? {}, true, "change_report")}
           onChangeQ5={() => start(QUESTION_KEYS.indexOf(AUTHORIZATION_QUESTION), current.answers ?? {}, true)}
         />
       ) : null}
@@ -88,6 +96,7 @@ export function EligibilityDeclaration({
           index={step}
           answer={answers[QUESTION_KEYS[step]]}
           correcting={correcting}
+          kind={kind}
           onAnswer={(value) => setAnswers((a) => ({ ...a, [QUESTION_KEYS[step]]: value }))}
           onBack={step > 0 ? () => setStep(step - 1) : current ? () => setMode("summary") : undefined}
           onNext={() => (step < QUESTION_KEYS.length - 1 ? setStep(step + 1) : setMode("confirm"))}
@@ -104,7 +113,7 @@ export function EligibilityDeclaration({
             setMode("questions");
           }}
           onSubmit={async (attested, signedName) => {
-            await onSubmit({ answers: answers as DeclarationAnswers, attestedPersonally: attested, signedName, supersedesId: correcting && current ? current.id : null });
+            await onSubmit({ answers: answers as DeclarationAnswers, attestedPersonally: attested, signedName, supersedesId: correcting && current ? current.id : null, kind: correcting ? kind : undefined });
           }}
         />
       ) : null}
@@ -138,6 +147,7 @@ function QuestionStep({
   index,
   answer,
   correcting,
+  kind,
   onAnswer,
   onBack,
   onNext,
@@ -145,6 +155,7 @@ function QuestionStep({
   index: number;
   answer: DeclarationAnswer | undefined;
   correcting: boolean;
+  kind: "correction" | "change_report";
   onAnswer: (v: DeclarationAnswer) => void;
   onBack?: () => void;
   onNext: () => void;
@@ -154,7 +165,9 @@ function QuestionStep({
     <div className="mt-5" data-question={key}>
       {correcting && index === 0 ? (
         <p className="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-          You are correcting a fact in your declaration. This is not an appeal. Your earlier declaration is kept on record, and this one is added as a new version.
+          {kind === "change_report"
+            ? "You are reporting a change: a statement in your declaration is no longer true. Answer each question as it stands today. Your earlier declaration is kept on record, and this one is added as a new version."
+            : "You are correcting a fact in your declaration. This is not an appeal. Your earlier declaration is kept on record, and this one is added as a new version."}
         </p>
       ) : null}
       <p className="text-sm font-medium text-muted-foreground">
@@ -264,7 +277,7 @@ function Confirm({
   );
 }
 
-function Summary({ record, onCorrect, onChangeQ5 }: { record: DeclarationSummary; onCorrect: () => void; onChangeQ5: () => void }) {
+function Summary({ record, onCorrect, onChangeQ5, onReportChange }: { record: DeclarationSummary; onCorrect: () => void; onChangeQ5: () => void; onReportChange: () => void }) {
   const when = new Date(record.declared_at).toLocaleString();
   return (
     <div className="mt-5">
@@ -282,9 +295,16 @@ function Summary({ record, onCorrect, onChangeQ5 }: { record: DeclarationSummary
       )}
       {record.answers ? <AnswerList answers={record.answers} /> : null}
       <p className="mt-3 break-all text-xs text-muted-foreground">Record fingerprint: {record.declaration_hash}</p>
-      <Button variant="outline" className="mt-4" onClick={onCorrect}>
-        Correct and resubmit
-      </Button>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button variant="outline" onClick={onCorrect}>
+          Correct and resubmit
+        </Button>
+        {record.status === "complete" ? (
+          <Button variant="outline" onClick={onReportChange}>
+            Report a change
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

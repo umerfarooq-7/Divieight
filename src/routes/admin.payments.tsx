@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusToneClass, currency, when } from "@/lib/admin";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listHeldMembers } from "@/lib/eligibility-engine.functions";
+import { RESULT_LABELS, RESULT_TONES, moneyStatusFor } from "@/lib/eligibility-engine";
 
 export const Route = createFileRoute("/admin/payments")({
   component: AdminPayments,
@@ -23,6 +27,15 @@ function AdminPayments() {
   const [rows, setRows] = useState<PayRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [side, setSide] = useState("all");
+  // Held accounts (by their buyer login) get their own Held label here, whatever the payment says.
+  const loadHeld = useServerFn(listHeldMembers);
+  const { data: held } = useQuery({ queryKey: ["admin-held"], retry: false, queryFn: () => loadHeld() });
+  const [heldLogins, setHeldLogins] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const ids = [...new Set((held ?? []).map((h) => h.accountId))];
+    if (!ids.length) return setHeldLogins(new Set());
+    void supabase.from("buyer_accounts").select("id, auth_user_id").in("id", ids).then(({ data }) => setHeldLogins(new Set(((data ?? []) as Array<{ auth_user_id: string }>).map((a) => a.auth_user_id))));
+  }, [held]);
 
   useEffect(() => {
     (async () => {
@@ -138,11 +151,17 @@ function AdminPayments() {
                       {currency(r.amount_cents)} {r.currency.toUpperCase()}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${StatusToneClass(r.status)}`}
-                      >
-                        {r.status}
-                      </span>
+                      {(() => {
+                        const shown = moneyStatusFor(r.status, r.side === "Buyer" && heldLogins.has(r.who));
+                        return (
+                          <span className="inline-flex flex-wrap gap-1">
+                            {shown.label === "held" ? null : (
+                              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${StatusToneClass(shown.label)}`}>{shown.label}</span>
+                            )}
+                            {shown.held ? <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${RESULT_TONES.held}`}>{RESULT_LABELS.held}</span> : null}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{r.environment}</td>
                     <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">

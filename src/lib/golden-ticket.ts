@@ -3,6 +3,7 @@ import { logAudit } from "@/lib/audit";
 import { notifyBuyer } from "@/lib/notify";
 import { tetherResidentAgent } from "@/lib/tethering.functions";
 import { latestLiveness } from "@/lib/liveness";
+import { currentResultOf } from "@/lib/eligibility-engine";
 
 /** Enrollment period covered by the Digital Key. */
 export const ENROLLMENT_DAYS = 365;
@@ -22,11 +23,13 @@ export interface GoldenTicketInputs {
   memberStatuses: string[];
   /** Each active member's latest liveness result (null = none yet), in any order. */
   livenessStatuses: Array<string | null>;
+  /** Each active member's current eligibility result from the engine (null = no result yet). */
+  eligibilityResults: Array<string | null>;
 }
 
 /**
  * Pure eligibility rule so it stays testable:
- * - every Account Member cleared vetting
+ * - every Account Member is eligible under the engine (a held member blocks the account)
  * - liquidity auto-verified OR manually approved by a Broker of Record
  *   ('manually_approved' is stubbed today — the broker review UI ships with
  *   the Month 3 Agent/Broker Module)
@@ -37,8 +40,11 @@ export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketSta
 
   if (input.memberStatuses.length === 0) {
     missing.push("Add at least one Account Member");
-  } else if (input.memberStatuses.some((s) => s !== "cleared")) {
-    missing.push("All Account Members must clear vetting");
+  } else if (input.eligibilityResults.some((r) => r === "held")) {
+    // A held member keeps the whole account from the Golden Ticket until the charge is resolved.
+    missing.push("An Account Member's application is held until the disclosed charge is resolved");
+  } else if (input.eligibilityResults.length < input.memberStatuses.length || input.eligibilityResults.some((r) => r !== "eligible")) {
+    missing.push("All Account Members must be eligible under the Participant Eligibility Standard");
   }
   if (input.memberStatuses.length > 0 && (input.livenessStatuses.length < input.memberStatuses.length || input.livenessStatuses.some((s) => s !== "passed"))) {
     missing.push("Every Account Member must pass the liveness check");
@@ -95,6 +101,16 @@ export async function issueGoldenTicketIfEligible(params: {
     .eq("buyer_account_id", buyerAccountId);
   const livenessRows = (checks ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>;
   const livenessStatuses = (members ?? []).map((m) => latestLiveness(livenessRows, (m as { id: string }).id)?.status ?? null);
+  // The engine's current result per member: the latest result on their current (complete) declaration.
+  const [{ data: resultRows }, { data: declRows }] = await Promise.all([
+    supabase.from("eligibility_results").select("account_member_id, declaration_id, determined_at, result").eq("buyer_account_id", buyerAccountId),
+    supabase.from("eligibility_declarations").select("id, account_member_id").eq("buyer_account_id", buyerAccountId).eq("status", "complete"),
+  ]);
+  const decls = (declRows ?? []) as Array<{ id: string; account_member_id: string }>;
+  const eligibilityResults = (members ?? []).map((m) => {
+    const id = (m as { id: string }).id;
+    return currentResultOf((resultRows ?? []) as Array<{ account_member_id: string; declaration_id: string; determined_at: string; result: string }>, id, decls.find((d) => d.account_member_id === id)?.id ?? null)?.result ?? null;
+  });
 
   const status = evaluateGoldenTicket({
     goldenTicketIssued: account.golden_ticket_issued,
@@ -103,6 +119,7 @@ export async function issueGoldenTicketIfEligible(params: {
     praSigned: (pra?.length ?? 0) > 0,
     memberStatuses: (members ?? []).map((m) => m.vetting_status),
     livenessStatuses,
+    eligibilityResults,
   });
 
   if (account.golden_ticket_issued) {

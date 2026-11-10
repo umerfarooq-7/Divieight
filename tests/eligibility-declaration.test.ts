@@ -23,6 +23,8 @@ function seed() {
   for (const m of db().table("account_members")) {
     Object.assign(m, { status: "active", date_of_birth: "1980-01-01", address: "1 Main St", id_document_url: `ids/${m.id}.jpg`, vetting_status: "in_progress" });
   }
+  // Liveness passed for everyone, so the engine has a result to give once the declaration is in.
+  db().seed("member_liveness_checks", db().table("account_members").map((m) => ({ account_member_id: m.id, buyer_account_id: m.buyer_account_id, status: "passed", created_at: "2026-11-01T00:00:00Z" })));
 }
 
 const member = (id: string) => db().table("account_members").find((m) => m.id === id)!;
@@ -238,14 +240,17 @@ describe("(7) personal attestation and the ID-verified name", () => {
 });
 
 describe("a No to a statement", () => {
-  it("is held for review, never failed, and a later Yes doesn't clear it on its own", async () => {
+  it("goes to the engine: Q1 No is not eligible, Q3 No is held, and a correction is recomputed", async () => {
     seed();
     const r = await declare(IDS.b1m1, { answers: { ...allYes, q1: "no" } });
-    expect(r.status).toBe("complete");
-    expect(member(IDS.b1m1).vetting_status).toBe("held_for_review");
-    expect(eligibilityOf("held_for_review")).toBe("held");
-    await declare(IDS.b1m1, { supersedesId: r.id });
-    expect(member(IDS.b1m1).vetting_status).toBe("held_for_review");
+    expect(r).toMatchObject({ status: "complete", result: "not_eligible", reasonCodes: ["q1_no"] });
+    expect(member(IDS.b1m1).vetting_status).toBe("not_eligible");
+    const fixed = await declare(IDS.b1m1, { supersedesId: r.id });
+    expect(fixed.result).toBe("eligible");
+    expect(member(IDS.b1m1).vetting_status).toBe("cleared");
+    const held = await declare(IDS.b1m2, { answers: { ...allYes, q3: "no" } });
+    expect(held.result).toBe("held");
+    expect(eligibilityOf(member(IDS.b1m2).vetting_status)).toBe("held");
   });
 
   it("no consumer report is requested: nothing but the declaration and its audit entry is written", async () => {

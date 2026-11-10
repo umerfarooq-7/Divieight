@@ -86,6 +86,15 @@ export const listMyTetheredBuyers = createServerFn({ method: "POST" })
       }
     }
 
+    // A held account is never shown as unpaid. The agent isn't told it is held either (that would
+    // disclose a pending charge): a fee short of paid reads "pending".
+    const { currentResults } = await import("@/lib/eligibility-engine.server");
+    const heldAccounts = new Set<string>();
+    for (const r of rows) {
+      const results = await currentResults(db as never, r.id).catch(() => ({}) as Record<string, null>);
+      if (Object.values(results).some((x) => x?.result === "held")) heldAccounts.add(r.id);
+    }
+
     // Display-only: active reservations per buyer. Read-only over Month 2 data.
     const { data: reservations } = await db
       .from("pod_reservations")
@@ -116,7 +125,7 @@ export const listMyTetheredBuyers = createServerFn({ method: "POST" })
     }
 
     return rows.map((r) => {
-      const pef = payStatus.get(r.id) ?? "unpaid";
+      const pef = payStatus.get(r.id) ?? (heldAccounts.has(r.id) ? "pending" : "unpaid");
       return {
         buyerAccountId: r.id,
         name: (r.email ?? "").split("@")[0] || "Buyer",

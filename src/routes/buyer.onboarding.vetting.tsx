@@ -20,6 +20,7 @@ import { logAudit } from "@/lib/audit";
 import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
 import { EligibilityDeclaration, type DeclarationSubmit, type DeclarationSummary } from "@/components/EligibilityDeclaration";
 import { getDeclarationState, submitEligibilityDeclaration } from "@/lib/eligibility-declaration.functions";
+import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
 
 export const Route = createFileRoute("/buyer/onboarding/vetting")({
   head: () => ({
@@ -39,6 +40,8 @@ export const Route = createFileRoute("/buyer/onboarding/vetting")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  // ?change=1: the ten-day change notice (Q6) — reopens this member's declaration as a new version.
+  validateSearch: (s: Record<string, unknown>): { change?: 1 } => (s.change === 1 || s.change === "1" ? { change: 1 } : {}),
   component: VettingScreen,
 });
 
@@ -151,6 +154,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   }, [user, loading, navigate, actingMemberId, loadDeclaration]);
 
   const declared = declaration?.current?.status === "complete";
+  const reportingChange = Route.useSearch().change === 1 && declared;
   const holdHarmlessHash = useMemo(
     () => hashDocument(`${HOLD_HARMLESS_VERSION}::${HOLD_HARMLESS_TEXT}`),
     [],
@@ -280,24 +284,31 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
           memberName={member.full_name}
           verifiedName={declaration?.verifiedName ?? null}
           current={declaration?.current ?? null}
+          reportChange={reportingChange}
           onSubmit={submitDeclaration}
         />
       ) : null}
 
-      {declared && declaration?.vettingStatus === "held_for_review" ? (
-        <div className="mt-6 rounded-xl border border-accent/50 bg-accent/10 p-5">
-          <p className="font-display text-base font-semibold text-foreground">Held for review</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Thank you for your declaration. divieight will review it and contact you. Your application is held, not refused.
+      {declared && declaration?.vettingStatus === "held" ? (
+        <div className={`mt-6 rounded-xl border p-5 ${RESULT_TONES.held}`}>
+          <p className="font-display text-base font-semibold">{RESULT_LABELS.held}</p>
+          <p className="mt-1 text-sm">{HELD_BUYER_TEXT}</p>
+        </div>
+      ) : null}
+      {declared && declaration?.vettingStatus === "not_eligible" ? (
+        <div className={`mt-6 rounded-xl border p-5 ${RESULT_TONES.not_eligible}`}>
+          <p className="font-display text-base font-semibold">{RESULT_LABELS.not_eligible}</p>
+          <p className="mt-1 text-sm">
+            Under the Participant Eligibility Standard, this member can't take part. If an answer was recorded wrongly, you can correct it and resubmit.
           </p>
         </div>
       ) : null}
 
       {held ? (
         <div className="mt-6 rounded-xl border border-accent/50 bg-accent/10 p-5">
-          <p className="font-display text-base font-semibold text-foreground">Your account is waiting on a review</p>
+          <p className="font-display text-base font-semibold text-foreground">Your account is pending</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every member has declared. One or more declarations are held for divieight's review; we'll email you when it's done.
+            Every member has declared. The account moves on once every member's result is eligible. If a member is held, it waits until the disclosed charge is resolved.
           </p>
         </div>
       ) : null}

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +9,19 @@ import { listDeclarationsForAdmin } from "@/lib/eligibility-declaration.function
 import { listLivenessForAdmin } from "@/lib/liveness.functions";
 import { latestLiveness } from "@/lib/liveness";
 import { LivenessTestSwitch } from "@/components/LivenessTestSwitch";
+import { MarkDeclarationUntrue } from "@/components/MarkDeclarationUntrue";
+import { listEligibilityForAdmin } from "@/lib/eligibility-engine.functions";
+import { RESULT_LABELS, RESULT_TONES, type EligibilityResult } from "@/lib/eligibility-engine";
+
+type Overall = "eligible" | "pending";
+type Tab = "all" | "held" | "eligible" | "not_eligible" | "pending";
+const TABS: Array<{ key: Tab; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "held", label: "Held" },
+  { key: "pending", label: "Pending" },
+  { key: "eligible", label: "Eligible" },
+  { key: "not_eligible", label: "Not eligible" },
+];
 import { StatusToneClass, when } from "@/lib/admin";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 import { AdminMemberActions } from "@/components/AdminMemberActions";
@@ -67,6 +80,29 @@ function AdminBuyers() {
     retry: false,
     queryFn: () => loadLiveness({ data: { accountIds: rows.map((r) => r.id) } }),
   });
+  const loadEligibility = useServerFn(listEligibilityForAdmin);
+  const { data: eligibility, refetch: refetchEligibility } = useQuery({
+    queryKey: ["admin-eligibility", rows.map((r) => r.id).join(",")],
+    enabled: rows.length > 0,
+    retry: false,
+    queryFn: () => loadEligibility({ data: { accountIds: rows.map((r) => r.id) } }),
+  });
+  const [tab, setTab] = useState<Tab>("all");
+  const resultOf = (memberId: string): EligibilityResult | null => eligibility?.[memberId]?.result ?? null;
+  const activeOf = (accountId: string) => members.filter((m) => m.buyer_account_id === accountId && m.status !== "removed");
+  // The account's overall status: eligible only when every member is; a held member leaves it pending.
+  const overallOf = (accountId: string): Overall => {
+    const list = activeOf(accountId);
+    return list.length > 0 && list.every((m) => resultOf(m.id) === "eligible") ? "eligible" : "pending";
+  };
+  const inTab = (accountId: string) => {
+    const results = activeOf(accountId).map((m) => resultOf(m.id));
+    if (tab === "all") return true;
+    if (tab === "held") return results.includes("held");
+    if (tab === "not_eligible") return results.includes("not_eligible");
+    if (tab === "eligible") return overallOf(accountId) === "eligible";
+    return overallOf(accountId) === "pending" && !results.includes("held") && !results.includes("not_eligible");
+  };
   const loadDeclarations = useServerFn(listDeclarationsForAdmin);
   const { data: declarations } = useQuery({
     queryKey: ["admin-eligibility-declarations", rows.map((r) => r.id).join(",")],
@@ -95,10 +131,12 @@ function AdminBuyers() {
     })();
   }, []);
 
-  const filtered = rows.filter((r) =>
-    `${r.email} ${r.phone ?? ""} ${r.intent ?? ""}`
-      .toLowerCase()
-      .includes(q.trim().toLowerCase()),
+  const filtered = rows.filter(
+    (r) =>
+      inTab(r.id) &&
+      `${r.email} ${r.phone ?? ""} ${r.intent ?? ""}`
+        .toLowerCase()
+        .includes(q.trim().toLowerCase()),
   );
 
   return (
@@ -122,6 +160,28 @@ function AdminBuyers() {
       </div>
 
       <LivenessTestSwitch />
+
+      {/* Eligibility tabs. Held has its own tab and colour, apart from every other status. */}
+      <div role="tablist" aria-label="Eligibility" className="mt-6 flex flex-wrap items-center gap-2">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setTab(t.key)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium ${tab === t.key ? (t.key === "all" ? "border-foreground bg-foreground text-background" : RESULT_TONES[t.key === "pending" ? "pending" : t.key]) : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            {t.label}
+          </button>
+        ))}
+        <Link to="/admin/eligibility/held" className="ml-auto text-xs font-medium text-primary hover:underline">
+          Record a disposition →
+        </Link>
+        <Link to="/admin/eligibility/sanctions" className="text-xs font-medium text-primary hover:underline">
+          Possible sanctions matches →
+        </Link>
+      </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
@@ -167,6 +227,9 @@ function AdminBuyers() {
                             {r.phone || "—"} · {r.intent ?? "no intent"}
                           </div>
                           {attribution ? <div className="text-xs font-medium text-accent">Attributed to {attribution.agentName}</div> : null}
+                          <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${RESULT_TONES[overallOf(r.id)]}`}>
+                            Eligibility: {overallOf(r.id) === "eligible" ? "Eligible" : "Pending"}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <span
@@ -224,11 +287,13 @@ function AdminBuyers() {
                                     </span>
                                     <span className="text-muted-foreground">({m.role}{m.email ? ` · ${m.email}` : ""})</span>
                                     {m.status === "removed" ? <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">removed</span> : null}
-                                    <span
-                                      className={`inline-flex rounded-full px-2 py-0.5 font-medium ${StatusToneClass(m.vetting_status)}`}
-                                    >
-                                      {m.vetting_status}
-                                    </span>
+                                    {resultOf(m.id) ? (
+                                      <span className={`inline-flex rounded-full border px-2 py-0.5 font-medium ${RESULT_TONES[resultOf(m.id)!]}`} title={(eligibility?.[m.id]?.reason_codes ?? []).join(", ")}>
+                                        {RESULT_LABELS[resultOf(m.id)!]}
+                                      </span>
+                                    ) : (
+                                      <span className={`inline-flex rounded-full px-2 py-0.5 font-medium ${StatusToneClass(m.vetting_status)}`}>{m.vetting_status}</span>
+                                    )}
                                     {/* "Read the Standard" is not the declaration: never shown as one. */}
                                     {(readStandard ?? []).filter((a) => a.account_member_id === m.id).map((a) => (
                                       <span key={a.standard_version + a.page_spec_version} className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
@@ -264,6 +329,7 @@ function AdminBuyers() {
                                         </>
                                       );
                                     })()}
+                                    {m.status !== "removed" ? <MarkDeclarationUntrue memberId={m.id} onDone={() => void refetchEligibility()} /> : null}
                                     {m.status !== "removed" ? <AdminMemberActions member={{ id: m.id, role: m.role, email: m.email ?? null }} onChanged={() => window.location.reload()} /> : null}
                                   </li>
                                 ))

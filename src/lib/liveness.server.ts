@@ -137,6 +137,10 @@ export async function runLivenessCheck(
     });
   }
 
+  // Liveness is one of the engine's facts (and the first point the member is screened against sanctions lists).
+  const { recomputeEligibility } = await import("@/lib/eligibility-engine.server");
+  await recomputeEligibility(db, { memberId: member.id, actorId: params.userId, trigger: "liveness_checked" });
+
   const waitingOn = await stillToGo(db, account.id);
   if (result.status === "passed" && waitingOn.length === 0) {
     const { data: acct } = await db.from("buyer_accounts").select("onboarding_status").eq("id", account.id).maybeSingle();

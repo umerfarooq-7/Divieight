@@ -36,12 +36,13 @@ export const getDeclarationState = createServerFn({ method: "POST" })
 
 export const submitEligibilityDeclaration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { actingMemberId: string; answers: Record<string, string>; attestedPersonally: boolean; signedName: string; supersedesId: string | null }) => ({
+  .inputValidator((input: { actingMemberId: string; answers: Record<string, string>; attestedPersonally: boolean; signedName: string; supersedesId: string | null; kind?: string }) => ({
     actingMemberId: memberId(input?.actingMemberId),
     answers: parseAnswers(input?.answers),
     attestedPersonally: input?.attestedPersonally === true,
     signedName: String(input?.signedName ?? "").slice(0, 200),
     supersedesId: input?.supersedesId ? String(input.supersedesId).slice(0, 64) : null,
+    kind: input?.kind === "change_report" ? ("change_report" as const) : undefined,
   }))
   .handler(async ({ data, context }) => {
     const { submitDeclaration } = await import("@/lib/eligibility-declaration.server");

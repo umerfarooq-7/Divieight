@@ -197,6 +197,8 @@ describe("the Account Members card", () => {
     db().table("account_members").find((m) => m.id === B3M)!.vetting_status = "cleared";
     db().seed("signed_documents", [{ buyer_account_id: B3, account_member_id: null, document_type: "HOLD_HARMLESS", signed_name: "Dan Three" }]);
     db().seed("member_liveness_checks", [{ account_member_id: B3M, buyer_account_id: B3, status: "passed", created_at: "2026-11-01T00:00:00Z" }]);
+    db().seed("eligibility_declarations", [{ id: "decl-b3", account_member_id: B3M, buyer_account_id: B3, status: "complete", answers: {} }]);
+    db().seed("eligibility_results", [{ account_member_id: B3M, buyer_account_id: B3, declaration_id: "decl-b3", result: "eligible", reason_codes: ["all_clear"], determined_at: "2026-11-02T00:00:00Z" }]);
     as(USERS.b3);
     const view = await getMyAccountMembers();
     expect(view).toMatchObject({ accountId: B3, locked: false, canAdd: false });

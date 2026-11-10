@@ -23,6 +23,12 @@ function seed() {
   account(IDS.b1).onboarding_status = "not_started";
 }
 
+/** Both of account 1's members have made a complete, all-Yes declaration. */
+function declared() {
+  const yes = { q1: "yes", q2: "yes", q3: "yes", q4: "yes", q5: "yes", q6: "yes" };
+  db().seed("eligibility_declarations", [IDS.b1m1, IDS.b1m2].map((id) => ({ id: `decl-${id}`, account_member_id: id, buyer_account_id: IDS.b1, status: "complete", answers: yes, declared_at: "2026-11-01T00:00:00Z" })));
+}
+
 let n = 0;
 function selfie(memberId: string, fileName = "selfie-camera.jpg", user: string = USERS.b1) {
   harness.userId = user;
@@ -113,11 +119,11 @@ describe("inconclusive creates a Verification Request", () => {
 describe("a failed liveness blocks eligibility for that member only", () => {
   it("the member is not eligible and can't retry; the other member is unaffected", async () => {
     seed();
+    declared();
     expect((await selfie(IDS.b1m1, "liveness-fail.png")).status).toBe("failed");
     expect(checks()[0]!.reason_code).toBe("face_mismatch");
     await expect(selfie(IDS.b1m1)).rejects.toThrow("failed");
     expect((await selfie(IDS.b1m2)).status).toBe("passed");
-    for (const id of [IDS.b1m1, IDS.b1m2]) member(id).vetting_status = "cleared";
     harness.userId = USERS.b1;
     const view = await getMyAccountMembers();
     expect(view.members.map((m) => [m.id, m.eligibility])).toEqual([
@@ -126,7 +132,8 @@ describe("a failed liveness blocks eligibility for that member only", () => {
     ]);
     expect(view.members[1]!.checklist.find((c) => c.key === "liveness")!.done).toBe(true);
     expect(view.members[0]!.checklist.find((c) => c.key === "liveness")!.done).toBe(false);
-    expect(member(IDS.b1m1).vetting_status).toBe("cleared");
+    expect(member(IDS.b1m1).vetting_status).toBe("not_eligible");
+    expect(member(IDS.b1m2).vetting_status).toBe("cleared");
   });
 
   it("feeds the eligibility result", () => {
@@ -139,19 +146,19 @@ describe("a failed liveness blocks eligibility for that member only", () => {
   });
 
   it("feeds the Golden Ticket check: every active member's latest attempt must have passed", async () => {
-    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified", praSigned: true, memberStatuses: ["cleared", "cleared"] };
+    const base = { goldenTicketIssued: false, liquidityVerified: true, liquidityStatus: "verified", praSigned: true, memberStatuses: ["cleared", "cleared"], eligibilityResults: ["eligible", "eligible"] };
     expect(evaluateGoldenTicket({ ...base, livenessStatuses: ["passed", "passed"] }).eligible).toBe(true);
     for (const s of [["passed", "failed"], ["passed", null], ["passed", "inconclusive"], ["passed"]])
       expect(evaluateGoldenTicket({ ...base, livenessStatuses: s }).missing).toContain("Every Account Member must pass the liveness check");
 
     seed();
-    for (const id of [IDS.b1m1, IDS.b1m2]) member(id).vetting_status = "cleared";
+    declared();
     Object.assign(account(IDS.b1), { liquidity_verified: true, golden_ticket_issued: false });
     db().seed("signed_documents", [{ buyer_account_id: IDS.b1, document_type: "PRA", signed_name: "Alice One" }]);
     await selfie(IDS.b1m1);
     await selfie(IDS.b1m2, "liveness-fail.jpg");
     const gt = await issueGoldenTicketIfEligible({ authUserId: USERS.b1, buyerAccountId: IDS.b1 });
-    expect(gt.missing).toEqual(["Every Account Member must pass the liveness check"]);
+    expect(gt.missing).toEqual(["All Account Members must be eligible under the Participant Eligibility Standard", "Every Account Member must pass the liveness check"]);
     expect(account(IDS.b1).golden_ticket_issued).toBe(false);
   });
 });

@@ -15,7 +15,6 @@ import {
   declarationStatusFor,
   declarationText,
   legalNamesMatch,
-  needsReview,
   type DeclarationAnswers,
   type DeclarationStatus,
 } from "@/lib/eligibility-declaration";
@@ -100,9 +99,11 @@ export async function submitDeclaration(
     signedName: string;
     /** The record this one corrects; must be the member's current record, if they have one. */
     supersedesId: string | null;
+    /** A correction of fact (E2) or a ten-day change notice (Q6). Both are new versions. */
+    kind?: "correction" | "change_report";
     request: RequestContext;
   },
-): Promise<{ id: string; status: "incomplete" | "complete"; declarationHash: string; vettingStatus: string | null; waitingOn: string[] }> {
+): Promise<{ id: string; status: "incomplete" | "complete"; declarationHash: string; vettingStatus: string | null; result: string | null; reasonCodes: string[]; waitingOn: string[] }> {
   const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
 
   if (params.attestedPersonally !== true) throw new Error("Confirm that you are personally making this declaration.");
@@ -151,12 +152,12 @@ export async function submitDeclaration(
   // Vetting outcome from the declaration alone. Q5 = No is incomplete: the member's status is left as it was,
   // and nothing is ever recorded as failed. A "No" to a statement is held for review, and stays held even if a
   // later correction answers Yes: a correction of fact is reviewed, not taken on its own.
-  let vettingStatus = member.vetting_status;
-  if (status === "complete") {
-    const everHeld = needsReview(params.answers) || rows.some((r) => r.answers && needsReview(r.answers));
-    vettingStatus = everHeld ? "held_for_review" : "cleared";
-    await db.from("account_members").update({ vetting_status: vettingStatus }).eq("id", member.id);
-  }
+  // The result is the engine's, from these answers and the member's screening facts. Recomputed on
+  // every submission: a correction of fact or a reported change gives a new result.
+  const { recomputeEligibility } = await import("@/lib/eligibility-engine.server");
+  const engine = await recomputeEligibility(db, { memberId: member.id, actorId: params.userId, trigger: params.kind === "change_report" ? "change_reported" : now ? "declaration_corrected" : "declaration_made" });
+  const { data: after } = await db.from("account_members").select("vetting_status").eq("id", member.id).maybeSingle();
+  const vettingStatus = (after as { vetting_status: string | null } | null)?.vetting_status ?? member.vetting_status;
 
   await db.from("audit_log").insert({
     actor_id: params.userId,
@@ -173,13 +174,15 @@ export async function submitDeclaration(
       declaration_hash: hash,
       status,
       supersedes_id: now?.id ?? null,
+      kind: params.kind ?? (now ? "correction" : "first"),
       vetting_status: vettingStatus,
+      eligibility_result: engine.result,
       ip_address: params.request.ip,
       user_agent: params.request.userAgent,
     },
   });
 
-  return { id: (inserted as { id: string }).id, status, declarationHash: hash, vettingStatus, waitingOn: await waitingOn(db, account.id) };
+  return { id: (inserted as { id: string }).id, status, declarationHash: hash, vettingStatus, result: engine.result, reasonCodes: engine.reason_codes, waitingOn: await waitingOn(db, account.id) };
 }
 
 /** For the admin's buyer view: every member's current declaration (and the count of earlier ones). */

@@ -10,13 +10,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { ELIGIBILITY_LABELS, MAX_ACTIVE_MEMBERS, memberDisplayName, type MemberEligibility } from "@/lib/account-members";
 import { getMyAccountMembers } from "@/lib/account-members.functions";
+import { HELD_BUYER_TEXT, RESULT_TONES } from "@/lib/eligibility-engine";
 
-const TONE: Record<MemberEligibility, string> = {
-  eligible: "border-primary/30 bg-primary/10 text-primary",
-  held: "border-accent/40 bg-accent/10 text-foreground",
-  not_eligible: "border-destructive/40 bg-destructive/10 text-destructive",
-  pending: "border-border bg-muted text-muted-foreground",
-};
+// Held has its own colour: never the refused or unpaid tones.
+const TONE: Record<MemberEligibility, string> = RESULT_TONES;
 
 /** The buyer's own view: their members, each one's progress and status. Nobody else sees this. */
 export function AccountMembersCard() {
@@ -69,6 +66,15 @@ export function AccountMembersCard() {
                       </li>
                     ))}
                   </ul>
+                  {m.eligibility === "held" ? <p className="mt-3 text-sm text-foreground">{HELD_BUYER_TEXT}</p> : null}
+                  {m.checklist.find((c) => c.key === "declaration")?.done ? (
+                    <div className="mt-3">
+                      {/* Q6: tell divieight within ten days if a statement stops being true. Opens a new declaration version. */}
+                      <Link to="/buyer/onboarding/vetting" search={{ change: 1 }} className="text-xs font-medium text-accent hover:underline">
+                        Report a change
+                      </Link>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

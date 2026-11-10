@@ -19,6 +19,7 @@ import {
   SAME_PERSON_MESSAGE,
   samePerson,
   type AccountMemberView,
+  type MemberEligibility,
 } from "@/lib/account-members";
 
 type Db = { from: (t: string) => any };
@@ -116,6 +117,15 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
   const declared = new Set(((declRows ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id));
   const { livenessByMember } = await import("@/lib/liveness.server");
   const liveness = await livenessByMember(db, account.id);
+  // The engine's result is the member's status; without one, a member is never shown as eligible.
+  const { currentResults } = await import("@/lib/eligibility-engine.server");
+  const results = await currentResults(db, account.id).catch(() => ({}) as Record<string, null>);
+  const statusOf = (m: MemberRow): MemberEligibility => {
+    const r = results[m.id]?.result;
+    if (r) return r;
+    const fallback = eligibilityOf(m.vetting_status, liveness[m.id] ?? null);
+    return fallback === "eligible" ? "pending" : fallback;
+  };
   // Signatures from before members were named on them belong to the account holder.
   const signedBy = (type: string, m: MemberRow) =>
     signed.some((d) => d.document_type === type && (d.account_member_id === m.id || (!d.account_member_id && (m.role === "primary" || (d.signed_name ?? "").trim().toLowerCase() === (m.full_name ?? "").trim().toLowerCase()))));
@@ -130,7 +140,7 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
       fullName: m.full_name ?? "",
       email: m.email,
       phone: m.phone,
-      eligibility: eligibilityOf(m.vetting_status, liveness[m.id] ?? null),
+      eligibility: statusOf(m),
       checklist: [
         { key: "identity", label: "Identity", done: identityComplete(m) },
         { key: "liveness", label: "Liveness check", done: liveness[m.id] === "passed" },

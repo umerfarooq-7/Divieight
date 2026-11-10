@@ -187,6 +187,153 @@ export type Database = {
         }
         Relationships: []
       }
+      eligibility_results: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          standard_version: string
+          result: string
+          reason_codes: string[]
+          determined_at: string
+          declaration_id: string
+          screening_snapshot: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          standard_version: string
+          result: string
+          reason_codes?: string[]
+          determined_at?: string
+          declaration_id: string
+          screening_snapshot?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          standard_version?: string
+          result?: string
+          reason_codes?: string[]
+          determined_at?: string
+          declaration_id?: string
+          screening_snapshot?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      member_sanctions_screenings: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          provider: string
+          status: string
+          list_name: string | null
+          matched_name: string | null
+          resolves_id: string | null
+          resolved_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          provider?: string
+          status: string
+          list_name?: string | null
+          matched_name?: string | null
+          resolves_id?: string | null
+          resolved_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          provider?: string
+          status?: string
+          list_name?: string | null
+          matched_name?: string | null
+          resolves_id?: string | null
+          resolved_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      charge_dispositions: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          outcome: string
+          offense_key: string | null
+          disposition_date: string
+          recorded_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          outcome: string
+          offense_key?: string | null
+          disposition_date: string
+          recorded_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          declaration_id?: string
+          outcome?: string
+          offense_key?: string | null
+          disposition_date?: string
+          recorded_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      declaration_untrue_findings: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          finding: string
+          after_closing: boolean
+          recorded_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          finding: string
+          after_closing?: boolean
+          recorded_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          declaration_id?: string
+          finding?: string
+          after_closing?: boolean
+          recorded_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

@@ -115,6 +115,8 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as ReserveIdRouteImport } from './routes/reserve.$id'
 import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password.index'
 import { Route as ResetPasswordConfirmRouteImport } from './routes/reset-password.confirm'
+import { Route as AdminEligibilityHeldRouteImport } from './routes/admin.eligibility.held'
+import { Route as AdminEligibilitySanctionsRouteImport } from './routes/admin.eligibility.sanctions'
 import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin.entity-genesis_.$propertyId'
 import { Route as AdminPodsIndexRouteImport } from './routes/admin.pods.index'
 import { Route as AdminPropertiesIndexRouteImport } from './routes/admin.properties.index'
@@ -727,6 +729,17 @@ const ResetPasswordConfirmRoute = ResetPasswordConfirmRouteImport.update({
   path: '/confirm',
   getParentRoute: () => ResetPasswordRoute,
 } as any)
+const AdminEligibilityHeldRoute = AdminEligibilityHeldRouteImport.update({
+  id: '/eligibility/held',
+  path: '/eligibility/held',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEligibilitySanctionsRoute =
+  AdminEligibilitySanctionsRouteImport.update({
+    id: '/eligibility/sanctions',
+    path: '/eligibility/sanctions',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminEntityGenesisPropertyIdRoute =
   AdminEntityGenesisPropertyIdRouteImport.update({
     id: '/entity-genesis_/$propertyId',
@@ -1271,6 +1284,8 @@ export interface FileRoutesByFullPath {
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
+  '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
@@ -1450,6 +1465,8 @@ export interface FileRoutesByTo {
   '/owner': typeof OwnerIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/reset-password': typeof ResetPasswordIndexRoute
+  '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
+  '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
@@ -1637,6 +1654,8 @@ export interface FileRoutesById {
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
+  '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis_/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
@@ -1825,6 +1844,8 @@ export interface FileRouteTypes {
     | '/owner/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/eligibility/held'
+    | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
@@ -2004,6 +2025,8 @@ export interface FileRouteTypes {
     | '/owner'
     | '/properties'
     | '/reset-password'
+    | '/admin/eligibility/held'
+    | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
@@ -2190,6 +2213,8 @@ export interface FileRouteTypes {
     | '/owner/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/eligibility/held'
+    | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis_/$propertyId'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
@@ -3114,6 +3139,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordConfirmRouteImport
       parentRoute: typeof ResetPasswordRoute
     }
+    '/admin/eligibility/held': {
+      id: '/admin/eligibility/held'
+      path: '/eligibility/held'
+      fullPath: '/admin/eligibility/held'
+      preLoaderRoute: typeof AdminEligibilityHeldRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/eligibility/sanctions': {
+      id: '/admin/eligibility/sanctions'
+      path: '/eligibility/sanctions'
+      fullPath: '/admin/eligibility/sanctions'
+      preLoaderRoute: typeof AdminEligibilitySanctionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/entity-genesis_/$propertyId': {
       id: '/admin/entity-genesis_/$propertyId'
       path: '/entity-genesis/$propertyId'
@@ -3722,6 +3761,8 @@ interface AdminRouteChildren {
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
   AdminTitleEscrowRoute: typeof AdminTitleEscrowRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminEligibilityHeldRoute: typeof AdminEligibilityHeldRoute
+  AdminEligibilitySanctionsRoute: typeof AdminEligibilitySanctionsRoute
   AdminEntityGenesisPropertyIdRoute: typeof AdminEntityGenesisPropertyIdRoute
   AdminPodsIndexRoute: typeof AdminPodsIndexRoute
   AdminPodsIdBriefcaseRoute: typeof AdminPodsIdBriefcaseRoute
@@ -3763,6 +3804,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
   AdminTitleEscrowRoute: AdminTitleEscrowRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminEligibilityHeldRoute: AdminEligibilityHeldRoute,
+  AdminEligibilitySanctionsRoute: AdminEligibilitySanctionsRoute,
   AdminEntityGenesisPropertyIdRoute: AdminEntityGenesisPropertyIdRoute,
   AdminPodsIndexRoute: AdminPodsIndexRoute,
   AdminPodsIdBriefcaseRoute: AdminPodsIdBriefcaseRoute,
