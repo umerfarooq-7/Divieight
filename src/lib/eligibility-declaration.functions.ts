@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectAuthorityAttempt } from "@/lib/member-authority";
 import { parseAnswers } from "@/lib/eligibility-declaration";
 
 /** Callable surface for Block 4 — Eligibility Declaration and Authorization. */
@@ -36,7 +37,7 @@ export const getDeclarationState = createServerFn({ method: "POST" })
 
 export const submitEligibilityDeclaration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { actingMemberId: string; answers: Record<string, string>; attestedPersonally: boolean; signedName: string; supersedesId: string | null; kind?: string }) => ({
+  .inputValidator((input: { actingMemberId: string; answers: Record<string, string>; attestedPersonally: boolean; signedName: string; supersedesId: string | null; kind?: string }) => (rejectAuthorityAttempt(input, "block4"), {
     actingMemberId: memberId(input?.actingMemberId),
     answers: parseAnswers(input?.answers),
     attestedPersonally: input?.attestedPersonally === true,

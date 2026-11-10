@@ -510,6 +510,16 @@ export const listBuyerAuthorizations = createServerFn({ method: "GET" })
     };
   });
 
+/** The request's IP and browser, as the server sees them. */
+async function requestContext(): Promise<{ ip: string | null; userAgent: string | null }> {
+  try {
+    const { getRequest, getRequestIP } = await import("@tanstack/react-start/server");
+    return { ip: getRequestIP({ xForwardedFor: true }) ?? null, userAgent: getRequest().headers.get("user-agent") };
+  } catch {
+    return { ip: null, userAgent: null };
+  }
+}
+
 export interface RespondInput {
   requestId: string;
   accountMemberId: string;
@@ -530,8 +540,8 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
     if (input.decision !== "confirmed" && input.decision !== "declined")
       throw new Error("Invalid decision");
     if (!input.signedName?.trim()) throw new Error("Secondary verification is required");
-    if (input.onBehalfOfMemberId && !input.authorityBasis?.trim())
-      throw new Error("Documented authority is required to respond for another member");
+    // Acting for another member needs a live grant in member_authority_grants (checked on the server);
+    // no free-text "basis" is enough on its own any more.
     return input;
   })
   .handler(async ({ data, context }) => {
@@ -552,8 +562,22 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
       throw new Error("Outstanding due-diligence acknowledgments must be completed first");
 
     const members = await loadMembers(db, buyer.id);
-    if (!members.some((m) => m.id === data.accountMemberId))
-      throw new Error("Unknown Account Member");
+    const acting = members.find((m) => m.id === data.accountMemberId);
+    if (!acting) throw new Error("Unknown Account Member");
+
+    // The signature is verified here, on the server, against the acting member's own name.
+    const { assertTypedSignature } = await import("@/lib/signature-check");
+    assertTypedSignature({ typed: data.signedName, fullName: acting.full_name, method: data.secondaryVerificationMethod });
+
+    // Acting for another member: only under a live documented-authority grant.
+    let use: Awaited<ReturnType<(typeof import("@/lib/member-authority.server"))["resolveAuthority"]>> | null = null;
+    const authority = await import("@/lib/member-authority.server");
+    if (data.onBehalfOfMemberId) {
+      use = await authority.resolveAuthority(db as never, { accountId: buyer.id, actingMemberId: data.accountMemberId, onBehalfOfMemberId: data.onBehalfOfMemberId, scope: "authorizations" });
+    }
+    const req = await requestContext();
+    const { sha256 } = await import("@/lib/entity-genesis-stage2.server");
+    const documentHash = sha256(JSON.stringify({ id: row.id, action: row.action_type, property: row.property_id, terms: row.terms ?? null }));
 
     const { error } = await db.from("authorization_responses").upsert(
       {
@@ -564,14 +588,29 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
         signed_name: data.signedName.trim(),
         secondary_verification_method: data.secondaryVerificationMethod,
         on_behalf_of_member_id: data.onBehalfOfMemberId ?? null,
-        authority_basis: data.authorityBasis?.trim() ?? null,
-        ip_address: auditIp(data.ipAddress),
+        authority_basis: use ? `authority_grant:${use.authorityGrantId}` : null,
+        acted_by_member_id: data.accountMemberId,
+        authority_grant_id: use?.authorityGrantId ?? null,
+        document_hash: documentHash,
+        user_agent: req.userAgent,
+        ip_address: req.ip ?? auditIp(data.ipAddress),
         device_fingerprint: data.deviceFingerprint ?? null,
         responded_at: new Date().toISOString(),
       },
       { onConflict: "request_id,account_member_id" },
     );
     if (error) throw new Error(error.message);
+    if (use) {
+      await authority.recordAuthorityUse(db as never, {
+        userId,
+        accountId: buyer.id,
+        use,
+        scope: "authorizations",
+        what: `${data.decision === "confirmed" ? "confirmed" : "declined"} an authorization request`,
+        record: { table: "authorization_responses", id: row.id },
+        request: req,
+      });
+    }
 
     await audit(db, {
       actorId: userId,
@@ -584,10 +623,13 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
       metadata: {
         account_member_id: data.accountMemberId,
         on_behalf_of_member_id: data.onBehalfOfMemberId ?? null,
-        authority_basis: data.authorityBasis ?? null,
+        acted_by_member_id: data.accountMemberId,
+        authority_grant_id: use?.authorityGrantId ?? null,
+        document_hash: documentHash,
         secondary_verification_method: data.secondaryVerificationMethod,
         signed_name: data.signedName.trim(),
-        ip_address: auditIp(data.ipAddress),
+        ip_address: req.ip ?? auditIp(data.ipAddress),
+        user_agent: req.userAgent,
       },
     });
 

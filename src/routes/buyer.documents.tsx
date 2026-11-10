@@ -37,6 +37,10 @@ interface SignedDoc {
   signed_name: string;
   document_hash: string | null;
   created_at: string;
+  /** Set when a member signed for another under documented authority. */
+  acted_by_member_id?: string | null;
+  on_behalf_of_member_id?: string | null;
+  authority_grant_id?: string | null;
 }
 
 const LABELS: Record<string, string> = {
@@ -51,6 +55,7 @@ function BuyerDocumentsPage() {
   const { data: records } = useQuery({ queryKey: ["my-property-records"], queryFn: () => loadRecords(), retry: false });
   const owned = records?.properties ?? [];
   const [docs, setDocs] = useState<SignedDoc[]>([]);
+  const [names, setNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,10 +79,12 @@ function BuyerDocumentsPage() {
       }
       const { data } = await supabase
         .from("signed_documents")
-        .select("id, document_type, document_version, signed_name, document_hash, created_at")
+        .select("id, document_type, document_version, signed_name, document_hash, created_at, acted_by_member_id, on_behalf_of_member_id, authority_grant_id")
         .eq("buyer_account_id", acct.id)
         .order("created_at", { ascending: false });
+      const { data: people } = await supabase.from("account_members").select("id, full_name").eq("buyer_account_id", acct.id);
       if (cancelled) return;
+      setNames(new Map(((people ?? []) as Array<{ id: string; full_name: string }>).map((p) => [p.id, p.full_name])));
       setDocs((data as SignedDoc[]) ?? []);
       setLoading(false);
     })();
@@ -122,6 +129,11 @@ function BuyerDocumentsPage() {
                   Version {d.document_version} · signed by {d.signed_name} ·{" "}
                   {new Date(d.created_at).toLocaleString()}
                 </p>
+                {d.authority_grant_id ? (
+                  <p className="mt-1 text-xs font-medium text-foreground">
+                    Signed by {names.get(d.acted_by_member_id ?? "") ?? "another member"} on behalf of {names.get(d.on_behalf_of_member_id ?? "") ?? "a member"}, under documented authority (grant {d.authority_grant_id.slice(0, 8)}).
+                  </p>
+                ) : null}
                 {d.document_hash ? (
                   <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
                     {d.document_hash}

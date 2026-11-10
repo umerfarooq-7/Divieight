@@ -8,6 +8,8 @@ import { BLOCK1_VERSION, BLOCK2_VERSION, block1ConsentText, block2AuthorizationT
 import { requireActingMember, type RequestContext } from "@/lib/account-members.server";
 import { legalNamesMatch } from "@/lib/eligibility-declaration";
 import { sha256 } from "@/lib/entity-genesis-stage2.server";
+import { recordAuthorityUse, resolveAuthority } from "@/lib/member-authority.server";
+import { rejectAuthorityAttempt } from "@/lib/member-authority";
 import { PLAID_SANDBOX, meetsLiquidityThreshold, sandboxBalanceFor, totalAvailableBalance, type PlaidAccountBalance } from "@/lib/liquidity";
 
 type Db = { from: (t: string) => any };
@@ -146,24 +148,49 @@ export type MemberDocument = "PRA" | "HOLD_HARMLESS";
  * Whether one member may sign a document on another's behalf. Always false until the
  * member_authority_grants table is added by the authority prompt (M4).
  */
-export function canSignOnBehalf(_grantorMemberId: string, _granteeMemberId: string, _document: "pra" | "hold_harmless"): boolean {
-  return false;
+export async function canSignOnBehalf(db: Db, accountId: string, grantorMemberId: string, granteeMemberId: string, document: "pra" | "hold_harmless"): Promise<boolean> {
+  // Only the PRA can be signed for someone else, and only under a live documented-authority grant.
+  if (document !== "pra") return false;
+  try {
+    await resolveAuthority(db, { accountId, actingMemberId: granteeMemberId, onBehalfOfMemberId: grantorMemberId, scope: "pra" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function signMemberDocument(
   db: Db,
-  params: { userId: string; actingMemberId: string; documentType: MemberDocument; documentVersion: string; documentHash: string; typedName: string; request: RequestContext },
+  params: { userId: string; actingMemberId: string; documentType: MemberDocument; documentVersion: string; documentHash: string; typedName: string; onBehalfOfMemberId?: string | null; request: RequestContext },
 ): Promise<{ id: string; waitingOn: string[] }> {
   if (params.documentType !== "PRA" && params.documentType !== "HOLD_HARMLESS") throw new Error("Unknown document");
+  // The Hold Harmless is always the member's own. Authority can never cover it.
+  if (params.documentType === "HOLD_HARMLESS") rejectAuthorityAttempt(params, "hold_harmless");
   const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
   const typed = params.typedName.trim();
+  // The typed name is the ACTING member's own, checked here against account_members.full_name.
   if (!legalNamesMatch(typed, member.full_name ?? "")) throw new Error(SIGNATURE_MISMATCH);
-  const { data: existing } = await db.from("signed_documents").select("id").eq("buyer_account_id", account.id).eq("document_type", params.documentType).eq("account_member_id", member.id).limit(1);
+  // Signing the PRA for another member: only under a live documented-authority grant.
+  const use = params.onBehalfOfMemberId ? await resolveAuthority(db, { accountId: account.id, actingMemberId: member.id, onBehalfOfMemberId: params.onBehalfOfMemberId, scope: "pra" }) : null;
+  const signerId = use ? use.onBehalfOfMemberId : member.id;
+  const { data: existing } = await db.from("signed_documents").select("id").eq("buyer_account_id", account.id).eq("document_type", params.documentType).eq("account_member_id", signerId).limit(1);
   let id = ((existing ?? []) as Array<{ id: string }>)[0]?.id ?? null;
   if (!id) {
     const { data, error } = await db
       .from("signed_documents")
-      .insert({ buyer_account_id: account.id, account_member_id: member.id, document_type: params.documentType, document_version: params.documentVersion, signed_name: typed, document_hash: params.documentHash, ip_address: params.request.ip })
+      .insert({
+        buyer_account_id: account.id,
+        account_member_id: signerId,
+        acted_by_member_id: member.id,
+        on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+        authority_grant_id: use?.authorityGrantId ?? null,
+        document_type: params.documentType,
+        document_version: params.documentVersion,
+        signed_name: typed,
+        document_hash: params.documentHash,
+        ip_address: params.request.ip,
+        user_agent: params.request.userAgent,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -171,11 +198,14 @@ export async function signMemberDocument(
     await audit(db, params.userId, params.documentType === "PRA" ? "buyer.pra_signed" : "buyer.hold_harmless_signed", account.id, {
       document_hash: params.documentHash,
       document_version: params.documentVersion,
-      account_member_id: member.id,
+      account_member_id: signerId,
       acted_by_member_id: member.id,
+      on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+      authority_grant_id: use?.authorityGrantId ?? null,
       ip_address: params.request.ip,
       user_agent: params.request.userAgent,
     });
+    if (use) await recordAuthorityUse(db, { userId: params.userId, accountId: account.id, use, scope: "pra", what: "signed the Priority Reservation Agreement", record: { table: "signed_documents", id }, request: params.request });
   }
   const waitingOn = await waitingOnSignature(db, account.id, params.documentType);
   if (params.documentType === "PRA" && waitingOn.length === 0) {

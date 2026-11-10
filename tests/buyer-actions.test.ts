@@ -20,8 +20,10 @@ async function queueOffer(commissionExpected = false) {
   return id;
 }
 
+// The server checks the signature against the acting member's own name.
+const NAMES: Record<string, string> = { [IDS.b1m1]: "Alice One", [IDS.b1m2]: "Bob One", [IDS.b2m1]: "Carol Two", [IDS.b3m1]: "Dan Three" };
 const confirm = (requestId: string, accountMemberId: string) => ({
-  data: { requestId, accountMemberId, decision: "confirmed" as const, signedName: "X", secondaryVerificationMethod: "typed_initials" },
+  data: { requestId, accountMemberId, decision: "confirmed" as const, signedName: NAMES[accountMemberId] ?? "X", secondaryVerificationMethod: "typed_initials" },
 });
 
 async function mine() {

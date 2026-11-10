@@ -377,6 +377,9 @@ export interface SignOaInput {
   secondaryVerificationMethod: string;
   ipAddress: string | null;
   deviceFingerprint: string | null;
+  userAgent?: string | null;
+  /** Signing for another member, under their documented authority ('closing_docs'). */
+  onBehalfOfMemberId?: string | null;
 }
 
 export async function signOperatingAgreement(db: Db, authUserId: string, buyerAccountId: string, input: SignOaInput) {
@@ -386,16 +389,30 @@ export async function signOperatingAgreement(db: Db, authUserId: string, buyerAc
     throw new Error("The agreement changed since you opened it — reload and review the current version.");
 
   const signers = await oaSigners(db, input.propertyId);
-  const me = signers.find((s) => s.accountMemberId === input.accountMemberId && s.buyerAccountId === buyerAccountId);
-  if (!me) throw new Error("This member is not a signer on this Operating Agreement.");
-  if (input.signedName.trim().toLowerCase() !== me.name.toLowerCase())
-    throw new Error(`Type the member's full legal name exactly: ${me.name}`);
+  const actor = signers.find((s) => s.accountMemberId === input.accountMemberId && s.buyerAccountId === buyerAccountId);
+  if (!actor) throw new Error("This member is not a signer on this Operating Agreement.");
+  // The typed full name must be the acting member's own, with case and spacing normalised (checked here, on the server).
+  const { legalNamesMatch } = await import("@/lib/eligibility-declaration");
+  if (!legalNamesMatch(input.signedName, actor.name)) throw new Error(`Type the member's full legal name exactly: ${actor.name}`);
+
+  // Signing for another member: only under a live documented-authority grant for closing documents.
+  const authority = await import("@/lib/member-authority.server");
+  const use = input.onBehalfOfMemberId
+    ? await authority.resolveAuthority(db as never, { accountId: buyerAccountId, actingMemberId: actor.accountMemberId, onBehalfOfMemberId: input.onBehalfOfMemberId, scope: "closing_docs" })
+    : null;
+  // The signature is the signer's: under authority it counts for the grantor, and says who actually signed.
+  const me = use ? signers.find((s) => s.accountMemberId === use.onBehalfOfMemberId && s.buyerAccountId === buyerAccountId) : actor;
+  if (!me) throw new Error("The member you are signing for is not a signer on this Operating Agreement.");
 
   const { error } = await db.from("operating_agreement_signatures").insert({
     entity_genesis_id: g.id,
     property_id: input.propertyId,
     buyer_account_id: buyerAccountId,
     account_member_id: me.accountMemberId,
+    acted_by_member_id: actor.accountMemberId,
+    on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+    authority_grant_id: use?.authorityGrantId ?? null,
+    user_agent: input.userAgent ?? null,
     signed_name: input.signedName.trim(),
     document_hash: g.final_oa_hash,
     secondary_verification_method: input.secondaryVerificationMethod,
@@ -413,11 +430,26 @@ export async function signOperatingAgreement(db: Db, authUserId: string, buyerAc
     metadata: {
       buyer_account_id: buyerAccountId,
       account_member_id: me.accountMemberId,
+      acted_by_member_id: actor.accountMemberId,
+      on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+      authority_grant_id: use?.authorityGrantId ?? null,
       document_hash: g.final_oa_hash,
       ip_address: input.ipAddress,
+      user_agent: input.userAgent ?? null,
       secondary_verification_method: input.secondaryVerificationMethod,
     },
   });
+  if (use) {
+    await authority.recordAuthorityUse(db as never, {
+      userId: authUserId,
+      accountId: buyerAccountId,
+      use,
+      scope: "closing_docs",
+      what: "signed the Operating Agreement",
+      record: { table: "operating_agreement_signatures", id: g.id },
+      request: { ip: input.ipAddress, userAgent: input.userAgent ?? null },
+    });
+  }
 
   const { data: sigs } = await db
     .from("operating_agreement_signatures")

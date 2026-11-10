@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { harness } from "./setup";
+import { grantAuthorityFn } from "@/lib/member-authority.functions";
 import { seedPod, IDS, USERS } from "./fixtures";
 import {
   createAuthorizationRequest,
@@ -41,13 +42,16 @@ async function propose(requestId: string, ratePercent = 2.5, fundingSource = "pr
   });
 }
 
+// The server checks the signature against the acting member's own name.
+const NAMES: Record<string, string> = { [IDS.b1m1]: "Alice One", [IDS.b1m2]: "Bob One", [IDS.b2m1]: "Carol Two", [IDS.b3m1]: "Dan Three" };
+
 function member(requestId: string, accountMemberId: string, decision: "confirmed" | "declined") {
   return {
     data: {
       requestId,
       accountMemberId,
       decision,
-      signedName: "Initials",
+      signedName: NAMES[accountMemberId] ?? "Initials",
       secondaryVerificationMethod: "typed_initials",
       ipAddress: "6.6.6.6", // browser-reported value; server must not trust it
       deviceFingerprint: "fp",
@@ -206,11 +210,15 @@ describe("Prompt 4 — itemized commission authorization", () => {
     seedPod(db());
     const id = await queueOffer(IDS.b1, false);
     as(USERS.b1);
+    // No grant: a free-text "basis" is not enough any more.
     await expect(
-      respondToAuthorization({ data: { ...member(id, IDS.b1m1, "confirmed").data, onBehalfOfMemberId: IDS.b1m2 } }),
-    ).rejects.toThrow("Documented authority");
+      respondToAuthorization({ data: { ...member(id, IDS.b1m1, "confirmed").data, onBehalfOfMemberId: IDS.b1m2, authorityBasis: "POA 2026-01" } }),
+    ).rejects.toThrow("hasn't given you live authority");
+    // Bob (the grantor) signs a grant for Alice, as himself.
+    for (const m of db().table("account_members")) m.role = m.role === "secondary" ? "member" : m.role;
+    await grantAuthorityFn({ data: { actingMemberId: IDS.b1m2, granteeMemberId: IDS.b1m1, scope: ["authorizations"], typedName: "Bob One" } });
     const r = await respondToAuthorization({
-      data: { ...member(id, IDS.b1m1, "confirmed").data, onBehalfOfMemberId: IDS.b1m2, authorityBasis: "POA 2026-01" },
+      data: { ...member(id, IDS.b1m1, "confirmed").data, onBehalfOfMemberId: IDS.b1m2 },
     });
     expect(r.disposition).toBe("authorized");
   });

@@ -366,9 +366,12 @@ describe("the PRA and the Hold Harmless, signed by each member", () => {
     expect(await getSignatureState({ data: { actingMemberId: M1, documentType: "PRA" } })).toMatchObject({ signed: true, waitingOn: ["Bob One"] });
   });
 
-  it("nobody signs on another's behalf: the authority hook returns false until the authority prompt (M4)", () => {
-    expect(canSignOnBehalf(M1, M2, "pra")).toBe(false);
-    expect(canSignOnBehalf(M2, M1, "hold_harmless")).toBe(false);
+  it("signing for another member works only under a live grant, and never for the Hold Harmless", async () => {
+    expect(await canSignOnBehalf(db(), A, M2, M1, "pra")).toBe(false);
+    expect(await canSignOnBehalf(db(), A, M2, M1, "hold_harmless")).toBe(false);
+    db().seed("member_authority_grants", [{ id: "g1", buyer_account_id: A, grantor_member_id: M2, grantee_member_id: M1, scope: ["pra"], granted_at: "2026-11-01T00:00:00Z", revoked_at: null }]);
+    expect(await canSignOnBehalf(db(), A, M2, M1, "pra")).toBe(true);
+    expect(await canSignOnBehalf(db(), A, M2, M1, "hold_harmless")).toBe(false);
   });
 
   it("the member's signature never overwrites the other's", async () => {

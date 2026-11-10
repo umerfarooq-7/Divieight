@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectAuthorityAttempt } from "@/lib/member-authority";
 
 /** Callable surface for the member-level steps: W-9, Blocks 1 and 2, the Plaid link, and signatures. */
 
@@ -35,7 +36,7 @@ export const getMyW9 = createServerFn({ method: "POST" })
 
 export const submitW9Fn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { actingMemberId: string; legalName: string; taxClassification: string; address: string; tinKind: string; tin: string; signedName: string }) => ({
+  .inputValidator((input: { actingMemberId: string; legalName: string; taxClassification: string; address: string; tinKind: string; tin: string; signedName: string }) => (rejectAuthorityAttempt(input, "w9"), {
     actingMemberId: memberId(input?.actingMemberId),
     legalName: String(input?.legalName ?? "").slice(0, 200),
     taxClassification: String(input?.taxClassification ?? "").slice(0, 40),
@@ -58,6 +59,7 @@ export const acceptAuthorizationFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { actingMemberId: string; block: string }) => {
     if (input?.block !== "block1" && input?.block !== "block2") throw new Error("Unknown authorization");
+    rejectAuthorityAttempt(input, input.block);
     return { actingMemberId: memberId(input.actingMemberId), block: input.block as "block1" | "block2" };
   })
   .handler(async ({ data, context }) => (await import("@/lib/member-steps.server")).acceptAuthorization(await adminDb(), { userId: context.userId, ...data, request: await request() }));
@@ -79,9 +81,12 @@ export const getSignatureState = createServerFn({ method: "POST" })
 
 export const signMemberDocumentFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { actingMemberId: string; documentType: string; documentVersion: string; documentHash: string; typedName: string }) => {
+  .inputValidator((input: { actingMemberId: string; documentType: string; documentVersion: string; documentHash: string; typedName: string; onBehalfOfMemberId?: string | null }) => {
     if (input?.documentType !== "PRA" && input?.documentType !== "HOLD_HARMLESS") throw new Error("Unknown document");
+    // Authority can cover the PRA (with a live grant) but never the Hold Harmless.
+    if (input.documentType === "HOLD_HARMLESS") rejectAuthorityAttempt(input, "hold_harmless");
     return {
+      onBehalfOfMemberId: input.onBehalfOfMemberId ? memberId(input.onBehalfOfMemberId) : null,
       actingMemberId: memberId(input.actingMemberId),
       documentType: input.documentType as "PRA" | "HOLD_HARMLESS",
       documentVersion: text(input.documentVersion, "document version", 40),

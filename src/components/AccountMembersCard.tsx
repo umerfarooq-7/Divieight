@@ -91,6 +91,11 @@ export function AccountMembersCard() {
                 </div>
               );
             })}
+            {data.members.length > 1 ? (
+              <Link to="/buyer/authority" className="inline-block text-sm font-medium text-accent hover:underline">
+                Delegate authority to the other member
+              </Link>
+            ) : null}
             {data.locked ? (
               <p className="text-xs text-muted-foreground">Members can't be changed after the Golden Ticket is issued. Contact divieight support for any change.</p>
             ) : managing ? (

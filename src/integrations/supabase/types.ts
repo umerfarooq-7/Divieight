@@ -448,6 +448,51 @@ export type Database = {
         }
         Relationships: []
       }
+      member_authority_grants: {
+        Row: {
+          id: string
+          buyer_account_id: string
+          grantor_member_id: string
+          grantee_member_id: string
+          scope: string[]
+          granted_at: string
+          revoked_at: string | null
+          grantor_typed_name: string
+          document_hash: string
+          ip: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          buyer_account_id: string
+          grantor_member_id: string
+          grantee_member_id: string
+          scope: string[]
+          granted_at?: string
+          revoked_at?: string | null
+          grantor_typed_name: string
+          document_hash: string
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          buyer_account_id?: string
+          grantor_member_id?: string
+          grantee_member_id?: string
+          scope?: string[]
+          granted_at?: string
+          revoked_at?: string | null
+          grantor_typed_name?: string
+          document_hash?: string
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string
@@ -1035,6 +1080,10 @@ export type Database = {
           seller_id: string | null
           signed_name: string
           account_member_id: string | null
+          user_agent: string | null
+          acted_by_member_id: string | null
+          on_behalf_of_member_id: string | null
+          authority_grant_id: string | null
         }
         Insert: {
           buyer_account_id?: string | null
@@ -1048,6 +1097,10 @@ export type Database = {
           seller_id?: string | null
           signed_name: string
           account_member_id?: string | null
+          user_agent?: string | null
+          acted_by_member_id?: string | null
+          on_behalf_of_member_id?: string | null
+          authority_grant_id?: string | null
         }
         Update: {
           buyer_account_id?: string | null
@@ -1061,6 +1114,10 @@ export type Database = {
           seller_id?: string | null
           signed_name?: string
           account_member_id?: string | null
+          user_agent?: string | null
+          acted_by_member_id?: string | null
+          on_behalf_of_member_id?: string | null
+          authority_grant_id?: string | null
         }
         Relationships: [
           {

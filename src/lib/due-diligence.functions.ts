@@ -230,6 +230,16 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
     };
   });
 
+/** The request's IP and browser, as the server sees them. */
+async function requestContextDd(): Promise<{ ip: string | null; userAgent: string | null }> {
+  try {
+    const { getRequest, getRequestIP } = await import("@tanstack/react-start/server");
+    return { ip: getRequestIP({ xForwardedFor: true }) ?? null, userAgent: getRequest().headers.get("user-agent") };
+  } catch {
+    return { ip: null, userAgent: null };
+  }
+}
+
 interface AckInput {
   documentId: string;
   contentHash: string;
@@ -240,7 +250,7 @@ interface AckInput {
   noticeShownAt?: string | null;
 }
 
-function parseAck(d: any): AckInput & { accountMemberId?: string } {
+function parseAck(d: any): AckInput & { accountMemberId?: string; onBehalfOfMemberId?: string } {
   return {
     documentId: String(d.documentId),
     contentHash: String(d.contentHash),
@@ -250,6 +260,7 @@ function parseAck(d: any): AckInput & { accountMemberId?: string } {
     deviceFingerprint: d.deviceFingerprint ? String(d.deviceFingerprint) : null,
     noticeShownAt: d.noticeShownAt ? String(d.noticeShownAt) : null,
     accountMemberId: d.accountMemberId ? String(d.accountMemberId) : undefined,
+    onBehalfOfMemberId: d.onBehalfOfMemberId ? String(d.onBehalfOfMemberId) : undefined,
   };
 }
 
@@ -288,18 +299,43 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!member) return { ok: false, error: "Account Member not found on this account." };
 
+    // The signature is verified here, on the server, against the acting member's own name.
+    const { assertTypedSignature } = await import("@/lib/signature-check");
+    try {
+      assertTypedSignature({ typed: data.signedName, fullName: member.full_name, method: data.secondaryVerificationMethod });
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+
+    // Acknowledging for another member: only under a live documented-authority grant.
+    const authority = await import("@/lib/member-authority.server");
+    let use: Awaited<ReturnType<(typeof authority)["resolveAuthority"]>> | null = null;
+    if (data.onBehalfOfMemberId) {
+      try {
+        use = await authority.resolveAuthority(db as never, { accountId: buyer.id, actingMemberId: member.id, onBehalfOfMemberId: data.onBehalfOfMemberId, scope: "due_diligence_ack" });
+      } catch (e) {
+        return { ok: false, error: (e as Error).message };
+      }
+    }
+    const req = await requestContextDd();
+
     const showNotice = Boolean(doc.is_governing_instrument);
     const { error } = await db.from("due_diligence_acknowledgments").insert({
       document_id: doc.id,
       property_id: doc.property_id,
       buyer_account_id: buyer.id,
       actor_role: "account_member",
-      account_member_id: member.id,
+      // Under authority the acknowledgment counts for the grantor, and says who actually acted.
+      account_member_id: use ? use.onBehalfOfMemberId : member.id,
+      acted_by_member_id: member.id,
+      on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+      authority_grant_id: use?.authorityGrantId ?? null,
+      user_agent: req.userAgent,
       actor_auth_user_id: context.userId,
-      signed_name: data.signedName || (member.full_name ?? "Account Member"),
+      signed_name: data.signedName,
       acknowledgment_text: MEMBER_ACK_TEXT,
       content_hash: doc.content_hash,
-      ip_address: auditIp(data.ipAddress),
+      ip_address: req.ip ?? auditIp(data.ipAddress),
       device_fingerprint: data.deviceFingerprint,
       secondary_verification_method: data.secondaryVerificationMethod,
       independent_review_notice_text: showNotice ? INDEPENDENT_REVIEW_NOTICE : null,
@@ -309,6 +345,17 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
     });
     if (error && !String(error.message).includes("duplicate key"))
       return { ok: false, error: error.message };
+    if (use && !error) {
+      await authority.recordAuthorityUse(db as never, {
+        userId: context.userId,
+        accountId: buyer.id,
+        use,
+        scope: "due_diligence_ack",
+        what: "acknowledged a due-diligence document",
+        record: { table: "due_diligence_acknowledgments", id: doc.id },
+        request: req,
+      });
+    }
 
     await audit(db, {
       actorId: context.userId,
@@ -318,7 +365,10 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
       metadata: {
         property_id: doc.property_id,
         buyer_account_id: buyer.id,
-        account_member_id: member.id,
+        account_member_id: use ? use.onBehalfOfMemberId : member.id,
+        acted_by_member_id: member.id,
+        on_behalf_of_member_id: use?.onBehalfOfMemberId ?? null,
+        authority_grant_id: use?.authorityGrantId ?? null,
         content_hash: doc.content_hash,
         is_governing_instrument: showNotice,
         independent_review_notice_shown: showNotice,

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectAuthorityAttempt } from "@/lib/member-authority";
 
 /** Callable surface for Account Members. */
 
@@ -80,6 +81,8 @@ export const removeAccountMember = createServerFn({ method: "POST" })
 export const saveMemberIdentityFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { actingMemberId: string; fullName: string; address: string; dateOfBirth: string; idDocumentNumber: string; idDocumentPath?: string | null }) => {
+    // The ID scan is always the member's own: authority can never cover it.
+    rejectAuthorityAttempt(input, "id_scan");
     const dateOfBirth = String(input?.dateOfBirth ?? "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) throw new Error("Enter a valid date of birth");
     return {

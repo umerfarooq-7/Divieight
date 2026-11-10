@@ -232,7 +232,7 @@ export const listMyOperatingAgreements = createServerFn({ method: "GET" })
 export const signMyOperatingAgreement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { propertyId: string; accountMemberId: string; signedName: string; documentHash: string; secondaryVerificationMethod: string; ipAddress?: string | null; deviceFingerprint?: string | null }) => {
+    (input: { propertyId: string; accountMemberId: string; signedName: string; documentHash: string; secondaryVerificationMethod: string; ipAddress?: string | null; deviceFingerprint?: string | null; onBehalfOfMemberId?: string | null }) => {
       if (!input?.propertyId || !input?.accountMemberId) throw new Error("Missing signer");
       if (!input.signedName?.trim()) throw new Error("Type your full legal name to sign");
       if (!input.secondaryVerificationMethod) throw new Error("Secondary verification is required");
@@ -245,13 +245,24 @@ export const signMyOperatingAgreement = createServerFn({ method: "POST" })
     const db = await adminDb();
     const buyer = await buyerFor(db, userId);
     if (!buyer) throw new Error("No buyer account");
+    let serverIp: string | null = null;
+    let serverUa: string | null = null;
+    try {
+      const { getRequest, getRequestIP } = await import("@tanstack/react-start/server");
+      serverIp = getRequestIP({ xForwardedFor: true }) ?? null;
+      serverUa = getRequest().headers.get("user-agent");
+    } catch {
+      // No request context (tests, scripts): the browser-reported IP is used.
+    }
     return (await stage2()).signOperatingAgreement(db, userId, buyer.id, {
       propertyId: data.propertyId,
       accountMemberId: data.accountMemberId,
       signedName: data.signedName,
       documentHash: data.documentHash,
       secondaryVerificationMethod: data.secondaryVerificationMethod,
-      ipAddress: auditIp(data.ipAddress ?? null),
+      ipAddress: serverIp ?? auditIp(data.ipAddress ?? null),
       deviceFingerprint: data.deviceFingerprint ?? null,
+      userAgent: serverUa,
+      onBehalfOfMemberId: data.onBehalfOfMemberId ?? null,
     });
   });

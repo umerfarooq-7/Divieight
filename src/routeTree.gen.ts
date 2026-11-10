@@ -79,6 +79,7 @@ import { Route as BrokerDashboardRouteImport } from './routes/broker.dashboard'
 import { Route as BrokerLoginRouteImport } from './routes/broker.login'
 import { Route as BrokerRegisterRouteImport } from './routes/broker.register'
 import { Route as BuyerAdverseActionRouteImport } from './routes/buyer.adverse-action'
+import { Route as BuyerAuthorityRouteImport } from './routes/buyer.authority'
 import { Route as BuyerAuthorizationsRouteImport } from './routes/buyer.authorizations'
 import { Route as BuyerClosingFundsRouteImport } from './routes/buyer.closing-funds'
 import { Route as BuyerDashboardRouteImport } from './routes/buyer.dashboard'
@@ -547,6 +548,11 @@ const BrokerRegisterRoute = BrokerRegisterRouteImport.update({
 const BuyerAdverseActionRoute = BuyerAdverseActionRouteImport.update({
   id: '/buyer/adverse-action',
   path: '/buyer/adverse-action',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerAuthorityRoute = BuyerAuthorityRouteImport.update({
+  id: '/buyer/authority',
+  path: '/buyer/authority',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuyerAuthorizationsRoute = BuyerAuthorizationsRouteImport.update({
@@ -1251,6 +1257,7 @@ export interface FileRoutesByFullPath {
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
+  '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
   '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
@@ -1434,6 +1441,7 @@ export interface FileRoutesByTo {
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
+  '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
   '/buyer/documents': typeof BuyerDocumentsRoute
@@ -1623,6 +1631,7 @@ export interface FileRoutesById {
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
+  '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
   '/buyer/closing-funds': typeof BuyerClosingFundsRoute
   '/buyer/dashboard': typeof BuyerDashboardRoute
@@ -1814,6 +1823,7 @@ export interface FileRouteTypes {
     | '/broker/login'
     | '/broker/register'
     | '/buyer/adverse-action'
+    | '/buyer/authority'
     | '/buyer/authorizations'
     | '/buyer/closing-funds'
     | '/buyer/dashboard'
@@ -1997,6 +2007,7 @@ export interface FileRouteTypes {
     | '/broker/login'
     | '/broker/register'
     | '/buyer/adverse-action'
+    | '/buyer/authority'
     | '/buyer/closing-funds'
     | '/buyer/dashboard'
     | '/buyer/documents'
@@ -2185,6 +2196,7 @@ export interface FileRouteTypes {
     | '/broker/login'
     | '/broker/register'
     | '/buyer/adverse-action'
+    | '/buyer/authority'
     | '/buyer/authorizations'
     | '/buyer/closing-funds'
     | '/buyer/dashboard'
@@ -2325,6 +2337,7 @@ export interface RootRouteChildren {
   ATokenRoute: typeof ATokenRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BuyerAdverseActionRoute: typeof BuyerAdverseActionRoute
+  BuyerAuthorityRoute: typeof BuyerAuthorityRoute
   BuyerAuthorizationsRoute: typeof BuyerAuthorizationsRouteWithChildren
   BuyerClosingFundsRoute: typeof BuyerClosingFundsRoute
   BuyerDashboardRoute: typeof BuyerDashboardRoute
@@ -2898,6 +2911,13 @@ declare module '@tanstack/react-router' {
       path: '/buyer/adverse-action'
       fullPath: '/buyer/adverse-action'
       preLoaderRoute: typeof BuyerAdverseActionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/authority': {
+      id: '/buyer/authority'
+      path: '/buyer/authority'
+      fullPath: '/buyer/authority'
+      preLoaderRoute: typeof BuyerAuthorityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/authorizations': {
@@ -3991,6 +4011,7 @@ const rootRouteChildren: RootRouteChildren = {
   ATokenRoute: ATokenRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BuyerAdverseActionRoute: BuyerAdverseActionRoute,
+  BuyerAuthorityRoute: BuyerAuthorityRoute,
   BuyerAuthorizationsRoute: BuyerAuthorizationsRouteWithChildren,
   BuyerClosingFundsRoute: BuyerClosingFundsRoute,
   BuyerDashboardRoute: BuyerDashboardRoute,

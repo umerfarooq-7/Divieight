@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { rejectAuthorityAttempt } from "@/lib/member-authority";
 
 /** Callable surface for the liveness step. */
 
@@ -40,7 +41,7 @@ export const getLivenessState = createServerFn({ method: "POST" })
 
 export const submitLivenessSelfie = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { actingMemberId: string; selfiePath: string; selfieFileName: string; contentType?: string | null }) => ({
+  .inputValidator((input: { actingMemberId: string; selfiePath: string; selfieFileName: string; contentType?: string | null }) => (rejectAuthorityAttempt(input, "liveness"), {
     actingMemberId: text(input?.actingMemberId, "member", 64),
     selfiePath: text(input?.selfiePath, "selfie", 500),
     selfieFileName: String(input?.selfieFileName ?? "selfie.jpg").slice(0, 200),
