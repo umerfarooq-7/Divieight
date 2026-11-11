@@ -21,6 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/lib/admin";
 import { getMyAdminRoles } from "@/lib/governance-config.functions";
+import { LaunchWarningsBanner } from "@/components/LaunchWarningsBanner";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -70,6 +71,7 @@ const NAV = [
   { to: "/admin/conversions", label: "Conversions", icon: ScrollText },
   { to: "/admin/founder", label: "Founder dashboard", icon: ScrollText },
   { to: "/admin/governance-settings", label: "Governance settings", icon: ShieldCheck },
+  { to: "/admin/launch-readiness", label: "Launch readiness", icon: AlertTriangle },
   { to: "/admin/library", label: "Library", icon: FileSignature },
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
@@ -85,7 +87,7 @@ function AdminLayout() {
   const isFounderRoute = pathname.startsWith("/admin/founder");
   // Only founders see the Founder dashboard link. (The page itself is refused on the server for everyone else.)
   const { data: roles } = useQuery({ queryKey: ["my-admin-roles", user?.id], enabled: !!user && isAdmin, retry: false, queryFn: () => getMyAdminRoles() });
-  const navItems = NAV.filter((item) => item.to !== "/admin/founder" || roles?.isFounder === true);
+  const navItems = NAV.filter((item) => (item.to !== "/admin/founder" && item.to !== "/admin/launch-readiness") || roles?.isFounder === true);
 
   useEffect(() => {
     if (isLoginRoute || loading) return;
@@ -158,6 +160,7 @@ function AdminLayout() {
       </aside>
 
       <main className="min-w-0 flex-1">
+        <LaunchWarningsBanner enabled={isAdmin} />
         <Outlet />
       </main>
     </div>

@@ -52,7 +52,8 @@ describe("1. only founders open the Founder dashboard", () => {
 
   it("the link is only in a founder's navigation, and the page shows a 403 to anyone else", () => {
     const nav = readFileSync("src/routes/admin.tsx", "utf8");
-    expect(nav).toMatch(/item\.to !== "\/admin\/founder" \|\| roles\?\.isFounder === true/);
+    expect(nav).toContain('item.to !== "/admin/founder"');
+    expect(nav).toContain("roles?.isFounder === true");
     expect(readFileSync("src/routes/admin.founder.tsx", "utf8")).toMatch(/Only founders can open the Founder dashboard/);
   });
 

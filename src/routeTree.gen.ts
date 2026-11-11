@@ -45,6 +45,7 @@ import { Route as AdminFounderRouteImport } from './routes/admin.founder'
 import { Route as AdminGovernanceSettingsRouteImport } from './routes/admin.governance-settings'
 import { Route as AdminHeldAccountsRouteImport } from './routes/admin.held-accounts'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
+import { Route as AdminLaunchReadinessRouteImport } from './routes/admin.launch-readiness'
 import { Route as AdminLibraryRouteImport } from './routes/admin.library'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
@@ -388,6 +389,11 @@ const AdminInsuranceRequirementsRoute =
     path: '/insurance-requirements',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminLaunchReadinessRoute = AdminLaunchReadinessRouteImport.update({
+  id: '/launch-readiness',
+  path: '/launch-readiness',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLibraryRoute = AdminLibraryRouteImport.update({
   id: '/library',
   path: '/library',
@@ -1282,6 +1288,7 @@ export interface FileRoutesByFullPath {
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/launch-readiness': typeof AdminLaunchReadinessRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1477,6 +1484,7 @@ export interface FileRoutesByTo {
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/launch-readiness': typeof AdminLaunchReadinessRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1674,6 +1682,7 @@ export interface FileRoutesById {
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
+  '/admin/launch-readiness': typeof AdminLaunchReadinessRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
   '/admin/login': typeof AdminLoginRoute
@@ -1875,6 +1884,7 @@ export interface FileRouteTypes {
     | '/admin/governance-settings'
     | '/admin/held-accounts'
     | '/admin/insurance-requirements'
+    | '/admin/launch-readiness'
     | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -2070,6 +2080,7 @@ export interface FileRouteTypes {
     | '/admin/governance-settings'
     | '/admin/held-accounts'
     | '/admin/insurance-requirements'
+    | '/admin/launch-readiness'
     | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -2266,6 +2277,7 @@ export interface FileRouteTypes {
     | '/admin/governance-settings'
     | '/admin/held-accounts'
     | '/admin/insurance-requirements'
+    | '/admin/launch-readiness'
     | '/admin/library'
     | '/admin/listing-compliance'
     | '/admin/login'
@@ -2790,6 +2802,13 @@ declare module '@tanstack/react-router' {
       path: '/insurance-requirements'
       fullPath: '/admin/insurance-requirements'
       preLoaderRoute: typeof AdminInsuranceRequirementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/launch-readiness': {
+      id: '/admin/launch-readiness'
+      path: '/launch-readiness'
+      fullPath: '/admin/launch-readiness'
+      preLoaderRoute: typeof AdminLaunchReadinessRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/library': {
@@ -3967,6 +3986,7 @@ interface AdminRouteChildren {
   AdminGovernanceSettingsRoute: typeof AdminGovernanceSettingsRoute
   AdminHeldAccountsRoute: typeof AdminHeldAccountsRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
+  AdminLaunchReadinessRoute: typeof AdminLaunchReadinessRoute
   AdminLibraryRoute: typeof AdminLibraryRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -4013,6 +4033,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGovernanceSettingsRoute: AdminGovernanceSettingsRoute,
   AdminHeldAccountsRoute: AdminHeldAccountsRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
+  AdminLaunchReadinessRoute: AdminLaunchReadinessRoute,
   AdminLibraryRoute: AdminLibraryRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
   AdminLoginRoute: AdminLoginRoute,
