@@ -13,6 +13,10 @@ export const OWNER_NOTIFICATION_TYPES = {
 
 export type OwnerNotificationType = keyof typeof OWNER_NOTIFICATION_TYPES;
 
+/** Where tapping a notification goes, when it goes anywhere. */
+export const notificationHref = (n: { type: string; property_id?: string | null }): string | null =>
+  n.type === "former_seller_weeks" && n.property_id ? `/owner/former/${n.property_id}` : null;
+
 export const isOwnerNotificationType = (type: string): type is OwnerNotificationType => type in OWNER_NOTIFICATION_TYPES;
 
 /** Rev 48 floor: governance, capital call and voting window emails always go. */

@@ -6,7 +6,11 @@
  */
 
 import { adminRecipients, deliver } from "@/lib/authorization.notify.server";
+import { hoursAsText } from "@/lib/governance-config";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 import {
+  openMarketExpiresAt,
+  pickNextElector,
   pickRofrWinner,
   RESALE_LIVE_STATUSES,
   RESALE_STATUS_LABELS,
@@ -37,6 +41,11 @@ export interface ResaleListingRow {
   rofr_closes_at: string;
   flat_fee: number;
   created_at: string;
+  /** Set when the listing reaches the open market (resale-decisions.sql). */
+  expires_at?: string | null;
+  /** After a cancelled sale: the co-owner holding the offer, and until when (resale-decisions.sql). */
+  offer_holder_key?: string | null;
+  offer_closes_at?: string | null;
 }
 
 type ElectionRow = { id: string; listing_id: string; holder_key: string; user_id: string | null; elected_at: string; priority_rank_at_election: number | null; status: string };
@@ -53,6 +62,8 @@ async function audit(db: Db, actor: { id: string | null; type: string }, action:
 }
 
 const ownerLink = (propertyId: string) => `/owner/properties/${propertyId}/resale`;
+/** The read-only page for a seller who no longer holds a share on the property. */
+export const formerSellerLink = (propertyId: string) => `/owner/former/${propertyId}`;
 
 async function tell(db: Db, listing: ResaleListingRow, recipients: Array<{ authUserId: string; email: string | null }>, subject: string, message: string, dedupeKey?: string) {
   for (const r of recipients) {
@@ -184,11 +195,17 @@ export async function settleRofr(db: Db, propertyId?: string): Promise<{ openMar
     const seller = await userRecipient(db, listing.seller_user_id);
     if (status === "open_market") {
       moved.openMarket += 1;
-      await tell(db, listing, [seller], "Your share is on the open market", `No co-owner exercised the right of first refusal on share #${listing.share_number}, so it is now on the open market.`);
+      // When it expires is fixed now, from the setting in force today. (Best effort: the column arrives with resale-decisions.sql.)
+      const days = (await loadGovernanceConfig(db)).openMarketExpiryDays;
+      await db.from("resale_listings").update({ expires_at: openMarketExpiresAt(new Date(), days).toISOString() }).eq("id", listing.id);
+      await tell(db, listing, [seller], "Your share is on the open market", `No co-owner exercised the right of first refusal on share #${listing.share_number}, so it is now on the open market. It stays listed for ${days} days.`);
     } else {
       moved.exercised += 1;
     }
   }
+
+  // A co-owner offered the share after a cancelled sale who let their window run out: on to the next.
+  await settleOffers(db, propertyId);
 
   // Everything waiting on a winner, including any that stopped part way last time.
   let waiting = db.from("resale_listings").select("*").eq("status", "rofr_exercised");
@@ -198,6 +215,103 @@ export async function settleRofr(db: Db, propertyId?: string): Promise<{ openMar
     if (await resolveElections(db, listing)) moved.resolved += 1;
   }
   return moved;
+}
+
+/**
+ * After a cancelled sale: offer the share to the next best-ranked co-owner who elected, with a fresh short window.
+ * Returns the offer, or null when nobody remains (or resale-decisions.sql hasn't been run, in which case the
+ * caller falls back to withdrawing the listing).
+ */
+async function offerToNextElector(db: Db, listing: ResaleListingRow): Promise<{ election: ElectionRow; closesAt: string; hours: number } | null> {
+  const { data } = await db.from("resale_rofr_elections").select("*").eq("listing_id", listing.id).eq("status", "lost");
+  const next = pickNextElector(((data ?? []) as ElectionRow[]).filter((e) => e.user_id), []);
+  if (!next) return null;
+  const hours = (await loadGovernanceConfig(db)).rofrNextOfferHours;
+  const closesAt = new Date(Date.now() + hours * 3_600_000).toISOString();
+  const { data: offered, error } = await db.from("resale_rofr_elections").update({ status: "offered" }).eq("id", next.id).eq("status", "lost").select("*").maybeSingle();
+  if (error || !offered) return null;
+  const { error: listingError } = await db.from("resale_listings").update({ offer_holder_key: next.holder_key, offer_closes_at: closesAt }).eq("id", listing.id);
+  if (listingError) {
+    await db.from("resale_rofr_elections").update({ status: "lost" }).eq("id", next.id);
+    return null;
+  }
+  return { election: next, closesAt, hours };
+}
+
+/** Nobody is left to offer the share to: the listing is withdrawn and everyone involved is told. */
+async function withdrawForWant(db: Db, listing: ResaleListingRow, involved: Array<{ authUserId: string; email: string | null }>, why: string) {
+  const { data } = await db.from("resale_listings").update({ status: "withdrawn", offer_holder_key: null, offer_closes_at: null }).eq("id", listing.id).in("status", RESALE_LIVE_STATUSES).select("*").maybeSingle();
+  const withdrawn = (data as ResaleListingRow | null) ?? null;
+  if (!withdrawn) return;
+  await audit(db, { id: null, type: "system" }, "resale.listing_withdrawn", withdrawn, { reason: why, no_electing_co_owner_left: true });
+  await tell(db, withdrawn, involved, "A share is no longer for sale", `Share #${withdrawn.share_number} was withdrawn: ${why}`);
+}
+
+/** Everyone who took part in this listing: the seller and every co-owner who elected. */
+async function involvedIn(db: Db, listing: ResaleListingRow, extraUserIds: string[] = []) {
+  const { data } = await db.from("resale_rofr_elections").select("user_id").eq("listing_id", listing.id);
+  const ids = new Set<string>([listing.seller_user_id, ...extraUserIds, ...((data ?? []) as Array<{ user_id: string | null }>).map((e) => e.user_id ?? "").filter(Boolean)]);
+  return Promise.all([...ids].map((id) => userRecipient(db, id)));
+}
+
+/** Moves a listing whose current offer ended (declined or timed out) to the next co-owner, or withdraws it. */
+async function advanceOffer(db: Db, listing: ResaleListingRow, why: "declined" | "lapsed") {
+  await db.from("resale_listings").update({ offer_holder_key: null, offer_closes_at: null }).eq("id", listing.id);
+  const next = await offerToNextElector(db, listing);
+  if (!next) {
+    await withdrawForWant(db, listing, await involvedIn(db, listing), "no co-owner who elected is left to offer it to.");
+    await tellAdmins(db, "Resale listing withdrawn", `Share #${listing.share_number} was withdrawn: the offer was ${why} and no co-owner who elected is left.`);
+    return;
+  }
+  await audit(db, { id: null, type: "system" }, "resale.offered_to_next", listing, { holder_key: next.election.holder_key, rank: next.election.priority_rank_at_election, closes_at: next.closesAt, after: why });
+  await tell(db, listing, [await userRecipient(db, next.election.user_id!)], "You can buy this share", `The sale of share #${listing.share_number} fell through and you are next in line, at ${resaleMoney(listing.asking_price)}. Confirm within ${hoursAsText(next.hours)} to buy it.`, `resale_offer:${listing.id}:${next.election.id}`);
+  await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "Your share was offered to the next co-owner", `The next co-owner who elected has ${hoursAsText(next.hours)} to confirm share #${listing.share_number}.`);
+  await tellAdmins(db, "Resale share offered to the next co-owner", `Share #${listing.share_number} was offered to the next co-owner, who has ${hoursAsText(next.hours)} to confirm.`);
+}
+
+/** Offers whose window ran out. Safe to repeat. */
+export async function settleOffers(db: Db, propertyId?: string): Promise<number> {
+  let query = db.from("resale_listings").select("*").eq("status", "rofr_exercised").lte("offer_closes_at", new Date().toISOString());
+  if (propertyId) query = query.eq("property_id", propertyId);
+  const { data, error } = await query;
+  if (error) return 0; // before resale-decisions.sql is run
+  let n = 0;
+  for (const listing of (data ?? []) as ResaleListingRow[]) {
+    if (!listing.offer_holder_key) continue;
+    const { data: closed } = await db.from("resale_rofr_elections").update({ status: "passed" }).eq("listing_id", listing.id).eq("holder_key", listing.offer_holder_key).eq("status", "offered").select("*").maybeSingle();
+    if (!closed) continue;
+    await audit(db, { id: null, type: "system" }, "resale.offer_lapsed", listing, { holder_key: listing.offer_holder_key });
+    await tell(db, listing, [await userRecipient(db, (closed as ElectionRow).user_id!)], "Your offer on a share ended", `The time to confirm share #${listing.share_number} ran out.`);
+    await advanceOffer(db, listing, "lapsed");
+    n += 1;
+  }
+  return n;
+}
+
+/** Open-market listings past their expiry. The seller is told and can list the share again. */
+export async function expireOpenMarketListings(db: Db): Promise<number> {
+  const { data, error } = await db.from("resale_listings").select("*").eq("status", "open_market");
+  if (error) return 0;
+  const days = (await loadGovernanceConfig(db)).openMarketExpiryDays;
+  let n = 0;
+  for (const found of (data ?? []) as ResaleListingRow[]) {
+    // A listing from before expiry was recorded counts from when its right of first refusal ended.
+    const expiresAt = found.expires_at ? new Date(found.expires_at) : openMarketExpiresAt(new Date(found.rofr_closes_at), days);
+    if (expiresAt.getTime() > Date.now()) continue;
+    const { data: updated } = await db.from("resale_listings").update({ status: "expired" }).eq("id", found.id).eq("status", "open_market").select("*").maybeSingle();
+    const listing = updated as ResaleListingRow | null;
+    if (!listing) continue;
+    // A buyer who had a sale started from their interest keeps it: only a listing with no live sale expires.
+    if (await liveTransaction(db, listing.id)) {
+      await db.from("resale_listings").update({ status: "open_market" }).eq("id", listing.id);
+      continue;
+    }
+    await audit(db, { id: null, type: "system" }, "resale.listing_expired", listing, { expired_at: expiresAt.toISOString(), open_market_days: days });
+    await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "Your listing expired", `Share #${listing.share_number} was on the open market for ${days} days and has expired. You can list it again from your Resale Shop.`);
+    await tellAdmins(db, "Resale listing expired", `The open-market listing of share #${listing.share_number} expired after ${days} days.`);
+    n += 1;
+  }
+  return n;
 }
 
 async function members(db: Db, holder: { type: string; buyerAccountId: string | null; holderKey: string }, listingId: string): Promise<MemberPosition[]> {
@@ -233,6 +347,10 @@ export interface OwnerResaleListing {
   electionCount: number;
   canWithdraw: boolean;
   saleStatus: ResaleTransactionStatus | null;
+  /** When an open-market listing expires, and the notice about what stays with the seller. */
+  expiresAt: string | null;
+  /** The next co-owner has been offered the share after a cancelled sale, until this time. */
+  offerClosesAt: string | null;
 }
 
 export interface CoOwnerResaleListing {
@@ -242,16 +360,20 @@ export interface CoOwnerResaleListing {
   status: ResaleStatus;
   rofrClosesAt: string;
   saleStatus: ResaleTransactionStatus | null;
-  myElection: "active" | "won" | "lost" | "withdrawn" | null;
+  myElection: "active" | "won" | "lost" | "withdrawn" | "offered" | "passed" | null;
   canElect: boolean;
+  /** This share was offered to this co-owner after a cancelled sale: they can confirm until this time. */
+  offer: { closesAt: string } | null;
   consensus: { state: ConsensusState; choice: string | null; members: MemberPosition[] };
 }
 
 /** /owner/properties/:id/resale. Never gated on anything but holding a share. */
-export async function ownerResale(db: Db, userId: string, propertyId: string): Promise<{ allowed: boolean; shares: OwnerResaleShare[]; mine: OwnerResaleListing[]; coOwners: CoOwnerResaleListing[] }> {
+export async function ownerResale(db: Db, userId: string, propertyId: string): Promise<{ allowed: boolean; rofrHours?: number; shares: OwnerResaleShare[]; mine: OwnerResaleListing[]; coOwners: CoOwnerResaleListing[] }> {
   const holder = await holderFor(db, userId, propertyId);
   if (!holder) return { allowed: false, shares: [], mine: [], coOwners: [] };
+  const rofrHours = (await loadGovernanceConfig(db)).rofrWindowHours;
   await settleRofr(db, propertyId);
+  await expireOpenMarketListings(db);
   const { data } = await db.from("resale_listings").select("*").eq("property_id", propertyId).order("created_at", { ascending: false });
   const listings = (data ?? []) as ResaleListingRow[];
 
@@ -284,6 +406,8 @@ export async function ownerResale(db: Db, userId: string, propertyId: string): P
         electionCount: elections.filter((e) => e.status === "active").length,
         canWithdraw: RESALE_LIVE_STATUSES.includes(l.status) && !elections.some((e) => e.status === "won") && !saleStatus,
         saleStatus,
+        expiresAt: l.status === "open_market" ? (l.expires_at ?? null) : null,
+        offerClosesAt: l.offer_holder_key ? (l.offer_closes_at ?? null) : null,
       });
       continue;
     }
@@ -300,11 +424,12 @@ export async function ownerResale(db: Db, userId: string, propertyId: string): P
       rofrClosesAt: l.rofr_closes_at,
       saleStatus: myElection === "won" ? saleStatus : null,
       myElection,
-      canElect: !rofrProblem(l) && myElection !== "active",
+      canElect: !rofrProblem(l) && myElection !== "active" && myElection !== "offered",
+      offer: myElection === "offered" && l.offer_holder_key === holder.holderKey && l.offer_closes_at ? { closesAt: l.offer_closes_at } : null,
       consensus: { ...consensusState(memberRows), members: memberRows },
     });
   }
-  return { allowed: true, shares, mine, coOwners };
+  return { allowed: true, rofrHours, shares, mine, coOwners };
 }
 
 export async function createListing(
@@ -330,8 +455,9 @@ export async function createListing(
     .in("status", RESALE_LIVE_STATUSES);
   if ((live ?? []).length > 0) return { error: liveMessage };
 
+  const rofrHours = (await loadGovernanceConfig(db)).rofrWindowHours;
   const opensAt = new Date();
-  const closesAt = rofrCloseAt(opensAt);
+  const closesAt = rofrCloseAt(opensAt, rofrHours);
   const { data, error } = await db
     .from("resale_listings")
     .insert({
@@ -362,7 +488,7 @@ export async function createListing(
     listing,
     await otherCoOwners(db, listing),
     "A co-owner's share is for sale",
-    `Share #${listing.share_number} is offered at ${resaleMoney(listing.asking_price)}. As a co-owner you have 10 days to exercise your right of first refusal.`,
+    `Share #${listing.share_number} is offered at ${resaleMoney(listing.asking_price)}. As a co-owner you have ${hoursAsText(rofrHours)} to exercise your right of first refusal.`,
     `resale_listed:${listing.id}`,
   );
   return { id: listing.id, rofrClosesAt: listing.rofr_closes_at };
@@ -472,7 +598,8 @@ export async function withdrawListing(db: Db, params: { userId: string; property
   if (!listing) return { error: "This listing can't be withdrawn any more." };
 
   const elections = await activeElections(db, listing.id);
-  await db.from("resale_rofr_elections").update({ status: "lost" }).eq("listing_id", listing.id).eq("status", "active");
+  await db.from("resale_rofr_elections").update({ status: "lost" }).eq("listing_id", listing.id).in("status", ["active", "offered"]);
+  await db.from("resale_listings").update({ offer_holder_key: null, offer_closes_at: null }).eq("id", listing.id);
   await audit(db, { id: params.userId, type: found.holder.type }, "resale.listing_withdrawn", listing, { elections_closed: elections.length, previous_status: found.listing.status });
   await tell(db, listing, await otherCoOwners(db, listing), "A share is no longer for sale", `Share #${listing.share_number} was withdrawn from sale.`);
   await tellAdmins(db, "Resale listing withdrawn", `Share #${listing.share_number} was withdrawn from sale.`);
@@ -505,6 +632,7 @@ export async function openMarketListings(db: Db, userId: string): Promise<{ allo
   const buyer = await onboardedBuyer(db, userId);
   if (!buyer) return { allowed: false, listings: [] };
   await settleRofr(db);
+  await expireOpenMarketListings(db);
   const { data, error } = await db.from("resale_listings").select("*").eq("status", "open_market").order("created_at", { ascending: false });
   if (error) return { allowed: true, listings: [] };
   const { data: interest } = await db.from("resale_interest_requests").select("listing_id").eq("buyer_account_id", buyer.id);
@@ -579,7 +707,11 @@ export interface AdminResaleListing {
   statusLabel: string;
   rofrClosesAt: string;
   elections: Array<{ holderKey: string; rank: number | null; status: string; electedAt: string }>;
-  interested: Array<{ email: string | null; at: string }>;
+  interested: Array<{ buyerAccountId: string; email: string | null; at: string; goldenTicket: boolean }>;
+  /** When an open-market listing expires. */
+  expiresAt: string | null;
+  /** After a cancelled sale: which co-owner holds the offer, and until when. */
+  offer: { holderKey: string; closesAt: string } | null;
   sales: AdminResaleSale[];
   /** Section 754 review flags for the CPA. No basis figures exist on the platform. */
   cpaFlags: Array<{ flagType: string; note: string | null; createdAt: string }>;
@@ -588,6 +720,7 @@ export interface AdminResaleListing {
 
 export async function adminResale(db: Db): Promise<{ rows: AdminResaleListing[] }> {
   await settleRofr(db);
+  await expireOpenMarketListings(db);
   const { data, error } = await db.from("resale_listings").select("*").order("created_at", { ascending: false });
   if (error) throw new Error("Database is missing resale_listings — run resale-shop.sql in Supabase.");
   const rows: AdminResaleListing[] = [];
@@ -598,8 +731,8 @@ export async function adminResale(db: Db): Promise<{ rows: AdminResaleListing[] 
     const { data: interest } = await db.from("resale_interest_requests").select("buyer_account_id, created_at").eq("listing_id", l.id);
     const interested: AdminResaleListing["interested"] = [];
     for (const i of (interest ?? []) as Array<{ buyer_account_id: string; created_at: string }>) {
-      const { data: b } = await db.from("buyer_accounts").select("email").eq("id", i.buyer_account_id).maybeSingle();
-      interested.push({ email: (b?.email as string | null) ?? null, at: i.created_at });
+      const { data: b } = await db.from("buyer_accounts").select("email, golden_ticket_issued").eq("id", i.buyer_account_id).maybeSingle();
+      interested.push({ buyerAccountId: i.buyer_account_id, email: (b?.email as string | null) ?? null, at: i.created_at, goldenTicket: b?.golden_ticket_issued === true });
     }
     const { data: saleRows } = await db.from("resale_transactions").select("*").eq("listing_id", l.id).order("created_at", { ascending: false });
     const sales: AdminResaleSale[] = [];
@@ -634,6 +767,8 @@ export async function adminResale(db: Db): Promise<{ rows: AdminResaleListing[] 
       rofrClosesAt: l.rofr_closes_at,
       elections: ((elections ?? []) as ElectionRow[]).map((e) => ({ holderKey: e.holder_key, rank: e.priority_rank_at_election, status: e.status, electedAt: e.elected_at })),
       interested,
+      expiresAt: l.status === "open_market" ? (l.expires_at ?? null) : null,
+      offer: l.offer_holder_key && l.offer_closes_at ? { holderKey: l.offer_holder_key, closesAt: l.offer_closes_at } : null,
       sales,
       cpaFlags,
       createdAt: l.created_at,
@@ -670,13 +805,20 @@ export async function completeSale(db: Db, adminId: string, transactionId: strin
     .gte("end_date", new Date().toISOString().slice(0, 10))
     .order("start_date", { ascending: true });
   const stays = ((weeks ?? []) as Array<{ start_date: string }>).map((w) => w.start_date);
-  await tell(
-    db,
-    listing,
-    [await userRecipient(db, listing.seller_user_id)],
-    "Your share sale is complete",
-    `The sale of share #${listing.share_number} is complete.${stays.length ? ` You keep the ${stays.length} Use Calendar week${stays.length === 1 ? "" : "s"} you already picked, starting ${stays.join(", ")}.` : ""}`,
-  );
+  const sellerMessage = `The sale of share #${listing.share_number} is complete.${stays.length ? ` You keep the ${stays.length} Use Calendar week${stays.length === 1 ? "" : "s"} you already picked, starting ${stays.join(", ")}.` : ""}`;
+  // A seller who sold every share can't open the owner area; their notice links to the read-only page for their weeks.
+  const stillHolds = await holderFor(db, listing.seller_user_id, listing.property_id);
+  if (stillHolds) {
+    await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "Your share sale is complete", sellerMessage);
+  } else {
+    await deliver(db as never, await userRecipient(db, listing.seller_user_id), {
+      subject: "Your share sale is complete",
+      message: sellerMessage,
+      link: formerSellerLink(listing.property_id),
+      type: "former_seller_weeks",
+      propertyId: listing.property_id,
+    });
+  }
   return { applied: true };
 }
 
@@ -691,11 +833,142 @@ export async function cancelSale(db: Db, params: { adminId: string; transactionI
     .maybeSingle();
   const sale = data as ResaleTransactionRow | null;
   if (!sale) throw new Error("Only a sale waiting to close can be cancelled.");
-  await db.from("resale_rofr_elections").update({ status: "lost" }).eq("listing_id", sale.listing_id).eq("status", "won");
-  const { data: l } = await db.from("resale_listings").update({ status: "withdrawn" }).eq("id", sale.listing_id).in("status", RESALE_LIVE_STATUSES).select("*").maybeSingle();
+  // The cancelled buyer has had their turn: marked 'passed' so they are never offered the share again. (Before
+  // resale-decisions.sql the status isn't allowed, and it is closed out as 'lost' like before.)
+  const { error: passError } = await db.from("resale_rofr_elections").update({ status: "passed" }).eq("listing_id", sale.listing_id).eq("status", "won");
+  if (passError) await db.from("resale_rofr_elections").update({ status: "lost" }).eq("listing_id", sale.listing_id).eq("status", "won");
+  const { data: current } = await db.from("resale_listings").select("*").eq("id", sale.listing_id).maybeSingle();
+  const found = current as ResaleListingRow | null;
+  if (!found || !RESALE_LIVE_STATUSES.includes(found.status)) return;
+
+  // The next best-ranked co-owner who elected, with a fresh short window.
+  const next = passError ? null : await offerToNextElector(db, found);
+  if (next) {
+    await audit(db, { id: params.adminId, type: "admin" }, "resale.sale_cancelled", found, { transaction_id: sale.id, reason: params.reason, buyer_holder_key: sale.buyer_holder_key, offered_to: next.election.holder_key, offer_closes_at: next.closesAt });
+    const window = hoursAsText(next.hours);
+    await tell(db, found, [await userRecipient(db, next.election.user_id!)], "You can buy this share", `The sale of share #${found.share_number} was cancelled and you are next in line, at ${resaleMoney(found.asking_price)}. Confirm within ${window} to buy it.`, `resale_offer:${found.id}:${next.election.id}`);
+    await tell(db, found, [await userRecipient(db, sale.buyer_user_id)], "A share sale was cancelled", `The sale of share #${found.share_number} was cancelled. Reason: ${params.reason}`);
+    await tell(db, found, [await userRecipient(db, found.seller_user_id)], "Your share was offered to the next co-owner", `The sale of share #${found.share_number} was cancelled. The next co-owner who elected has ${window} to confirm. Reason: ${params.reason}`);
+    const others = await involvedIn(db, found);
+    await tell(db, found, others.filter((r) => r.authUserId !== next.election.user_id && r.authUserId !== sale.buyer_user_id && r.authUserId !== found.seller_user_id), "A resale offer moved on", `The sale of share #${found.share_number} fell through. The next co-owner in line was offered it.`);
+    return;
+  }
+
+  // Nobody who elected is left: the listing is withdrawn, as it always was.
+  const { data: l } = await db.from("resale_listings").update({ status: "withdrawn", offer_holder_key: null, offer_closes_at: null }).eq("id", sale.listing_id).in("status", RESALE_LIVE_STATUSES).select("*").maybeSingle();
   const listing = l as ResaleListingRow | null;
   if (!listing) return;
-  await audit(db, { id: params.adminId, type: "admin" }, "resale.sale_cancelled", listing, { transaction_id: sale.id, reason: params.reason, buyer_holder_key: sale.buyer_holder_key });
-  const message = `The sale of share #${listing.share_number} was cancelled. Reason: ${params.reason}`;
-  await tell(db, listing, [await userRecipient(db, sale.buyer_user_id), await userRecipient(db, listing.seller_user_id)], "A share sale was cancelled", message);
+  await audit(db, { id: params.adminId, type: "admin" }, "resale.sale_cancelled", listing, { transaction_id: sale.id, reason: params.reason, buyer_holder_key: sale.buyer_holder_key, no_electing_co_owner_left: true });
+  const message = `The sale of share #${listing.share_number} was cancelled and no co-owner who elected is left to offer it to, so it is withdrawn. Reason: ${params.reason}`;
+  await tell(db, listing, await involvedIn(db, listing, [sale.buyer_user_id]), "A share sale was cancelled", message);
+}
+
+/** The offered co-owner confirms: their election is live again and the sale opens for them. */
+export async function confirmOffer(db: Db, params: { userId: string; propertyId: string; listingId: string }): Promise<{ error?: string }> {
+  const found = await loadForHolder(db, params.userId, params.propertyId, params.listingId);
+  if (!found) return { error: "This listing isn't available." };
+  const { holder, listing } = found;
+  if (listing.offer_holder_key !== holder.holderKey || !listing.offer_closes_at) return { error: "This share isn't offered to you." };
+  if (Date.now() >= new Date(listing.offer_closes_at).getTime()) return { error: "Your time to confirm this share has run out." };
+  const { data: election, error } = await db
+    .from("resale_rofr_elections")
+    .update({ status: "active", elected_at: new Date().toISOString() })
+    .eq("listing_id", listing.id)
+    .eq("holder_key", holder.holderKey)
+    .eq("status", "offered")
+    .select("*")
+    .maybeSingle();
+  if (error || !election) return { error: "This share isn't offered to you." };
+  await db.from("resale_listings").update({ offer_holder_key: null, offer_closes_at: null }).eq("id", listing.id);
+  await audit(db, { id: params.userId, type: holder.type }, "resale.offer_confirmed", listing, { holder_key: holder.holderKey, asking_price: listing.asking_price });
+  const { data: fresh } = await db.from("resale_listings").select("*").eq("id", listing.id).maybeSingle();
+  await resolveElections(db, (fresh as ResaleListingRow) ?? listing);
+  return {};
+}
+
+export async function declineOffer(db: Db, params: { userId: string; propertyId: string; listingId: string }): Promise<{ error?: string }> {
+  const found = await loadForHolder(db, params.userId, params.propertyId, params.listingId);
+  if (!found) return { error: "This listing isn't available." };
+  const { holder, listing } = found;
+  if (listing.offer_holder_key !== holder.holderKey) return { error: "This share isn't offered to you." };
+  const { data } = await db.from("resale_rofr_elections").update({ status: "passed" }).eq("listing_id", listing.id).eq("holder_key", holder.holderKey).eq("status", "offered").select("id").maybeSingle();
+  if (!data) return { error: "This share isn't offered to you." };
+  await audit(db, { id: params.userId, type: holder.type }, "resale.offer_declined", listing, { holder_key: holder.holderKey });
+  await advanceOffer(db, listing, "declined");
+  return {};
+}
+
+/**
+ * Turns an expressed interest on an open-market listing into a sale. Only for a buyer who already holds a Golden Ticket:
+ * anyone else has to finish the normal onboarding first. The sale is the same pending-closing record a right of first
+ * refusal creates; no money moves.
+ */
+export async function convertInterestToSale(db: Db, params: { adminId: string; listingId: string; buyerAccountId: string }): Promise<{ transactionId: string }> {
+  const { data: l } = await db.from("resale_listings").select("*").eq("id", params.listingId).maybeSingle();
+  const listing = l as ResaleListingRow | null;
+  if (!listing || listing.status !== "open_market") throw new Error("Only a listing on the open market can be sold this way.");
+  const { data: interest } = await db.from("resale_interest_requests").select("id").eq("listing_id", listing.id).eq("buyer_account_id", params.buyerAccountId).maybeSingle();
+  if (!interest) throw new Error("That buyer hasn't expressed interest in this share.");
+  const { data: buyer } = await db.from("buyer_accounts").select("id, auth_user_id, email, golden_ticket_issued").eq("id", params.buyerAccountId).maybeSingle();
+  if (!buyer) throw new Error("Buyer not found.");
+  if (buyer.golden_ticket_issued !== true) throw new Error(GOLDEN_TICKET_REQUIRED);
+  if (await liveTransaction(db, listing.id)) throw new Error("This share already has a sale.");
+  const { data, error } = await db
+    .from("resale_transactions")
+    .insert({ listing_id: listing.id, buyer_holder_key: buyer.id, buyer_user_id: buyer.auth_user_id, price: listing.asking_price, flat_fee: listing.flat_fee, status: "pending_closing" })
+    .select("*")
+    .maybeSingle();
+  if (error?.code === "23505") throw new Error("This share already has a sale.");
+  if (error || !data) throw new Error("Database is missing the resale sales — run resale-completion.sql in Supabase.");
+  const sale = data as ResaleTransactionRow;
+  await audit(db, { id: params.adminId, type: "admin" }, "resale.interest_converted", listing, { transaction_id: sale.id, buyer_account_id: buyer.id, price: sale.price });
+  await tell(db, listing, [{ authUserId: buyer.auth_user_id, email: (buyer.email as string | null) ?? null }], "Your share purchase is set up", `divieight set up your purchase of share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`);
+  await tell(db, listing, [await userRecipient(db, listing.seller_user_id)], "A buyer is confirmed for your share", `A buyer is confirmed for share #${listing.share_number} at ${resaleMoney(listing.asking_price)}. divieight will contact you about closing.`);
+  return { transactionId: sale.id };
+}
+
+export const GOLDEN_TICKET_REQUIRED = "This buyer hasn't been issued a Golden Ticket yet. They must complete the normal onboarding first.";
+
+// ---------------------------------------------------------------------------
+// A seller who sold every share: read-only, and only their picked weeks
+// ---------------------------------------------------------------------------
+
+export interface FormerSellerWeeks {
+  allowed: boolean;
+  propertyLabel: string;
+  weeks: Array<{ year: number; weekNumber: number; startDate: string; endDate: string; isHoliday: boolean; upcoming: boolean }>;
+}
+
+/**
+ * /owner/former/:propertyId. For someone who sold shares in this property and holds none now: the Use Calendar
+ * weeks they already picked, and nothing else (no votes, no co-owners, no dashboard). A current holder, or someone
+ * who never sold here, gets nothing: the same answer as for a property that doesn't exist.
+ */
+export async function formerSellerWeeks(db: Db, userId: string, propertyId: string): Promise<FormerSellerWeeks> {
+  const none: FormerSellerWeeks = { allowed: false, propertyLabel: "", weeks: [] };
+  if (await holderFor(db, userId, propertyId)) return none;
+  const { data: sold } = await db.from("resale_listings").select("seller_holder_key").eq("property_id", propertyId).eq("seller_user_id", userId).eq("status", "sold");
+  const keys = [...new Set(((sold ?? []) as Array<{ seller_holder_key: string }>).map((l) => l.seller_holder_key))];
+  if (keys.length === 0) return none;
+  const { data: weeks } = await db
+    .from("use_calendar_weeks")
+    .select("year, week_number, start_date, end_date, is_holiday")
+    .eq("property_id", propertyId)
+    .in("holder_key", keys)
+    .order("start_date", { ascending: true });
+  const today = new Date().toISOString().slice(0, 10);
+  const { propertyCard } = await import("@/lib/owner.functions");
+  const { label } = await propertyCard(db, propertyId);
+  return {
+    allowed: true,
+    propertyLabel: label,
+    weeks: ((weeks ?? []) as Array<{ year: number; week_number: number; start_date: string; end_date: string; is_holiday: boolean }>).map((w) => ({
+      year: w.year,
+      weekNumber: w.week_number,
+      startDate: w.start_date,
+      endDate: w.end_date,
+      isHoliday: w.is_holiday,
+      upcoming: w.end_date >= today,
+    })),
+  };
 }

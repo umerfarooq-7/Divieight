@@ -8,9 +8,12 @@ import { timeLeft } from "@/components/owner/VoteBits";
 import { OwnerLoading, OwnerPageShell } from "@/components/owner/useOwnerProperty";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDate } from "@/lib/format-date";
-import { RESALE_FLAT_FEE, RESALE_ROFR_HOURS, RESALE_STATUS_LABELS, resaleMoney, ROFR_WINNER_RULE, type RofrPosition } from "@/lib/resale";
+import { GOVERNANCE_DEFAULTS, hoursAsText } from "@/lib/governance-config";
+import { RESALE_FLAT_FEE, RESALE_STATUS_LABELS, RESALE_UNPAID_NOTICE, resaleMoney, ROFR_WINNER_RULE, type RofrPosition } from "@/lib/resale";
 import {
+  confirmResaleOffer,
   createResaleListing,
+  declineResaleOffer,
   exerciseResaleRofr,
   getOwnerResale,
   recordResalePosition,
@@ -73,7 +76,7 @@ function OwnerResalePage() {
       </Link>
       <h1 className="mt-4 font-display text-2xl font-semibold text-foreground sm:text-3xl">Resale Shop</h1>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-        Co-owners get the first chance to buy a listed share. If none of them does within 10 days, it goes on the open market.
+        Co-owners get the first chance to buy a listed share. If none of them does within {data ? hoursAsText(data.rofrHours ?? GOVERNANCE_DEFAULTS.rofrWindowHours) : "the window"}, it goes on the open market.
         If more than one co-owner elects to buy: {ROFR_WINNER_RULE.toLowerCase()}.
       </p>
       <div className="mt-6 space-y-6">
@@ -88,7 +91,7 @@ function OwnerResalePage() {
           <OwnerLoading />
         ) : (
           <>
-            <ListShare propertyId={propertyId} shares={data.shares} />
+            <ListShare propertyId={propertyId} shares={data.shares} rofrHours={data.rofrHours ?? GOVERNANCE_DEFAULTS.rofrWindowHours} />
             {data.mine.length > 0 ? (
               <section>
                 <h2 className="font-display text-lg font-semibold text-foreground">My listings</h2>
@@ -118,7 +121,7 @@ function OwnerResalePage() {
   );
 }
 
-function ListShare({ propertyId, shares }: { propertyId: string; shares: OwnerResaleShare[] }) {
+function ListShare({ propertyId, shares, rofrHours }: { propertyId: string; shares: OwnerResaleShare[]; rofrHours: number }) {
   const refresh = useRefresh(propertyId);
   const create = useServerFn(createResaleListing);
   const listable = shares.filter((s) => !s.locked && !s.listed);
@@ -210,8 +213,9 @@ function ListShare({ propertyId, shares }: { propertyId: string; shares: OwnerRe
               A {resaleMoney(RESALE_FLAT_FEE)} flat technology-service fee applies. It is collected at sale; nothing is charged now.
             </p>
             <p className="mt-2 text-muted-foreground">
-              Your co-owners are told now and have {RESALE_ROFR_HOURS} hours (10 days) to buy at this price before it goes on the open market.
+              Your co-owners are told now and have {rofrHours} hours ({hoursAsText(rofrHours)}) to buy at this price before it goes on the open market.
             </p>
+            <p className="mt-2 text-muted-foreground">{RESALE_UNPAID_NOTICE}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={mut.isPending} onClick={() => mut.mutate()} className={primaryButton}>
@@ -251,8 +255,12 @@ function MyListing({ propertyId, listing: l }: { propertyId: string; listing: Ow
         {resaleMoney(l.flatFee)} technology-service fee at sale.
         {l.status === "rofr_open" ? ` Window closes in ${untilClose(l.rofrClosesAt)}.` : ""}
         {l.electionCount > 0 ? ` ${l.electionCount} co-owner election${l.electionCount === 1 ? "" : "s"}.` : ""}
-        {l.saleStatus === "pending_closing" ? " A co-owner is confirmed as the buyer; divieight will contact you about closing." : ""}
+        {l.saleStatus === "pending_closing" ? " A buyer is confirmed; divieight will contact you about closing." : ""}
+        {l.status === "open_market" && l.expiresAt ? ` It stays on the open market until ${formatDate(l.expiresAt)}.` : ""}
+        {l.status === "expired" ? " This listing expired. You can list the share again." : ""}
+        {l.offerClosesAt ? ` The next co-owner who elected has until ${formatDate(l.offerClosesAt)} to confirm.` : ""}
       </p>
+      <p className="mt-1 text-xs text-muted-foreground">{RESALE_UNPAID_NOTICE}</p>
       {l.canWithdraw ? (
         <button type="button" disabled={mut.isPending} onClick={() => mut.mutate()} className={`mt-3 ${quietButton}`}>
           Withdraw listing
@@ -266,6 +274,8 @@ function CoOwnerListing({ propertyId, listing: l }: { propertyId: string; listin
   const refresh = useRefresh(propertyId);
   const exercise = useServerFn(exerciseResaleRofr);
   const withdraw = useServerFn(withdrawResaleElection);
+  const confirmOffer = useServerFn(confirmResaleOffer);
+  const declineOffer = useServerFn(declineResaleOffer);
   const [confirming, setConfirming] = useState(false);
   const onResult = (message: string) => (r: { error?: string }) => {
     setConfirming(false);
@@ -276,6 +286,8 @@ function CoOwnerListing({ propertyId, listing: l }: { propertyId: string; listin
   const onError = (e: Error) => toast.error(e.message);
   const exerciseMut = useMutation({ mutationFn: () => exercise({ data: { propertyId, listingId: l.id } }), onSuccess: onResult("Right of first refusal exercised."), onError });
   const withdrawMut = useMutation({ mutationFn: () => withdraw({ data: { propertyId, listingId: l.id } }), onSuccess: onResult("Election withdrawn."), onError });
+  const confirmOfferMut = useMutation({ mutationFn: () => confirmOffer({ data: { propertyId, listingId: l.id } }), onSuccess: onResult("Confirmed. You are the buyer."), onError });
+  const declineOfferMut = useMutation({ mutationFn: () => declineOffer({ data: { propertyId, listingId: l.id } }), onSuccess: onResult("Offer declined."), onError });
   const windowOpen = l.status === "rofr_open";
   const multiMember = l.consensus.members.length > 1;
   const ready = !multiMember || (l.consensus.state === "agreed" && l.consensus.choice === "exercise");
@@ -299,6 +311,23 @@ function CoOwnerListing({ propertyId, listing: l }: { propertyId: string; listin
         </p>
       ) : l.myElection === "lost" ? (
         <p className="mt-2 text-sm text-muted-foreground">Another co-owner was confirmed as the buyer, or the listing closed. {ROFR_WINNER_RULE}.</p>
+      ) : null}
+
+      {l.offer ? (
+        <div className="mt-3 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm">
+          <p className="font-medium text-foreground">The earlier sale fell through and you are next in line.</p>
+          <p className="mt-1 text-muted-foreground">
+            Confirm to buy share #{l.shareNumber} at {resaleMoney(l.askingPrice)}. You have until {formatDate(l.offer.closesAt)} ({untilClose(l.offer.closesAt)} left).
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" disabled={confirmOfferMut.isPending} onClick={() => confirmOfferMut.mutate()} className={primaryButton}>
+              Confirm purchase
+            </button>
+            <button type="button" disabled={declineOfferMut.isPending} onClick={() => declineOfferMut.mutate()} className={quietButton}>
+              Decline
+            </button>
+          </div>
+        </div>
       ) : null}
 
       {l.canElect && multiMember ? (

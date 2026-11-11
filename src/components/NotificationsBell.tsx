@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { groupByProperty } from "@/lib/owner-notifications";
+import { groupByProperty, notificationHref } from "@/lib/owner-notifications";
 import { getNotificationPropertyLabels } from "@/lib/owner-notifications.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,11 @@ export function NotificationsBell() {
                   <button
                     key={n.id}
                     type="button"
-                    onClick={() => markOne(n.id)}
+                    onClick={() => {
+                      void markOne(n.id);
+                      const href = notificationHref(n);
+                      if (href) window.location.assign(href);
+                    }}
                     className={cn(
                       "flex w-full flex-col items-start gap-1 border-b border-border/60 px-4 py-3 text-left transition-colors last:border-0 hover:bg-secondary/60",
                       !n.is_read && "bg-accent/5",
@@ -126,6 +130,7 @@ export function NotificationsBell() {
                           </span>
                         ) : null}
                         {n.message}
+                        {notificationHref(n) ? <span className="ml-1 font-medium text-accent">See the weeks you picked.</span> : null}
                       </p>
                     </div>
                     <p className="pl-3.5 text-[11px] text-muted-foreground">

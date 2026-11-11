@@ -37,6 +37,7 @@ BEGIN
       ('divieight-use-calendar-sweep',       'use-calendar-sweep',        '15 * * * *',   'secret'),
       ('divieight-retention-sweep',          'retention-sweep',           '25 * * * *',   'secret'),
       ('divieight-resale-sweep',             'resale-sweep',              '35 * * * *',   'secret'),
+      ('divieight-resale-expiry',            'resale-expiry-sweep',       '30 4 * * *',   'secret'),
       ('divieight-capital-call-sweep',       'capital-call-sweep',        '5 13 * * *',   'secret'),
       ('divieight-conversion-sweep',         'conversion-sweep',          '45 * * * *',   'secret'),
       ('divieight-owner-reminders',          'owner-reminders-sweep',     '10 * * * *',   'secret'),

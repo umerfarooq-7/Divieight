@@ -4,6 +4,8 @@
 // "Master LLC with internal Series cells" structure (explicitly rejected).
 // divieight, LLC is always the Manager — a fixed clause, never configurable.
 
+import { oaDraftClause, oaTermsFrom, type OaTerms } from "@/constants/oaDraftClauses";
+
 export const RETENTION_LOCK_MONTHS = 12;
 
 export interface CapTableRow {
@@ -83,8 +85,11 @@ export function draftOperatingAgreement(input: {
   property: { address: string; city: string; state: string; zip: string };
   capTable: CapTableRow[];
   generatedAt: string;
+  /** The numbers the draft clauses quote (the governance settings). Defaults when not given. */
+  terms?: OaTerms;
 }): string {
   const { llcName, property, capTable, generatedAt } = input;
+  const terms = input.terms ?? oaTermsFrom();
   const roster =
     capTable.length === 0
       ? "  [MEMBER ROSTER PENDING — no shares recorded at generation time]"
@@ -143,6 +148,7 @@ ARTICLE IV — RETENTION LOCK
     substitution or as required by law.
 4.3 Retention Lock expiry dates are recorded per unit in Article II and are
     maintained on the Company cap table.
+${oaDraftClause("retention_exceptions").render(terms)}
 
 ARTICLE V — USE CALENDAR
 5.1 Occupancy is allocated among the eight units through the divieight Use
@@ -156,6 +162,7 @@ ARTICLE VI — TRANSFERS AND SUBSTITUTION
 6.1 After the Retention Lock, transfers proceed only through the platform's
     substitution process, with the Manager confirming the transferee meets
     the Company's member requirements.
+${oaDraftClause("right_of_first_refusal").render(terms)}
 
 ARTICLE VII — DRAFT PLACEHOLDERS
     [MEMBER ROSTER — FINALIZED AT CLOSING-READY]
@@ -201,12 +208,14 @@ export function finalOperatingAgreement(input: {
   capTable: CapTableRow[];
   signers: Stage2Signer[];
   lockedAt: string;
+  terms?: OaTerms;
 }): string {
   const draft = draftOperatingAgreement({
     llcName: input.llcName,
     property: input.property,
     capTable: input.capTable,
     generatedAt: input.lockedAt,
+    terms: input.terms,
   });
   const body = draft
     .replace("DRAFT LIMITED LIABILITY COMPANY OPERATING AGREEMENT", "LIMITED LIABILITY COMPANY OPERATING AGREEMENT")

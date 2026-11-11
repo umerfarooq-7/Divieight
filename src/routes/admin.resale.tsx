@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format-date";
 import { resaleMoney, ROFR_WINNER_RULE } from "@/lib/resale";
-import { cancelResaleSale, completeResaleSale, listResaleForAdmin } from "@/lib/resale.functions";
+import { cancelResaleSale, completeResaleSale, convertResaleInterest, listResaleForAdmin } from "@/lib/resale.functions";
 import type { AdminResaleListing, AdminResaleSale } from "@/lib/resale.server";
 
 export const Route = createFileRoute("/admin/resale")({
@@ -72,7 +72,10 @@ function ListingCard({ row }: { row: AdminResaleListing }) {
         <Fact label="Asking price" value={resaleMoney(row.askingPrice)} />
         <Fact label="Fee at sale" value={resaleMoney(row.flatFee)} />
         <Fact label="ROFR closes" value={formatDate(row.rofrClosesAt)} />
+        {row.expiresAt ? <Fact label="Open market until" value={formatDate(row.expiresAt)} /> : null}
+        {row.offer ? <Fact label="Offered to next co-owner until" value={formatDate(row.offer.closesAt)} /> : null}
       </dl>
+      <p className="mt-2 text-xs text-muted-foreground">Amounts already allocated to the seller stay with the seller after a sale.</p>
       {row.elections.length > 0 ? (
         <div className="mt-3 text-sm">
           <p className="font-medium text-foreground">Elections</p>
@@ -90,9 +93,7 @@ function ListingCard({ row }: { row: AdminResaleListing }) {
           <p className="font-medium text-foreground">Interested buyers</p>
           <ul className="mt-1 space-y-1 text-muted-foreground">
             {row.interested.map((i, index) => (
-              <li key={index} className="break-words">
-                {i.email ?? "Buyer"} · {formatDate(i.at)}
-              </li>
+              <InterestRow key={index} row={row} interest={i} />
             ))}
           </ul>
         </div>
@@ -113,6 +114,29 @@ function ListingCard({ row }: { row: AdminResaleListing }) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** One expressed interest. Only a buyer who already holds a Golden Ticket can be turned into a sale. */
+function InterestRow({ row, interest: i }: { row: AdminResaleListing; interest: AdminResaleListing["interested"][number] }) {
+  const qc = useQueryClient();
+  const convert = useServerFn(convertResaleInterest);
+  const mut = useMutation({
+    mutationFn: () => convert({ data: { listingId: row.id, buyerAccountId: i.buyerAccountId } }),
+    onSuccess: () => toast.success("Sale created. It now waits to close."),
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => void qc.invalidateQueries({ queryKey: ["admin-resale"] }),
+  });
+  const canConvert = row.status === "open_market" && row.sales.every((s) => s.status === "cancelled");
+  return (
+    <li className="break-words">
+      {i.email ?? "Buyer"} · {formatDate(i.at)} · {i.goldenTicket ? "Golden Ticket" : "No Golden Ticket yet: finish onboarding first"}
+      {canConvert && i.goldenTicket ? (
+        <button type="button" disabled={mut.isPending} onClick={() => mut.mutate()} className="ml-3 font-medium text-primary hover:underline">
+          Convert to sale
+        </button>
+      ) : null}
+    </li>
   );
 }
 
@@ -157,6 +181,7 @@ function SalePanel({ sale: s }: { sale: AdminResaleSale }) {
           {confirming ? (
             <div className="space-y-2">
               <p className="text-foreground">This moves the share to the buyer on the cap table, starts their Retention Lock and can't be undone here.</p>
+              <p className="text-muted-foreground">Amounts already allocated to the seller stay with the seller after this sale. They aren't passed to the buyer, and don't block it.</p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" disabled={busy} onClick={() => completeMut.mutate()} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
                   {completeMut.isPending ? "Completing…" : "Confirm complete"}

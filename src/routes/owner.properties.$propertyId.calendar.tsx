@@ -124,6 +124,7 @@ function OwnerCalendarPage() {
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Pick one {year.phase === "holiday" ? "holiday " : ""}week.
+                  {year.phase === "holiday" ? ` Holiday turns follow your shares: you hold ${year.myHolidayTurns}, so you get ${year.myHolidayTurns} holiday turn${year.myHolidayTurns === 1 ? "" : "s"} in each round.` : ""}
                   {year.deadlineAt ? ` You have ${timeLeft(new Date(year.deadlineAt).getTime(), Date.now())}, then the turn moves on.` : ""}
                 </p>
               </div>

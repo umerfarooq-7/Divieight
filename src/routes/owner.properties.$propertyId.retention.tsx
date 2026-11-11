@@ -78,14 +78,14 @@ function OwnerRetentionPage() {
         ) : authLoading || isLoading || !data || denied ? (
           <OwnerLoading />
         ) : (
-          data.shares.map((share) => <ShareCard key={share.shareNumber} propertyId={propertyId} share={share} userId={user!.id} />)
+          data.shares.map((share) => <ShareCard key={share.shareNumber} propertyId={propertyId} share={share} userId={user!.id} voteDays={data.voteDays ?? RETENTION_VOTE_DAYS} />)
         )}
       </div>
     </OwnerPageShell>
   );
 }
 
-function ShareCard({ propertyId, share, userId }: { propertyId: string; share: OwnerRetentionShare; userId: string }) {
+function ShareCard({ propertyId, share, userId, voteDays }: { propertyId: string; share: OwnerRetentionShare; userId: string; voteDays: number }) {
   const [requesting, setRequesting] = useState(false);
   const Icon = share.locked ? Lock : LockOpen;
   return (
@@ -114,7 +114,7 @@ function ShareCard({ propertyId, share, userId }: { propertyId: string; share: O
           </button>
         ) : null}
       </div>
-      {requesting ? <RequestForm propertyId={propertyId} shareNumber={share.shareNumber} userId={userId} onDone={() => setRequesting(false)} /> : null}
+      {requesting ? <RequestForm propertyId={propertyId} shareNumber={share.shareNumber} userId={userId} voteDays={voteDays} onDone={() => setRequesting(false)} /> : null}
       {share.requests.length > 0 ? (
         <ul className="mt-4 space-y-3 border-t border-border pt-4">
           {share.requests.map((r) => (
@@ -126,7 +126,7 @@ function ShareCard({ propertyId, share, userId }: { propertyId: string; share: O
   );
 }
 
-function RequestForm({ propertyId, shareNumber, userId, onDone }: { propertyId: string; shareNumber: number; userId: string; onDone: () => void }) {
+function RequestForm({ propertyId, shareNumber, userId, voteDays, onDone }: { propertyId: string; shareNumber: number; userId: string; voteDays: number; onDone: () => void }) {
   const qc = useQueryClient();
   const submit = useServerFn(requestRetentionException);
   const [exceptionType, setExceptionType] = useState<RetentionExceptionType>("hardship");
@@ -180,7 +180,7 @@ function RequestForm({ propertyId, shareNumber, userId, onDone }: { propertyId: 
               <span className="mt-1 block text-xs text-muted-foreground">
                 {type === "hardship"
                   ? "The divieight Manager reviews your request."
-                  : `Opens a ${RETENTION_VOTE_DAYS}-day vote. Every issued share must vote Yes, including yours. Co-owners will see your reason.`}
+                  : `Opens a ${voteDays}-day vote. Every issued share must vote Yes, including yours. Co-owners will see your reason.`}
               </span>
             </label>
           ))}

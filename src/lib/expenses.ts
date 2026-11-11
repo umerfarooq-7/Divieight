@@ -2,6 +2,7 @@
  * Expense Management: the pro-rata split, the capital call rules and status labels.
  * Nothing here moves money: an owner marks a payment and an admin confirms it.
  */
+import { GOVERNANCE_DEFAULTS } from "@/lib/governance-config";
 
 export type ExpenseStatus = "draft" | "posted" | "voided";
 export type ExpenseAllocationStatus = "due" | "paid" | "waived";
@@ -10,15 +11,16 @@ export type CapitalCallAllocationStatus = "due" | "marked_paid" | "confirmed" | 
 export type PaymentKind = "expense" | "capital_call";
 
 /**
- * PLACEHOLDER pending the Operating Agreement: a capital call above this total
- * needs a passed owner vote before it can be issued. Exactly this amount doesn't.
+ * A capital call strictly above the threshold needs a passed Major vote before it can be issued. Exactly the
+ * threshold doesn't. The number is the governance config's (src/lib/governance-config.ts); this is its default,
+ * for callers with no config in hand.
  */
-export const CAPITAL_CALL_VOTE_THRESHOLD = 10_000;
-export const CAPITAL_CALL_VOTE_THRESHOLD_IS_PLACEHOLDER = true;
+export const CAPITAL_CALL_VOTE_THRESHOLD = GOVERNANCE_DEFAULTS.capitalCallVoteThresholdUsd;
+export const CAPITAL_CALL_VOTE_THRESHOLD_IS_PLACEHOLDER = false;
 /** PLACEHOLDER: OA 3.3 asks for "member approval" without naming a threshold. */
 export const CAPITAL_CALL_VOTE_TYPE = "major" as const;
 
-export const capitalCallNeedsVote = (totalAmount: number) => toCents(totalAmount) > toCents(CAPITAL_CALL_VOTE_THRESHOLD);
+export const capitalCallNeedsVote = (totalAmount: number, thresholdUsd: number = CAPITAL_CALL_VOTE_THRESHOLD) => toCents(totalAmount) > toCents(thresholdUsd);
 
 export const EXPENSE_CATEGORIES = [
   "Plumbing",

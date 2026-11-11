@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2 } from "lucide-react";
 import { listEntityGenesis } from "@/lib/entity-genesis.functions";
+import { OA_DRAFT_CLAUSES, OA_DRAFT_CLAUSES_NOTE, OA_DRAFT_MARKER } from "@/constants/oaDraftClauses";
 
 export const Route = createFileRoute("/admin/entity-genesis")({
   component: AdminEntityGenesis,
@@ -32,6 +33,18 @@ function AdminEntityGenesis() {
           table below reflects who holds what right now.
         </p>
       </header>
+
+      <section className="mb-6 rounded-xl border border-border bg-card p-4 text-sm" aria-label="Draft Operating Agreement clauses">
+        <p className="font-medium text-foreground">Draft Operating Agreement clauses ({OA_DRAFT_MARKER})</p>
+        <p className="mt-1 text-muted-foreground">{OA_DRAFT_CLAUSES_NOTE}</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-foreground">
+          {OA_DRAFT_CLAUSES.map((c) => (
+            <li key={c.id}>
+              Article {c.article}, clause {c.number}: {c.title}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading entities…</p>

@@ -135,7 +135,9 @@ describe("Final Operating Agreement — parallel platform-native signing", () =>
     expect(text).toContain("D8 Independence Lusk, LLC");
     expect(text).toContain("file no. 7654321");
     expect(text).toContain("MEMBER ROSTER — FINAL");
-    expect(text).not.toContain("DRAFT");
+    // The only "DRAFT" left in the final text is the marker on the two clauses still pending counsel review.
+    expect(text.replace(/DRAFT: pending counsel review/g, "")).not.toContain("DRAFT");
+    expect(text.match(/DRAFT: pending counsel review/g)).toHaveLength(2);
     expect(text.match(/Retained Seller Share/g)).toHaveLength(5);
     expect(text.match(/\[SIGNATURE PENDING\]/g)).toHaveLength(3); // Alice, Bob, Carol
     expect(text).toContain("divieight, LLC is the Manager");

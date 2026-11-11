@@ -42,6 +42,7 @@ import { Route as AdminEarnestMoneyRouteImport } from './routes/admin.earnest-mo
 import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-genesis'
 import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
 import { Route as AdminFounderRouteImport } from './routes/admin.founder'
+import { Route as AdminGovernanceSettingsRouteImport } from './routes/admin.governance-settings'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminLibraryRouteImport } from './routes/admin.library'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
@@ -152,6 +153,7 @@ import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
 import { Route as ApiPublicOwnerRemindersSweepRouteImport } from './routes/api.public.owner-reminders-sweep'
+import { Route as ApiPublicResaleExpirySweepRouteImport } from './routes/api.public.resale-expiry-sweep'
 import { Route as ApiPublicResaleSweepRouteImport } from './routes/api.public.resale-sweep'
 import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
@@ -176,6 +178,7 @@ import { Route as BuyerOnboardingW9RouteImport } from './routes/buyer.onboarding
 import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
 import { Route as EmbedLibrarySlugRouteImport } from './routes/embed.library.$slug'
 import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
+import { Route as OwnerFormerPropertyIdRouteImport } from './routes/owner.former.$propertyId'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
 import { Route as AdminPropertiesIdCalendarRouteImport } from './routes/admin.properties.$id.calendar'
@@ -364,6 +367,11 @@ const AdminExpensesRoute = AdminExpensesRouteImport.update({
 const AdminFounderRoute = AdminFounderRouteImport.update({
   id: '/founder',
   path: '/founder',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGovernanceSettingsRoute = AdminGovernanceSettingsRouteImport.update({
+  id: '/governance-settings',
+  path: '/governance-settings',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInsuranceRequirementsRoute =
@@ -937,6 +945,12 @@ const ApiPublicOwnerRemindersSweepRoute =
     path: '/api/public/owner-reminders-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicResaleExpirySweepRoute =
+  ApiPublicResaleExpirySweepRouteImport.update({
+    id: '/api/public/resale-expiry-sweep',
+    path: '/api/public/resale-expiry-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResaleSweepRoute = ApiPublicResaleSweepRouteImport.update({
   id: '/api/public/resale-sweep',
   path: '/api/public/resale-sweep',
@@ -1065,6 +1079,11 @@ const ListingsIdEditRoute = ListingsIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => ListingsIdRoute,
+} as any)
+const OwnerFormerPropertyIdRoute = OwnerFormerPropertyIdRouteImport.update({
+  id: '/owner/former/$propertyId',
+  path: '/owner/former/$propertyId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminPodsIdBriefcaseRoute = AdminPodsIdBriefcaseRouteImport.update({
   id: '/pods/$id/briefcase',
@@ -1240,6 +1259,7 @@ export interface FileRoutesByFullPath {
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
+  '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1346,6 +1366,7 @@ export interface FileRoutesByFullPath {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1368,6 +1389,7 @@ export interface FileRoutesByFullPath {
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
+  '/owner/former/$propertyId': typeof OwnerFormerPropertyIdRoute
   '/admin/pods/': typeof AdminPodsIndexRoute
   '/admin/properties/': typeof AdminPropertiesIndexRoute
   '/agent/authorizations/': typeof AgentAuthorizationsIndexRoute
@@ -1429,6 +1451,7 @@ export interface FileRoutesByTo {
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
+  '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1532,6 +1555,7 @@ export interface FileRoutesByTo {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1554,6 +1578,7 @@ export interface FileRoutesByTo {
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
+  '/owner/former/$propertyId': typeof OwnerFormerPropertyIdRoute
   '/admin/pods': typeof AdminPodsIndexRoute
   '/admin/properties': typeof AdminPropertiesIndexRoute
   '/agent/authorizations': typeof AgentAuthorizationsIndexRoute
@@ -1620,6 +1645,7 @@ export interface FileRoutesById {
   '/admin/entity-genesis': typeof AdminEntityGenesisRoute
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
+  '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1726,6 +1752,7 @@ export interface FileRoutesById {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
@@ -1748,6 +1775,7 @@ export interface FileRoutesById {
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
   '/embed/library/$slug': typeof EmbedLibrarySlugRoute
   '/listings/$id/edit': typeof ListingsIdEditRoute
+  '/owner/former/$propertyId': typeof OwnerFormerPropertyIdRoute
   '/admin/pods/': typeof AdminPodsIndexRoute
   '/admin/properties/': typeof AdminPropertiesIndexRoute
   '/agent/authorizations/': typeof AgentAuthorizationsIndexRoute
@@ -1815,6 +1843,7 @@ export interface FileRouteTypes {
     | '/admin/entity-genesis'
     | '/admin/expenses'
     | '/admin/founder'
+    | '/admin/governance-settings'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -1921,6 +1950,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -1943,6 +1973,7 @@ export interface FileRouteTypes {
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
+    | '/owner/former/$propertyId'
     | '/admin/pods/'
     | '/admin/properties/'
     | '/agent/authorizations/'
@@ -2004,6 +2035,7 @@ export interface FileRouteTypes {
     | '/admin/entity-genesis'
     | '/admin/expenses'
     | '/admin/founder'
+    | '/admin/governance-settings'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -2107,6 +2139,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -2129,6 +2162,7 @@ export interface FileRouteTypes {
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
+    | '/owner/former/$propertyId'
     | '/admin/pods'
     | '/admin/properties'
     | '/agent/authorizations'
@@ -2194,6 +2228,7 @@ export interface FileRouteTypes {
     | '/admin/entity-genesis'
     | '/admin/expenses'
     | '/admin/founder'
+    | '/admin/governance-settings'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -2300,6 +2335,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/substitution-sweep'
@@ -2322,6 +2358,7 @@ export interface FileRouteTypes {
     | '/buyer/pods/$id'
     | '/embed/library/$slug'
     | '/listings/$id/edit'
+    | '/owner/former/$propertyId'
     | '/admin/pods/'
     | '/admin/properties/'
     | '/agent/authorizations/'
@@ -2428,6 +2465,7 @@ export interface RootRouteChildren {
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
   ApiPublicOwnerRemindersSweepRoute: typeof ApiPublicOwnerRemindersSweepRoute
+  ApiPublicResaleExpirySweepRoute: typeof ApiPublicResaleExpirySweepRoute
   ApiPublicResaleSweepRoute: typeof ApiPublicResaleSweepRoute
   ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
@@ -2444,6 +2482,7 @@ export interface RootRouteChildren {
   BuyerOnboardingW9Route: typeof BuyerOnboardingW9Route
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
   EmbedLibrarySlugRoute: typeof EmbedLibrarySlugRoute
+  OwnerFormerPropertyIdRoute: typeof OwnerFormerPropertyIdRoute
   BuyerOnboardingIndexRoute: typeof BuyerOnboardingIndexRoute
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
@@ -2690,6 +2729,13 @@ declare module '@tanstack/react-router' {
       path: '/founder'
       fullPath: '/admin/founder'
       preLoaderRoute: typeof AdminFounderRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/governance-settings': {
+      id: '/admin/governance-settings'
+      path: '/governance-settings'
+      fullPath: '/admin/governance-settings'
+      preLoaderRoute: typeof AdminGovernanceSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/insurance-requirements': {
@@ -3462,6 +3508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicOwnerRemindersSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/resale-expiry-sweep': {
+      id: '/api/public/resale-expiry-sweep'
+      path: '/api/public/resale-expiry-sweep'
+      fullPath: '/api/public/resale-expiry-sweep'
+      preLoaderRoute: typeof ApiPublicResaleExpirySweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/resale-sweep': {
       id: '/api/public/resale-sweep'
       path: '/api/public/resale-sweep'
@@ -3629,6 +3682,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/listings/$id/edit'
       preLoaderRoute: typeof ListingsIdEditRouteImport
       parentRoute: typeof ListingsIdRoute
+    }
+    '/owner/former/$propertyId': {
+      id: '/owner/former/$propertyId'
+      path: '/owner/former/$propertyId'
+      fullPath: '/owner/former/$propertyId'
+      preLoaderRoute: typeof OwnerFormerPropertyIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/pods/$id/briefcase': {
       id: '/admin/pods/$id/briefcase'
@@ -3843,6 +3903,7 @@ interface AdminRouteChildren {
   AdminEntityGenesisRoute: typeof AdminEntityGenesisRoute
   AdminExpensesRoute: typeof AdminExpensesRoute
   AdminFounderRoute: typeof AdminFounderRoute
+  AdminGovernanceSettingsRoute: typeof AdminGovernanceSettingsRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminLibraryRoute: typeof AdminLibraryRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
@@ -3887,6 +3948,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEntityGenesisRoute: AdminEntityGenesisRoute,
   AdminExpensesRoute: AdminExpensesRoute,
   AdminFounderRoute: AdminFounderRoute,
+  AdminGovernanceSettingsRoute: AdminGovernanceSettingsRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminLibraryRoute: AdminLibraryRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
@@ -4128,6 +4190,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,
   ApiPublicNarCertSweepRoute: ApiPublicNarCertSweepRoute,
   ApiPublicOwnerRemindersSweepRoute: ApiPublicOwnerRemindersSweepRoute,
+  ApiPublicResaleExpirySweepRoute: ApiPublicResaleExpirySweepRoute,
   ApiPublicResaleSweepRoute: ApiPublicResaleSweepRoute,
   ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
@@ -4144,6 +4207,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingW9Route: BuyerOnboardingW9Route,
   BuyerPodsIdRoute: BuyerPodsIdRoute,
   EmbedLibrarySlugRoute: EmbedLibrarySlugRoute,
+  OwnerFormerPropertyIdRoute: OwnerFormerPropertyIdRoute,
   BuyerOnboardingIndexRoute: BuyerOnboardingIndexRoute,
   ApiPublicTitleEscrowProviderRoute: ApiPublicTitleEscrowProviderRoute,
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,

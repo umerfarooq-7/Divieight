@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { groupByProperty, isOwnerNotificationType, OWNER_NOTIFICATION_TYPES } from "@/lib/owner-notifications";
+import { groupByProperty, isOwnerNotificationType, notificationHref, OWNER_NOTIFICATION_TYPES } from "@/lib/owner-notifications";
 import { getNotificationPropertyLabels } from "@/lib/owner-notifications.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -120,7 +120,11 @@ function NotificationsPage() {
             <button
               key={n.id}
               type="button"
-              onClick={() => markOne(n.id)}
+              onClick={() => {
+                void markOne(n.id);
+                const href = notificationHref(n);
+                if (href) window.location.assign(href);
+              }}
               className={cn(
                 "flex w-full items-start gap-3 border-b border-border/60 px-5 py-4 text-left transition-colors last:border-0 hover:bg-secondary/60",
                 !n.is_read && "bg-accent/5",

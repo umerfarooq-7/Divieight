@@ -8,6 +8,9 @@ import {
   retentionLockExpiry,
   type CapTableRow,
 } from "@/lib/entity-genesis";
+import { oaTermsFrom } from "@/constants/oaDraftClauses";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
+import { RESALE_FLAT_FEE } from "@/lib/resale";
 
 type Db = any;
 
@@ -266,6 +269,7 @@ export async function ensureDigitalGenesis(
       property,
       capTable: rows,
       generatedAt,
+      terms: oaTermsFrom(await loadGovernanceConfig(db), RESALE_FLAT_FEE),
     });
     const path = `entity-genesis/${params.propertyId}/draft-operating-agreement.md`;
     try {

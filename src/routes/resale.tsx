@@ -43,7 +43,7 @@ function ResalePage() {
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">Resale shares</h1>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-        Shares here have already been offered to the home's co-owners. Express interest and divieight will contact you.
+        Shares here have already been offered to the home's co-owners. Express interest and divieight will contact you. A purchase can only be set up for a buyer who has a Golden Ticket; otherwise finish onboarding first.
       </p>
       <div className="mt-6">
         {authLoading || isLoading || (!data && !error) ? (
@@ -52,8 +52,11 @@ function ResalePage() {
           <p className="text-sm text-destructive">{error.message}</p>
         ) : data?.allowed === false ? (
           <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            Resale shares are open to buyers who have finished onboarding.
-            <div className="mt-4">
+            To express interest in a resale share you first need to finish buyer onboarding. A purchase can only be set up for a buyer who has been issued a Golden Ticket.
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+              <Link to="/buyer/onboarding" className="font-medium text-primary hover:underline">
+                Start onboarding
+              </Link>
               <Link to="/buyer/dashboard" className="font-medium text-primary hover:underline">
                 Go to my buyer dashboard
               </Link>

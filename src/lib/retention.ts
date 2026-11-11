@@ -1,8 +1,10 @@
 /**
  * Retention Lock exceptions: shared labels and small rules.
  *
- * PLACEHOLDER pending OA language: how long a release vote stays open.
+ * How long a release vote stays open is a governance setting (governance-config.ts).
  */
+
+import { GOVERNANCE_DEFAULTS } from "@/lib/governance-config";
 
 export const RETENTION_EXCEPTION_TYPES = ["hardship", "unanimous_consent"] as const;
 export type RetentionExceptionType = (typeof RETENTION_EXCEPTION_TYPES)[number];
@@ -13,7 +15,8 @@ export const RETENTION_EXCEPTION_LABELS: Record<RetentionExceptionType, string> 
   unanimous_consent: "Unanimous consent",
 };
 
-export const RETENTION_VOTE_DAYS = 14;
+/** The default; the live value is the governance config's retentionReleaseVoteDays. */
+export const RETENTION_VOTE_DAYS = GOVERNANCE_DEFAULTS.retentionReleaseVoteDays;
 
 export const retentionVoteTitle = (shareNumber: number) => `Retention Lock release: share #${shareNumber}`;
 

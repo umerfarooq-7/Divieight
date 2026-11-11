@@ -73,6 +73,21 @@ export const withdrawResaleElection = createServerFn({ method: "POST" })
   .inputValidator(listingInput)
   .handler(async ({ data, context }) => (await server()).withdrawElection(await adminDb(), { userId: context.userId, ...data }));
 
+export const confirmResaleOffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(listingInput)
+  .handler(async ({ data, context }) => (await server()).confirmOffer(await adminDb(), { userId: context.userId, ...data }));
+
+export const declineResaleOffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(listingInput)
+  .handler(async ({ data, context }) => (await server()).declineOffer(await adminDb(), { userId: context.userId, ...data }));
+
+export const getFormerSellerWeeks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId: string }) => ({ propertyId: required(input?.propertyId, "property") }))
+  .handler(async ({ data, context }) => (await server()).formerSellerWeeks(await adminDb(), context.userId, data.propertyId));
+
 export const listOpenMarketResale = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => (await server()).openMarketListings(await adminDb(), context.userId));
@@ -100,6 +115,14 @@ export const completeResaleSale = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     return (await server()).completeSale(await adminDb(), context.userId, data.transactionId);
+  });
+
+export const convertResaleInterest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { listingId: string; buyerAccountId: string }) => ({ listingId: required(input?.listingId, "listing"), buyerAccountId: required(input?.buyerAccountId, "buyer") }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    return (await server()).convertInterestToSale(await adminDb(), { adminId: context.userId, ...data });
   });
 
 export const cancelResaleSale = createServerFn({ method: "POST" })

@@ -10,14 +10,14 @@ import {
   consensusState,
   nameInitials,
   tallyVote,
-  VOTE_THRESHOLDS,
-  VOTE_THRESHOLDS_ARE_PLACEHOLDER,
   type ConsensusState,
   type MemberPosition,
   type VoteResultSummary,
   type VoteStatus,
   type VoteType,
 } from "@/lib/votes";
+import { readVoteThresholds, thresholdLabelFor, voteThresholdsOf, type VoteThresholds } from "@/lib/governance-config";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 
 type Db = { from: (t: string) => any };
 
@@ -32,6 +32,8 @@ export interface VoteRow {
   closes_at: string;
   status: VoteStatus;
   result_summary: VoteResultSummary | null;
+  /** The thresholds the vote started with (stored when it opens). Null on a vote from before this existed. */
+  thresholds?: VoteThresholds | null;
   created_at: string;
 }
 
@@ -133,6 +135,8 @@ export async function closeVote(db: Db, voteId: string, actor: { id: string | nu
     options: vote.options,
     issuedShares: rows.length,
     ballots: ((ballots ?? []) as Array<{ holder_key: string; choice: string }>).map((b) => ({ choice: b.choice, weight: weightOf(b.holder_key) })),
+    // The thresholds it started with, not whatever the config says now.
+    thresholds: readVoteThresholds(vote.thresholds),
   });
   await db.from("votes").update({ result_summary: summary }).eq("id", vote.id);
   await audit(db, {
@@ -140,7 +144,7 @@ export async function closeVote(db: Db, voteId: string, actor: { id: string | nu
     actorType: actor.type,
     action: "vote.closed",
     vote,
-    extra: { passed: summary.passed, voted_shares: summary.votedShares, required_shares: summary.requiredShares, placeholder_thresholds: VOTE_THRESHOLDS_ARE_PLACEHOLDER },
+    extra: { passed: summary.passed, voted_shares: summary.votedShares, required_shares: summary.requiredShares, thresholds: readVoteThresholds(vote.thresholds) },
   });
   const closed: VoteRow = { ...vote, status: "closed", result_summary: summary };
   await (await import("@/lib/retention.server")).applyVoteOutcome(db, closed);
@@ -252,8 +256,9 @@ export async function ownerVoteDetail(db: Db, userId: string, propertyId: string
       status: vote!.status,
       voteType: vote!.vote_type,
     },
-    thresholdLabel: VOTE_THRESHOLDS[vote!.vote_type].label,
-    thresholdsArePlaceholder: VOTE_THRESHOLDS_ARE_PLACEHOLDER,
+    // An open or closed vote shows what it started with; a draft shows what it would start with now.
+    thresholdLabel: thresholdLabelFor(vote!.vote_type, vote!.thresholds ? readVoteThresholds(vote!.thresholds) : voteThresholdsOf(await loadGovernanceConfig(db))),
+    thresholdsArePlaceholder: false,
     myWeight: holder.shareNumbers.length,
     myShareNumbers: holder.shareNumbers,
     myChoice: (ballot?.choice as string | undefined) ?? null,
@@ -408,8 +413,10 @@ export async function openVote(db: Db, actorId: string, voteId: string, actorTyp
   if (!vote) throw new Error("Vote not found");
   if (vote.status !== "draft") throw new Error("Only a draft can be opened.");
   if (Date.now() >= new Date(vote.closes_at).getTime()) throw new Error("This vote's closing time has already passed.");
-  await db.from("votes").update({ status: "open" }).eq("id", vote.id).eq("status", "draft");
-  await audit(db, { actorId, actorType, action: "vote.opened", vote });
+  // The thresholds in force at this moment are written onto the vote and stay with it.
+  const thresholds = voteThresholdsOf(await loadGovernanceConfig(db));
+  await db.from("votes").update({ status: "open", thresholds }).eq("id", vote.id).eq("status", "draft");
+  await audit(db, { actorId, actorType, action: "vote.opened", vote, extra: { thresholds } });
 
   for (const recipient of await holderRecipients(db, vote.property_id)) {
     await deliver(db as never, recipient, {

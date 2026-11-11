@@ -11,13 +11,13 @@ import {
   isOwnRetentionDocPath,
   lockDaysRemaining,
   RETENTION_EXCEPTION_LABELS,
-  RETENTION_VOTE_DAYS,
   retentionVoteTitle,
   type RetentionExceptionStatus,
   type RetentionExceptionType,
 } from "@/lib/retention";
 import { cancelVote, closeVote, createVote, holderFor, openVote, type VoteRow } from "@/lib/votes.server";
 import { DEFAULT_VOTE_OPTIONS } from "@/lib/votes";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 
 type Db = { from: (t: string) => any };
 
@@ -234,9 +234,10 @@ export interface OwnerRetentionShare {
   }>;
 }
 
-export async function ownerRetention(db: Db, userId: string, propertyId: string): Promise<{ allowed: boolean; shares: OwnerRetentionShare[] }> {
+export async function ownerRetention(db: Db, userId: string, propertyId: string): Promise<{ allowed: boolean; shares: OwnerRetentionShare[]; voteDays?: number }> {
   const holder = await holderFor(db, userId, propertyId);
   if (!holder) return { allowed: false, shares: [] };
+  const voteDays = (await loadGovernanceConfig(db)).retentionReleaseVoteDays;
   await settleVoteExceptions(db, propertyId);
   const { data } = await db
     .from("retention_exceptions")
@@ -271,7 +272,7 @@ export async function ownerRetention(db: Db, userId: string, propertyId: string)
       })),
     });
   }
-  return { allowed: true, shares };
+  return { allowed: true, shares, voteDays };
 }
 
 export async function requestException(
@@ -327,7 +328,7 @@ export async function requestException(
         voteType: "unanimous",
         options: DEFAULT_VOTE_OPTIONS,
         opensAt: new Date(now).toISOString(),
-        closesAt: new Date(now + RETENTION_VOTE_DAYS * 86_400_000).toISOString(),
+        closesAt: new Date(now + (await loadGovernanceConfig(db)).retentionReleaseVoteDays * 86_400_000).toISOString(),
       });
       voteId = vote.id;
       await db.from("retention_exceptions").update({ vote_id: vote.id }).eq("id", row.id);

@@ -8,7 +8,6 @@ import { deliver } from "@/lib/authorization.notify.server";
 import { loadOwnerProperty } from "@/lib/owner.functions";
 import {
   computeQuotas,
-  DEFAULT_TURN_HOURS,
   nextTurn,
   RETAINED_SELLER_NOTE,
   RETAINED_SELLER_RANK,
@@ -19,6 +18,7 @@ import {
   type TurnPhase,
 } from "@/lib/use-calendar";
 import { holderFor } from "@/lib/votes.server";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 
 type Db = { from: (t: string) => any; rpc?: (fn: string, args: Record<string, unknown>) => any };
 
@@ -158,7 +158,14 @@ async function turnContext(db: Db, year: YearRow, weeks: WeekRow[]): Promise<Tur
     .filter((key) => key in year.quotas && current.has(key));
   const picks: Record<string, number> = {};
   for (const w of weeks) if (w.holder_key) picks[w.holder_key] = (picks[w.holder_key] ?? 0) + 1;
+  // Holiday turns are proportional to the shares each holder has.
+  const shares: Record<string, number> = {};
+  for (const c of (cap ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null }>) {
+    const key = c.holder_type === "retained_seller" ? `seller:${c.seller_id}` : String(c.buyer_account_id);
+    shares[key] = (shares[key] ?? 0) + 1;
+  }
   return {
+    shares,
     order,
     rotationOffset: year.rotation_offset,
     quotas: year.quotas,
@@ -242,6 +249,7 @@ export interface OwnerCalendar {
     deadlineAt: string | null;
     myQuota: number;
     myPicked: number;
+    myHolidayTurns: number;
   } | null;
   weeks: OwnerCalendarWeek[];
 }
@@ -287,6 +295,8 @@ export async function ownerCalendar(db: Db, userId: string, propertyId: string, 
       deadlineAt: year.status === "selection_open" ? year.turn_deadline_at : null,
       myQuota: year.quotas[holder.holderKey] ?? 0,
       myPicked,
+      /** Holiday turns are proportional to shares: this many in each round-set. */
+      myHolidayTurns: holder.shareNumbers.length,
     },
     weeks: weeks.map((w) => {
       const mine = w.holder_key === holder.holderKey;
@@ -454,7 +464,7 @@ export async function createCalendarYear(db: Db, actorId: string, propertyId: st
       status: "draft",
       holiday_weeks: [],
       rotation_offset: previous ? previous.rotation_offset + (year - previous.year) : 0,
-      turn_hours: turnHours ?? DEFAULT_TURN_HOURS,
+      turn_hours: turnHours ?? (await loadGovernanceConfig(db)).useCalendarTurnHours,
       quotas: {},
       turn_seq: 0,
     })
@@ -504,7 +514,7 @@ export async function openSelection(db: Db, actorId: string, yearId: string) {
   if (holders.length === 0) throw new Error("This property has no holders on its cap table.");
   await refreshPriority(db, year.property_id, holders);
 
-  const quotas = computeQuotas(holders, year.rotation_offset);
+  const quotas = computeQuotas(holders, year.rotation_offset, (await loadGovernanceConfig(db)).guaranteedWeeksPerShare);
   const weeks = await yearWeeks(db, year);
   const opened = { ...year, quotas };
   const first = nextTurn(await turnContext(db, opened, weeks), null);

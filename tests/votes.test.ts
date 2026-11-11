@@ -231,7 +231,8 @@ describe("results", () => {
     expect(issued8("major", 6).passed).toBe(true);
     expect(issued8("unanimous", 7).passed).toBe(false);
     expect(issued8("unanimous", 8).passed).toBe(true);
-    expect(issued8("major", 6).thresholdsArePlaceholder).toBe(true);
+    // The thresholds are decided now (governance config), no longer placeholders.
+    expect(issued8("major", 6).thresholdsArePlaceholder).toBe(false);
     expect(tallyVote({ voteType: "unanimous", options: ["Yes", "No"], issuedShares: 0, ballots: [] }).passed).toBe(false);
   });
 

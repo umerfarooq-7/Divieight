@@ -8,7 +8,6 @@
 import { adminRecipients, deliver } from "@/lib/authorization.notify.server";
 import {
   canMarkPaid,
-  CAPITAL_CALL_VOTE_THRESHOLD,
   CAPITAL_CALL_VOTE_THRESHOLD_IS_PLACEHOLDER,
   CAPITAL_CALL_VOTE_TYPE,
   capitalCallNeedsVote,
@@ -25,6 +24,8 @@ import {
 } from "@/lib/expenses";
 import { rankedHolders } from "@/lib/use-calendar.server";
 import { DEFAULT_VOTE_OPTIONS } from "@/lib/votes";
+import { readVoteThresholds } from "@/lib/governance-config";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 import { closeVote, createVote, holderFor, holderRecipients, openVote, type VoteRow } from "@/lib/votes.server";
 
 type Db = { from: (t: string) => any };
@@ -423,12 +424,19 @@ async function freshVote(db: Db, voteId: string | null): Promise<VoteRow | null>
   return vote;
 }
 
+/**
+ * The dollar threshold that applies to a call: the one its vote started with when it has a vote, otherwise the live
+ * config. So raising the threshold can't turn a call that is mid-vote into one that needs no vote.
+ */
+const thresholdFor = (vote: VoteRow | null, liveUsd: number) => (vote?.thresholds ? readVoteThresholds(vote.thresholds).capitalCallVoteThresholdUsd : liveUsd);
+
 const votePassed = (vote: VoteRow | null) => vote?.status === "closed" && vote.result_summary?.passed === true;
 /** Nothing linked yet, or the last try is over without passing. */
 const voteCanRestart = (vote: VoteRow | null) => !vote || vote.status === "cancelled" || (vote.status === "closed" && vote.result_summary?.passed === false);
 
 export async function adminExpenses(db: Db) {
   await settleOverdue(db);
+  const live = (await loadGovernanceConfig(db)).capitalCallVoteThresholdUsd;
   const { data: expenseRows, error } = await db.from("expenses").select("*").order("created_at", { ascending: false });
   if (error) throw new Error(MISSING_SCHEMA);
   const { data: callRows } = await db.from("capital_calls").select("*").order("created_at", { ascending: false });
@@ -467,7 +475,7 @@ export async function adminExpenses(db: Db) {
   const calls: AdminCapitalCall[] = [];
   for (const r of (callRows ?? []) as CapitalCallRow[]) {
     const vote = await freshVote(db, r.vote_id);
-    const needsVote = capitalCallNeedsVote(Number(r.total_amount));
+    const needsVote = capitalCallNeedsVote(Number(r.total_amount), thresholdFor(vote, live));
     calls.push({
       id: r.id,
       propertyId: r.property_id,
@@ -490,7 +498,7 @@ export async function adminExpenses(db: Db) {
     properties: [...issuedByProperty.entries()].map(([id, issuedShares]) => ({ id, issuedShares, label: labels.get(id) ?? "Property" })).sort((a, b) => a.label.localeCompare(b.label)),
     expenses,
     calls,
-    voteThreshold: CAPITAL_CALL_VOTE_THRESHOLD,
+    voteThreshold: live,
     voteThresholdIsPlaceholder: CAPITAL_CALL_VOTE_THRESHOLD_IS_PLACEHOLDER,
   };
 }
@@ -650,8 +658,9 @@ async function loadCall(db: Db, callId: string): Promise<CapitalCallRow> {
 export async function startCapitalCallVote(db: Db, params: { adminId: string; callId: string; closesAt: string }) {
   const call = await loadCall(db, params.callId);
   if (call.status !== "draft") throw new Error("Only a draft capital call can go to a vote.");
-  if (!capitalCallNeedsVote(Number(call.total_amount))) throw new Error("This capital call is under the threshold, so it doesn't need a vote.");
   const current = await freshVote(db, call.vote_id);
+  const live = (await loadGovernanceConfig(db)).capitalCallVoteThresholdUsd;
+  if (!capitalCallNeedsVote(Number(call.total_amount), thresholdFor(current, live))) throw new Error("This capital call is under the threshold, so it doesn't need a vote.");
   if (!voteCanRestart(current)) throw new Error(votePassed(current) ? "The owners already approved this capital call." : "A vote on this capital call is already running.");
   if (new Date(params.closesAt).getTime() <= Date.now()) throw new Error("The vote's closing time must be in the future.");
 
@@ -681,8 +690,9 @@ export async function issueCapitalCall(db: Db, params: { adminId: string; callId
   const call = await loadCall(db, params.callId);
   if (call.status !== "draft") throw new Error("Only a draft capital call can be issued.");
   if (isPastDue(params.dueDate)) throw new Error("The due date can't be in the past.");
-  const needsVote = capitalCallNeedsVote(Number(call.total_amount));
-  if (needsVote && !votePassed(await freshVote(db, call.vote_id))) throw new Error("This capital call needs a passed vote before it can be issued.");
+  const vote = await freshVote(db, call.vote_id);
+  const needsVote = capitalCallNeedsVote(Number(call.total_amount), thresholdFor(vote, (await loadGovernanceConfig(db)).capitalCallVoteThresholdUsd));
+  if (needsVote && !votePassed(vote)) throw new Error("This capital call needs a passed vote before it can be issued.");
 
   const lines = await currentSplit(db, call.property_id, call.total_amount);
   const result = await rpc(db, "issue_capital_call", { _call: call.id, _allocations: lines, _due_date: params.dueDate, _vote_required: needsVote, _actor: params.adminId });

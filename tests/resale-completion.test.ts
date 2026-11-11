@@ -265,7 +265,8 @@ describe("cancelling a sale", () => {
     expect(JSON.stringify(db().table("cap_table_entries"))).toBe(before);
     expect(db().table("cap_table_history")).toEqual([]);
     expect(listing(id).status).toBe("withdrawn");
-    expect(election(IDS.b1).status).toBe("lost");
+    // The cancelled buyer has had their turn: marked 'passed', never offered the share again.
+    expect(election(IDS.b1).status).toBe("passed");
     expect(db().audits("resale.sale_cancelled")[0]!.metadata.reason).toBe("Buyer's funds fell through");
     expect(db().notificationsFor(USERS.b2).some((n) => /fell through/.test(n.message))).toBe(true);
     expect(db().notificationsFor(USERS.b1).some((n) => /fell through/.test(n.message))).toBe(true);

@@ -18,6 +18,9 @@ import {
   type Stage2Signer,
   type TinMatchResult,
 } from "@/lib/entity-genesis";
+import { oaTermsFrom } from "@/constants/oaDraftClauses";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
+import { RESALE_FLAT_FEE } from "@/lib/resale";
 
 type Db = { from: (t: string) => any; storage?: any };
 
@@ -363,6 +366,7 @@ export async function generateFinalOa(db: Db, actorId: string, propertyId: strin
     capTable: await lockedCapTable(db, propertyId),
     signers,
     lockedAt: g.cap_table_locked_at,
+    terms: oaTermsFrom(await loadGovernanceConfig(db), RESALE_FLAT_FEE),
   });
   const hash = sha256(text);
   await update(db, propertyId, {
