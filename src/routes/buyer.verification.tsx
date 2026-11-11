@@ -7,11 +7,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { logAudit } from "@/lib/audit";
 import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
 import { latestLiveness } from "@/lib/liveness";
+import { verificationRequestCopy } from "@/constants/eligibilityCheckCopy";
 
-// ⚠️ COMPLIANCE-SENSITIVE FLOW — FLAGGED FOR LEGAL REVIEW BEFORE PRODUCTION.
-// Adjudication of flagged consumer-report results must follow FCRA pre-adverse
-// action procedures (notice + copy of report + Summary of Rights + reasonable
-// waiting period before final adverse action). Text below is placeholder.
+// A Verification Request asks one thing at a time. A possible sanctions match asks only whether the
+// member is the person the list names: a question of identity, not merit. No consumer report is
+// obtained in the ordinary course, so nothing here asks about, or supplies, one.
 
 export const Route = createFileRoute("/buyer/verification")({
   head: () => ({
@@ -63,6 +63,8 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
   const [uploading, setUploading] = useState(false);
   // A Verification Request opened by an inconclusive liveness check reads as such.
   const [livenessInconclusive, setLivenessInconclusive] = useState(false);
+  // A possible sanctions match: the only question is whether this member is the person the list names.
+  const [sanctionsMatch, setSanctionsMatch] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -92,6 +94,10 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
         ? await supabase.from("member_liveness_checks").select("account_member_id, status, created_at").eq("account_member_id", m.id)
         : { data: [] };
       if (cancelled) return;
+      const { data: screens } = m?.id
+        ? await supabase.from("member_sanctions_screenings").select("account_member_id, status, created_at").eq("account_member_id", m.id)
+        : { data: [] };
+      setSanctionsMatch(latestLiveness((screens ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>, m?.id ?? "")?.status === "possible_match");
       setLivenessInconclusive(latestLiveness((checks ?? []) as Array<{ account_member_id: string; status: string; created_at: string }>, m?.id ?? "")?.status === "inconclusive");
       setAccountId(b.id);
       setMemberId(m?.id ?? null);
@@ -178,7 +184,7 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
         Verification request
       </p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-        {livenessInconclusive ? "We couldn't complete your liveness check" : "We need additional information to verify your background check results"}
+        {livenessInconclusive ? "We couldn't complete your liveness check" : sanctionsMatch ? verificationRequestCopy.sanctionsHeading : verificationRequestCopy.generalHeading}
       </h1>
       {livenessInconclusive ? (
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
@@ -191,17 +197,14 @@ function VerificationForMember({ actingMemberId }: { actingMemberId: string }) {
         </p>
       ) : null}
       {!livenessInconclusive ? (
-      <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-        Your screening returned one or more items we could not confirm automatically. This is
-        not a decision on your account — we simply need documentation to complete the review.
-        Helpful documents include a government-issued ID, proof of address, court
-        dispositions, or a written explanation of any item you believe is inaccurate.
-      </p>
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+          {sanctionsMatch ? verificationRequestCopy.sanctionsBody : verificationRequestCopy.generalBody}
+        </p>
       ) : null}
 
       <div className="mt-8 rounded-xl border border-accent/50 bg-accent/10 p-5">
         <p className="font-display text-base font-semibold text-foreground">
-          Your account is under review
+          {verificationRequestCopy.reviewHeading}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           We'll notify you within {REVIEW_BUSINESS_DAYS} business days. You can sign back in

@@ -173,3 +173,34 @@ export function moneyStatusFor(status: string, held: boolean): { label: string; 
   if (!held) return { label: status, held: false };
   return { label: status === "paid" ? "paid" : "held", held: true };
 }
+
+/**
+ * The binary vetting display (Vetted / Pending / Failed), fed from eligibility_results.
+ * Held is its own display: it is never merged into Pending or Failed, and has its own colour.
+ */
+export type VettingKey = "vetted" | "pending" | "failed" | "held";
+export interface VettingDisplay {
+  key: VettingKey;
+  label: string;
+  tone: string;
+}
+
+const VETTING: Record<VettingKey, VettingDisplay> = {
+  vetted: { key: "vetted", label: "Vetted", tone: RESULT_TONES.eligible },
+  pending: { key: "pending", label: "Pending", tone: RESULT_TONES.pending },
+  failed: { key: "failed", label: "Failed", tone: RESULT_TONES.not_eligible },
+  held: { key: "held", label: "Held", tone: RESULT_TONES.held },
+};
+
+/** One member: from their current engine result (null = no result yet). */
+export function vettingDisplay(result: EligibilityResult | null | undefined): VettingDisplay {
+  return VETTING[result === "eligible" ? "vetted" : result === "not_eligible" ? "failed" : result === "held" ? "held" : "pending"];
+}
+
+/** The account: held if any member is held; failed if any is not eligible; vetted only when every member is. */
+export function accountVettingDisplay(results: Array<EligibilityResult | null | undefined>): VettingDisplay {
+  if (results.length === 0) return VETTING.pending;
+  if (results.some((r) => r === "held")) return VETTING.held;
+  if (results.some((r) => r === "not_eligible")) return VETTING.failed;
+  return results.every((r) => r === "eligible") ? VETTING.vetted : VETTING.pending;
+}

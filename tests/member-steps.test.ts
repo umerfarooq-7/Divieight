@@ -396,8 +396,8 @@ describe("the adverse-action notice, per member", () => {
     expect(page).toContain("ActingMemberGate");
     expect(page).toContain("x.id === actingMemberId");
     expect(page).not.toMatch(/\.eq\("background_check_result", "failed"\)\s*\.order/);
-    // The account is parked only when every member is affected.
-    expect(page).toContain("affected.length === everyone.length");
+    // It reads the acting member's own notices, never another member's.
+    expect(page).toContain("getMyAdverseActionNotices");
   });
 });
 

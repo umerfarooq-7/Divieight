@@ -493,6 +493,111 @@ export type Database = {
         }
         Relationships: []
       }
+      adverse_action_notices: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          action_statement: string
+          agency_name: string
+          agency_address: string
+          agency_phone: string
+          agency_website: string | null
+          rendered_text: string
+          document_hash: string
+          report_obtained_attested: boolean
+          issued_by: string
+          issued_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          declaration_id: string
+          action_statement: string
+          agency_name: string
+          agency_address: string
+          agency_phone: string
+          agency_website?: string | null
+          rendered_text: string
+          document_hash: string
+          report_obtained_attested: boolean
+          issued_by: string
+          issued_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          declaration_id?: string
+          action_statement?: string
+          agency_name?: string
+          agency_address?: string
+          agency_phone?: string
+          agency_website?: string | null
+          rendered_text?: string
+          document_hash?: string
+          report_obtained_attested?: boolean
+          issued_by?: string
+          issued_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      seller_eligibility_declarations: {
+        Row: {
+          id: string
+          seller_id: string
+          standard_version: string
+          answers: Json
+          rendered_text_snapshot: string
+          declaration_hash: string
+          declared_at: string
+          signed_name: string
+          attested_personally: boolean
+          ip: string | null
+          user_agent: string | null
+          supersedes_id: string | null
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          seller_id: string
+          standard_version: string
+          answers: Json
+          rendered_text_snapshot: string
+          declaration_hash: string
+          declared_at?: string
+          signed_name: string
+          attested_personally: boolean
+          ip?: string | null
+          user_agent?: string | null
+          supersedes_id?: string | null
+          status: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          seller_id?: string
+          standard_version?: string
+          answers?: Json
+          rendered_text_snapshot?: string
+          declaration_hash?: string
+          declared_at?: string
+          signed_name?: string
+          attested_personally?: boolean
+          ip?: string | null
+          user_agent?: string | null
+          supersedes_id?: string | null
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

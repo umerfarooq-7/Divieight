@@ -8,7 +8,7 @@ import { residencyFor, type Residency } from "@/lib/markets";
  * Read-only view over Month 2 buyer data, scoped so an agent only ever sees
  * the buyers tethered to their own agent row. PII boundary: identity, market,
  * and status flags only — never vetting report contents, liquidity documents,
- * or background-check detail.
+ * or eligibility-check detail.
  *
  * Runs with the service role because RLS keeps `buyer_accounts` readable only
  * by the buyer; the scoping to `tethered_resident_agent_id` is enforced here.

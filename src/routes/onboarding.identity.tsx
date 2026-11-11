@@ -157,7 +157,9 @@ function IdentityScreen() {
       entityId: user.id,
       metadata: { has_document: Boolean(idDocumentUrl), manual_mode: manualMode },
     });
-    navigate({ to: "/onboarding/property" });
+    // A seller who retains shares goes through the eligibility check (Block 4); Full Exit sellers have none.
+    const { data: exit } = await supabase.from("sellers").select("exit_type").eq("id", user.id).maybeSingle();
+    navigate({ to: exit?.exit_type === "hybrid_exit" ? "/onboarding/eligibility" : "/onboarding/property" });
   }
 
   const showForm = scanned || manualMode;

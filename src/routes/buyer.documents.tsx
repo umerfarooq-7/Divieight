@@ -45,7 +45,7 @@ interface SignedDoc {
 
 const LABELS: Record<string, string> = {
   PRA: "Priority Reservation Agreement",
-  HOLD_HARMLESS: "Hold Harmless & Background Check Consent",
+  HOLD_HARMLESS: "Hold Harmless",
   [BLOCK_5_DOCUMENT_TYPE]: "Independent Professional Advice Acknowledgment",
 };
 

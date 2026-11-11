@@ -22,20 +22,22 @@ import { EligibilityDeclaration, type DeclarationSubmit, type DeclarationSummary
 import { getDeclarationState, submitEligibilityDeclaration } from "@/lib/eligibility-declaration.functions";
 import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
 import { signMemberDocumentFn } from "@/lib/member-steps.functions";
+import { eligibilityCheckScreen } from "@/constants/eligibilityCheckCopy";
+import { HOLD_HARMLESS_VERSION, holdHarmlessDocumentText } from "@/lib/hold-harmless";
 
 export const Route = createFileRoute("/buyer/onboarding/vetting")({
   head: () => ({
     meta: [
-      { title: "Vetting & Security Clearance — divieight" },
+      { title: "The Eligibility Check — divieight" },
       {
         name: "description",
         content:
-          "Make your Eligibility Declaration and Authorization, and sign the hold harmless acknowledgment.",
+          "The Eligibility Check: each Account Member makes their Eligibility Declaration and Authorization and signs the Hold Harmless.",
       },
-      { property: "og:title", content: "Vetting & Security Clearance — divieight" },
+      { property: "og:title", content: "The Eligibility Check — divieight" },
       {
         property: "og:description",
-        content: "Buyer vetting step: the Eligibility Declaration and Authorization, made by each Account Member.",
+        content: "The Eligibility Check: the Eligibility Declaration and Authorization, made by each Account Member.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -46,9 +48,6 @@ export const Route = createFileRoute("/buyer/onboarding/vetting")({
   component: VettingScreen,
 });
 
-const HOLD_HARMLESS_VERSION = "hh-v1";
-const HOLD_HARMLESS_TEXT =
-  "I acknowledge that while the platform vets all members, I remain responsible for my final property decisions.";
 
 interface BuyerRow {
   id: string;
@@ -157,7 +156,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const declared = declaration?.current?.status === "complete";
   const reportingChange = Route.useSearch().change === 1 && declared;
   const holdHarmlessHash = useMemo(
-    () => hashDocument(`${HOLD_HARMLESS_VERSION}::${HOLD_HARMLESS_TEXT}`),
+    () => hashDocument(`${HOLD_HARMLESS_VERSION}::${holdHarmlessDocumentText}`),
     [],
   );
 
@@ -246,15 +245,11 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       <BuyerOnboardingStepper current={4} />
 
       <div className="mt-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 5 · Vetting
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{eligibilityCheckScreen.eyebrow}</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-          Vetting & Security Clearance
+          {eligibilityCheckScreen.heading}
         </h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          Every divieight co-owner makes their own Eligibility Declaration and Authorization before reservations unlock.
-        </p>
+        <p className="mt-3 text-base text-muted-foreground">{eligibilityCheckScreen.body}</p>
       </div>
 
       {member ? (
@@ -293,14 +288,14 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       ) : null}
 
       <>
-          {/* Hold harmless */}          {/* Hold harmless */}
+          {/* Hold harmless: the client's recital and the Part Three co-owner paragraph, signed by each member */}
           {declared ? (
             <section className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
               <h2 className="font-display text-lg font-semibold text-foreground">
-                Hold harmless acknowledgment
+                Hold Harmless
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {HOLD_HARMLESS_TEXT}
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                {holdHarmlessDocumentText}
               </p>
               <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-4">
                 <Checkbox
@@ -310,7 +305,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
                   className="mt-0.5"
                 />
                 <span className="text-sm text-foreground">
-                  I have read and agree to the hold harmless acknowledgment.
+                  I have read and agree to the Hold Harmless.
                 </span>
               </label>
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -319,7 +314,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
                   onClick={() => setModalOpen(true)}
                   disabled={!hhChecked || signed}
                 >
-                  {signed ? "Signed" : "Sign acknowledgment"}
+                  {signed ? "Signed" : "Sign the Hold Harmless"}
                 </Button>
                 <Button onClick={continueFromDeclaration} disabled={!signed}>
                   Continue

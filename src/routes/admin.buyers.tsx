@@ -10,6 +10,7 @@ import { listLivenessForAdmin } from "@/lib/liveness.functions";
 import { latestLiveness } from "@/lib/liveness";
 import { LivenessTestSwitch } from "@/components/LivenessTestSwitch";
 import { MarkDeclarationUntrue } from "@/components/MarkDeclarationUntrue";
+import { IssueAdverseActionNotice } from "@/components/IssueAdverseActionNotice";
 import { listEligibilityForAdmin } from "@/lib/eligibility-engine.functions";
 import { RESULT_LABELS, RESULT_TONES, type EligibilityResult } from "@/lib/eligibility-engine";
 
@@ -330,6 +331,7 @@ function AdminBuyers() {
                                       );
                                     })()}
                                     {m.status !== "removed" ? <MarkDeclarationUntrue memberId={m.id} onDone={() => void refetchEligibility()} /> : null}
+                                    {m.status !== "removed" ? <IssueAdverseActionNotice memberId={m.id} onDone={() => void refetchEligibility()} /> : null}
                                     {m.status !== "removed" ? <AdminMemberActions member={{ id: m.id, role: m.role, email: m.email ?? null }} onChanged={() => window.location.reload()} /> : null}
                                   </li>
                                 ))

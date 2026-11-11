@@ -31,6 +31,9 @@ import { enrollmentDaysRemaining, enrollmentEndDate } from "@/lib/golden-ticket"
 import { formatDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { AccountMembersCard } from "@/components/AccountMembersCard";
+import { verificationRequestCopy } from "@/constants/eligibilityCheckCopy";
+import { loadMemberSteps } from "@/lib/account-rollup";
+import { accountVettingDisplay } from "@/lib/eligibility-engine";
 import { LifestylePerksConsent } from "@/components/LifestylePerksConsent";
 import { SubstitutionInvitations } from "@/components/SubstitutionInvitations";
 
@@ -186,6 +189,8 @@ function BuyerDashboardPage() {
 
   const [account, setAccount] = useState<AccountView | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  // The binary vetting display, fed from eligibility_results (Held is never merged into Pending or Failed).
+  const [vetting, setVetting] = useState<ReturnType<typeof accountVettingDisplay> | null>(null);
   const [docs, setDocs] = useState<SignedDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -231,6 +236,11 @@ function BuyerDashboardPage() {
       ]);
       if (cancelled) return;
       setMembers((mem as Member[]) ?? []);
+      try {
+        setVetting(accountVettingDisplay((await loadMemberSteps(supabase, acct.id)).map((s) => s.result)));
+      } catch {
+        setVetting(null);
+      }
       setDocs((sd as SignedDoc[]) ?? []);
       setLoading(false);
     })();
@@ -274,6 +284,11 @@ function BuyerDashboardPage() {
               {account.golden_ticket_issued_at ? ` · ${formatDate(account.golden_ticket_issued_at)}` : ""}
             </span>
           ) : null}
+          {!isCoOwner && !account.golden_ticket_issued && vetting ? (
+            <span className={cn("mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold", vetting.tone)} data-vetting={vetting.key}>
+              Vetting: {vetting.label}
+            </span>
+          ) : null}
         </div>
         {!isCoOwner && account.priority_rank != null ? (
           <div className="shrink-0 rounded-xl border border-accent/40 bg-accent/10 px-5 py-3 text-center">
@@ -303,8 +318,7 @@ function BuyerDashboardPage() {
             Your account is under review
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            We need additional information to verify your background check results. You can add
-            more documents at any time.
+            {verificationRequestCopy.dashboardBody}
           </p>
           <Link
             to="/buyer/verification"
@@ -771,19 +785,6 @@ function DashboardSkeleton() {
       <div className="h-48 animate-pulse rounded-xl bg-muted/60" />
     </div>
   );
-}
-
-function vettingLabel(status: string) {
-  if (status === "cleared") return "Cleared";
-  if (status === "failed" || status === "adverse_action") return "Failed";
-  return "Pending";
-}
-
-function vettingTone(status: string) {
-  if (status === "cleared") return "border-accent/50 bg-accent/10 text-accent";
-  if (status === "failed" || status === "adverse_action")
-    return "border-destructive/40 bg-destructive/5 text-destructive";
-  return "border-border bg-muted/40 text-muted-foreground";
 }
 
 function QuickLink({

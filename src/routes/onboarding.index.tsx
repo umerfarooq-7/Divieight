@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { fullExitSellerNotice, hybridSellerNotice } from "@/constants/eligibilityCheckCopy";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +120,9 @@ function IntentScreen() {
           onClick={() => setSelected("hybrid_exit")}
         />
       </div>
+
+      {selected === "full_exit" ? <p className="mx-auto mt-6 max-w-md text-center text-sm text-muted-foreground">{fullExitSellerNotice}</p> : null}
+      {selected === "hybrid_exit" ? <p className="mx-auto mt-6 max-w-md text-center text-sm text-muted-foreground">{hybridSellerNotice}</p> : null}
 
       {selected === "hybrid_exit" ? (
         <div className="mx-auto mt-8 max-w-md rounded-xl border border-border bg-card p-6 shadow-sm">

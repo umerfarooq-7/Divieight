@@ -101,6 +101,7 @@ import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 import { Route as ListingsNewRouteImport } from './routes/listings.new'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as OnboardingAgreementRouteImport } from './routes/onboarding.agreement'
+import { Route as OnboardingEligibilityRouteImport } from './routes/onboarding.eligibility'
 import { Route as OnboardingFeeRouteImport } from './routes/onboarding.fee'
 import { Route as OnboardingIdentityRouteImport } from './routes/onboarding.identity'
 import { Route as OnboardingListingRouteImport } from './routes/onboarding.listing'
@@ -659,6 +660,11 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
 const OnboardingAgreementRoute = OnboardingAgreementRouteImport.update({
   id: '/onboarding/agreement',
   path: '/onboarding/agreement',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingEligibilityRoute = OnboardingEligibilityRouteImport.update({
+  id: '/onboarding/eligibility',
+  path: '/onboarding/eligibility',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingFeeRoute = OnboardingFeeRouteImport.update({
@@ -1277,6 +1283,7 @@ export interface FileRoutesByFullPath {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
   '/onboarding/listing': typeof OnboardingListingRoute
@@ -1460,6 +1467,7 @@ export interface FileRoutesByTo {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
   '/onboarding/listing': typeof OnboardingListingRoute
@@ -1651,6 +1659,7 @@ export interface FileRoutesById {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
   '/onboarding/listing': typeof OnboardingListingRoute
@@ -1843,6 +1852,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
     | '/onboarding/listing'
@@ -2026,6 +2036,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
     | '/onboarding/listing'
@@ -2216,6 +2227,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
     | '/onboarding/listing'
@@ -2357,6 +2369,7 @@ export interface RootRouteChildren {
   ListingsIdRoute: typeof ListingsIdRouteWithChildren
   ListingsNewRoute: typeof ListingsNewRoute
   OnboardingAgreementRoute: typeof OnboardingAgreementRoute
+  OnboardingEligibilityRoute: typeof OnboardingEligibilityRoute
   OnboardingFeeRoute: typeof OnboardingFeeRoute
   OnboardingIdentityRoute: typeof OnboardingIdentityRoute
   OnboardingListingRoute: typeof OnboardingListingRoute
@@ -3065,6 +3078,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/agreement'
       fullPath: '/onboarding/agreement'
       preLoaderRoute: typeof OnboardingAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/eligibility': {
+      id: '/onboarding/eligibility'
+      path: '/onboarding/eligibility'
+      fullPath: '/onboarding/eligibility'
+      preLoaderRoute: typeof OnboardingEligibilityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/fee': {
@@ -4031,6 +4051,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingsIdRoute: ListingsIdRouteWithChildren,
   ListingsNewRoute: ListingsNewRoute,
   OnboardingAgreementRoute: OnboardingAgreementRoute,
+  OnboardingEligibilityRoute: OnboardingEligibilityRoute,
   OnboardingFeeRoute: OnboardingFeeRoute,
   OnboardingIdentityRoute: OnboardingIdentityRoute,
   OnboardingListingRoute: OnboardingListingRoute,
