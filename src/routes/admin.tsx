@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/lib/admin";
+import { getMyAdminRoles } from "@/lib/governance-config.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -80,6 +82,9 @@ function AdminLayout() {
   const { user, loading, isAdmin } = useAdmin();
   const isLoginRoute = pathname.startsWith("/admin/login");
   const isFounderRoute = pathname.startsWith("/admin/founder");
+  // Only founders see the Founder dashboard link. (The page itself is refused on the server for everyone else.)
+  const { data: roles } = useQuery({ queryKey: ["my-admin-roles", user?.id], enabled: !!user && isAdmin, retry: false, queryFn: () => getMyAdminRoles() });
+  const navItems = NAV.filter((item) => item.to !== "/admin/founder" || roles?.isFounder === true);
 
   useEffect(() => {
     if (isLoginRoute || loading) return;
@@ -127,7 +132,7 @@ function AdminLayout() {
             <p className="mt-1 truncate text-xs text-muted-foreground">{user?.email}</p>
           </div>
           <nav className="flex flex-wrap gap-1 lg:flex-col">
-            {NAV.map(({ to, label, icon: Icon }) => (
+            {navItems.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}

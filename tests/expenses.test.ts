@@ -240,7 +240,7 @@ describe("posting expenses", () => {
     await expect(postExpenseDraft({ data: { expenseId: id } })).rejects.toThrow("Not authorized");
     await expect(listExpensesForAdmin()).rejects.toThrow("Not authorized");
     expect((await getOwnerExpenses({ data: { propertyId: A } })).rows).toEqual([]);
-    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense")).toEqual([]);
+    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense_posted")).toEqual([]);
   });
 
   it("splits on the cap table at posting time, not when the draft was made", async () => {
@@ -272,12 +272,12 @@ describe("posting expenses", () => {
     seed();
     const id = await newExpense(100);
     await post(id);
-    const msg = (user: string) => db().notificationsFor(user).filter((n) => n.type === "expense").map((n) => n.message).join(" ");
+    const msg = (user: string) => db().notificationsFor(user).filter((n) => n.type === "expense_posted").map((n) => n.message).join(" ");
     expect(msg(USERS.b1)).toContain("$25.00");
     expect(msg(USERS.b1)).not.toContain("$50.00");
     expect(msg(USERS.b2)).toContain("$50.00");
     expect(msg(IDS.seller)).toContain("$25.00");
-    expect(db().notificationsFor(USERS.b3).filter((n) => n.type === "expense")).toEqual([]);
+    expect(db().notificationsFor(USERS.b3).filter((n) => n.type === "expense_posted")).toEqual([]);
   });
 
   it("a second post of the same expense is refused and changes nothing", async () => {
@@ -294,7 +294,7 @@ describe("posting expenses", () => {
     const { postExpense } = await import("@/lib/expenses.server");
     await Promise.allSettled([postExpense(db() as never, { adminId: USERS.admin, expenseId: id }), postExpense(db() as never, { adminId: USERS.admin, expenseId: id })]);
     expect(db().table("expense_allocations").filter((a) => a.expense_id === id)).toHaveLength(3);
-    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense")).toHaveLength(1);
+    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense_posted")).toHaveLength(1);
   });
 
   it("a property with no cap table can't post", async () => {
@@ -570,7 +570,7 @@ describe("voiding", () => {
     const id = await newExpense(100);
     as(USERS.admin);
     await voidExpenseRecord({ data: { expenseId: id, reason: "Typed wrong" } });
-    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense")).toEqual([]);
+    expect(db().notificationsFor(USERS.b1).filter((n) => n.type === "expense_posted")).toEqual([]);
   });
 });
 

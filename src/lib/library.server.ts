@@ -31,8 +31,12 @@ interface VideoRow {
   status: LibraryStatus;
   compliance_approved_by: string | null;
   compliance_approved_at: string | null;
+  /** Who created the video (agents-library-decisions.sql). Null on a video from before it was recorded. */
+  created_by?: string | null;
   sort_order: number;
 }
+
+export const SAME_APPROVER_MESSAGE = "A video has to be approved by a different admin than the one who created it. Ask another admin to review and approve it.";
 
 const publicVideo = (r: VideoRow): PublicLibraryVideo | null => {
   const videoId = youtubeId(r.youtube_url);
@@ -40,6 +44,12 @@ const publicVideo = (r: VideoRow): PublicLibraryVideo | null => {
 };
 
 const bySortOrder = <T extends { sort_order: number }>(rows: T[]) => [...rows].sort((a, b) => a.sort_order - b.sort_order);
+
+/** Whether any video is published: where an agent's link lands (the homepage until there is something to watch). */
+export async function libraryHasPublished(db: Db): Promise<boolean> {
+  const { count, error } = await db.from("library_videos").select("id", { count: "exact", head: true }).eq("status", "published");
+  return !error && (count ?? 0) > 0;
+}
 
 export async function publicLibrary(db: Db): Promise<{ clusters: Array<{ id: string; name: string; videos: PublicLibraryVideo[] }> }> {
   const { data: clusters, error } = await db.from("library_clusters").select("id, name, sort_order").order("sort_order", { ascending: true });
@@ -187,7 +197,9 @@ export async function createVideo(db: Db, params: { adminId: string; input: Vide
   const { count, error: countError } = await db.from("library_videos").select("id", { count: "exact", head: true });
   if (countError) throw new Error(MISSING_SCHEMA);
   if ((count ?? 0) >= LIBRARY_CAPACITY) throw new Error(`The library holds ${LIBRARY_CAPACITY} videos.`);
-  const { data, error } = await db.from("library_videos").insert({ ...row, status: "draft" }).select("*").maybeSingle();
+  let { data, error } = await db.from("library_videos").insert({ ...row, status: "draft", created_by: params.adminId }).select("*").maybeSingle();
+  // Before agents-library-decisions.sql is run there is no created_by column: create it the old way.
+  if (error && /created_by/.test(error.message ?? "")) ({ data, error } = await db.from("library_videos").insert({ ...row, status: "draft" }).select("*").maybeSingle());
   if (error || !data) throw new Error(error ? friendly(error) : MISSING_SCHEMA);
   await audit(db, params.adminId, "library.video_created", data.id as string, { slug: row.slug });
   return { id: data.id as string };
@@ -233,6 +245,8 @@ export async function moveVideo(db: Db, params: { adminId: string; videoId: stri
 
   const patch: Record<string, unknown> = { status: params.status };
   if (video.status === "compliance_review" && params.status === "approved") {
+    // Four eyes: the approver is never the creator. Enforced here, and by the database as well.
+    if (video.created_by && video.created_by === params.adminId) throw new Error(SAME_APPROVER_MESSAGE);
     patch["compliance_approved_by"] = params.adminId;
     patch["compliance_approved_at"] = new Date().toISOString();
   }
@@ -241,7 +255,7 @@ export async function moveVideo(db: Db, params: { adminId: string; videoId: stri
     patch["compliance_approved_at"] = null;
   }
   const { data, error } = await db.from("library_videos").update(patch).eq("id", video.id).eq("status", video.status).select("id").maybeSingle();
-  if (error) throw new Error(friendly(error));
+  if (error) throw new Error(/different admin|creator/i.test(error.message ?? "") ? SAME_APPROVER_MESSAGE : friendly(error));
   if (!data) throw new Error("This video just changed. Reload and try again.");
   await audit(db, params.adminId, `library.video_${params.status}`, video.id, { from_status: video.status, to_status: params.status });
 }

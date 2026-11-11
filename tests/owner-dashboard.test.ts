@@ -174,6 +174,6 @@ describe("dashboard data", () => {
     ]);
     r = await open(A);
     if (r.access !== "active") throw new Error("expected active");
-    expect(r.property.capital).toEqual({ contributed: 1000.5, distributions: 200, net: 800.5 });
+    expect(r.property.capital).toEqual({ contributed: 1000.5, distributions: 200, net: 800.5, contributions: [] });
   });
 });

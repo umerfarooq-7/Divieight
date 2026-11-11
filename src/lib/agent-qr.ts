@@ -13,6 +13,9 @@ const TOKEN_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 export const TOKEN_LENGTH = 12;
 
 export const isAttributionToken = (token: string) => /^[a-z2-9]{12}$/.test(token);
+/** The older /r links' tokens (eight characters). They are kept as suggestions in the same stamp, never as a referring agent. */
+export const isLegacyReferralToken = (token: string) => /^[a-z2-9]{8}$/.test(token);
+export const isAnyAttributionToken = (token: string) => isAttributionToken(token) || isLegacyReferralToken(token);
 
 /** Unbiased: bytes that would favour early letters are thrown away. */
 export function randomAttributionToken(): string {
@@ -41,7 +44,7 @@ export function parseStoredTokens(raw: string | null | undefined, now = Date.now
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (e): e is StoredToken =>
-        e && typeof e.t === "string" && isAttributionToken(e.t) && typeof e.at === "number" && now - e.at < ATTRIBUTION_DAYS * DAY_MS,
+        e && typeof e.t === "string" && isAnyAttributionToken(e.t) && typeof e.at === "number" && now - e.at < ATTRIBUTION_DAYS * DAY_MS,
     );
   } catch {
     return [];

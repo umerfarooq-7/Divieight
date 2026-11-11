@@ -1,4 +1,5 @@
 /** Buyer Learning Library: what the public can see, the compliance path, YouTube links, views and attribution. */
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { harness } from "./setup";
 import { seedPod, IDS, USERS } from "./fixtures";
@@ -24,6 +25,7 @@ const TOKEN = "aaaaaaaaaaaa", TOKEN2 = "bbbbbbbbbbbb";
 
 function seed() {
   seedPod(db());
+  db().rpcResults.has_role = (a: { _user_id: string; _role: string }) => a._role === "admin" && [USERS.admin, "u-admin-approver"].includes(a._user_id);
   db().seed("library_clusters", [
     { id: C1, name: "Basics", sort_order: 1 },
     { id: C2, name: "Co-Ownership", sort_order: 2 },
@@ -39,8 +41,10 @@ const create = async (o: Record<string, unknown> = {}) => {
   as(USERS.admin);
   return (await createLibraryVideo({ data: input(o) as never })).id;
 };
+/** Compliance approval is by a different admin than the creator. */
+const APPROVER = "u-admin-approver";
 const move = (videoId: string, status: string) => {
-  as(USERS.admin);
+  as(status === "approved" ? APPROVER : USERS.admin);
   return moveLibraryVideo({ data: { videoId, status } as never });
 };
 const publish = async (id: string) => {
@@ -131,7 +135,7 @@ describe("the compliance path", () => {
     await move(id, "compliance_review");
     expect(row(id).compliance_approved_by ?? null).toBeNull();
     await move(id, "approved");
-    expect(row(id).compliance_approved_by).toBe(USERS.admin);
+    expect(row(id).compliance_approved_by).toBe(APPROVER);
     expect(row(id).compliance_approved_at).toBeTruthy();
     await move(id, "draft");
     expect(row(id).compliance_approved_by).toBeNull();
@@ -143,7 +147,7 @@ describe("the compliance path", () => {
     const id = await create();
     await publish(id);
     await move(id, "approved");
-    expect(row(id).compliance_approved_by).toBe(USERS.admin);
+    expect(row(id).compliance_approved_by).toBe(APPROVER);
     await move(id, "published");
     expect(row(id).status).toBe("published");
   });
@@ -360,5 +364,37 @@ describe("links, slugs and embed code", () => {
     const videos = [{ title: "Costs", description: null }, { title: "Other", description: "about COSTS" }, { title: "Third", description: "x" }];
     expect(searchVideos(videos, " costs ").map((v) => v.title)).toEqual(["Costs", "Other"]);
     expect(searchVideos(videos, "")).toHaveLength(3);
+  });
+});
+
+describe("the approver is never the creator", () => {
+  it("the admin who created a video can't approve it, on the server, with a clear message; another admin can", async () => {
+    seed();
+    const id = await create();
+    await move(id, "compliance_review");
+    expect(row(id).created_by).toBe(USERS.admin);
+    as(USERS.admin);
+    await expect(moveLibraryVideo({ data: { videoId: id, status: "approved" } as never })).rejects.toThrow("approved by a different admin than the one who created it");
+    expect(row(id).status).toBe("compliance_review");
+    expect(row(id).compliance_approved_by ?? null).toBeNull();
+    await move(id, "approved");
+    expect(row(id).status).toBe("approved");
+    expect(db().audits("library.video_approved")).toHaveLength(1);
+  });
+
+  it("a video from before the creator was recorded isn't blocked", async () => {
+    seed();
+    const id = await create();
+    delete row(id).created_by;
+    await move(id, "compliance_review");
+    as(USERS.admin);
+    await moveLibraryVideo({ data: { videoId: id, status: "approved" } as never });
+    expect(row(id).status).toBe("approved");
+  });
+
+  it("the database refuses it too, and the rest of the compliance path is unchanged", () => {
+    const sql = readFileSync("agents-library-decisions.sql", "utf8");
+    expect(sql).toMatch(/compliance_approved_by = NEW.created_by/);
+    expect(sql).toMatch(/different admin/);
   });
 });

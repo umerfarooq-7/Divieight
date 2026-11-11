@@ -69,7 +69,13 @@ export interface SplitLine {
  * cents left over all go to the lowest rank number, so the lines add up to the
  * total exactly and the same inputs always give the same split. Rounding down
  * means no line can go negative. Lines come back in rank order.
+ *
+ * THE ROUNDING RULE (decided, do not change without the CPA): every line is rounded DOWN to the cent; the cents that
+ * are left over all go to the holder with rank 1. A property has at most eight holders, so at most 7 cents are left
+ * over (each of up to 8 lines loses less than one cent). Rank 1 is the lowest rank number, the top-priority holder.
  */
+export const ROUNDING_RULE_TEXT =
+  "Each owner's share is rounded down to the cent. The cents left over (at most 7) go to the holder with rank 1, so the lines add up to the total exactly.";
 export function splitProRata(totalAmount: number, holders: SplitHolder[]): SplitLine[] {
   const issued = holders.reduce((sum, h) => sum + h.shares, 0);
   if (issued <= 0) throw new Error("This property has no issued shares to allocate to.");

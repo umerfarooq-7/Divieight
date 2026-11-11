@@ -4,7 +4,7 @@
  * attribution_tokens table.
  */
 
-import { isAttributionToken, randomAttributionToken } from "@/lib/agent-qr";
+import { isAnyAttributionToken, isAttributionToken, randomAttributionToken } from "@/lib/agent-qr";
 
 type Db = { from: (t: string) => any };
 
@@ -58,6 +58,8 @@ export interface AgentQrToken {
   createdAt: string;
   revokedAt: string | null;
   visits: number;
+  /** How many buyers were stamped through this link. A count only: no names, no details. */
+  buyers: number;
 }
 
 /** /agent/qr. The first visit creates the agent's default token. */
@@ -79,7 +81,8 @@ export async function agentQrPage(db: Db, userId: string): Promise<{ isAgent: bo
   const tokens: AgentQrToken[] = [];
   for (const r of rows) {
     const { count } = await db.from("attribution_visits").select("id", { count: "exact", head: true }).eq("token_id", r.id);
-    tokens.push({ id: r.id, token: r.token, label: r.label, isDefault: r.is_default, createdAt: r.created_at, revokedAt: r.revoked_at, visits: count ?? 0 });
+    const { count: stamped } = await db.from("buyer_attribution").select("id", { count: "exact", head: true }).eq("token_id", r.id);
+    tokens.push({ id: r.id, token: r.token, label: r.label, isDefault: r.is_default, createdAt: r.created_at, revokedAt: r.revoked_at, visits: count ?? 0, buyers: stamped ?? 0 });
   }
   return { isAgent: true, tokens: tokens.sort((a, b) => Number(b.isDefault && !b.revokedAt) - Number(a.isDefault && !a.revokedAt)) };
 }
@@ -137,15 +140,19 @@ export async function stampBuyer(db: Db, params: { userId: string; tokens: strin
   if (missing) return { stamped: false, keep: true }; // before the SQL is run
   if (existing || buyer.priority_rank_timestamp) return { stamped: false, keep: false };
 
-  for (const token of params.tokens.filter(isAttributionToken)) {
-    const { data: row } = await db.from("agent_attribution_tokens").select("id, agent_id, revoked_at").eq("token", token).maybeSingle();
+  for (const token of params.tokens.filter(isAnyAttributionToken)) {
+    // A /a link's token (twelve characters), or an older /r link's (eight): either way it is only a suggestion.
+    const { data: row } = isAttributionToken(token)
+      ? await db.from("agent_attribution_tokens").select("id, agent_id, revoked_at").eq("token", token).maybeSingle()
+      : await db.from("attribution_tokens").select("id, agent_id").eq("token", token).maybeSingle();
     if (!row || row.revoked_at) continue;
+    const tokenId = isAttributionToken(token) ? row.id : null; // the older table's ids aren't in this one
     const { data: agent } = await db.from("agents").select("auth_user_id").eq("id", row.agent_id).maybeSingle();
     if (!agent || agent.auth_user_id === params.userId) continue; // nobody refers themselves
 
     const { data: stamp, error } = await db
       .from("buyer_attribution")
-      .insert({ buyer_user_id: params.userId, token_id: row.id, agent_id: row.agent_id })
+      .insert({ buyer_user_id: params.userId, token_id: tokenId, agent_id: row.agent_id })
       .select("id")
       .maybeSingle();
     if (error) return { stamped: false, keep: error.code !== "23505" }; // 23505: another tab stamped first
@@ -155,19 +162,85 @@ export async function stampBuyer(db: Db, params: { userId: string; tokens: strin
       action_type: "buyer.attribution_stamped",
       entity_type: "buyer_account",
       entity_id: buyer.id,
-      metadata: { stamp_id: stamp?.id ?? null, token_id: row.id, agent_id: row.agent_id },
+      metadata: { stamp_id: stamp?.id ?? null, token_id: tokenId, legacy_link: !isAttributionToken(token), agent_id: row.agent_id },
     });
     return { stamped: true, keep: false };
   }
   return { stamped: false, keep: false };
 }
 
-/** The neutral note on the agent-selection step. Choosing stays with the buyer. */
-export async function myReferralSuggestion(db: Db, userId: string): Promise<{ agentName: string } | null> {
-  const { data: stamp, error } = await db.from("buyer_attribution").select("agent_id").eq("buyer_user_id", userId).maybeSingle();
+/**
+ * The question on the agent-selection step: "You were referred by <Agent>. Confirm this agent as your referring agent?"
+ * Nothing is set until the buyer says Confirm. After No thanks it is never asked again; after Confirm it reads as done.
+ */
+export async function myReferralSuggestion(db: Db, userId: string): Promise<{ agentName: string; status: "pending" | "confirmed" } | null> {
+  const { data: stamp, error } = await db.from("buyer_attribution").select("agent_id, response").eq("buyer_user_id", userId).maybeSingle();
   if (error || !stamp) return null;
+  if (stamp.response === "declined") return null;
   const { data: agent } = await db.from("agents").select("full_name").eq("id", stamp.agent_id).maybeSingle();
-  return agent?.full_name ? { agentName: agent.full_name as string } : null;
+  if (!agent?.full_name) return null;
+  return { agentName: agent.full_name as string, status: stamp.response === "confirmed" ? "confirmed" : "pending" };
+}
+
+async function stampFor(db: Db, userId: string) {
+  const { data: stamp, error } = await db.from("buyer_attribution").select("id, agent_id, token_id, response").eq("buyer_user_id", userId).maybeSingle();
+  if (error || !stamp) throw new Error("There is no referral to confirm.");
+  const { data: buyer } = await db.from("buyer_accounts").select("id, referring_agent_id").eq("auth_user_id", userId).maybeSingle();
+  if (!buyer) throw new Error("No buyer account");
+  return { stamp: stamp as { id: string; agent_id: string; token_id: string | null; response: string | null }, buyer: buyer as { id: string; referring_agent_id: string | null } };
+}
+
+/** The buyer confirms the agent who referred them. Only this sets referring_agent_id, exactly as the older tag did. */
+export async function confirmReferringAgent(db: Db, params: { userId: string }): Promise<void> {
+  const { stamp, buyer } = await stampFor(db, params.userId);
+  if (stamp.response === "declined") throw new Error("You chose not to name this agent.");
+  // A referring agent who is already on the account stays exactly as they are.
+  if (buyer.referring_agent_id && buyer.referring_agent_id !== stamp.agent_id) throw new Error("This account already has a referring agent.");
+  if (!buyer.referring_agent_id) {
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + 12); // the NAR Referral Agreement's standard duration, as the older tag used
+    let referralToken: string | null = null;
+    if (stamp.token_id) {
+      const { data: t } = await db.from("agent_attribution_tokens").select("token").eq("id", stamp.token_id).maybeSingle();
+      referralToken = (t?.token as string | undefined) ?? null;
+    }
+    const { error } = await db
+      .from("buyer_accounts")
+      .update({ referring_agent_id: stamp.agent_id, referral_token: referralToken, referral_source: "agent_referral", referral_tag_expires_at: expires.toISOString() })
+      .eq("id", buyer.id)
+      .is("referring_agent_id", null);
+    if (error) throw new Error("That didn't save. Please try again.");
+  }
+  await db.from("buyer_attribution").update({ response: "confirmed", responded_at: new Date().toISOString() }).eq("id", stamp.id);
+  await db.from("audit_log").insert({
+    actor_id: params.userId,
+    actor_type: "buyer",
+    action_type: "buyer.referral_confirmed",
+    entity_type: "buyer_account",
+    entity_id: buyer.id,
+    metadata: { referring_agent_id: stamp.agent_id, stamp_id: stamp.id },
+  });
+}
+
+/** "No thanks": remembered, so the question isn't asked again. Nothing else changes. */
+export async function declineReferringAgent(db: Db, params: { userId: string }): Promise<void> {
+  const { stamp, buyer } = await stampFor(db, params.userId);
+  if (stamp.response === "confirmed") return;
+  await db.from("buyer_attribution").update({ response: "declined", responded_at: new Date().toISOString() }).eq("id", stamp.id);
+  await db.from("audit_log").insert({
+    actor_id: params.userId,
+    actor_type: "buyer",
+    action_type: "buyer.referral_declined",
+    entity_type: "buyer_account",
+    entity_id: buyer.id,
+    metadata: { stamp_id: stamp.id, agent_id: stamp.agent_id },
+  });
+}
+
+/** Where a link lands: the homepage until a library video is published, the library after. The stamp works either way. */
+export async function attributionLanding(db: Db): Promise<"/" | "/library"> {
+  const { libraryHasPublished } = await import("@/lib/library.server");
+  return (await libraryHasPublished(db)) ? "/library" : "/";
 }
 
 /** "Attributed to Agent X" for the admin's buyers list, keyed by the buyer's login. */

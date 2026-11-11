@@ -267,6 +267,17 @@ export function computeFounderDashboard(facts: FounderFacts, filters: FounderFil
 }
 
 export type FounderDashboard = ReturnType<typeof computeFounderDashboard>;
+/**
+ * What the money lines are called. Only the Platform Enrollment Fee is divieight's revenue. The Heavy Lifter Premium and
+ * the Participating Agent Yield are paid broker to broker through title: they are recorded here, never added to
+ * revenue, and never added to each other. (Labels only: the numbers behind them are unchanged.)
+ */
+export const PLATFORM_REVENUE_LABEL = "Platform revenue (Platform Enrollment Fees)";
+export const AGENT_PAYOUTS_LABEL = "Agent payouts recorded (not revenue)";
+export const AGENT_PAYOUTS_NOTE = "Paid broker to broker through title, not received by divieight";
+export const AGENT_YIELD_DEFINITION =
+  "Participating Agent Yield: the resident and referring agents' share of the commission after the Heavy Lifter Premium is taken out. Premium plus yield equals the total commission.";
+
 export type FounderWidget = "gtv" | "revenue" | "velocity" | "referrals" | "demand" | "retention";
 
 /** A leading = + - @ would run as a formula in a spreadsheet: names here are typed by people. */
@@ -293,10 +304,11 @@ export function founderCsv(widget: FounderWidget, d: FounderDashboard): string {
       ]);
     case "revenue":
       return csv([
-        ["Stream", "Recorded (USD)", "Count", "Test or simulated, not included (USD)"],
-        ["Platform Enrollment Fee", dollars(d.streams.pef.realCents), d.streams.pef.realCount, dollars(d.streams.pef.testCents)],
-        ["Heavy Lifter Premium", d.streams.recorded ? dollars(d.streams.premium.realCents) : "Not yet recorded", null, dollars(d.streams.premium.testCents)],
-        ["Participating Agent Yield", d.streams.recorded ? dollars(d.streams.agentYield.realCents) : "Not yet recorded", null, dollars(d.streams.agentYield.testCents)],
+        ["Line", "Recorded (USD)", "Count", "Test or simulated, not included (USD)", "Note"],
+        [PLATFORM_REVENUE_LABEL, dollars(d.streams.pef.realCents), d.streams.pef.realCount, dollars(d.streams.pef.testCents), "Cleared Platform Enrollment Fees only"],
+        [AGENT_PAYOUTS_LABEL, "", "", "", AGENT_PAYOUTS_NOTE],
+        ["Heavy Lifter Premium", d.streams.recorded ? dollars(d.streams.premium.realCents) : "Not yet recorded", null, dollars(d.streams.premium.testCents), AGENT_PAYOUTS_NOTE],
+        ["Participating Agent Yield", d.streams.recorded ? dollars(d.streams.agentYield.realCents) : "Not yet recorded", null, dollars(d.streams.agentYield.testCents), AGENT_PAYOUTS_NOTE],
       ]);
     case "velocity":
       return csv([

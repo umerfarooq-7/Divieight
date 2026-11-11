@@ -126,6 +126,12 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
             <Facts
               rows={[
                 ["Contributed", money(p.capital.contributed)],
+                ...(p.capital.contributions.length > 0
+                  ? ([
+                      ["  of which capital calls", money(p.capital.contributions.filter((c) => c.type === "capital_call").reduce((s, c) => s + c.amount, 0))],
+                      ["  of which expenses", money(p.capital.contributions.filter((c) => c.type === "expense").reduce((s, c) => s + c.amount, 0))],
+                    ] as Array<[string, string]>)
+                  : []),
                 ["Distributions", money(p.capital.distributions)],
                 ["Net", money(p.capital.net)],
               ]}

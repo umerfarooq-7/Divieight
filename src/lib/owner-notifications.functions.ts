@@ -47,6 +47,28 @@ export const listDistributionsForAdmin = createServerFn({ method: "GET" })
     return (await server()).adminDistributions(await adminDb());
   });
 
+export const voidDistributionEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { distributionId: string; reason: string }) => ({ distributionId: String(input?.distributionId ?? ""), reason: String(input?.reason ?? "").slice(0, 1000) }))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    await (await server()).voidDistribution(await adminDb(), { adminId: context.userId, ...data });
+    return { ok: true };
+  });
+
+export const repostDistributionEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { distributionId: string; reason: string; totalAmount: number | string; recordDate: string; note?: string | null }) => {
+    const recordDate = String(input?.recordDate ?? "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(recordDate)) throw new Error("Enter a valid record date");
+    const note = String(input?.note ?? "").trim().slice(0, 1000);
+    return { distributionId: String(input?.distributionId ?? ""), reason: String(input?.reason ?? "").slice(0, 1000), totalAmount: Number(input?.totalAmount), recordDate, note: note || null };
+  })
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    return (await server()).repostDistribution(await adminDb(), { adminId: context.userId, ...data });
+  });
+
 export const postDistributionEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { propertyId: string; totalAmount: number | string; recordDate: string; note?: string | null }) => {

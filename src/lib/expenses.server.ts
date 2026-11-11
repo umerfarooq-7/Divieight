@@ -552,7 +552,7 @@ export async function postExpense(db: Db, params: { adminId: string; expenseId: 
     subject: "A new expense was posted",
     message: `"${expense.description}" was posted to your home. Your share is ${expenseMoney(line.amount)} (${line.share_count} of the issued shares).`,
     link: `/owner/properties/${expense.property_id}/expenses`,
-    type: "expense",
+    type: "expense_posted",
     propertyId: expense.property_id,
     dedupeKey: `expense_posted:${expense.id}`,
   }));
@@ -568,7 +568,7 @@ export async function voidExpense(db: Db, params: { adminId: string; expenseId: 
     subject: "An expense was voided",
     message: `"${expense.description}" was voided, so nothing is owed for it. Reason: ${params.reason}`,
     link: `/owner/properties/${expense.property_id}/expenses`,
-    type: "expense",
+    type: "expense_posted",
     propertyId: expense.property_id,
     dedupeKey: `expense_voided:${expense.id}`,
   }));
@@ -586,7 +586,7 @@ export async function confirmPayment(db: Db, params: { adminId: string; kind: Pa
       subject: "Your payment was confirmed",
       message: `Your ${expenseMoney(found.allocation.amount)} payment on "${parentName(kind, found.parent)}" was confirmed and added to your capital account.`,
       link: `/owner/properties/${found.parent.property_id}/${OWNER_PAGE[kind]}`,
-      type: kind === "capital_call" ? "capital_call_alert" : kind,
+      type: kind === "capital_call" ? "capital_call_alert" : "expense_posted",
       propertyId: found.parent.property_id,
     });
   }
@@ -614,7 +614,7 @@ export async function rejectPaymentMark(db: Db, params: { adminId: string; kind:
       subject: "Your payment wasn't confirmed",
       message: `Your ${expenseMoney(allocation.amount)} payment on "${parentName(kind, parent)}" hasn't been received. Note: ${params.note}`,
       link: `/owner/properties/${parent.property_id}/${OWNER_PAGE[kind]}`,
-      type: kind === "capital_call" ? "capital_call_alert" : kind,
+      type: kind === "capital_call" ? "capital_call_alert" : "expense_posted",
       propertyId: parent.property_id,
     });
   }

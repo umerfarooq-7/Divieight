@@ -270,7 +270,7 @@ describe("who sees the suggestion", () => {
     const t = await defaultToken(USERS.ra);
     await stamp(USERS.b1, [t.token]);
     as(USERS.b1);
-    expect(await getMyReferralSuggestion()).toEqual({ agentName: "Rita Resident" });
+    expect(await getMyReferralSuggestion()).toEqual({ agentName: "Rita Resident", status: "pending" });
     await expect(listBuyerAttributionsForAdmin()).rejects.toThrow("Not authorized");
     as(USERS.b2);
     expect(await getMyReferralSuggestion()).toBeNull();

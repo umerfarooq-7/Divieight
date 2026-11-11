@@ -8,7 +8,7 @@ import { deliver } from "@/lib/authorization.notify.server";
 import { expenseMoney, isValidMoney, splitProRata, todayIso } from "@/lib/expenses";
 import { holderRecipient } from "@/lib/expenses.server";
 import { isMandatoryNotification, OWNER_NOTIFICATION_TYPES, type OwnerNotificationType } from "@/lib/owner-notifications";
-import { rankedHolders } from "@/lib/use-calendar.server";
+import { holdersAsOf } from "@/lib/record-date-holders.server";
 import { holderRecipients } from "@/lib/votes.server";
 
 type Db = { from: (t: string) => any };
@@ -167,35 +167,63 @@ export async function adminDistributions(db: Db) {
   const owned = new Set(((cap ?? []) as Array<{ property_id: string }>).map((c) => c.property_id));
   return {
     properties: [...owned].map((id) => ({ id, label: labels.get(id) ?? "Property" })).sort((a, b) => a.label.localeCompare(b.label)),
-    rows: ((rows ?? []) as Array<{ id: string; property_id: string; total_amount: number; record_date: string; note: string | null; created_at: string }>).map((r) => ({
+    rows: ((rows ?? []) as DistributionRow[]).map((r) => ({
       id: r.id,
       propertyLabel: labels.get(r.property_id) ?? "Property",
       totalAmount: Number(r.total_amount),
       recordDate: r.record_date,
       note: r.note,
       createdAt: r.created_at,
+      status: (r.status ?? "posted") as "posted" | "voided",
+      voidReason: r.void_reason ?? null,
+      voidedAt: r.voided_at ?? null,
+      replacesId: r.replaces_id ?? null,
+      replacedById: r.replaced_by_id ?? null,
     })),
   };
 }
 
-/** Tells each owner their pro-rata amount. Pays nothing and changes no balance. */
-export async function postDistribution(db: Db, params: { adminId: string; propertyId: string; totalAmount: number; recordDate: string; note: string | null }): Promise<{ id: string }> {
+interface DistributionRow {
+  id: string;
+  property_id: string;
+  total_amount: number;
+  record_date: string;
+  note: string | null;
+  created_at: string;
+  status?: string | null;
+  void_reason?: string | null;
+  voided_at?: string | null;
+  replaces_id?: string | null;
+  replaced_by_id?: string | null;
+  lines?: Array<{ holder_key: string; share_count: number; amount: number }> | null;
+}
+
+/**
+ * Tells each owner their pro-rata amount, split on the holders ON THE RECORD DATE (rebuilt from cap_table_history), not
+ * on today's cap table. Pays nothing and changes no balance. A posted distribution is never edited: a mistake is voided
+ * and re-posted, and every version is kept.
+ */
+export async function postDistribution(db: Db, params: { adminId: string; propertyId: string; totalAmount: number; recordDate: string; note: string | null; replacesId?: string | null }): Promise<{ id: string }> {
   if (!isValidMoney(params.totalAmount)) throw new Error("The total must be above zero, with at most two decimal places.");
-  const holders = await rankedHolders(db as never, params.propertyId);
+  const holders = await holdersAsOf(db, params.propertyId, params.recordDate);
   const lines = splitProRata(params.totalAmount, holders.map((h) => ({ holderKey: h.holderKey, shares: h.shares, rank: h.rank })));
-  const { data, error } = await db
+  const base = { property_id: params.propertyId, total_amount: params.totalAmount, record_date: params.recordDate, note: params.note, created_by: params.adminId };
+  let { data, error } = await db
     .from("distribution_events")
-    .insert({ property_id: params.propertyId, total_amount: params.totalAmount, record_date: params.recordDate, note: params.note, created_by: params.adminId })
+    .insert({ ...base, status: "posted", lines, replaces_id: params.replacesId ?? null })
     .select("id")
     .maybeSingle();
+  // Before governance-and-money-decisions.sql is run the new columns aren't there: post the old way.
+  if ((error || !data) && !params.replacesId) ({ data, error } = await db.from("distribution_events").insert(base).select("id").maybeSingle());
   if (error || !data) throw new Error(MISSING_SCHEMA);
+  if (params.replacesId) await db.from("distribution_events").update({ replaced_by_id: data.id }).eq("id", params.replacesId);
   await db.from("audit_log").insert({
     actor_id: params.adminId,
     actor_type: "admin",
     action_type: "distribution.posted",
     entity_type: "distribution_event",
     entity_id: data.id,
-    metadata: { property_id: params.propertyId, total_amount: params.totalAmount, record_date: params.recordDate, lines },
+    metadata: { property_id: params.propertyId, total_amount: params.totalAmount, record_date: params.recordDate, lines, holders_as_of: params.recordDate, replaces_id: params.replacesId ?? null },
   });
   for (const line of lines) {
     const recipient = await holderRecipient(db, line.holder_key);
@@ -210,5 +238,64 @@ export async function postDistribution(db: Db, params: { adminId: string; proper
     });
   }
   return { id: data.id as string };
+}
+
+/**
+ * Void a posted distribution, with a reason. Owners are told it is voided. Nothing is deleted: the row stays, marked
+ * voided, with who voided it and why. It never paid anything, so there is nothing to claw back.
+ */
+export async function voidDistribution(db: Db, params: { adminId: string; distributionId: string; reason: string }): Promise<void> {
+  const reason = params.reason.trim();
+  if (!reason) throw new Error("Say why it is being voided.");
+  const { data: found } = await db.from("distribution_events").select("*").eq("id", params.distributionId).maybeSingle();
+  const row = found as DistributionRow | null;
+  if (!row) throw new Error("Distribution not found.");
+  if ((row.status ?? "posted") === "voided") throw new Error("This distribution is already voided.");
+  const { data: voided, error } = await db
+    .from("distribution_events")
+    .update({ status: "voided", voided_at: new Date().toISOString(), voided_by: params.adminId, void_reason: reason.slice(0, 1000) })
+    .eq("id", row.id)
+    .eq("status", "posted")
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(MISSING_SCHEMA);
+  if (!voided) throw new Error("This distribution is already voided.");
+  await db.from("audit_log").insert({
+    actor_id: params.adminId,
+    actor_type: "admin",
+    action_type: "distribution.voided",
+    entity_type: "distribution_event",
+    entity_id: row.id,
+    metadata: { property_id: row.property_id, total_amount: Number(row.total_amount), record_date: row.record_date, reason },
+  });
+  // The same owners who were told about it.
+  const lines = row.lines ?? splitProRata(Number(row.total_amount), (await holdersAsOf(db, row.property_id, row.record_date)).map((h) => ({ holderKey: h.holderKey, shares: h.shares, rank: h.rank })));
+  for (const line of lines) {
+    const recipient = await holderRecipient(db, line.holder_key);
+    if (!recipient) continue;
+    await deliver(db as never, recipient, {
+      subject: "A distribution notice was voided",
+      message: `The distribution of ${expenseMoney(Number(row.total_amount))} posted for record date ${row.record_date} is voided. Reason: ${reason}. Ignore the earlier amount; a corrected notice may follow. No payment was made through divieight, and no balance changed.`,
+      link: `/owner/properties/${row.property_id}`,
+      type: "distribution_event",
+      propertyId: row.property_id,
+      dedupeKey: `distribution_voided:${row.id}`,
+    });
+  }
+}
+
+/** Void and re-post: the old notice is voided with a reason and a corrected one is posted, linked to it. Both are kept. */
+export async function repostDistribution(
+  db: Db,
+  params: { adminId: string; distributionId: string; reason: string; totalAmount: number; recordDate: string; note: string | null },
+): Promise<{ id: string }> {
+  if (!isValidMoney(params.totalAmount)) throw new Error("The total must be above zero, with at most two decimal places.");
+  const { data: found } = await db.from("distribution_events").select("*").eq("id", params.distributionId).maybeSingle();
+  const row = found as DistributionRow | null;
+  if (!row) throw new Error("Distribution not found.");
+  // Check the corrected split can be made before anything is voided.
+  splitProRata(params.totalAmount, (await holdersAsOf(db, row.property_id, params.recordDate)).map((h) => ({ holderKey: h.holderKey, shares: h.shares, rank: h.rank })));
+  await voidDistribution(db, { adminId: params.adminId, distributionId: params.distributionId, reason: params.reason });
+  return postDistribution(db, { adminId: params.adminId, propertyId: row.property_id, totalAmount: params.totalAmount, recordDate: params.recordDate, note: params.note, replacesId: row.id });
 }
 

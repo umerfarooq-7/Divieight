@@ -27,6 +27,29 @@ export const recordAttributionVisit = createServerFn({ method: "POST" })
     }
   });
 
+/** Public: where /a and /r links land. */
+export const getAttributionLanding = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    return await (await server()).attributionLanding(await adminDb());
+  } catch {
+    return "/" as const; // never gets in the way of reaching the site
+  }
+});
+
+export const confirmMyReferringAgent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await (await server()).confirmReferringAgent(await adminDb(), { userId: context.userId });
+    return { ok: true };
+  });
+
+export const declineMyReferringAgent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await (await server()).declineReferringAgent(await adminDb(), { userId: context.userId });
+    return { ok: true };
+  });
+
 export const getAgentQrPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => (await server()).agentQrPage(await adminDb(), context.userId));

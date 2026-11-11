@@ -18,6 +18,14 @@ async function requireAdminOr403(context: { supabase: any; userId: string }) {
   throw new Error("Not authorized");
 }
 
+/** What the signed-in admin may see in the navigation. */
+export const getMyAdminRoles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { isFounder } = await import("@/lib/governance-config.server");
+    return { isFounder: await isFounder(await adminDb(), context.userId) };
+  });
+
 export const getGovernanceSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

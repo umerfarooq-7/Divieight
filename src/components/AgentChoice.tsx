@@ -1,20 +1,50 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { Sparkles, UserSearch } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyReferralSuggestion } from "@/lib/agent-qr.functions";
+import { confirmMyReferringAgent, declineMyReferringAgent, getMyReferralSuggestion } from "@/lib/agent-qr.functions";
 import { cn } from "@/lib/utils";
 
 export const PLATFORM_CHOICE_EXPLANATION =
   "We will match you with a verified Resident Agent in your market. You will be notified and can see who was assigned.";
 
-/** A note only: it selects nobody, and the buyer's choice below is unchanged. */
+/**
+ * A link only suggests an agent. Nothing is set until the buyer confirms: Confirm names the agent as their referring
+ * agent; No thanks is remembered and the question isn't asked again. The buyer's own choice below is unchanged.
+ */
 function ReferralNote() {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const load = useServerFn(getMyReferralSuggestion);
-  const { data } = useQuery({ queryKey: ["my-referral-suggestion", user?.id], enabled: !!user, retry: false, queryFn: () => load() });
+  const confirm = useServerFn(confirmMyReferringAgent);
+  const decline = useServerFn(declineMyReferringAgent);
+  const key = ["my-referral-suggestion", user?.id];
+  const { data } = useQuery({ queryKey: key, enabled: !!user, retry: false, queryFn: () => load() });
+  const answer = async (fn: () => Promise<unknown>, done: string) => {
+    try {
+      await fn();
+      toast.success(done);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+    await qc.invalidateQueries({ queryKey: key });
+  };
   if (!data) return null;
-  return <p className="mt-4 break-words text-sm text-muted-foreground">You were referred via {data.agentName} — you may choose them.</p>;
+  if (data.status === "confirmed") return <p className="mt-4 break-words text-sm text-muted-foreground">{data.agentName} is your referring agent.</p>;
+  return (
+    <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+      <p className="break-words text-foreground">You were referred by {data.agentName}. Confirm this agent as your referring agent?</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" onClick={() => void answer(() => confirm(), "Thanks. We've noted your referring agent.")} className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground">
+          Confirm
+        </button>
+        <button type="button" onClick={() => void answer(() => decline(), "No problem.")} className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary">
+          No thanks
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /** "Choose my own agent" / "Let divieight choose for me" — shared by the dashboard and reserve steps. */

@@ -63,7 +63,13 @@ export async function rankedHolders(db: Db, propertyId: string): Promise<RankedH
     .from("cap_table_entries")
     .select("holder_type, buyer_account_id, seller_id, account_member_names")
     .eq("property_id", propertyId);
-  const rows = (data ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null; account_member_names: string[] | null }>;
+  return rankHolderRows(db, (data ?? []) as HolderRow[]);
+}
+
+export type HolderRow = { holder_type: string; buyer_account_id: string | null; seller_id: string | null; account_member_names: string[] | null };
+
+/** The same ranking, for any set of per-share holder rows (today's cap table, or one rebuilt for a past date). */
+export async function rankHolderRows(db: Db, rows: HolderRow[]): Promise<RankedHolder[]> {
 
   const buyers = new Map<string, { shares: number; name: string }>();
   const sellers = new Map<string, number>();

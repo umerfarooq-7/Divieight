@@ -5,6 +5,8 @@ export const OWNER_NOTIFICATION_TYPES = {
   capital_call_alert: { label: "Capital calls", mandatory: true },
   governance_vote_window: { label: "Voting windows", mandatory: true },
   resale_activity: { label: "Resale activity", mandatory: false },
+  /** Expenses posted, voided, and their payments confirmed. Optional: the email can be switched off, the bell is always on. */
+  expense_posted: { label: "Expenses", mandatory: false },
   maintenance_update: { label: "Maintenance updates", mandatory: false },
   calendar_turn: { label: "Use Calendar turns", mandatory: false },
   retention_exception_update: { label: "Retention Lock requests", mandatory: false },

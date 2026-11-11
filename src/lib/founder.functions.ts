@@ -11,9 +11,10 @@ async function adminDb(): Promise<Db> {
   return supabaseAdmin as unknown as Db;
 }
 
+/** Founders only. An admin who isn't a founder gets a 403 here, like anyone else. */
 async function requireAdminOr403(context: { supabase: any; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-  if (data) return;
+  const { isFounder } = await import("@/lib/governance-config.server");
+  if (await isFounder((await adminDb()) as never, context.userId)) return;
   const { setResponseStatus } = await import("@tanstack/react-start/server");
   setResponseStatus(403);
   throw new Error("Not authorized");

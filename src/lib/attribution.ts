@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
+import { readStoredTokens, rememberToken } from "@/lib/agent-qr";
 
 /**
  * Lead attribution: QR codes and deep links that connect a buyer's platform
@@ -132,9 +133,10 @@ export function clearReferralCookie() {
 }
 
 /**
- * Lead Attribution Tag — stamp the buyer account with the referring agent, or
- * mark it 'direct' when no referral cookie is present. Safe to call on every
- * buyer sign-in; it never overwrites an existing tag.
+ * Lead Attribution Tag. A link no longer sets a referring agent: the buyer confirms the agent they were referred by on
+ * the agent-selection step. An older /r cookie, set before that, is carried over as a suggestion and cleared. This marks
+ * the account 'direct' only when there is no link of any kind behind it. Safe to call on every buyer sign-in; it never
+ * overwrites an existing tag, and never touches a referring agent that is already set.
  */
 export async function applyReferralTag(buyerAccountId: string, actorId: string): Promise<void> {
   const { data } = await db
@@ -150,40 +152,17 @@ export async function applyReferralTag(buyerAccountId: string, actorId: string):
 
   const referral = readReferralCookie();
 
-  if (!referral) {
-    await db
-      .from("buyer_accounts")
-      .update({ referral_source: "direct_confirmed" })
-      .eq("id", buyerAccountId);
+  if (referral) {
+    // From a /r link followed before this changed: a suggestion now, like any other link.
+    rememberToken(referral.token);
+    clearReferralCookie();
     return;
   }
+  if (readStoredTokens().length > 0) return; // a link is waiting to be stamped as a suggestion
 
-  const expires = new Date();
-  expires.setMonth(expires.getMonth() + REFERRAL_TAG_MONTHS);
-
-  const { error } = await db
+  await db
     .from("buyer_accounts")
-    .update({
-      referring_agent_id: referral.agentId,
-      referral_token: referral.token,
-      referral_source: "agent_referral",
-      referral_tag_expires_at: expires.toISOString(),
-    })
+    .update({ referral_source: "direct_confirmed" })
     .eq("id", buyerAccountId);
-
-  if (error) return;
-  clearReferralCookie();
-
-  await logAudit({
-    actorId,
-    actionType: "buyer.referral_tagged",
-    entityType: "buyer_account",
-    entityId: buyerAccountId,
-    actorType: "buyer",
-    metadata: {
-      referring_agent_id: referral.agentId,
-      token: referral.token,
-      referral_tag_expires_at: expires.toISOString(),
-    },
-  });
+  void actorId;
 }

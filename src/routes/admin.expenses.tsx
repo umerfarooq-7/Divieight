@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format-date";
-import { CAPITAL_CALL_STATUS_LABELS, EXPENSE_CATEGORIES, EXPENSE_STATUS_LABELS, expenseMoney, todayIso, type PaymentKind } from "@/lib/expenses";
+import { ROUNDING_RULE_TEXT, CAPITAL_CALL_STATUS_LABELS, EXPENSE_CATEGORIES, EXPENSE_STATUS_LABELS, expenseMoney, todayIso, type PaymentKind } from "@/lib/expenses";
 import {
   closeCapitalCallFn,
   confirmPaymentReceived,
@@ -222,7 +222,12 @@ function Preview({ preview }: { preview: SplitPreview | null }) {
   if (preview.problem) return <p className="mt-3 text-sm text-destructive">{preview.problem}</p>;
   return (
     <div className="mt-3 border-t border-border pt-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Split on today's cap table</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Split on today's cap table
+        <span className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-border text-[10px] font-semibold normal-case" title={ROUNDING_RULE_TEXT} aria-label={ROUNDING_RULE_TEXT} tabIndex={0}>
+          i
+        </span>
+      </p>
       <ul className="mt-1.5 space-y-1 text-sm">
         {preview.lines.map((l) => (
           <li key={l.holderLabel} className="flex flex-wrap justify-between gap-2 text-foreground">

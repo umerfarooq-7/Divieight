@@ -3,10 +3,7 @@ import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { rememberToken, stampStoredAttribution } from "@/lib/agent-qr";
-import { recordAttributionVisit } from "@/lib/agent-qr.functions";
-
-/** Where a link lands. The stored token carries on from the Library to registration. */
-const LANDING = "/library";
+import { getAttributionLanding, recordAttributionVisit } from "@/lib/agent-qr.functions";
 
 export const Route = createFileRoute("/a/$token")({
   head: () => ({
@@ -24,6 +21,7 @@ function AttributionLanding() {
   const { token } = Route.useParams();
   const navigate = useNavigate();
   const visit = useServerFn(recordAttributionVisit);
+  const landingFn = useServerFn(getAttributionLanding);
   const ran = useRef(false);
 
   useEffect(() => {
@@ -41,10 +39,12 @@ function AttributionLanding() {
       } catch {
         /* attribution is best-effort: it never stops anyone reaching the site */
       } finally {
-        navigate({ to: LANDING, replace: true });
+        // The homepage while no library video is published, the library once one is. The stamp works either way.
+        const landing = await landingFn().catch(() => "/" as const);
+        navigate({ to: landing, replace: true });
       }
     })();
-  }, [token, visit, navigate]);
+  }, [token, visit, landingFn, navigate]);
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 text-center">

@@ -45,7 +45,7 @@ export interface OwnerPropertyDetail extends OwnerPropertySummary {
   acquisitionDate: string | null;
   /** The latest Retention Lock across this owner's shares. */
   retentionLockExpiresAt: string | null;
-  capital: { contributed: number; distributions: number; net: number } | null;
+  capital: { contributed: number; distributions: number; net: number; contributions: Array<{ type: "capital_call" | "expense"; amount: number; at: string }> } | null;
   /** This holder's next Use Calendar weeks. */
   upcomingStays: Array<{ weekNumber: number; startDate: string; endDate: string }>;
 }
@@ -238,6 +238,15 @@ export async function loadOwnerProperty(db: Db, userId: string, propertyId: stri
     .eq("property_id", propertyId)
     .eq("user_id", userId)
     .maybeSingle();
+  // Every contribution is tagged with what it paid for (a capital call or an expense), so the treatment of the two
+  // can be changed later without losing which was which. Empty before money-decisions.sql is run.
+  const { data: tagged } = await db
+    .from("owner_capital_contributions")
+    .select("contribution_type, amount, created_at")
+    .eq("property_id", propertyId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  const contributions = ((tagged ?? []) as Array<{ contribution_type: "capital_call" | "expense"; amount: number; created_at: string }>).map((c) => ({ type: c.contribution_type, amount: Number(c.amount), at: c.created_at }));
   const contributed = Number(capitalRow?.contributed_amount ?? 0);
   const distributions = Number(capitalRow?.distributions_amount ?? 0);
   const latest = (values: string[]) => (values.length ? values.reduce((a, b) => (new Date(a) >= new Date(b) ? a : b)) : null);
@@ -255,7 +264,7 @@ export async function loadOwnerProperty(db: Db, userId: string, propertyId: stri
       shareLabels: await retainedShareLabels(db, propertyId, userId, rows),
       acquisitionDate: earliest(rows.map((r) => r.acquisition_date)),
       retentionLockExpiresAt: latest(rows.map((r) => r.retention_lock_expires_at)),
-      capital: capitalRow ? { contributed, distributions, net: contributed - distributions } : null,
+      capital: capitalRow ? { contributed, distributions, net: contributed - distributions, contributions } : null,
       upcomingStays: await (await import("@/lib/use-calendar.server")).nextStays(
         db,
         propertyId,

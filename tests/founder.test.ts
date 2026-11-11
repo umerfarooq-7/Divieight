@@ -209,15 +209,22 @@ describe("CSV", () => {
   });
 });
 
+const FOUNDER = "u-founder";
+/** Admin: USERS.admin. Founder: an admin who also holds the founder role. */
+const asFounder = () => {
+  harness.db.rpcResults.has_role = (a: { _user_id: string; _role: string }) => (a._role === "admin" && [USERS.admin, FOUNDER].includes(a._user_id)) || (a._role === "founder" && a._user_id === FOUNDER);
+};
+
 describe("access", () => {
   const seedViews = () => {
     seedPod(harness.db);
     harness.db.seed("founder_dashboard_refreshes", [{ id: 1, refreshed_at: "2026-11-01T01:00:00Z" }]);
   };
-  it("anyone but an admin is refused with a 403, reading or refreshing", async () => {
+  it("anyone but a founder is refused with a 403, reading or refreshing (an admin who isn't a founder included)", async () => {
     seedViews();
+    asFounder();
     const { setResponseStatus } = await import("@tanstack/react-start/server");
-    for (const user of [USERS.b1, USERS.ra, USERS.broker, "u-nobody"]) {
+    for (const user of [USERS.admin, USERS.b1, USERS.ra, USERS.broker, "u-nobody"]) {
       harness.userId = user;
       vi.mocked(setResponseStatus).mockClear();
       await expect(getFounderDashboard({ data: {} })).rejects.toThrow("Not authorized");
@@ -225,9 +232,10 @@ describe("access", () => {
       await expect(refreshFounderDashboard()).rejects.toThrow("Not authorized");
     }
   });
-  it("an admin reads it; with nothing recorded every widget is empty", async () => {
+  it("a founder reads it; with nothing recorded every widget is empty", async () => {
     seedViews();
-    harness.userId = USERS.admin;
+    asFounder();
+    harness.userId = FOUNDER;
     const d = await getFounderDashboard({ data: {} });
     expect(d.refreshedAt).toBe("2026-11-01T01:00:00Z");
     expect(d.gtv.closedCount).toBe(0);
@@ -240,21 +248,24 @@ describe("access", () => {
   it("reads past Supabase's 1,000-row page", async () => {
     seedViews();
     harness.db.seed("founder_mv_buyers", Array.from({ length: 2345 }, (_, i) => buyer({ id: String(i).padStart(5, "0") })));
-    harness.userId = USERS.admin;
+    asFounder();
+    harness.userId = FOUNDER;
     expect((await getFounderDashboard({ data: {} })).referrals.totalBuyers).toBe(2345);
   });
   it("refresh runs the function and is audited", async () => {
     seedViews();
     let runs = 0;
     harness.db.rpcResults.refresh_founder_dashboard = () => ((runs += 1), "2026-11-02T00:00:00Z");
-    harness.userId = USERS.admin;
+    asFounder();
+    harness.userId = FOUNDER;
     expect(await refreshFounderDashboard()).toEqual({ refreshedAt: "2026-11-02T00:00:00Z" });
     expect(runs).toBe(1);
     expect(harness.db.audits("founder_dashboard.refreshed")).toHaveLength(1);
   });
   it("refuses a bad date or market", async () => {
     seedViews();
-    harness.userId = USERS.admin;
+    asFounder();
+    harness.userId = FOUNDER;
     await expect(getFounderDashboard({ data: { from: "soon" } })).rejects.toThrow("date");
     await expect(getFounderDashboard({ data: { state: "Texas" } })).rejects.toThrow("market");
   });

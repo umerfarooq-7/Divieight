@@ -6,14 +6,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { when } from "@/lib/admin";
-import { founderCsv, UNIT_STATUS_LABELS, type FounderDashboard, type FounderWidget, type UnitStatus } from "@/lib/founder";
+import { AGENT_PAYOUTS_LABEL, AGENT_PAYOUTS_NOTE, AGENT_YIELD_DEFINITION, PLATFORM_REVENUE_LABEL, founderCsv, UNIT_STATUS_LABELS, type FounderDashboard, type FounderWidget, type UnitStatus } from "@/lib/founder";
 import { getFounderDashboard, refreshFounderDashboard } from "@/lib/founder.functions";
 
 export const Route = createFileRoute("/admin/founder")({
   head: () => ({
     meta: [
       { title: "Founder dashboard — divieight admin" },
-      { name: "description", content: "Read-only aggregates across GTV, revenue streams, velocity, referrals, demand and retention." },
+      { name: "description", content: "Read-only aggregates across GTV, platform revenue, agent payouts, velocity, referrals, demand and retention." },
       { property: "og:title", content: "Founder dashboard — divieight admin" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -97,7 +97,14 @@ function FounderPage() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : error ? (
-          <p className="text-sm text-destructive">{error.message}</p>
+          /not authorized/i.test(error.message) ? (
+            <div className="py-16 text-center">
+              <p className="font-display text-3xl font-semibold text-foreground">403</p>
+              <p className="mt-2 text-sm text-muted-foreground">Only founders can open the Founder dashboard.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-destructive">{error.message}</p>
+          )
         ) : !data ? null : (
           <>
             <Gtv d={data} />
@@ -143,10 +150,17 @@ function Widget({ title, hint, widget, d, children }: { title: string; hint: str
   );
 }
 
-function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+function Stat({ label, value, note, tip }: { label: string; value: string; note?: string; tip?: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">
+        {label}
+        {tip ? (
+          <span className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-border text-[10px] font-semibold text-muted-foreground" title={tip} aria-label={tip} tabIndex={0}>
+            i
+          </span>
+        ) : null}
+      </p>
       <p className="break-words font-display text-2xl font-semibold text-foreground">{value}</p>
       {note ? <p className="mt-0.5 text-xs text-muted-foreground">{note}</p> : null}
     </div>
@@ -207,15 +221,26 @@ function Revenue({ d }: { d: FounderDashboard }) {
   const notRecorded = "Not yet recorded";
   const test = (cents: number) => (cents ? `Test, not included: ${usdCents(cents)}` : undefined);
   return (
-    <Widget title="Triple-Stream Revenue Tracker" hint="PEF by clearing date; the other two as recorded at closing. Kept separate, because they aren't all paid to divieight." widget="revenue" d={d}>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat
-          label={`Platform Enrollment Fee (${s.pef.realCount} cleared)`}
-          value={s.pef.realCount || s.pef.testCount ? usdCents(s.pef.realCents) : NO_DATA}
-          note={s.pef.testCount ? `Test-mode, not included: ${usdCents(s.pef.testCents)} across ${s.pef.testCount}` : undefined}
-        />
-        <Stat label="Heavy Lifter Premium" value={s.recorded ? usdCents(s.premium.realCents) : notRecorded} note={s.recorded ? test(s.premium.testCents) : undefined} />
-        <Stat label="Participating Agent Yield" value={s.recorded ? usdCents(s.agentYield.realCents) : notRecorded} note={s.recorded ? test(s.agentYield.testCents) : undefined} />
+    <Widget title="Platform revenue and agent payouts" hint="Only the Platform Enrollment Fee is divieight's revenue. The two agent payout lines are recorded at closing and are not added to it, or to each other." widget="revenue" d={d}>
+      <div className="space-y-6">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{PLATFORM_REVENUE_LABEL}</p>
+          <div className="mt-2 grid gap-4 sm:grid-cols-3">
+            <Stat
+              label={`Cleared fees (${s.pef.realCount})`}
+              value={s.pef.realCount || s.pef.testCount ? usdCents(s.pef.realCents) : NO_DATA}
+              note={s.pef.testCount ? `Test-mode, not included: ${usdCents(s.pef.testCents)} across ${s.pef.testCount}` : undefined}
+            />
+          </div>
+        </div>
+        <div className="rounded-lg border border-border p-4">
+          <p className="text-sm font-semibold text-foreground">{AGENT_PAYOUTS_LABEL}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{AGENT_PAYOUTS_NOTE}</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-3">
+            <Stat label="Heavy Lifter Premium" value={s.recorded ? usdCents(s.premium.realCents) : notRecorded} note={s.recorded ? test(s.premium.testCents) : undefined} />
+            <Stat label="Participating Agent Yield" value={s.recorded ? usdCents(s.agentYield.realCents) : notRecorded} note={s.recorded ? test(s.agentYield.testCents) : undefined} tip={AGENT_YIELD_DEFINITION} />
+          </div>
+        </div>
       </div>
     </Widget>
   );

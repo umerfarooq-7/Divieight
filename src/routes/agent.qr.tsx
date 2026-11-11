@@ -136,7 +136,7 @@ function TokenCard({ row }: { row: AgentQrToken }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 className="min-w-0 break-words font-display text-base font-semibold text-foreground">{row.label || (row.isDefault ? "Your link" : "Link")}</h2>
         <p className="text-sm text-muted-foreground">
-          {row.visits} {row.visits === 1 ? "visit" : "visits"}
+          {row.visits} {row.visits === 1 ? "visit" : "visits"} · {row.buyers} {row.buyers === 1 ? "buyer" : "buyers"} stamped
           {live ? "" : ` · Revoked ${formatDate(row.revokedAt)}`}
         </p>
       </div>
