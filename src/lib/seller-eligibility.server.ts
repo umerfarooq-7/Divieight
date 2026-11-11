@@ -6,7 +6,7 @@
  * The engine's rules are applied to the seller's answers. A seller's liveness and sanctions screening
  * aren't built yet, so a seller whose answers raise nothing has no result yet (pending), never "eligible".
  */
-import { STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { getLiveStandard } from "@/lib/standard-version.server";
 import { type RequestContext } from "@/lib/account-members.server";
 import { declarationStatusFor, declarationText, legalNamesMatch, NAME_MISMATCH_MESSAGE, type DeclarationAnswers } from "@/lib/eligibility-declaration";
 import { evaluateEligibility, type Evaluation } from "@/lib/eligibility-engine";
@@ -61,13 +61,14 @@ function evaluate(s: SellerRow, answers: DeclarationAnswers | null, declaredAt: 
 
 export async function sellerEligibilityState(db: Db, userId: string) {
   const s = await seller(db, userId);
-  if (!requiresEligibilityCheck(s)) return { required: false as const, current: null, history: 0, verifiedName: null, result: null, reasonCodes: [] as string[], message: FULL_EXIT_NO_CHECK };
+  if (!requiresEligibilityCheck(s)) return { required: false as const, standardVersion: null, current: null, history: 0, verifiedName: null, result: null, reasonCodes: [] as string[], message: FULL_EXIT_NO_CHECK };
   const { data, error } = await db.from(TABLE).select("*").eq("seller_id", s.id);
   if (error) throw new Error(MISSING_SCHEMA);
   const rows = (data ?? []) as SellerDeclarationRecord[];
   const current = rows.find((r) => r.status === "complete" || r.status === "incomplete") ?? null;
   const e = current ? evaluate(s, current.answers, current.declared_at) : { result: null, reason_codes: ["declaration_missing"] };
-  return { required: true as const, current, history: rows.length, verifiedName: identityOn(s) ? (s.full_name ?? "").trim() : null, result: e.result, reasonCodes: e.reason_codes, message: null };
+  const standardVersion = (await getLiveStandard(db)).version;
+  return { required: true as const, standardVersion, current, history: rows.length, verifiedName: identityOn(s) ? (s.full_name ?? "").trim() : null, result: e.result, reasonCodes: e.reason_codes, message: null };
 }
 
 export async function submitSellerDeclaration(
@@ -86,15 +87,16 @@ export async function submitSellerDeclaration(
   const now = ((existing ?? []) as Array<{ id: string; status: string }>).find((r) => r.status === "complete" || r.status === "incomplete") ?? null;
   if ((now?.id ?? null) !== (params.supersedesId ?? null)) throw new Error(now ? "This declaration was already corrected. Reload the page to see the latest one." : "There is no earlier declaration to correct.");
 
+  const standardVersion = (await getLiveStandard(db)).version;
   const status = declarationStatusFor(params.answers);
-  const text = declarationText(params.answers, STANDARD_VERSION);
+  const text = declarationText(params.answers, standardVersion);
   const hash = sha256(text);
   const declaredAt = new Date().toISOString();
   const { data, error } = await db
     .from(TABLE)
     .insert({
       seller_id: s.id,
-      standard_version: STANDARD_VERSION,
+      standard_version: standardVersion,
       answers: params.answers,
       rendered_text_snapshot: text,
       declaration_hash: hash,
@@ -118,7 +120,7 @@ export async function submitSellerDeclaration(
     action_type: status === "complete" ? "seller.eligibility_declaration_made" : "seller.eligibility_declaration_incomplete",
     entity_type: "seller",
     entity_id: s.id,
-    metadata: { declaration_id: (data as { id: string }).id, standard_version: STANDARD_VERSION, declaration_hash: hash, status, supersedes_id: now?.id ?? null, result: e.result, reason_codes: e.reason_codes, ip_address: params.request.ip, user_agent: params.request.userAgent },
+    metadata: { declaration_id: (data as { id: string }).id, standard_version: standardVersion, declaration_hash: hash, status, supersedes_id: now?.id ?? null, result: e.result, reason_codes: e.reason_codes, ip_address: params.request.ip, user_agent: params.request.userAgent },
   });
   return { id: (data as { id: string }).id, status, declarationHash: hash, result: e.result, reasonCodes: e.reason_codes };
 }

@@ -62,6 +62,7 @@ interface MemberRow {
 }
 
 interface DeclarationView {
+  standardVersion?: string;
   current: DeclarationSummary | null;
   verifiedName: string | null;
   vettingStatus: string | null;
@@ -95,7 +96,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const loadDeclaration = useCallback(async (memberId: string): Promise<DeclarationView | null> => {
     try {
       const st = await getDeclarationState({ data: { actingMemberId: memberId } });
-      return { current: st.current as DeclarationSummary | null, verifiedName: st.verifiedName, vettingStatus: st.vettingStatus };
+      return { current: st.current as DeclarationSummary | null, verifiedName: st.verifiedName, vettingStatus: st.vettingStatus, standardVersion: st.standardVersion };
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not load your declaration.");
       return null;
@@ -259,6 +260,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
           verifiedName={declaration?.verifiedName ?? null}
           current={declaration?.current ?? null}
           reportChange={reportingChange}
+          standardVersion={declaration?.standardVersion}
           onSubmit={submitDeclaration}
         />
       ) : null}

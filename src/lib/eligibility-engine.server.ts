@@ -11,7 +11,6 @@ import { identityComplete } from "@/lib/account-members";
 import { latestLiveness } from "@/lib/liveness";
 import { getSanctionsAdapter } from "@/lib/sanctions-adapters";
 import {
-  ENGINE_STANDARD_VERSION,
   OFFENSES,
   VETTING_STATUS_FOR,
   currentResultOf,
@@ -47,6 +46,7 @@ interface DeclRow {
   status: string;
   answers: DeclarationAnswers | null;
   declared_at: string;
+  standard_version: string;
 }
 
 const byTime = <T extends { created_at: string }>(rows: T[]) => [...rows].sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
@@ -58,7 +58,7 @@ async function member(db: Db, memberId: string): Promise<MemberRow> {
 }
 
 async function currentDeclaration(db: Db, memberId: string): Promise<DeclRow | null> {
-  const { data } = await db.from("eligibility_declarations").select("id, account_member_id, status, answers, declared_at").eq("account_member_id", memberId);
+  const { data } = await db.from("eligibility_declarations").select("id, account_member_id, status, answers, declared_at, standard_version").eq("account_member_id", memberId);
   return ((data ?? []) as DeclRow[]).find((d) => d.status === "complete" || d.status === "incomplete") ?? null;
 }
 
@@ -126,7 +126,9 @@ export async function recomputeEligibility(db: Db, params: { memberId: string; a
       .insert({
         account_member_id: m.id,
         buyer_account_id: m.buyer_account_id,
-        standard_version: ENGINE_STANDARD_VERSION,
+        // The version of the declaration this result is determined on, not whichever is live now: publishing a
+        // new Standard never re-measures an existing participant.
+        standard_version: decl.standard_version,
         result: evaluation.result,
         reason_codes: evaluation.reason_codes,
         determined_at: new Date().toISOString(),

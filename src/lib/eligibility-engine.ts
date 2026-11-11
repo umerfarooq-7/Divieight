@@ -14,7 +14,7 @@
  *  - no result: the declaration is missing or Q5 = No (incomplete), or a screening is still pending.
  */
 
-import { block4Questions, decisionPageCopy, STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { block4Questions, decisionPageCopy } from "@/constants/eligibilityCopy";
 import type { DeclarationAnswers } from "@/lib/eligibility-declaration";
 
 export type EligibilityResult = "eligible" | "held" | "not_eligible";
@@ -144,7 +144,6 @@ export function evaluateEligibility(answers: DeclarationAnswers | null, screenin
   return { result: "eligible", reason_codes: reasons };
 }
 
-export const ENGINE_STANDARD_VERSION = STANDARD_VERSION;
 // The questions the engine reads are the copy file's six; a seventh would need a new rule here.
 export const ENGINE_QUESTION_COUNT = block4Questions.length;
 

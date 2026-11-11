@@ -82,6 +82,7 @@ function SellerEligibilityScreen() {
               key={state.current?.id ?? "new"}
               memberName={state.verifiedName}
               verifiedName={state.verifiedName}
+              standardVersion={state.standardVersion ?? undefined}
               current={(state.current as DeclarationSummary | null) ?? null}
               onSubmit={onSubmit}
             />

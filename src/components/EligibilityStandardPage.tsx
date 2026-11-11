@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
 import { EligibilityStandardContent } from "@/components/EligibilityStandard";
 import { acknowledgeEligibilityStandard } from "@/lib/eligibility-standard.functions";
+import { getLiveStandardFn } from "@/lib/standard-version.functions";
 
 /**
  * Shown once per Account Member through the "Who is acting?" switcher. When the other
@@ -22,6 +23,11 @@ function ForMember({ actingMemberId, next, onSwitch }: { actingMemberId: string;
   const navigate = useNavigate();
   const acknowledge = useServerFn(acknowledgeEligibilityStandard);
   const [busy, setBusy] = useState(false);
+  // The version shown is the live one: the same source the declaration is recorded under.
+  const [version, setVersion] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    void getLiveStandardFn().then((s) => setVersion(s.version)).catch(() => undefined);
+  }, []);
   const onContinue = async () => {
     setBusy(true);
     try {
@@ -34,5 +40,5 @@ function ForMember({ actingMemberId, next, onSwitch }: { actingMemberId: string;
       setBusy(false);
     }
   };
-  return <EligibilityStandardContent onContinue={() => void onContinue()} busy={busy} />;
+  return <EligibilityStandardContent onContinue={() => void onContinue()} busy={busy} version={version} />;
 }

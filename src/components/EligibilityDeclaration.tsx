@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { block4DeclarationLine, block4Questions, STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { block4DeclarationLine, block4Questions, STANDARD_VERSION as BUNDLED_STANDARD_VERSION } from "@/constants/eligibilityCopy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ export function EligibilityDeclaration({
   verifiedName,
   current,
   reportChange = false,
+  standardVersion = BUNDLED_STANDARD_VERSION,
   onSubmit,
 }: {
   memberName: string;
@@ -55,6 +56,8 @@ export function EligibilityDeclaration({
   current: DeclarationSummary | null;
   /** Opened from "Report a change" (Q6): start a new version straight away. */
   reportChange?: boolean;
+  /** The Standard that is live now: what this declaration is made under. */
+  standardVersion?: string;
   onSubmit: (input: DeclarationSubmit) => Promise<void>;
 }) {
   const changing = reportChange && Boolean(current);
@@ -79,7 +82,7 @@ export function EligibilityDeclaration({
         Eligibility Declaration and Authorization
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Made by {memberName} personally · Participant Eligibility Standard {STANDARD_VERSION}
+        Made by {memberName} personally · Participant Eligibility Standard {standardVersion}
       </p>
 
       {mode === "summary" && current ? (

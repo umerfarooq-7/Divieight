@@ -3,7 +3,8 @@
  * version. This is not the declaration: that is a separate record (Block 4).
  */
 
-import { DECISION_PAGE_SPEC_VERSION, STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { DECISION_PAGE_SPEC_VERSION } from "@/constants/eligibilityCopy";
+import { getLiveStandard } from "@/lib/standard-version.server";
 import { requireActingMember, type RequestContext } from "@/lib/account-members.server";
 
 type Db = { from: (t: string) => any };
@@ -13,11 +14,12 @@ const MISSING_SCHEMA = "Database is missing eligibility acknowledgements — run
 /** Records this member's acknowledgement once, and says which active members are still to read it. */
 export async function acknowledgeStandard(db: Db, params: { userId: string; actingMemberId: string; request: RequestContext }): Promise<{ remaining: number }> {
   const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
+  const standardVersion = (await getLiveStandard(db)).version;
   const { data: existing, error: readError } = await db
     .from("eligibility_page_acknowledgements")
     .select("id")
     .eq("account_member_id", member.id)
-    .eq("standard_version", STANDARD_VERSION)
+    .eq("standard_version", standardVersion)
     .eq("page_spec_version", DECISION_PAGE_SPEC_VERSION)
     .maybeSingle();
   if (readError) throw new Error(MISSING_SCHEMA);
@@ -25,7 +27,7 @@ export async function acknowledgeStandard(db: Db, params: { userId: string; acti
     const { error } = await db.from("eligibility_page_acknowledgements").insert({
       account_member_id: member.id,
       buyer_account_id: account.id,
-      standard_version: STANDARD_VERSION,
+      standard_version: standardVersion,
       page_spec_version: DECISION_PAGE_SPEC_VERSION,
       acknowledged_at: new Date().toISOString(),
       ip: params.request.ip,
@@ -44,7 +46,7 @@ export async function acknowledgeStandard(db: Db, params: { userId: string; acti
           record: "read_the_standard",
           account_member_id: member.id,
           acted_by_member_id: member.id,
-          standard_version: STANDARD_VERSION,
+          standard_version: standardVersion,
           page_spec_version: DECISION_PAGE_SPEC_VERSION,
           ip_address: params.request.ip,
           user_agent: params.request.userAgent,
@@ -52,16 +54,16 @@ export async function acknowledgeStandard(db: Db, params: { userId: string; acti
       });
     }
   }
-  return { remaining: (await pending(db, account.id)).length };
+  return { remaining: (await pending(db, account.id, standardVersion)).length };
 }
 
-async function pending(db: Db, accountId: string): Promise<string[]> {
+async function pending(db: Db, accountId: string, standardVersion: string): Promise<string[]> {
   const { data: members } = await db.from("account_members").select("id").eq("buyer_account_id", accountId).eq("status", "active");
   const { data: acks } = await db
     .from("eligibility_page_acknowledgements")
     .select("account_member_id")
     .eq("buyer_account_id", accountId)
-    .eq("standard_version", STANDARD_VERSION)
+    .eq("standard_version", standardVersion)
     .eq("page_spec_version", DECISION_PAGE_SPEC_VERSION);
   const done = new Set(((acks ?? []) as Array<{ account_member_id: string }>).map((a) => a.account_member_id));
   return ((members ?? []) as Array<{ id: string }>).map((m) => m.id).filter((id) => !done.has(id));

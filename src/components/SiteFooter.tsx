@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { STANDARD_ON_REQUEST } from "@/lib/standard-version";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 
 const social = [
@@ -54,6 +55,10 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-border/60 py-5">
+        {/* "Standard on request" is only this text: no form, no link to one. */}
+        <p className="mx-auto max-w-7xl px-4 pb-2 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
+          {STANDARD_ON_REQUEST.label}: {STANDARD_ON_REQUEST.text}
+        </p>
         <p className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
           © {new Date().getFullYear()} divieight — Fractional real estate co-ownership. All rights
           reserved.

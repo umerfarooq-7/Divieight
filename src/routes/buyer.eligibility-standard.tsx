@@ -6,7 +6,7 @@ import { decisionPageCopy } from "@/constants/eligibilityCopy";
 export const Route = createFileRoute("/buyer/eligibility-standard")({
   head: () => ({
     meta: [
-      { title: decisionPageCopy.eyebrow },
+      { title: "Participant Eligibility Standard" },
       { name: "description", content: decisionPageCopy.heading },
       { name: "robots", content: "noindex" },
     ],

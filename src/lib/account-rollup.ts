@@ -10,7 +10,7 @@
  * Block 2 (LPOA) is tracked per member but is not a Golden Ticket condition: it gates
  * Entity Genesis Stage 2 instead.
  */
-import { DECISION_PAGE_SPEC_VERSION, STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { DECISION_PAGE_SPEC_VERSION, STANDARD_VERSION as BUNDLED_STANDARD_VERSION } from "@/constants/eligibilityCopy";
 import { BLOCK1_VERSION, BLOCK2_VERSION } from "@/constants/authorizationsCopy";
 import { identityComplete } from "@/lib/account-members";
 import { currentResultOf, type EligibilityResult } from "@/lib/eligibility-engine";
@@ -76,13 +76,16 @@ export async function loadMemberSteps(db: Db, accountId: string): Promise<Member
   const [live, acks, decls, results, b1, b2, docs, w9] = await Promise.all([
     rows("member_liveness_checks", "account_member_id, status, created_at"),
     rows("eligibility_page_acknowledgements", "account_member_id, standard_version, page_spec_version"),
-    rows("eligibility_declarations", "id, account_member_id, status"),
+    rows("eligibility_declarations", "id, account_member_id, status, standard_version"),
     rows("eligibility_results", "account_member_id, declaration_id, determined_at, result"),
     rows("member_plaid_consents", "account_member_id, text_version"),
     rows("member_block2_authorizations", "account_member_id, text_version"),
     rows("signed_documents", "account_member_id, document_type"),
     rows("member_w9", "account_member_id"),
   ]);
+  // The live Standard (the bundled version stands in until the table exists).
+  const liveRow = await db.from("standard_versions").select("version").eq("is_live", true).maybeSingle();
+  const liveVersion: string = (liveRow?.data as { version?: string } | null)?.version ?? BUNDLED_STANDARD_VERSION;
   const primaryId = members.find((m) => m.role === "primary")?.id ?? null;
   // Signatures from before members were named on them belong to the account holder.
   const signedBy = (type: string, id: string) => docs.some((d) => d.document_type === type && (d.account_member_id ?? primaryId) === id);
@@ -96,7 +99,9 @@ export async function loadMemberSteps(db: Db, accountId: string): Promise<Member
         role: m.role,
         idScan: identityComplete(m) && Boolean(m.id_document_url),
         liveness: latestLiveness(live, m.id)?.status === "passed",
-        standardRead: acks.some((a) => a.account_member_id === m.id && a.standard_version === STANDARD_VERSION && a.page_spec_version === DECISION_PAGE_SPEC_VERSION),
+        // Read against the version they are measured under: their declaration's, or the live one before they declare.
+        // A newer version going live doesn't send an existing participant back to read it again.
+        standardRead: acks.some((a) => a.account_member_id === m.id && a.standard_version === (decl?.standard_version ?? liveVersion) && a.page_spec_version === DECISION_PAGE_SPEC_VERSION),
         declaration: Boolean(decl),
         block1: b1.some((r) => r.account_member_id === m.id && r.text_version === BLOCK1_VERSION),
         block2: b2.some((r) => r.account_member_id === m.id && r.text_version === BLOCK2_VERSION),

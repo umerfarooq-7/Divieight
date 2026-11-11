@@ -54,6 +54,7 @@ import { Route as AdminRetentionExceptionsRouteImport } from './routes/admin.ret
 import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
 import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
 import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
+import { Route as AdminStandardRouteImport } from './routes/admin.standard'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
@@ -425,6 +426,11 @@ const AdminSellersRoute = AdminSellersRouteImport.update({
 const AdminSettlementRoute = AdminSettlementRouteImport.update({
   id: '/settlement',
   path: '/settlement',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStandardRoute = AdminStandardRouteImport.update({
+  id: '/standard',
+  path: '/standard',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSubstitutionsRoute = AdminSubstitutionsRouteImport.update({
@@ -1246,6 +1252,7 @@ export interface FileRoutesByFullPath {
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
+  '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1433,6 +1440,7 @@ export interface FileRoutesByTo {
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
+  '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1624,6 +1632,7 @@ export interface FileRoutesById {
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
   '/admin/settlement': typeof AdminSettlementRoute
+  '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
@@ -1818,6 +1827,7 @@ export interface FileRouteTypes {
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
+    | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -2005,6 +2015,7 @@ export interface FileRouteTypes {
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
+    | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -2195,6 +2206,7 @@ export interface FileRouteTypes {
     | '/admin/saga-poc'
     | '/admin/sellers'
     | '/admin/settlement'
+    | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tether-resolution'
@@ -2762,6 +2774,13 @@ declare module '@tanstack/react-router' {
       path: '/settlement'
       fullPath: '/admin/settlement'
       preLoaderRoute: typeof AdminSettlementRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/standard': {
+      id: '/admin/standard'
+      path: '/standard'
+      fullPath: '/admin/standard'
+      preLoaderRoute: typeof AdminStandardRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/substitutions': {
@@ -3836,6 +3855,7 @@ interface AdminRouteChildren {
   AdminSagaPocRoute: typeof AdminSagaPocRoute
   AdminSellersRoute: typeof AdminSellersRoute
   AdminSettlementRoute: typeof AdminSettlementRoute
+  AdminStandardRoute: typeof AdminStandardRoute
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
@@ -3879,6 +3899,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSagaPocRoute: AdminSagaPocRoute,
   AdminSellersRoute: AdminSellersRoute,
   AdminSettlementRoute: AdminSettlementRoute,
+  AdminStandardRoute: AdminStandardRoute,
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,

@@ -643,6 +643,33 @@ export type Database = {
         }
         Relationships: []
       }
+      standard_versions: {
+        Row: {
+          version: string
+          effective_from: string
+          is_live: boolean
+          file_url: string
+          published_by: string | null
+          created_at: string
+        }
+        Insert: {
+          version: string
+          effective_from: string
+          is_live?: boolean
+          file_url: string
+          published_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          version?: string
+          effective_from?: string
+          is_live?: boolean
+          file_url?: string
+          published_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Ban, CircleCheck, Clock3 } from "lucide-react";
-import { decisionPageCopy as copy } from "@/constants/eligibilityCopy";
+import { decisionPageCopy as copy, STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { eyebrowFor } from "@/lib/standard-version";
 import { cn } from "@/lib/utils";
 
 /**
@@ -44,7 +45,7 @@ function TextSection({ title, body }: { title: string; body: string }) {
   );
 }
 
-export function EligibilityStandardContent({ onContinue, busy = false }: { onContinue: () => void; busy?: boolean }) {
+export function EligibilityStandardContent({ onContinue, busy = false, version = STANDARD_VERSION }: { onContinue: () => void; busy?: boolean; /** The live Standard's version; the bundled one until it is known. */ version?: string }) {
   // Never pre-selected, remembered or inferred: a fresh, unticked box on every load.
   const [acknowledged, setAcknowledged] = useState(false);
   const p1 = copy.partOne;
@@ -56,7 +57,7 @@ export function EligibilityStandardContent({ onContinue, busy = false }: { onCon
       </header>
 
       <main className="pt-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{copy.eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{eyebrowFor(version)}</p>
         <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{copy.heading}</h1>
         <p className="mt-4 text-lg leading-relaxed text-foreground">{copy.definition}</p>
 

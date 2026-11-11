@@ -6,7 +6,7 @@
  * or deleted otherwise. No consumer report is requested here: only the consent text and its hash.
  */
 
-import { STANDARD_VERSION } from "@/constants/eligibilityCopy";
+import { getLiveStandard } from "@/lib/standard-version.server";
 import { requireActingMember, type RequestContext } from "@/lib/account-members.server";
 import { identityComplete } from "@/lib/account-members";
 import { sha256 } from "@/lib/entity-genesis-stage2.server";
@@ -60,6 +60,8 @@ export interface DeclarationState {
   vettingStatus: string | null;
   /** Active members on the account whose declaration isn't complete yet (names only). */
   waitingOn: string[];
+  /** The Standard that is live now: what a declaration made today is made under. */
+  standardVersion: string;
 }
 
 export async function declarationState(db: Db, params: { userId: string; actingMemberId: string }): Promise<DeclarationState> {
@@ -71,6 +73,7 @@ export async function declarationState(db: Db, params: { userId: string; actingM
     verifiedName: verifiedNameOf(member),
     vettingStatus: member.vetting_status,
     waitingOn: await waitingOn(db, account.id),
+    standardVersion: (await getLiveStandard(db)).version,
   };
 }
 
@@ -118,8 +121,11 @@ export async function submitDeclaration(
     throw new Error(now ? "This declaration was already corrected. Reload the page to see the latest one." : "There is no earlier declaration to correct.");
   }
 
+  // The Standard that is live now. A declaration is made under it, and stays tied to it: a version published
+  // later never re-measures it.
+  const standardVersion = (await getLiveStandard(db)).version;
   const status = declarationStatusFor(params.answers);
-  const text = declarationText(params.answers, STANDARD_VERSION);
+  const text = declarationText(params.answers, standardVersion);
   const hash = sha256(text);
   const declaredAt = new Date().toISOString();
 
@@ -128,7 +134,7 @@ export async function submitDeclaration(
     .insert({
       account_member_id: member.id,
       buyer_account_id: account.id,
-      standard_version: STANDARD_VERSION,
+      standard_version: standardVersion,
       answers: params.answers,
       rendered_text_snapshot: text,
       declaration_hash: hash,
@@ -170,7 +176,7 @@ export async function submitDeclaration(
       declaration_id: (inserted as { id: string }).id,
       account_member_id: member.id,
       acted_by_member_id: member.id,
-      standard_version: STANDARD_VERSION,
+      standard_version: standardVersion,
       declaration_hash: hash,
       status,
       supersedes_id: now?.id ?? null,
