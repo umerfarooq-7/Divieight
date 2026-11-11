@@ -78,6 +78,11 @@ export const removeAccountMember = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const remindAccountMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { actingMemberId: string; memberId: string }) => ({ actingMemberId: id(input?.actingMemberId, "who is acting"), memberId: id(input?.memberId, "a member") }))
+  .handler(async ({ data, context }) => (await server()).remindSecondMember(await adminDb(), { userId: context.userId, ...data, request: await request() }));
+
 export const saveMemberIdentityFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { actingMemberId: string; fullName: string; address: string; dateOfBirth: string; idDocumentNumber: string; idDocumentPath?: string | null }) => {

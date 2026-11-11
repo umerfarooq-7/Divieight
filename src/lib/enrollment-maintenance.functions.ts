@@ -46,6 +46,13 @@ function warningEmail(subject: string, body: string, recipient: string) {
 </body></html>`;
 }
 
+/** The account's address, and each active member's own: they have no logins, so this is how they hear. */
+async function reminderAddresses(a: { auth_user_id: string; email: string }): Promise<string[]> {
+  const { memberEmailsFor, uniqueEmails } = await import("@/lib/authorization.notify.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+  return uniqueEmails([a.email, ...(await memberEmailsFor(supabaseAdmin as never, a.auth_user_id))]);
+}
+
 async function sendEmail(recipient: string, subject: string, body: string) {
   const { resendFrom } = await import("@/lib/email-sender");
   const apiKey = process.env.RESEND_API_KEY;
@@ -103,7 +110,15 @@ export const runEnrollmentMaintenance = createServerFn({ method: "POST" }).handl
     let warned = 0;
     let forfeited = 0;
 
+    // A held member holds the whole account: held is not a failure and no automatic action may follow from it.
+    const { heldAccountIds } = await import("@/lib/account-rollup");
+    const held = await heldAccountIds(supabaseAdmin as never, accounts.map((x) => x.id));
+
     for (const a of accounts) {
+      if (held.has(a.id)) {
+        rows.push({ buyerAccountId: a.id, email: a.email, action: "none", daysInactive: 0, graceDaysLeft: 0 });
+        continue;
+      }
       const verdict = evaluateMaintenance({
         goldenTicketIssued: a.golden_ticket_issued,
         onboardingStatus: a.onboarding_status,
@@ -121,7 +136,7 @@ export const runEnrollmentMaintenance = createServerFn({ method: "POST" }).handl
         await supabaseAdmin
           .from("notifications")
           .insert({ seller_id: a.auth_user_id, message, type: "enrollment_warning" });
-        await sendEmail(a.email, "Your divieight enrollment has stalled", message);
+        for (const to of await reminderAddresses(a)) await sendEmail(to, "Your divieight enrollment has stalled", message);
         warned += 1;
       }
 
@@ -152,7 +167,7 @@ export const runEnrollmentMaintenance = createServerFn({ method: "POST" }).handl
             grace_days: GRACE_DAYS,
           },
         });
-        await sendEmail(a.email, "Your divieight priority position was forfeited", message);
+        for (const to of await reminderAddresses(a)) await sendEmail(to, "Your divieight priority position was forfeited", message);
         forfeited += 1;
       }
 

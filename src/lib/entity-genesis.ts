@@ -63,6 +63,17 @@ export function placeholderLlcName(property: {
 }
 
 /**
+ * How a Buyer Account holder is named on the cap table. Two members of one account hold a single interest
+ * together: it is one joint, indivisible interest, never two halves.
+ */
+export function jointHolderLabel(names: string[]): string {
+  const list = names.map((n) => n.trim()).filter(Boolean);
+  if (list.length === 0) return "";
+  if (list.length === 1) return list[0]!;
+  return `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]} (jointly, one indivisible interest)`;
+}
+
+/**
  * Draft Operating Agreement. Placeholders stay unresolved on purpose: the
  * member roster is only final at Closing-Ready, and the LLC name/EIN arrive
  * with the state filing in Stage 2.
@@ -83,7 +94,7 @@ export function draftOperatingAgreement(input: {
               r.holderType === "retained_seller"
                 ? "Retained Seller Share (Hybrid Exit election)"
                 : r.memberNames.length > 0
-                  ? r.memberNames.join(" & ")
+                  ? jointHolderLabel(r.memberNames)
                   : "[MEMBER NAME PENDING]";
             return `  Unit ${r.shareNumber} of 8 — ${who} — acquired ${r.acquisitionDate.slice(0, 10)} — Retention Lock through ${r.retentionLockExpiresAt.slice(0, 10)}`;
           })

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { jointHolderLabel } from "@/lib/entity-genesis";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2 } from "lucide-react";
@@ -101,7 +102,7 @@ function AdminEntityGenesis() {
                               : "Buyer account"}
                           </td>
                           <td className="py-2 pr-4">
-                            {r.memberNames.length > 0 ? r.memberNames.join(" & ") : "—"}
+                            {r.memberNames.length > 0 ? jointHolderLabel(r.memberNames) : "—"}
                           </td>
                           <td className="py-2 pr-4">{date(r.acquisitionDate)}</td>
                           <td className="py-2">{date(r.retentionLockExpiresAt)}</td>

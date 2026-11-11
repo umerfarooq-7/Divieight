@@ -21,7 +21,7 @@ import {
   type AccountMemberView,
   type MemberEligibility,
 } from "@/lib/account-members";
-import { accountRollup, loadMemberSteps, type AccountStatus } from "@/lib/account-rollup";
+import { accountRollup, loadMemberSteps, missingSteps, type AccountStatus } from "@/lib/account-rollup";
 
 type Db = { from: (t: string) => any };
 
@@ -197,9 +197,15 @@ const friendly = (error: { code?: string; message?: string }) => {
   return m || "That didn't save. Please try again.";
 };
 
+/** A refused change to the members is itself recorded: who tried, what, and that it was blocked. */
+async function refuseLocked(db: Db, params: { userId: string; actingMemberId: string; accountId: string; request: RequestContext; attempted: string; memberId?: string | null }): Promise<never> {
+  await audit(db, { userId: params.userId, action: "buyer.member_change_blocked", accountId: params.accountId, actingMemberId: params.actingMemberId, request: params.request, extra: { attempted: params.attempted, member_id: params.memberId ?? null, reason: "locked" } });
+  throw new Error(LOCKED_MESSAGE);
+}
+
 export async function addSecondMember(db: Db, params: { userId: string; actingMemberId: string; fullName: string; email: string; phone: string | null; request: RequestContext }) {
   const { account, member: acting } = await requireActingMember(db, params.userId, params.actingMemberId, { primary: true });
-  if (await membersLocked(db, account)) throw new Error(LOCKED_MESSAGE);
+  if (await membersLocked(db, account)) return refuseLocked(db, { userId: params.userId, actingMemberId: acting.id, accountId: account.id, request: params.request, attempted: "add" });
   const members = await activeMembers(db, account.id);
   if (members.length >= MAX_ACTIVE_MEMBERS) throw new Error(LIMIT_MESSAGE);
   const email = await checkEmail(db, account, members, params.email, null);
@@ -215,7 +221,7 @@ export async function addSecondMember(db: Db, params: { userId: string; actingMe
 
 export async function updateSecondMember(db: Db, params: { userId: string; actingMemberId: string; memberId: string; fullName: string; email: string; phone: string | null; request: RequestContext }) {
   const { account, member: acting } = await requireActingMember(db, params.userId, params.actingMemberId, { primary: true });
-  if (await membersLocked(db, account)) throw new Error(LOCKED_MESSAGE);
+  if (await membersLocked(db, account)) return refuseLocked(db, { userId: params.userId, actingMemberId: acting.id, accountId: account.id, request: params.request, attempted: "update", memberId: params.memberId });
   const members = await activeMembers(db, account.id);
   const target = members.find((m) => m.id === params.memberId && m.role === "member");
   if (!target) throw new Error("That member isn't on your account.");
@@ -225,10 +231,37 @@ export async function updateSecondMember(db: Db, params: { userId: string; actin
   await audit(db, { userId: params.userId, action: "buyer.member_updated", accountId: account.id, actingMemberId: acting.id, request: params.request, extra: { member_id: target.id } });
 }
 
+/** How long between two reminders to the same member. */
+export const REMINDER_INTERVAL_MS = 24 * 3_600_000;
+
+/**
+ * The account holder nudges the second member to finish their steps. The member has no login, so the email goes to
+ * their own address and tells them to ask the account holder to switch to them. Once a day per member at most.
+ */
+export async function remindSecondMember(db: Db, params: { userId: string; actingMemberId: string; memberId: string; request: RequestContext }) {
+  const { account, member: acting } = await requireActingMember(db, params.userId, params.actingMemberId, { primary: true });
+  if (await membersLocked(db, account)) return refuseLocked(db, { userId: params.userId, actingMemberId: acting.id, accountId: account.id, request: params.request, attempted: "remind", memberId: params.memberId });
+  const members = await activeMembers(db, account.id);
+  const target = members.find((m) => m.id === params.memberId && m.role === "member");
+  if (!target || !target.email) throw new Error("That member isn't on your account.");
+  const steps = await loadMemberSteps(db, account.id);
+  const mine = steps.find((s) => s.memberId === target.id);
+  if (mine && mine.result === "eligible" && missingSteps(mine).length === 0) throw new Error("This member has finished every step.");
+  const { data: earlier } = await db.from("audit_log").select("metadata").eq("action_type", "buyer.member_reminded").eq("entity_id", account.id);
+  const recent = ((earlier ?? []) as Array<{ metadata: { member_id?: string; at?: string } }>).some((r) => r.metadata?.member_id === target.id && r.metadata?.at && Date.now() - Date.parse(r.metadata.at) < REMINDER_INTERVAL_MS);
+  if (recent) throw new Error("A reminder was already sent in the last 24 hours.");
+  const left = mine ? missingSteps(mine).map((s) => s.label) : [];
+  const { sendEmail } = await import("@/lib/authorization.notify.server");
+  const body = `${(acting.full_name ?? "The account holder").trim()} added you to a divieight account and is waiting for you to finish your steps${left.length ? ` (${left.join(", ")})` : ""}. Ask them to sign in and choose "I am ${(target.full_name ?? "you").trim()}" to continue as yourself.`;
+  const emailed = await sendEmail(target.email, "Your divieight steps are waiting", body, null, "Open divieight");
+  await audit(db, { userId: params.userId, action: "buyer.member_reminded", accountId: account.id, actingMemberId: acting.id, request: params.request, extra: { member_id: target.id, emailed } });
+  return { emailed };
+}
+
 /** Soft remove: the row and everything it signed stay. */
 export async function removeSecondMember(db: Db, params: { userId: string; actingMemberId: string; memberId: string; request: RequestContext }) {
   const { account, member: acting } = await requireActingMember(db, params.userId, params.actingMemberId, { primary: true });
-  if (await membersLocked(db, account)) throw new Error(LOCKED_MESSAGE);
+  if (await membersLocked(db, account)) return refuseLocked(db, { userId: params.userId, actingMemberId: acting.id, accountId: account.id, request: params.request, attempted: "remove", memberId: params.memberId });
   const members = await activeMembers(db, account.id);
   const target = members.find((m) => m.id === params.memberId && m.role === "member");
   if (!target) throw new Error("That member isn't on your account.");

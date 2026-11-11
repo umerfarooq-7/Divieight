@@ -51,6 +51,7 @@ export function KyoPanel({ accountId }: { accountId: string }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-medium text-foreground">{m.name}</span>
               <span className="text-muted-foreground">({m.role})</span>
+              {(m as { removed?: boolean }).removed ? <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">Removed from the account</span> : null}
               {m.eligibility ? (
                 <span className={`rounded-full border px-2 py-0.5 font-medium ${RESULT_TONES[m.eligibility.result]}`}>{RESULT_LABELS[m.eligibility.result]}</span>
               ) : (

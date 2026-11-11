@@ -112,3 +112,13 @@ export async function loadMemberSteps(db: Db, accountId: string): Promise<Member
       };
     });
 }
+
+/** The accounts among these whose roll-up is held: a held member holds the whole account. */
+export async function heldAccountIds(db: Db, accountIds: string[]): Promise<Set<string>> {
+  const held = new Set<string>();
+  for (const id of accountIds) {
+    const steps = await loadMemberSteps(db, id);
+    if (accountRollup(steps).status === "held") held.add(id);
+  }
+  return held;
+}

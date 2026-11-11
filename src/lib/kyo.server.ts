@@ -56,10 +56,11 @@ async function buildKyo(db: Db, m: MemberRow): Promise<MemberKyo & { reasonCodes
 /** Admin only (the caller checks the role). Reading it is logged. */
 export async function adminKyo(db: Db, params: { adminId: string; accountId: string }) {
   const { data: members } = await db.from("account_members").select("id, full_name, role, status, buyer_account_id").eq("buyer_account_id", params.accountId);
-  const active = ((members ?? []) as MemberRow[]).filter((m) => m.status === "active");
+  // Removed members stay on the admin's record, flagged: what they signed and declared is history, not something to hide.
+  const all = ((members ?? []) as MemberRow[]).sort((a, b) => Number(b.status === "active") - Number(a.status === "active"));
   const out = [];
-  for (const m of active) out.push(await buildKyo(db, m));
-  await db.from("audit_log").insert({ actor_id: params.adminId, actor_type: "admin", action_type: "kyo.viewed", entity_type: "buyer_account", entity_id: params.accountId, metadata: { members: active.map((m) => m.id) } });
+  for (const m of all) out.push({ ...(await buildKyo(db, m)), removed: m.status !== "active" });
+  await db.from("audit_log").insert({ actor_id: params.adminId, actor_type: "admin", action_type: "kyo.viewed", entity_type: "buyer_account", entity_id: params.accountId, metadata: { members: all.map((m) => m.id) } });
   return out;
 }
 

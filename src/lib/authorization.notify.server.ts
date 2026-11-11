@@ -41,7 +41,7 @@ function html(subject: string, rawBody: string, link: string | null, linkLabel: 
   </td></tr></table></body></html>`;
 }
 
-async function sendEmail(to: string, subject: string, body: string, link: string | null, linkLabel: string) {
+export async function sendEmail(to: string, subject: string, body: string, link: string | null, linkLabel: string) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
   try {
@@ -62,6 +62,33 @@ async function emailSwitchedOff(db: Db, userId: string | null, type: string | un
   const { data } = await db.from("owner_notification_preferences").select("email_enabled").eq("user_id", userId).eq("type", type).maybeSingle();
   return data?.email_enabled === false;
 }
+
+/**
+ * The emails of every active Account Member of the Buyer Account this login belongs to. Members have no logins of
+ * their own, so a notice to the account has to reach each of them at their own address. Empty for anyone who isn't
+ * a Buyer Account's login (agents, sellers, admins).
+ */
+export async function memberEmailsFor(db: Db, authUserId: string | null | undefined): Promise<string[]> {
+  if (!authUserId) return [];
+  const { data: acct } = await db.from("buyer_accounts").select("id").eq("auth_user_id", authUserId).maybeSingle();
+  if (!acct) return [];
+  const { data } = await db.from("account_members").select("email").eq("buyer_account_id", (acct as { id: string }).id).eq("status", "active");
+  return ((data ?? []) as Array<{ email: string | null }>).map((m) => (m.email ?? "").trim()).filter(Boolean);
+}
+
+/** The addresses to write to, once each (case and spacing aside). */
+export const uniqueEmails = (list: Array<string | null | undefined>): string[] => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const e of list) {
+    const v = (e ?? "").trim();
+    if (v && !seen.has(v.toLowerCase())) {
+      seen.add(v.toLowerCase());
+      out.push(v);
+    }
+  }
+  return out;
+};
 
 /** Portal notification + email. Delivery failures are audited, never thrown. */
 export async function deliver(
@@ -101,10 +128,15 @@ export async function deliver(
     const { data } = await db.from("sellers").select("email").eq("id", recipient.authUserId).maybeSingle();
     email = (data?.email as string | null | undefined) ?? null;
   }
-  const emailed =
-    email && !(await emailSwitchedOff(db, recipient.authUserId, args.type))
-      ? await sendEmail(email, args.subject, args.message, args.link ?? null, args.type && isOwnerNotificationType(args.type) ? "Open in divieight" : "Open the authorization request")
-      : false;
+  // A Buyer Account's notice goes to the login's address and to each member's own address.
+  const addresses = uniqueEmails([email, ...(await memberEmailsFor(db, recipient.authUserId))]);
+  let emailed = false;
+  if (addresses.length > 0 && !(await emailSwitchedOff(db, recipient.authUserId, args.type))) {
+    for (const to of addresses) {
+      const ok = await sendEmail(to, args.subject, args.message, args.link ?? null, args.type && isOwnerNotificationType(args.type) ? "Open in divieight" : "Open the authorization request");
+      emailed = emailed || ok;
+    }
+  }
 
   if (!portal && !emailed) {
     await db.from("audit_log").insert({

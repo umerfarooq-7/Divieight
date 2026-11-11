@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { ELIGIBILITY_LABELS, MAX_ACTIVE_MEMBERS, memberDisplayName, type MemberEligibility } from "@/lib/account-members";
-import { getMyAccountMembers } from "@/lib/account-members.functions";
+import { getMyAccountMembers, remindAccountMember } from "@/lib/account-members.functions";
 import { HELD_BUYER_TEXT, RESULT_TONES } from "@/lib/eligibility-engine";
 
 // Held has its own colour: never the refused or unpaid tones.
@@ -21,6 +21,16 @@ export function AccountMembersCard() {
   const load = useServerFn(getMyAccountMembers);
   const { data, isLoading, error } = useQuery({ queryKey: ["my-account-members", user?.id], enabled: !!user, retry: false, queryFn: () => load() });
   const [managing, setManaging] = useState(false);
+  const remind = useServerFn(remindAccountMember);
+  const [reminded, setReminded] = useState<Record<string, string>>({});
+  const sendReminder = async (actingMemberId: string, memberId: string) => {
+    try {
+      await remind({ data: { actingMemberId, memberId } });
+      setReminded((r) => ({ ...r, [memberId]: "Reminder sent." }));
+    } catch (e) {
+      setReminded((r) => ({ ...r, [memberId]: (e as Error).message }));
+    }
+  };
 
   return (
     <section>
@@ -78,6 +88,12 @@ export function AccountMembersCard() {
                       <button type="button" onClick={() => setManaging(true)} className="ml-2 font-medium text-accent hover:underline">
                         Continue without this member
                       </button>
+                      {m.eligibility !== "not_eligible" && m.eligibility !== "held" ? (
+                        <button type="button" onClick={() => void sendReminder(data.members.find((x) => x.role === "primary")?.id ?? "", m.id)} className="ml-3 font-medium text-accent hover:underline">
+                          Send a reminder
+                        </button>
+                      ) : null}
+                      {reminded[m.id] ? <span className="ml-2">{reminded[m.id]}</span> : null}
                     </div>
                   ) : null}
                   {m.checklist.find((c) => c.key === "declaration")?.done ? (

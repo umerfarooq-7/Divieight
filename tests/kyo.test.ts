@@ -101,11 +101,12 @@ describe("the KYO record (admin)", () => {
     expect(db().audits("kyo.viewed")[0]).toMatchObject({ actor_id: USERS.admin, entity_id: IDS.b1 });
   });
 
-  it("only active members appear", async () => {
+  it("a removed member stays on the admin record, flagged and listed after the active ones", async () => {
     seedKyo();
     db().table("account_members").find((m) => m.id === BOB)!.status = "removed";
     as(USERS.admin);
-    expect((await getKyoForAdmin({ data: { accountId: IDS.b1 } })).map((m) => m.memberId)).toEqual([ALICE]);
+    const view = await getKyoForAdmin({ data: { accountId: IDS.b1 } });
+    expect(view.map((m) => [m.memberId, m.removed])).toEqual([[ALICE, false], [BOB, true]]);
   });
 });
 

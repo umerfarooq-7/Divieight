@@ -39,17 +39,14 @@ export const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test
 export const identityComplete = (m: { full_name: string | null; date_of_birth: string | null; address: string | null }) =>
   Boolean(m.full_name?.trim() && m.date_of_birth && m.address?.trim());
 
-/** Same person: same name, date of birth and ID number. */
+/** Same person: the same identity document number (spacing, dashes and case aside). */
 export function samePerson(
   a: { full_name: string | null; date_of_birth: string | null; id_document_number: string | null },
   b: { full_name: string | null; date_of_birth: string | null; id_document_number: string | null },
 ): boolean {
-  if (!a.id_document_number || !b.id_document_number || !a.date_of_birth || !b.date_of_birth) return false;
-  return (
-    a.id_document_number.trim().toUpperCase() === b.id_document_number.trim().toUpperCase() &&
-    a.date_of_birth === b.date_of_birth &&
-    (a.full_name ?? "").trim().toLowerCase() === (b.full_name ?? "").trim().toLowerCase()
-  );
+  const norm = (v: string | null) => (v ?? "").replace(/[\s-]+/g, "").toUpperCase();
+  // One identity document belongs to one person: the same ID number twice is the same person, whatever else was typed.
+  return Boolean(norm(a.id_document_number)) && norm(a.id_document_number) === norm(b.id_document_number);
 }
 
 export const SAME_EMAIL_MESSAGE = "Each member needs their own email address.";

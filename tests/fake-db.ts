@@ -95,6 +95,9 @@ const NOW_DEFAULTS: Record<string, string[]> = {
 
 const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);
 
+/** Tests that need two requests genuinely in flight at once give every query a little latency. */
+export const latency = { ms: 0 };
+
 class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
   private filters: Filter[] = [];
   private op: "select" | "insert" | "update" | "upsert" | "delete" = "select";
@@ -206,6 +209,7 @@ class Query implements PromiseLike<{ data: any; error: any; count?: number }> {
     onrej?: ((e: any) => T2 | PromiseLike<T2>) | null,
   ): PromiseLike<T1 | T2> {
     return Promise.resolve()
+      .then(() => (latency.ms > 0 ? new Promise((r) => setTimeout(r, latency.ms)) : undefined))
       .then(() => this.run())
       .then((r: any) => (this.wantCount ? { ...r, data: null, count: Array.isArray(r.data) ? r.data.length : 0 } : r))
       .then(onful, onrej);

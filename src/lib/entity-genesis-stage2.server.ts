@@ -173,6 +173,8 @@ export async function requestAtlas(db: Db, actorId: string, propertyId: string, 
   const g = await genesis(db, propertyId);
   requireClosingReady(g);
   if (g.atlas_request_status !== "not_requested") throw new Error("Stripe Atlas was already requested for this LLC.");
+  // The filing record names every member, account by account, from the locked cap table.
+  const roster = await filingRoster(db, propertyId);
   // Block 2 (LPOA): every active member of every Buyer Account on the cap table authorizes the filing first.
   const signers = await oaSigners(db, propertyId);
   const { block2MissingFor } = await import("@/lib/member-steps.server");
@@ -184,7 +186,14 @@ export async function requestAtlas(db: Db, actorId: string, propertyId: string, 
     atlas_reference: reference,
     atlas_fee: ATLAS_FEE_USD,
   });
+  // Kept on the genesis record too (best effort: the audit entry below carries it either way).
+  try {
+    await update(db, propertyId, { filing_roster: roster });
+  } catch {
+    // The column arrives with two-member-fixes.sql.
+  }
   await audit(db, actorId, "atlas_requested", propertyId, {
+    roster,
     vendor: "stripe_atlas",
     fee_usd: ATLAS_FEE_USD,
     includes: ["delaware_filing", "ein"],
@@ -308,6 +317,17 @@ async function lockedCapTable(db: Db, propertyId: string): Promise<CapTableRow[]
     acquisitionDate: new Date(r.acquisition_date).toISOString(),
     retentionLockExpiresAt: new Date(r.retention_lock_expires_at).toISOString(),
   }));
+}
+
+/** The members named in the filing, per Buyer Account, in cap-table order. */
+export async function filingRoster(db: Db, propertyId: string): Promise<Array<{ buyerAccountId: string; members: string[] }>> {
+  const cap = await lockedCapTable(db, propertyId);
+  const out: Array<{ buyerAccountId: string; members: string[] }> = [];
+  for (const row of cap) {
+    if (!row.buyerAccountId || out.some((r) => r.buyerAccountId === row.buyerAccountId)) continue;
+    out.push({ buyerAccountId: row.buyerAccountId, members: row.memberNames.filter(Boolean) });
+  }
+  return out;
 }
 
 /** Every Account Member of every Buyer Account on the locked cap table. */
