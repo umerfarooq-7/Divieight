@@ -394,7 +394,7 @@ describe("the adverse-action notice, per member", () => {
   it("works through the picker for the second member, and no longer reads only the first failed member", () => {
     const page = readFileSync("src/routes/buyer.adverse-action.tsx", "utf8");
     expect(page).toContain("ActingMemberGate");
-    expect(page).toContain("x.id === actingMemberId");
+    expect(page).toContain(".eq(\"id\", actingMemberId)");
     expect(page).not.toMatch(/\.eq\("background_check_result", "failed"\)\s*\.order/);
     // It reads the acting member's own notices, never another member's.
     expect(page).toContain("getMyAdverseActionNotices");

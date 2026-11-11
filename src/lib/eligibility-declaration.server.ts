@@ -11,6 +11,7 @@ import { requireActingMember, type RequestContext } from "@/lib/account-members.
 import { identityComplete } from "@/lib/account-members";
 import { sha256 } from "@/lib/entity-genesis-stage2.server";
 import {
+  AUTHORIZATION_QUESTION,
   NAME_MISMATCH_MESSAGE,
   declarationStatusFor,
   declarationText,
@@ -154,6 +155,10 @@ export async function submitDeclaration(
   }
   // The database trigger marks the earlier record superseded as part of the insert; this is a no-op there.
   if (now) await db.from(TABLE).update({ status: "superseded" }).eq("id", now.id).in("status", ["incomplete", "complete"]);
+
+  // The Question 5 authorization is the member's consent record. The legacy fcra_consent_at column follows it: set when
+  // they say Yes, cleared if they later withdraw it. (background_check_result is no longer written by anything.)
+  await db.from("account_members").update({ fcra_consent_at: params.answers[AUTHORIZATION_QUESTION] === "yes" ? declaredAt : null }).eq("id", member.id);
 
   // Vetting outcome from the declaration alone. Q5 = No is incomplete: the member's status is left as it was,
   // and nothing is ever recorded as failed. A "No" to a statement is held for review, and stays held even if a

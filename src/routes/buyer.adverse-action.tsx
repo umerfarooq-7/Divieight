@@ -33,7 +33,7 @@ export const Route = createFileRoute("/buyer/adverse-action")({
 function AdverseActionPage() {
   return (
     <ActingMemberGate step="Your result">
-      {({ member, switchPerson }) => <AdverseActionForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+      {({ member }) => <AdverseActionForMember key={member.id} actingMemberId={member.id} />}
     </ActingMemberGate>
   );
 }
@@ -49,12 +49,11 @@ interface Notice {
   issued_at: string;
 }
 
-function AdverseActionForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
+function AdverseActionForMember({ actingMemberId }: { actingMemberId: string }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const loadNotices = useServerFn(getMyAdverseActionNotices);
   const [ready, setReady] = useState(false);
-  const [notForMe, setNotForMe] = useState<string | null>(null);
   const [notices, setNotices] = useState<Notice[]>([]);
 
   useEffect(() => {
@@ -70,25 +69,22 @@ function AdverseActionForMember({ actingMemberId, onSwitch }: { actingMemberId: 
         if (!cancelled) navigate({ to: "/buyer/dashboard", replace: true });
         return;
       }
-      const { data: all } = await supabase
+      // Only the acting member's own row is read: another member's result is never fetched, named or hinted at.
+      const { data: own } = await supabase
         .from("account_members")
-        .select("id, full_name, background_check_result, vetting_status")
+        .select("id, background_check_result, vetting_status")
+        .eq("id", actingMemberId)
         .eq("buyer_account_id", b.id)
-        .eq("status", "active");
+        .eq("status", "active")
+        .maybeSingle();
       if (cancelled) return;
-      const everyone = (all ?? []) as Array<{ id: string; full_name: string; background_check_result: string | null; vetting_status: string | null }>;
-      const affected = everyone.filter(isAdverselyAffected);
-      const me = everyone.find((x) => x.id === actingMemberId) ?? null;
+      const me = (own ?? null) as { background_check_result: string | null; vetting_status: string | null } | null;
       const mine = await loadNotices({ data: { actingMemberId } }).catch(() => [] as Notice[]);
       if (cancelled) return;
-      if (affected.length === 0 && mine.length === 0) {
-        navigate({ to: "/buyer/dashboard", replace: true });
-        return;
-      }
       if (mine.length === 0 && (!me || !isAdverselyAffected(me))) {
-        // The result belongs to the affected member; nobody else sees it.
-        setNotForMe(affected.map((a) => a.full_name || "the other member").join(" and "));
-        setReady(true);
+        // Nothing here for this member. (Not "this is for the other member": that would tell them something
+        // about the other member's result.)
+        navigate({ to: "/buyer/dashboard", replace: true });
         return;
       }
       setNotices(mine as Notice[]);
@@ -101,21 +97,6 @@ function AdverseActionForMember({ actingMemberId, onSwitch }: { actingMemberId: 
 
   if (loading || !ready) {
     return <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-muted-foreground">Loading…</div>;
-  }
-
-  if (notForMe) {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6">
-        <h1 className="font-display text-2xl font-semibold text-foreground">This is for {notForMe}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">A result and any notice are addressed to the member they concern. Switch to that member to read it.</p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Button onClick={onSwitch}>Switch person</Button>
-          <Button asChild variant="outline">
-            <Link to="/buyer/dashboard">Back to dashboard</Link>
-          </Button>
-        </div>
-      </div>
-    );
   }
 
   const latest = notices[0] ?? null;

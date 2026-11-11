@@ -255,10 +255,11 @@ describe("a No to a statement", () => {
 
   it("no consumer report is requested: nothing but the declaration and its audit entry is written", async () => {
     seed();
-    const before = Object.fromEntries(["account_members", "signed_documents", "buyer_accounts"].map((t) => [t, JSON.stringify(db().table(t).map((r) => ({ ...r, vetting_status: undefined })))]));
+    const before = Object.fromEntries(["account_members", "signed_documents", "buyer_accounts"].map((t) => [t, JSON.stringify(db().table(t).map((r) => ({ ...r, vetting_status: undefined, fcra_consent_at: undefined })))]));
     await declare(IDS.b1m1);
-    for (const [t, snap] of Object.entries(before)) expect(JSON.stringify(db().table(t).map((r) => ({ ...r, vetting_status: undefined })))).toBe(snap);
-    expect(member(IDS.b1m1).fcra_consent_at ?? null).toBeNull();
+    for (const [t, snap] of Object.entries(before)) expect(JSON.stringify(db().table(t).map((r) => ({ ...r, vetting_status: undefined, fcra_consent_at: undefined })))).toBe(snap);
+    // The only thing recorded on the member is the Q5 authorization itself (the legacy fcra_consent_at mirrors it).
+    expect(member(IDS.b1m1).fcra_consent_at).toBe(db().table("eligibility_declarations").find((d) => d.account_member_id === IDS.b1m1)!.declared_at);
     expect(member(IDS.b1m1).background_check_result ?? null).toBeNull();
   });
 });
