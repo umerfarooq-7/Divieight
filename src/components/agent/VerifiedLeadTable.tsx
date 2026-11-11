@@ -100,6 +100,8 @@ export function VerifiedLeadTable({
             )}
           </div>
 
+          {/* Rev 49 counsel items D2(a)/D2(b): this stage and the Digital Key badge are what the agent saw before and are
+              kept exactly. The stage comes through agentVisibleStage: a held account reads as Pending, with no reason. */}
           {/* Binary-vetting rule: discrete stage only — no computed progress
               score, percentage, or band derived from vetting/financial state. */}
           <div className="mt-2 text-[11px] text-muted-foreground">

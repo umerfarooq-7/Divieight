@@ -56,6 +56,7 @@ function AgentLeadsPage() {
         <h1 className="font-display text-3xl font-semibold text-foreground">
           Your tethered buyers
         </h1>
+        {/* Rev 49 counsel items D2(a)/D2(b): the KYO Access Controls sentence below is queued for counsel review. Do not change it. */}
         <p className="text-sm text-muted-foreground">
           {qualified} of {buyers.length} tethered buyer{buyers.length === 1 ? "" : "s"} are fully
           qualified — Platform Enrollment Fee paid and Digital Key issued. Vetting report contents

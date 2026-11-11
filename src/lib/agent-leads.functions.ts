@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { residencyFor, type Residency } from "@/lib/markets";
+import { agentVisibleStage } from "@/lib/agent-visibility";
 
 /**
  * Verified Lead Dashboard data.
@@ -133,7 +134,8 @@ export const listMyTetheredBuyers = createServerFn({ method: "POST" })
         market: r.primary_target_market ?? null,
         goldenTicketIssued: Boolean(r.golden_ticket_issued),
         goldenTicketIssuedAt: r.golden_ticket_issued_at ?? null,
-        onboardingStatus: r.onboarding_status ?? "unknown",
+        // Rev 49 counsel items D2(a)/D2(b): the agent sees only what they saw before; a held account reads as Pending.
+        onboardingStatus: agentVisibleStage(r.onboarding_status ?? "unknown", heldAccounts.has(r.id), Boolean(r.golden_ticket_issued)),
         liquidityVerified: Boolean(r.liquidity_verified),
         liquidityStatus: r.liquidity_status ?? "pending",
         pefStatus: pef,

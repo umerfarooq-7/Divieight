@@ -598,6 +598,51 @@ export type Database = {
         }
         Relationships: []
       }
+      kyo_correction_requests: {
+        Row: {
+          id: string
+          account_member_id: string
+          buyer_account_id: string
+          field: string
+          requested_change: string
+          status: string
+          resolution_note: string | null
+          resolved_by: string | null
+          resolved_at: string | null
+          ip: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          account_member_id: string
+          buyer_account_id: string
+          field: string
+          requested_change: string
+          status?: string
+          resolution_note?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          account_member_id?: string
+          buyer_account_id?: string
+          field?: string
+          requested_change?: string
+          status?: string
+          resolution_note?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          ip?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action_type: string

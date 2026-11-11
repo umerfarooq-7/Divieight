@@ -91,6 +91,9 @@ export function AccountMembersCard() {
                 </div>
               );
             })}
+            <Link to="/buyer/kyo" className="inline-block text-sm font-medium text-accent hover:underline">
+              My data and corrections
+            </Link>
             {data.members.length > 1 ? (
               <Link to="/buyer/authority" className="inline-block text-sm font-medium text-accent hover:underline">
                 Delegate authority to the other member

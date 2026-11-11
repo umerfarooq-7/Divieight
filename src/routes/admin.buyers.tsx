@@ -11,6 +11,7 @@ import { latestLiveness } from "@/lib/liveness";
 import { LivenessTestSwitch } from "@/components/LivenessTestSwitch";
 import { MarkDeclarationUntrue } from "@/components/MarkDeclarationUntrue";
 import { IssueAdverseActionNotice } from "@/components/IssueAdverseActionNotice";
+import { KyoPanel } from "@/components/KyoPanel";
 import { listEligibilityForAdmin } from "@/lib/eligibility-engine.functions";
 import { RESULT_LABELS, RESULT_TONES, type EligibilityResult } from "@/lib/eligibility-engine";
 
@@ -337,6 +338,7 @@ function AdminBuyers() {
                                 ))
                               )}
                             </ul>
+                            <KyoPanel accountId={r.id} />
                           </td>
                         </tr>
                       )}

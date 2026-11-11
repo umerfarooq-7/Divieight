@@ -88,6 +88,7 @@ import { Route as BuyerEarnestMoneyRouteImport } from './routes/buyer.earnest-mo
 import { Route as BuyerEligibilityStandardRouteImport } from './routes/buyer.eligibility-standard'
 import { Route as BuyerGoldenTicketRouteImport } from './routes/buyer.golden-ticket'
 import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
+import { Route as BuyerKyoRouteImport } from './routes/buyer.kyo'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
 import { Route as BuyerOperatingAgreementRouteImport } from './routes/buyer.operating-agreement'
 import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
@@ -595,6 +596,11 @@ const BuyerGoldenTicketRoute = BuyerGoldenTicketRouteImport.update({
 const BuyerInsuranceRoute = BuyerInsuranceRouteImport.update({
   id: '/buyer/insurance',
   path: '/buyer/insurance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerKyoRoute = BuyerKyoRouteImport.update({
+  id: '/buyer/kyo',
+  path: '/buyer/kyo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BuyerLoginRoute = BuyerLoginRouteImport.update({
@@ -1272,6 +1278,7 @@ export interface FileRoutesByFullPath {
   '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
+  '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
@@ -1456,6 +1463,7 @@ export interface FileRoutesByTo {
   '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
+  '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
@@ -1648,6 +1656,7 @@ export interface FileRoutesById {
   '/buyer/eligibility-standard': typeof BuyerEligibilityStandardRoute
   '/buyer/golden-ticket': typeof BuyerGoldenTicketRoute
   '/buyer/insurance': typeof BuyerInsuranceRoute
+  '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
   '/buyer/register': typeof BuyerRegisterRoute
@@ -1841,6 +1850,7 @@ export interface FileRouteTypes {
     | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
+    | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
     | '/buyer/register'
@@ -2025,6 +2035,7 @@ export interface FileRouteTypes {
     | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
+    | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
     | '/buyer/register'
@@ -2216,6 +2227,7 @@ export interface FileRouteTypes {
     | '/buyer/eligibility-standard'
     | '/buyer/golden-ticket'
     | '/buyer/insurance'
+    | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
     | '/buyer/register'
@@ -2358,6 +2370,7 @@ export interface RootRouteChildren {
   BuyerEligibilityStandardRoute: typeof BuyerEligibilityStandardRoute
   BuyerGoldenTicketRoute: typeof BuyerGoldenTicketRoute
   BuyerInsuranceRoute: typeof BuyerInsuranceRoute
+  BuyerKyoRoute: typeof BuyerKyoRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
   BuyerOperatingAgreementRoute: typeof BuyerOperatingAgreementRoute
   BuyerRegisterRoute: typeof BuyerRegisterRoute
@@ -2987,6 +3000,13 @@ declare module '@tanstack/react-router' {
       path: '/buyer/insurance'
       fullPath: '/buyer/insurance'
       preLoaderRoute: typeof BuyerInsuranceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/kyo': {
+      id: '/buyer/kyo'
+      path: '/buyer/kyo'
+      fullPath: '/buyer/kyo'
+      preLoaderRoute: typeof BuyerKyoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/login': {
@@ -4040,6 +4060,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerEligibilityStandardRoute: BuyerEligibilityStandardRoute,
   BuyerGoldenTicketRoute: BuyerGoldenTicketRoute,
   BuyerInsuranceRoute: BuyerInsuranceRoute,
+  BuyerKyoRoute: BuyerKyoRoute,
   BuyerLoginRoute: BuyerLoginRoute,
   BuyerOperatingAgreementRoute: BuyerOperatingAgreementRoute,
   BuyerRegisterRoute: BuyerRegisterRoute,

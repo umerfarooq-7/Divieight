@@ -228,6 +228,7 @@ export function AgentActionItems() {
 
         {elections.map((e) => (
           <li key={e.id} className="rounded-lg border border-border bg-card p-4">
+            {/* Rev 49 counsel items D2(a)/D2(b): the Binary Vetting Result sentence is queued for counsel review. Do not change it. */}
             <p className="text-sm font-medium text-foreground">
               A buyer you referred is now vetted — choose how to proceed
             </p>

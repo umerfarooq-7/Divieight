@@ -267,6 +267,7 @@ function AgentDashboard() {
             Verified lead dashboard
           </Link>
         </div>
+        {/* Rev 49 counsel items D2(a)/D2(b): the KYO Access Controls sentence below is queued for counsel review. Do not change it. */}
         <p className="mt-2 text-sm text-muted-foreground">
           {qualifiedLeads} of {buyers.length} tethered buyer{buyers.length === 1 ? "" : "s"} are
           fully qualified. Vetting report contents remain private to the buyer and the Platform.
