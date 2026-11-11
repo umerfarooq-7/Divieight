@@ -26,3 +26,8 @@ export const verificationRequestCopy = {
   reviewHeading: "Your account is under review",
   dashboardBody: "We need a little more to complete your Eligibility Check. You can add more documents at any time.",
 } as const;
+
+/** A seller's declaration doesn't gate their listing unless the setting is on (gateListingOnSellerEligibility). */
+export const SELLER_INFORMATIONAL_NOTE = "For now this declaration is informational: it does not affect whether your listing is published.";
+export const SELLER_NOT_ELIGIBLE_MESSAGE = "Your eligibility declaration has to come back eligible before your listing can be published.";
+export const SELLER_DECLARATION_MISSING_MESSAGE = "Make your eligibility declaration before your listing can be published.";

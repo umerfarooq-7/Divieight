@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
-import { CORRECTION_FIELDS, KYO_MOST_SENSITIVE_PII } from "@/lib/kyo";
+import { CORRECTION_FIELDS, KYO_MOST_SENSITIVE_PII, KYO_REVIEW_BANNER } from "@/lib/kyo";
 import { getKyoForAdmin, listKyoCorrectionsForAdmin, resolveKyoCorrectionFn } from "@/lib/kyo.functions";
 
 /**
@@ -41,6 +41,9 @@ export function KyoPanel({ accountId }: { accountId: string }) {
     );
   return (
     <div className="mt-3 rounded-lg border border-border bg-muted/30 p-4 text-xs">
+      <p className="mb-2 rounded-md border border-border bg-muted px-2 py-1 text-muted-foreground" role="note">
+        {KYO_REVIEW_BANNER}
+      </p>
       <p className="font-semibold text-foreground">Know Your Owner record</p>
       <p className="mt-1 text-muted-foreground">Most sensitive PII held, access limited and logged: {KYO_MOST_SENSITIVE_PII.join("; ")}.</p>
       {isLoading ? <p className="mt-3 text-muted-foreground">Loading…</p> : null}

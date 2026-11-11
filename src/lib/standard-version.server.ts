@@ -63,9 +63,14 @@ export async function publishStandardVersion(
   if (existing.some((v) => v.version === version)) throw new Error(`Version ${version} already exists.`);
 
   // One transaction in the database: the new version goes live and the old one stops, together.
-  const { data, error } = await (db.rpc as NonNullable<Db["rpc"]>)("publish_standard_version", { _version: version, _file_url: fileUrl, _published_by: params.adminId });
+  const { currentRulesHash } = await import("@/lib/standard-rules-hash");
+  const publish = (args: Record<string, unknown>) => (db.rpc as NonNullable<Db["rpc"]>)("publish_standard_version", args);
+  let { data, error } = await publish({ _version: version, _file_url: fileUrl, _published_by: params.adminId, _rules_hash: currentRulesHash() });
+  // Before rules-and-held-decisions.sql is run the function has no hash argument: publish the old way.
+  if (error && /_rules_hash|schema cache|Could not find the function/i.test(error.message ?? "")) ({ data, error } = await publish({ _version: version, _file_url: fileUrl, _published_by: params.adminId }));
   if (error) throw new Error(error.message?.includes("publish_standard_version") ? MISSING_SCHEMA : error.message || MISSING_SCHEMA);
   const effectiveFrom = (data as string | null) ?? new Date().toISOString();
+  // The new version was published with this build's questions-and-rules hash, in the same insert.
   await db.from("audit_log").insert({
     actor_id: params.adminId,
     actor_type: "admin",

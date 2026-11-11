@@ -55,6 +55,9 @@ export interface KyoEligibility {
   determinedAt: string;
 }
 
+/** Shown to admins on the KYO screens until compliance has reviewed the list. */
+export const KYO_REVIEW_BANNER = "Sensitive-data list and retention wording pending compliance review";
+
 export interface MemberKyo {
   memberId: string;
   name: string;

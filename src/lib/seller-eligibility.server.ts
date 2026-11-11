@@ -9,7 +9,9 @@
 import { getLiveStandard } from "@/lib/standard-version.server";
 import { type RequestContext } from "@/lib/account-members.server";
 import { declarationStatusFor, declarationText, legalNamesMatch, NAME_MISMATCH_MESSAGE, type DeclarationAnswers } from "@/lib/eligibility-declaration";
-import { evaluateEligibility, type Evaluation } from "@/lib/eligibility-engine";
+import { SELLER_DECLARATION_MISSING_MESSAGE, SELLER_NOT_ELIGIBLE_MESSAGE } from "@/constants/eligibilityCheckCopy";
+import { evaluateEligibility, HELD_BUYER_TEXT, type Evaluation } from "@/lib/eligibility-engine";
+import { loadGovernanceConfig } from "@/lib/governance-config.server";
 import { sha256 } from "@/lib/entity-genesis-stage2.server";
 
 type Db = { from: (t: string) => any };
@@ -59,16 +61,41 @@ function evaluate(s: SellerRow, answers: DeclarationAnswers | null, declaredAt: 
   });
 }
 
+
+/**
+ * Whether the seller's eligibility result stops their listing being published. Only when the setting is on
+ * (gateListingOnSellerEligibility, off by default), only for a seller who retains shares, and only when their result
+ * isn't 'eligible'. A held seller is told it is held, in the same words a held buyer reads.
+ */
+export async function sellerListingGate(db: Db, sellerId: string): Promise<{ blocked: boolean; held: boolean; message: string | null }> {
+  const open = { blocked: false, held: false, message: null };
+  if ((await loadGovernanceConfig(db)).gateListingOnSellerEligibility !== 1) return open;
+  let state: Awaited<ReturnType<typeof sellerEligibilityState>>;
+  try {
+    state = await sellerEligibilityState(db, sellerId);
+  } catch {
+    return open; // no seller record to judge: the setting never blocks on a missing table
+  }
+  if (!state.required || state.result === "eligible") return open;
+  if (state.result === "held") return { blocked: true, held: true, message: HELD_BUYER_TEXT };
+  if (state.result === "not_eligible") return { blocked: true, held: false, message: SELLER_NOT_ELIGIBLE_MESSAGE };
+  // No result yet. A seller has no liveness or sanctions step, so those pending items don't count against them: only a
+  // declaration that hasn't been made (or isn't complete) does.
+  const undeclared = state.reasonCodes.some((c) => ["declaration_missing", "q5_authorization_not_given", "q6_undertaking_not_given"].includes(c));
+  return undeclared ? { blocked: true, held: false, message: SELLER_DECLARATION_MISSING_MESSAGE } : open;
+}
+
 export async function sellerEligibilityState(db: Db, userId: string) {
   const s = await seller(db, userId);
-  if (!requiresEligibilityCheck(s)) return { required: false as const, standardVersion: null, current: null, history: 0, verifiedName: null, result: null, reasonCodes: [] as string[], message: FULL_EXIT_NO_CHECK };
+  const gatesListing = (await loadGovernanceConfig(db)).gateListingOnSellerEligibility === 1;
+  if (!requiresEligibilityCheck(s)) return { gatesListing, required: false as const, standardVersion: null, current: null, history: 0, verifiedName: null, result: null, reasonCodes: [] as string[], message: FULL_EXIT_NO_CHECK };
   const { data, error } = await db.from(TABLE).select("*").eq("seller_id", s.id);
   if (error) throw new Error(MISSING_SCHEMA);
   const rows = (data ?? []) as SellerDeclarationRecord[];
   const current = rows.find((r) => r.status === "complete" || r.status === "incomplete") ?? null;
   const e = current ? evaluate(s, current.answers, current.declared_at) : { result: null, reason_codes: ["declaration_missing"] };
   const standardVersion = (await getLiveStandard(db)).version;
-  return { required: true as const, standardVersion, current, history: rows.length, verifiedName: identityOn(s) ? (s.full_name ?? "").trim() : null, result: e.result, reasonCodes: e.reason_codes, message: null };
+  return { gatesListing, required: true as const, standardVersion, current, history: rows.length, verifiedName: identityOn(s) ? (s.full_name ?? "").trim() : null, result: e.result, reasonCodes: e.reason_codes, message: null };
 }
 
 export async function submitSellerDeclaration(
@@ -77,6 +104,7 @@ export async function submitSellerDeclaration(
 ) {
   const s = await seller(db, params.userId);
   if (!requiresEligibilityCheck(s)) throw new Error(FULL_EXIT_NO_CHECK);
+  await (await import("@/lib/standard-rules-check.server")).assertStandardRules(db);
   if (params.attestedPersonally !== true) throw new Error("Confirm that you are personally making this declaration.");
   if (!identityOn(s)) throw new Error("Finish the identity step first, so the signature can be checked against your ID.");
   const signedName = params.signedName.trim();

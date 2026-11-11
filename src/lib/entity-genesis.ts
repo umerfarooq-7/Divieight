@@ -64,6 +64,9 @@ export function placeholderLlcName(property: {
   return `D8 ${slug} ${property.zip}, LLC (name reservation pending)`;
 }
 
+/** Shown to admins only, beside the joint wording. Not part of any agreement or any owner-facing text. */
+export const JOINT_OWNERSHIP_ADMIN_NOTE = "Form of joint ownership pending counsel";
+
 /**
  * How a Buyer Account holder is named on the cap table. Two members of one account hold a single interest
  * together: it is one joint, indivisible interest, never two halves.

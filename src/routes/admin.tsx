@@ -41,6 +41,7 @@ const NAV = [
   { to: "/admin/sellers", label: "Sellers", icon: Users },
   { to: "/admin/buyers", label: "Buyers", icon: ShieldCheck },
   { to: "/admin/eligibility/held", label: "Held applications", icon: ShieldCheck },
+  { to: "/admin/held-accounts", label: "Held accounts", icon: ShieldCheck },
   { to: "/admin/standard", label: "Eligibility Standard", icon: FileSignature },
   { to: "/admin/properties", label: "Properties", icon: Home },
   { to: "/admin/agents", label: "Agents", icon: Users2 },

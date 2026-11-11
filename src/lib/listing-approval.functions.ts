@@ -1070,6 +1070,15 @@ async function tryPublish(db: Db, propertyId: string, actorId: string) {
   if (!p) return false;
   if (p.content_approval_status !== "approved" || p.compliance_status !== "cleared") return false;
 
+  // When the setting is on, a seller whose eligibility result isn't 'eligible' can't publish. Off by default.
+  const { sellerListingGate } = await import("@/lib/seller-eligibility.server");
+  const gate = await sellerListingGate(db, p.seller_id);
+  if (gate.blocked) {
+    await audit(db, { actorId, actorType: "agent", actionType: "listing.publish_blocked_seller_eligibility", entityType: "property", entityId: propertyId, metadata: { held: gate.held } });
+    await notifyUser(db, p.seller_id, gate.message ?? "", "compliance");
+    return false;
+  }
+
   await db
     .from("properties")
     .update({ status: "listed", published_at: new Date().toISOString() })

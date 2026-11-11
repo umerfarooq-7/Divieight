@@ -5,7 +5,7 @@ import { OnboardingStepper } from "@/components/OnboardingStepper";
 import { EligibilityDeclaration, type DeclarationSubmit, type DeclarationSummary } from "@/components/EligibilityDeclaration";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { eligibilityCheckScreen, fullExitSellerNotice, hybridSellerNotice } from "@/constants/eligibilityCheckCopy";
+import { eligibilityCheckScreen, fullExitSellerNotice, hybridSellerNotice, SELLER_INFORMATIONAL_NOTE } from "@/constants/eligibilityCheckCopy";
 import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
 import { getSellerEligibility, submitSellerEligibility } from "@/lib/seller-eligibility.functions";
 
@@ -56,6 +56,11 @@ function SellerEligibilityScreen() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">The Eligibility Check</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{eligibilityCheckScreen.heading}</h1>
         <p className="mt-3 text-base text-muted-foreground">{eligibilityCheckScreen.body}</p>
+        {state && state.required && !state.gatesListing ? (
+          <p className="mt-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-foreground" role="note">
+            {SELLER_INFORMATIONAL_NOTE}
+          </p>
+        ) : null}
       </div>
 
       {!state ? (

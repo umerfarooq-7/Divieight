@@ -17,6 +17,8 @@ export const GOVERNANCE_KEYS = [
   "openMarketExpiryDays",
   "useCalendarTurnHours",
   "guaranteedWeeksPerShare",
+  "heldReminderDays",
+  "gateListingOnSellerEligibility",
 ] as const;
 export type GovernanceKey = (typeof GOVERNANCE_KEYS)[number];
 export type GovernanceConfig = Record<GovernanceKey, number>;
@@ -43,7 +45,17 @@ export const GOVERNANCE_DEFAULTS: GovernanceConfig = {
   useCalendarTurnHours: 48,
   /** Weeks every share is guaranteed in the Use Calendar. */
   guaranteedWeeksPerShare: 6,
+  /** A member held this many days (and no reminder in this many days) raises one admin reminder. */
+  heldReminderDays: 30,
+  /** 1 = a seller whose eligibility result isn't 'eligible' can't publish a listing. 0 = informational only. */
+  gateListingOnSellerEligibility: 0,
 };
+
+/** The decided names for two of the settings, for readers that want them as constants. */
+export const HELD_REMINDER_DAYS = GOVERNANCE_DEFAULTS.heldReminderDays;
+export const GATE_LISTING_ON_SELLER_ELIGIBILITY = GOVERNANCE_DEFAULTS.gateListingOnSellerEligibility === 1;
+/** How long an admin's snooze of a held account lasts. */
+export const HELD_SNOOZE_DAYS = 30;
 
 export interface GovernanceSetting {
   key: GovernanceKey;
@@ -65,6 +77,8 @@ export const GOVERNANCE_SETTINGS: GovernanceSetting[] = [
   { key: "rofrNextOfferHours", label: "Next co-owner window after a cancelled sale", unit: "hours", help: "The fresh window given to the next co-owner who elected.", min: 1, max: 720, integer: true },
   { key: "openMarketExpiryDays", label: "Open-market listing expiry", unit: "days", help: "A listing on the open market expires after this many days. Applies to listings that reach the open market after the change.", min: 1, max: 730, integer: true },
   { key: "useCalendarTurnHours", label: "Use Calendar turn length", unit: "hours", help: "The default for a new calendar year. An admin can still change one year.", min: 1, max: 720, integer: true },
+  { key: "heldReminderDays", label: "Held account reminder", unit: "days", help: "A member held this long, with no reminder in this long, raises one reminder for the admins. It never reaches the buyer or the agent, and a held account is never warned, forfeited or charged.", min: 1, max: 365, integer: true },
+  { key: "gateListingOnSellerEligibility", label: "Gate listings on seller eligibility", unit: "1 = on, 0 = off", help: "Off (0): the seller's eligibility declaration is informational. On (1): a seller whose result isn't eligible can't publish a listing, and a held seller sees the held message.", min: 0, max: 1, integer: true },
   { key: "guaranteedWeeksPerShare", label: "Guaranteed weeks per share", unit: "weeks", help: "Eight shares at 6 weeks leaves 4 weeks to share by rotation. More than 6 does not fit in 52 weeks.", min: 1, max: 6, integer: true },
 ];
 

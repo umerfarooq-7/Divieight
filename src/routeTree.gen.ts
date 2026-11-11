@@ -43,6 +43,7 @@ import { Route as AdminEntityGenesisRouteImport } from './routes/admin.entity-ge
 import { Route as AdminExpensesRouteImport } from './routes/admin.expenses'
 import { Route as AdminFounderRouteImport } from './routes/admin.founder'
 import { Route as AdminGovernanceSettingsRouteImport } from './routes/admin.governance-settings'
+import { Route as AdminHeldAccountsRouteImport } from './routes/admin.held-accounts'
 import { Route as AdminInsuranceRequirementsRouteImport } from './routes/admin.insurance-requirements'
 import { Route as AdminLibraryRouteImport } from './routes/admin.library'
 import { Route as AdminListingComplianceRouteImport } from './routes/admin.listing-compliance'
@@ -147,6 +148,7 @@ import { Route as ApiPublicEarnestMoneySweepRouteImport } from './routes/api.pub
 import { Route as ApiPublicEnrollmentMaintenanceRouteImport } from './routes/api.public.enrollment-maintenance'
 import { Route as ApiPublicEoExpirySweepRouteImport } from './routes/api.public.eo-expiry-sweep'
 import { Route as ApiPublicFounderRefreshRouteImport } from './routes/api.public.founder-refresh'
+import { Route as ApiPublicHeldReminderSweepRouteImport } from './routes/api.public.held-reminder-sweep'
 import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
 import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
@@ -156,6 +158,7 @@ import { Route as ApiPublicOwnerRemindersSweepRouteImport } from './routes/api.p
 import { Route as ApiPublicResaleExpirySweepRouteImport } from './routes/api.public.resale-expiry-sweep'
 import { Route as ApiPublicResaleSweepRouteImport } from './routes/api.public.resale-sweep'
 import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
+import { Route as ApiPublicStandardRulesCheckRouteImport } from './routes/api.public.standard-rules-check'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
 import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
@@ -372,6 +375,11 @@ const AdminFounderRoute = AdminFounderRouteImport.update({
 const AdminGovernanceSettingsRoute = AdminGovernanceSettingsRouteImport.update({
   id: '/governance-settings',
   path: '/governance-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHeldAccountsRoute = AdminHeldAccountsRouteImport.update({
+  id: '/held-accounts',
+  path: '/held-accounts',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInsuranceRequirementsRoute =
@@ -913,6 +921,12 @@ const ApiPublicFounderRefreshRoute = ApiPublicFounderRefreshRouteImport.update({
   path: '/api/public/founder-refresh',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHeldReminderSweepRoute =
+  ApiPublicHeldReminderSweepRouteImport.update({
+    id: '/api/public/held-reminder-sweep',
+    path: '/api/public/held-reminder-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHlaSweepRoute = ApiPublicHlaSweepRouteImport.update({
   id: '/api/public/hla-sweep',
   path: '/api/public/hla-sweep',
@@ -961,6 +975,12 @@ const ApiPublicRetentionSweepRoute = ApiPublicRetentionSweepRouteImport.update({
   path: '/api/public/retention-sweep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStandardRulesCheckRoute =
+  ApiPublicStandardRulesCheckRouteImport.update({
+    id: '/api/public/standard-rules-check',
+    path: '/api/public/standard-rules-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSubstitutionSweepRoute =
   ApiPublicSubstitutionSweepRouteImport.update({
     id: '/api/public/substitution-sweep',
@@ -1260,6 +1280,7 @@ export interface FileRoutesByFullPath {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
+  '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1360,6 +1381,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
+  '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1369,6 +1391,7 @@ export interface FileRoutesByFullPath {
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
+  '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1452,6 +1475,7 @@ export interface FileRoutesByTo {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
+  '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1549,6 +1573,7 @@ export interface FileRoutesByTo {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
+  '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1558,6 +1583,7 @@ export interface FileRoutesByTo {
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
+  '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1646,6 +1672,7 @@ export interface FileRoutesById {
   '/admin/expenses': typeof AdminExpensesRoute
   '/admin/founder': typeof AdminFounderRoute
   '/admin/governance-settings': typeof AdminGovernanceSettingsRoute
+  '/admin/held-accounts': typeof AdminHeldAccountsRoute
   '/admin/insurance-requirements': typeof AdminInsuranceRequirementsRoute
   '/admin/library': typeof AdminLibraryRoute
   '/admin/listing-compliance': typeof AdminListingComplianceRoute
@@ -1746,6 +1773,7 @@ export interface FileRoutesById {
   '/api/public/enrollment-maintenance': typeof ApiPublicEnrollmentMaintenanceRoute
   '/api/public/eo-expiry-sweep': typeof ApiPublicEoExpirySweepRoute
   '/api/public/founder-refresh': typeof ApiPublicFounderRefreshRoute
+  '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
@@ -1755,6 +1783,7 @@ export interface FileRoutesById {
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
+  '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1844,6 +1873,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/governance-settings'
+    | '/admin/held-accounts'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -1944,6 +1974,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/founder-refresh'
+    | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -1953,6 +1984,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
+    | '/api/public/standard-rules-check'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2036,6 +2068,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/governance-settings'
+    | '/admin/held-accounts'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -2133,6 +2166,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/founder-refresh'
+    | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -2142,6 +2176,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
+    | '/api/public/standard-rules-check'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2229,6 +2264,7 @@ export interface FileRouteTypes {
     | '/admin/expenses'
     | '/admin/founder'
     | '/admin/governance-settings'
+    | '/admin/held-accounts'
     | '/admin/insurance-requirements'
     | '/admin/library'
     | '/admin/listing-compliance'
@@ -2329,6 +2365,7 @@ export interface FileRouteTypes {
     | '/api/public/enrollment-maintenance'
     | '/api/public/eo-expiry-sweep'
     | '/api/public/founder-refresh'
+    | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
     | '/api/public/listing-approval-escalation'
@@ -2338,6 +2375,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
+    | '/api/public/standard-rules-check'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2459,6 +2497,7 @@ export interface RootRouteChildren {
   ApiPublicEnrollmentMaintenanceRoute: typeof ApiPublicEnrollmentMaintenanceRoute
   ApiPublicEoExpirySweepRoute: typeof ApiPublicEoExpirySweepRoute
   ApiPublicFounderRefreshRoute: typeof ApiPublicFounderRefreshRoute
+  ApiPublicHeldReminderSweepRoute: typeof ApiPublicHeldReminderSweepRoute
   ApiPublicHlaSweepRoute: typeof ApiPublicHlaSweepRoute
   ApiPublicInsuranceSweepRoute: typeof ApiPublicInsuranceSweepRoute
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
@@ -2468,6 +2507,7 @@ export interface RootRouteChildren {
   ApiPublicResaleExpirySweepRoute: typeof ApiPublicResaleExpirySweepRoute
   ApiPublicResaleSweepRoute: typeof ApiPublicResaleSweepRoute
   ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
+  ApiPublicStandardRulesCheckRoute: typeof ApiPublicStandardRulesCheckRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
@@ -2736,6 +2776,13 @@ declare module '@tanstack/react-router' {
       path: '/governance-settings'
       fullPath: '/admin/governance-settings'
       preLoaderRoute: typeof AdminGovernanceSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/held-accounts': {
+      id: '/admin/held-accounts'
+      path: '/held-accounts'
+      fullPath: '/admin/held-accounts'
+      preLoaderRoute: typeof AdminHeldAccountsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/insurance-requirements': {
@@ -3466,6 +3513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFounderRefreshRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/held-reminder-sweep': {
+      id: '/api/public/held-reminder-sweep'
+      path: '/api/public/held-reminder-sweep'
+      fullPath: '/api/public/held-reminder-sweep'
+      preLoaderRoute: typeof ApiPublicHeldReminderSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hla-sweep': {
       id: '/api/public/hla-sweep'
       path: '/api/public/hla-sweep'
@@ -3527,6 +3581,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/retention-sweep'
       fullPath: '/api/public/retention-sweep'
       preLoaderRoute: typeof ApiPublicRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/standard-rules-check': {
+      id: '/api/public/standard-rules-check'
+      path: '/api/public/standard-rules-check'
+      fullPath: '/api/public/standard-rules-check'
+      preLoaderRoute: typeof ApiPublicStandardRulesCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/substitution-sweep': {
@@ -3904,6 +3965,7 @@ interface AdminRouteChildren {
   AdminExpensesRoute: typeof AdminExpensesRoute
   AdminFounderRoute: typeof AdminFounderRoute
   AdminGovernanceSettingsRoute: typeof AdminGovernanceSettingsRoute
+  AdminHeldAccountsRoute: typeof AdminHeldAccountsRoute
   AdminInsuranceRequirementsRoute: typeof AdminInsuranceRequirementsRoute
   AdminLibraryRoute: typeof AdminLibraryRoute
   AdminListingComplianceRoute: typeof AdminListingComplianceRoute
@@ -3949,6 +4011,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminExpensesRoute: AdminExpensesRoute,
   AdminFounderRoute: AdminFounderRoute,
   AdminGovernanceSettingsRoute: AdminGovernanceSettingsRoute,
+  AdminHeldAccountsRoute: AdminHeldAccountsRoute,
   AdminInsuranceRequirementsRoute: AdminInsuranceRequirementsRoute,
   AdminLibraryRoute: AdminLibraryRoute,
   AdminListingComplianceRoute: AdminListingComplianceRoute,
@@ -4183,6 +4246,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEnrollmentMaintenanceRoute: ApiPublicEnrollmentMaintenanceRoute,
   ApiPublicEoExpirySweepRoute: ApiPublicEoExpirySweepRoute,
   ApiPublicFounderRefreshRoute: ApiPublicFounderRefreshRoute,
+  ApiPublicHeldReminderSweepRoute: ApiPublicHeldReminderSweepRoute,
   ApiPublicHlaSweepRoute: ApiPublicHlaSweepRoute,
   ApiPublicInsuranceSweepRoute: ApiPublicInsuranceSweepRoute,
   ApiPublicListingApprovalEscalationRoute:
@@ -4193,6 +4257,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicResaleExpirySweepRoute: ApiPublicResaleExpirySweepRoute,
   ApiPublicResaleSweepRoute: ApiPublicResaleSweepRoute,
   ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,
+  ApiPublicStandardRulesCheckRoute: ApiPublicStandardRulesCheckRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,

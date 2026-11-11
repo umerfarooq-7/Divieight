@@ -274,7 +274,20 @@ export async function removeSecondMember(db: Db, params: { userId: string; actin
     .maybeSingle();
   if (error) throw new Error(friendly(error));
   if (!data) throw new Error("This member was just changed. Reload and try again.");
-  await audit(db, { userId: params.userId, action: "buyer.member_removed", accountId: account.id, actingMemberId: acting.id, request: params.request, extra: { member_id: target.id } });
+  // The removed member has no login, so email is how they hear. Their records stay; the account holder's screen still
+  // says the fee isn't affected.
+  let emailed = false;
+  if (target.email) {
+    const { sendEmail } = await import("@/lib/authorization.notify.server");
+    emailed = await sendEmail(
+      target.email,
+      "You were removed from a divieight account",
+      `${(acting.full_name ?? "The account holder").trim()} removed you from their divieight Buyer Account, so you are no longer a member of it. What you already signed or submitted while you were a member stays on record. If you think this is a mistake, contact divieight support.`,
+      null,
+      "Open divieight",
+    ).catch(() => false);
+  }
+  await audit(db, { userId: params.userId, action: "buyer.member_removed", accountId: account.id, actingMemberId: acting.id, request: params.request, extra: { member_id: target.id, removed_member_emailed: emailed } });
 }
 
 // ---------------------------------------------------------------------------

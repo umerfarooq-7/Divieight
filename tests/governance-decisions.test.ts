@@ -62,6 +62,8 @@ describe("1. the governance config", () => {
       openMarketExpiryDays: 180,
       useCalendarTurnHours: 48,
       guaranteedWeeksPerShare: 6,
+      heldReminderDays: 30,
+      gateListingOnSellerEligibility: 0,
     });
     expect(GOVERNANCE_SETTINGS.map((s) => s.key).sort()).toEqual([...GOVERNANCE_KEYS].sort());
   });

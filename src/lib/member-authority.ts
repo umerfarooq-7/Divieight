@@ -4,7 +4,14 @@
  * forever, and can be revoked; nothing else can ever be delegated.
  */
 
+/**
+ * The only things authority can cover: the PRA, due-diligence acknowledgments, buyer authorizations, Block 3 and closing
+ * documents. Block 1, Block 2, Block 4, the Hold Harmless and the W-9 are each accepted personally and are not scopes.
+ * (The Operating Agreement is a closing document: it is signed under 'closing_docs'.)
+ */
 export const AUTHORITY_SCOPES = ["pra", "due_diligence_ack", "authorizations", "block3", "closing_docs"] as const;
+/** Scopes that existed in an earlier design and were removed. Refused by name, and stripped from any old grant. */
+export const REMOVED_AUTHORITY_SCOPES = ["block1", "block2"] as const;
 export type AuthorityScope = (typeof AUTHORITY_SCOPES)[number];
 
 export const AUTHORITY_SCOPE_LABELS: Record<AuthorityScope, string> = {

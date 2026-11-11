@@ -109,6 +109,8 @@ export async function submitDeclaration(
   },
 ): Promise<{ id: string; status: "incomplete" | "complete"; declarationHash: string; vettingStatus: string | null; result: string | null; reasonCodes: string[]; waitingOn: string[] }> {
   const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
+  // The questions and rules must be the ones the live Standard version was published with.
+  await (await import("@/lib/standard-rules-check.server")).assertStandardRules(db);
 
   if (params.attestedPersonally !== true) throw new Error("Confirm that you are personally making this declaration.");
   const verified = verifiedNameOf(member);
