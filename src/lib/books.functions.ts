@@ -72,7 +72,15 @@ export const ignoreBankTransactionFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const postManualEntryFn = createServerFn({ method: "POST" })
+export const reclassifyStrDepositFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { transactionId: string; reason: string }) => ({ transactionId: id(input?.transactionId, "transaction"), reason: text(input?.reason) }))
+  .handler(async ({ data, context }) => {
+    await (await server()).reclassifyStrDeposit(await adminDb(), { actorId: context.userId, ...data, request: await request() });
+    return { ok: true };
+  });
+
+export const postManualEntryFn =createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { propertyId: string; date: string; amountCents: number; direction: "in" | "out"; accountCode: string; memo: string; receiptPath?: string | null; receiptName?: string | null; receiptType?: string | null; isAdjustment?: boolean; adjustmentReason?: string | null }) => ({
     propertyId: id(input?.propertyId, "property"),

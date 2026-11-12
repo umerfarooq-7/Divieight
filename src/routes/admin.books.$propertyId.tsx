@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCents, reviewReasonLabel } from "@/lib/bank-feed-display";
+import { LODGING_TAX_FLAG_NOTE, LODGING_TAX_FLAG_TITLE, LODGING_TAX_LABELS, STR_LLC_WARNING } from "@/lib/str";
+import { getLodgingTaxExposure } from "@/lib/str.functions";
 import {
   applyRulesToNeedsReviewFn,
   capitalizeEntryFn,
@@ -12,6 +14,7 @@ import {
   getBooksOverview,
   getReceiptLinkFn,
   ignoreBankTransactionFn,
+  reclassifyStrDepositFn,
   postBankTransactionFn,
   postManualEntryFn,
   recategorizeEntryFn,
@@ -131,6 +134,7 @@ function AccountSelect({ data, value, onChange, label }: { data: BooksOverview; 
 function ReviewTab({ data, done, fail }: TabProps) {
   const post = useServerFn(postBankTransactionFn);
   const ignore = useServerFn(ignoreBankTransactionFn);
+  const reclassify = useServerFn(reclassifyStrDepositFn);
   const apply = useServerFn(applyRulesToNeedsReviewFn);
   const applyM = useMutation({ mutationFn: () => apply({ data: { propertyId: data.property.id } }), onSuccess: (r) => { toast.success(`${r.posted} posted by the rules, ${r.stillNeedsReview} still need you`); done(); }, onError: fail });
   return (
@@ -143,20 +147,24 @@ function ReviewTab({ data, done, fail }: TabProps) {
       </div>
       {data.review.length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Nothing is waiting for review.</p> : null}
       {data.review.map((t) => (
-        <ReviewItemCard key={t.id} item={t} data={data} post={(splits) => post({ data: { transactionId: t.id, splits } })} ignore={(reason) => ignore({ data: { transactionId: t.id, reason } })} done={done} fail={fail} />
+        <ReviewItemCard key={t.id} item={t} data={data} post={(splits) => post({ data: { transactionId: t.id, splits } })} ignore={(reason) => ignore({ data: { transactionId: t.id, reason } })} reclassify={(reason) => reclassify({ data: { transactionId: t.id, reason } })} done={done} fail={fail} />
       ))}
     </div>
   );
 }
 
-function ReviewItemCard({ item, data, post, ignore, done, fail }: { item: BooksOverview["review"][number]; data: BooksOverview; post: (s: Array<{ code: string; cents: number }>) => Promise<unknown>; ignore: (reason: string) => Promise<unknown>; done: () => void; fail: (e: Error) => void }) {
+function ReviewItemCard({ item, data, post, ignore, reclassify, done, fail }: { item: BooksOverview["review"][number]; data: BooksOverview; post: (s: Array<{ code: string; cents: number }>) => Promise<unknown>; ignore: (reason: string) => Promise<unknown>; reclassify: (reason: string) => Promise<unknown>; done: () => void; fail: (e: Error) => void }) {
   const [rows, setRows] = useState<Array<{ code: string; amount: string }>>([{ code: item.suggestion?.code ?? "", amount: (item.amountCents / 100).toFixed(2) }]);
   const [reason, setReason] = useState("");
   const [ignoring, setIgnoring] = useState(false);
+  const [reclassifying, setReclassifying] = useState(false);
+  // Short-term-rental income is the owner's, never the LLC's: it can only be ignored or reclassified.
+  const isStr = item.reason === "looks_like_str_revenue";
   const total = rows.reduce((s, r) => s + (Number.isFinite(dollars(r.amount)) ? dollars(r.amount) : 0), 0);
   const balanced = total === item.amountCents;
   const postM = useMutation({ mutationFn: () => post(rows.map((r) => ({ code: r.code, cents: dollars(r.amount) }))), onSuccess: () => { toast.success("Posted to the ledger"); done(); }, onError: fail });
   const ignoreM = useMutation({ mutationFn: () => ignore(reason), onSuccess: () => { toast.success("Marked ignored"); done(); }, onError: fail });
+  const reclassifyM = useMutation({ mutationFn: () => reclassify(reason), onSuccess: () => { toast.success("Reclassified as the owner's income, not the LLC's"); done(); }, onError: fail });
   return (
     <section className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -168,7 +176,9 @@ function ReviewItemCard({ item, data, post, ignore, done, fail }: { item: BooksO
         </div>
         <div className="text-sm font-semibold">{item.direction === "in" ? "+" : "−"}{formatCents(item.amountCents)}</div>
       </div>
-      {item.suggestion ? <p className="mt-1 text-xs text-muted-foreground">Suggested: {item.suggestion.code} · {item.suggestion.name}</p> : null}
+      {isStr ? <p role="alert" className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm font-medium text-destructive">{STR_LLC_WARNING}</p> : null}
+      {item.suggestion && !isStr ? <p className="mt-1 text-xs text-muted-foreground">Suggested: {item.suggestion.code} · {item.suggestion.name}</p> : null}
+      {!isStr ? (
       <div className="mt-3 space-y-2">
         {rows.map((r, i) => (
           <div key={i} className="grid gap-2 sm:grid-cols-[1fr_9rem_auto]">
@@ -190,14 +200,33 @@ function ReviewItemCard({ item, data, post, ignore, done, fail }: { item: BooksO
           </span>
         </div>
       </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={PRIMARY} disabled={!balanced || rows.some((r) => !r.code) || postM.isPending} onClick={() => postM.mutate()}>
-          Post to the ledger
-        </button>
-        <button type="button" className={SECONDARY} onClick={() => setIgnoring(!ignoring)}>
+        {!isStr ? (
+          <button type="button" className={PRIMARY} disabled={!balanced || rows.some((r) => !r.code) || postM.isPending} onClick={() => postM.mutate()}>
+            Post to the ledger
+          </button>
+        ) : null}
+        <button type="button" className={SECONDARY} onClick={() => { setIgnoring(!ignoring); setReclassifying(false); }}>
           Ignore…
         </button>
+        {isStr ? (
+          <button type="button" className={SECONDARY} onClick={() => { setReclassifying(!reclassifying); setIgnoring(false); }}>
+            Reclassify as the owner's…
+          </button>
+        ) : null}
       </div>
+      {reclassifying ? (
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="flex-1 text-xs font-medium text-foreground">
+            Whose income is this, and why isn't it the LLC's?
+            <input className={FIELD} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </label>
+          <button type="button" className={SECONDARY} disabled={!reason.trim() || reclassifyM.isPending} onClick={() => reclassifyM.mutate()}>
+            Reclassify
+          </button>
+        </div>
+      ) : null}
       {ignoring ? (
         <div className="mt-3 flex flex-wrap items-end gap-2">
           <label className="flex-1 text-xs font-medium text-foreground">
@@ -683,6 +712,32 @@ function CapitalTab({ propertyId, done, fail }: TabProps) {
           </button>
         </form>
       </div>
+      <LodgingTaxFlag propertyId={propertyId} />
     </div>
+  );
+}
+
+// Who recorded short-term-rental activity with lodging tax owed or unknown. No amounts; divieight remits nothing. The CPA
+// Cooperation Worksheet reads the same list.
+function LodgingTaxFlag({ propertyId }: { propertyId: string }) {
+  const load = useServerFn(getLodgingTaxExposure);
+  const q = useQuery({ queryKey: ["lodging-tax-exposure", propertyId], queryFn: () => load({ data: { propertyId } }), retry: false });
+  return (
+    <section className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-sm font-semibold text-foreground">{LODGING_TAX_FLAG_TITLE}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{LODGING_TAX_FLAG_NOTE}</p>
+      {q.error ? <p className="mt-2 text-sm text-destructive">{(q.error as Error).message}</p> : null}
+      {q.data && q.data.rows.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">No owner has recorded short-term-rental activity with lodging tax owed or unknown.</p> : null}
+      {q.data && q.data.rows.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-sm">
+          {q.data.rows.map((r) => (
+            <li key={r.member} className="flex justify-between gap-3">
+              <span>{r.member}</span>
+              <span className="text-muted-foreground">{r.statuses.map((s) => LODGING_TAX_LABELS[s]).join(", ")}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }

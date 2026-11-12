@@ -213,6 +213,7 @@ import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner
 import { Route as OwnerPropertiesPropertyIdMaintenanceRouteImport } from './routes/owner.properties.$propertyId.maintenance'
 import { Route as OwnerPropertiesPropertyIdResaleRouteImport } from './routes/owner.properties.$propertyId.resale'
 import { Route as OwnerPropertiesPropertyIdRetentionRouteImport } from './routes/owner.properties.$propertyId.retention'
+import { Route as OwnerPropertiesPropertyIdStrRouteImport } from './routes/owner.properties.$propertyId.str'
 import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
 import { Route as OwnerPropertiesPropertyIdVotesVoteIdRouteImport } from './routes/owner.properties.$propertyId.votes.$voteId'
 
@@ -1290,6 +1291,12 @@ const OwnerPropertiesPropertyIdRetentionRoute =
     path: '/owner/properties/$propertyId/retention',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdStrRoute =
+  OwnerPropertiesPropertyIdStrRouteImport.update({
+    id: '/owner/properties/$propertyId/str',
+    path: '/owner/properties/$propertyId/str',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdVotesIndexRoute =
   OwnerPropertiesPropertyIdVotesIndexRouteImport.update({
     id: '/owner/properties/$propertyId/votes/',
@@ -1506,6 +1513,7 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
+  '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -1707,6 +1715,7 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
+  '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -1916,6 +1925,7 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
   '/owner/properties/$propertyId/retention': typeof OwnerPropertiesPropertyIdRetentionRoute
+  '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
@@ -2126,6 +2136,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
+    | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -2327,6 +2338,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
+    | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -2535,6 +2547,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
     | '/owner/properties/$propertyId/retention'
+    | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
     | '/owner/properties/$propertyId/votes/$voteId'
@@ -2648,6 +2661,7 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdMaintenanceRoute: typeof OwnerPropertiesPropertyIdMaintenanceRoute
   OwnerPropertiesPropertyIdResaleRoute: typeof OwnerPropertiesPropertyIdResaleRoute
   OwnerPropertiesPropertyIdRetentionRoute: typeof OwnerPropertiesPropertyIdRetentionRoute
+  OwnerPropertiesPropertyIdStrRoute: typeof OwnerPropertiesPropertyIdStrRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
   OwnerPropertiesPropertyIdVotesVoteIdRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
   OwnerPropertiesPropertyIdVotesIndexRoute: typeof OwnerPropertiesPropertyIdVotesIndexRoute
@@ -4083,6 +4097,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdRetentionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/str': {
+      id: '/owner/properties/$propertyId/str'
+      path: '/owner/properties/$propertyId/str'
+      fullPath: '/owner/properties/$propertyId/str'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdStrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/votes/': {
       id: '/owner/properties/$propertyId/votes/'
       path: '/owner/properties/$propertyId/votes'
@@ -4480,6 +4501,7 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdResaleRoute: OwnerPropertiesPropertyIdResaleRoute,
   OwnerPropertiesPropertyIdRetentionRoute:
     OwnerPropertiesPropertyIdRetentionRoute,
+  OwnerPropertiesPropertyIdStrRoute: OwnerPropertiesPropertyIdStrRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
   OwnerPropertiesPropertyIdVotesVoteIdRoute:
     OwnerPropertiesPropertyIdVotesVoteIdRoute,

@@ -17,7 +17,7 @@ export interface RequestContext {
 const MISSING = "Database is missing the books tables: run books.sql in Supabase.";
 function fail(error: { message?: string }): never {
   const m = error.message ?? "";
-  if (/does not exist|schema cache|Could not find/i.test(m) && /post_bank_transaction|ignore_bank_transaction|post_manual_entry|recategorize_entry|capitalize_entry|recurring|reopen_period|categorization|suggest_bank_account|entry_corrections|ledger_attachments/i.test(m)) throw new Error(MISSING);
+  if (/does not exist|schema cache|Could not find/i.test(m) && /post_bank_transaction|ignore_bank_transaction|reclassify_str_deposit|post_manual_entry|recategorize_entry|capitalize_entry|recurring|reopen_period|categorization|suggest_bank_account|entry_corrections|ledger_attachments/i.test(m)) throw new Error(MISSING);
   throw new Error(m || "The books refused that.");
 }
 
@@ -53,6 +53,12 @@ export async function postBankTransaction(db: Db, p: { actorId: string; transact
 export async function ignoreBankTransaction(db: Db, p: { actorId: string; transactionId: string; reason: string; request?: RequestContext }) {
   await requireManager(db, p.actorId);
   await call(db, "ignore_bank_transaction", { _txn: p.transactionId, _reason: p.reason, _actor: p.actorId, _meta: meta(p.request) });
+}
+
+/** A deposit that looks like STR income is the owner's, not the LLC's: it is ignored or reclassified, never posted. */
+export async function reclassifyStrDeposit(db: Db, p: { actorId: string; transactionId: string; reason: string; request?: RequestContext }) {
+  await requireManager(db, p.actorId);
+  await call(db, "reclassify_str_deposit", { _txn: p.transactionId, _reason: p.reason, _actor: p.actorId, _meta: meta(p.request) });
 }
 
 export async function postManualEntry(

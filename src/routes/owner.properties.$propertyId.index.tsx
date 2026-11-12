@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Building2, CalendarDays, Lock } from "lucide-react";
+import { getOwnerStr } from "@/lib/str.functions";
 import { formatDate } from "@/lib/format-date";
 import { OWNER_LLC_LINKS, OWNER_SECTIONS } from "@/lib/owner-sections";
 import type { OwnerPropertyDetail } from "@/lib/owner.functions";
@@ -214,6 +217,7 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
         >
           Ledger
         </Link>
+        <StrRecordsLink propertyId={p.propertyId} />
         <Link
           to="/owner/properties/$propertyId/capital"
           params={{ propertyId: p.propertyId }}
@@ -268,5 +272,21 @@ function Facts({ rows }: { rows: Array<[string, string]> }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+// Only a home whose intent profile includes short-term rental offers the tracker; for any other home the link is not shown.
+function StrRecordsLink({ propertyId }: { propertyId: string }) {
+  const load = useServerFn(getOwnerStr);
+  const { data } = useQuery({ queryKey: ["owner-str", propertyId], retry: false, queryFn: () => load({ data: { propertyId } }) });
+  if (!data?.trackerEnabled) return null;
+  return (
+    <Link
+      to="/owner/properties/$propertyId/str"
+      params={{ propertyId }}
+      className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+    >
+      Short-term rental records
+    </Link>
   );
 }

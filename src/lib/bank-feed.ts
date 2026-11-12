@@ -52,7 +52,7 @@ const STR_REGEX = new RegExp(`(${STR_REVENUE_HINTS.join("|")})`);
 export const looksLikeStrRevenue = (...parts: Array<string | null | undefined>) => STR_REGEX.test(parts.map((p) => p ?? "").join(" ").toLowerCase());
 
 export const REVIEW_REASON_LABELS: Record<string, string> = {
-  looks_like_str_revenue: "Looks like short-term-rental revenue. It never goes to the LLC.",
+  looks_like_str_revenue: "STR income does not belong to the LLC. It can only be ignored or reclassified, never posted as LLC income.",
   money_in_unknown_source: "Money in from an unknown source. Never auto-posted to income.",
   money_in_not_an_expense_refund: "Money in that isn't a refund of an expense.",
   no_matching_rule: "No categorization rule matched.",
