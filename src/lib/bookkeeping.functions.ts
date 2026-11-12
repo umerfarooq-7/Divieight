@@ -123,3 +123,22 @@ export const getLedgerAccountActivity = createServerFn({ method: "GET" })
 export const getChartOfAccounts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => (await server()).chartOfAccounts(await adminDb()));
+
+export const openPropertyLedgerFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId: string; initialCashCents?: number }) => ({ propertyId: id(input?.propertyId, "property"), initialCashCents: input?.initialCashCents === undefined ? 0 : Number(input.initialCashCents) }))
+  .handler(async ({ data, context }) => (await server()).openPropertyLedger(await adminDb(), { actorId: context.userId, ...data, request: await request() }));
+
+export const backfillOpeningEntriesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => (await server()).backfillOpeningEntries(await adminDb(), { actorId: context.userId }));
+
+export const getOwnerCapitalReport = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId?: string } | undefined) => ({ propertyId: input?.propertyId ? id(input.propertyId, "property") : undefined }))
+  .handler(async ({ data, context }) => (await server()).ownerCapitalReport(await adminDb(), { userId: context.userId, ...data }));
+
+export const getCapitalAccountLedger = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId: string }) => ({ propertyId: id(input?.propertyId, "property") }))
+  .handler(async ({ data, context }) => (await server()).capitalAccountLedger(await adminDb(), { userId: context.userId, ...data }));

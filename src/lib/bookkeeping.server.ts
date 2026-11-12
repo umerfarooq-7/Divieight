@@ -176,3 +176,76 @@ export async function ledgerAccountActivity(db: Db, params: { userId: string; pr
     })),
   };
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Opening the books and the capital accounts (capital-accounts.sql)
+// ---------------------------------------------------------------------------------------------------------
+
+export interface OpeningResult {
+  status: "opened" | "already_open" | "not_ready";
+  entryId?: string;
+  reason?: string;
+  capTableChanged?: boolean;
+}
+
+const MISSING_CAPITAL = "Database is missing the capital account tables: run capital-accounts.sql in Supabase.";
+function failCapital(error: { message?: string }): never {
+  const message = error.message ?? "";
+  if (/open_property_ledger|reconcile_owner_capital|backfill_opening_entries|capital_account_ledger|ledger_balance_check|schema cache/i.test(message) && /does not exist|schema cache|Could not find/i.test(message)) throw new Error(MISSING_CAPITAL);
+  throw new Error(message || "The ledger refused that.");
+}
+
+/** Open one LLC's books from its locked cap table. Idempotent. The Manager only. */
+export async function openPropertyLedger(db: Db, params: { actorId: string; propertyId: string; initialCashCents?: number; request?: RequestContext }): Promise<OpeningResult> {
+  await requireManager(db, params.actorId);
+  const cash = params.initialCashCents ?? 0;
+  if (!Number.isSafeInteger(cash) || cash < 0) throw new Error("Initial cash is a whole number of cents, zero or more.");
+  const { data, error } = await db.rpc("open_property_ledger", { _property: params.propertyId, _actor: params.actorId, _initial_cash_cents: cash, _meta: { ip_address: params.request?.ip ?? null, user_agent: params.request?.userAgent ?? null } });
+  if (error) failCapital(error);
+  const r = (data ?? {}) as { status: OpeningResult["status"]; entry_id?: string; reason?: string; cap_table_changed?: boolean };
+  return { status: r.status, entryId: r.entry_id, reason: r.reason, capTableChanged: r.cap_table_changed };
+}
+
+/** Open the books of every LLC that already closed, and bring the Month 5 totals in. Running it again creates nothing. */
+export async function backfillOpeningEntries(db: Db, params: { actorId: string }): Promise<Array<{ propertyId: string; opening: { status: string; reason?: string; capTableChanged?: boolean } | null; differences: number; error: string | null }>> {
+  await requireManager(db, params.actorId);
+  const { data, error } = await db.rpc("backfill_opening_entries", { _actor: params.actorId });
+  if (error) failCapital(error);
+  return ((data ?? []) as Array<Record<string, any>>).map((r) => ({ propertyId: String(r.property_id), opening: r.opening ? { status: String(r.opening.status), reason: r.opening.reason as string | undefined, capTableChanged: r.opening.cap_table_changed as boolean | undefined } : null, differences: Array.isArray(r.reconciliation?.differences) ? r.reconciliation.differences.length : 0, error: (r.error ?? null) as string | null }));
+}
+
+/** Month 5 owner_capital_accounts beside the ledger. Every row that doesn't match is reported; nothing is changed. */
+export async function ownerCapitalReport(db: Db, params: { userId: string; propertyId?: string }) {
+  if (!(await isAdmin(db, params.userId))) throw new Error("Not authorized");
+  let q = db.from("owner_capital_reconciliation").select("property_id, user_id, member_key, table_contributed_cents, ledger_contributed_cents, table_distributions_cents, ledger_distributions_cents, opening_cents, capital_balance_cents, matches");
+  if (params.propertyId) q = q.eq("property_id", params.propertyId);
+  const { data, error } = await q;
+  if (error) failCapital(error);
+  const rows = (data ?? []) as Array<Record<string, any>>;
+  return { rows: rows.map((r) => ({ propertyId: r.property_id as string, userId: r.user_id as string, memberKey: (r.member_key ?? null) as string | null, tableContributedCents: Number(r.table_contributed_cents), ledgerContributedCents: Number(r.ledger_contributed_cents), tableDistributionsCents: Number(r.table_distributions_cents), ledgerDistributionsCents: Number(r.ledger_distributions_cents), openingCents: Number(r.opening_cents), capitalBalanceCents: Number(r.capital_balance_cents), matches: r.matches === true })), mismatches: rows.filter((r) => r.matches !== true).length };
+}
+
+export interface CapitalLedgerRow {
+  entryId: string;
+  member: string;
+  lineType: string;
+  amountCents: number;
+  balanceAfterCents: number;
+  effectiveDate: string;
+}
+
+/** The capital account ledger. A member sees their own; the Manager sees all; a Heavy Lifting Agent sees anonymous labels. */
+export async function capitalAccountLedger(db: Db, params: { userId: string; propertyId: string }): Promise<{ role: LedgerRole; rows: CapitalLedgerRow[] }> {
+  const role = await requireReader(db, params.userId, params.propertyId);
+  const { data, error } = await db.from("capital_account_ledger").select("entry_id, member_key, line_type, amount_cents, balance_after_cents, effective_date, seq").eq("property_id", params.propertyId).order("seq", { ascending: true });
+  if (error) failCapital(error);
+  let raw = (data ?? []) as Array<{ entry_id: string; member_key: string; line_type: string; amount_cents: number | string; balance_after_cents: number | string; effective_date: string }>;
+  if (role === "member") {
+    const { holderFor } = await import("@/lib/votes.server");
+    const holder = await holderFor(db, params.userId, params.propertyId);
+    const own = holder?.type === "buyer" ? holder.buyerAccountId : holder ? holder.holderKey.replace(/^seller:/, "") : null;
+    raw = raw.filter((r) => r.member_key === own);
+  }
+  const label = role === "heavy_lifting_agent" ? memberLabels(raw.map((r) => r.member_key)) : (id: string | null) => id;
+  return { role, rows: raw.map((r) => ({ entryId: r.entry_id, member: label(r.member_key) as string, lineType: r.line_type, amountCents: Number(r.amount_cents), balanceAfterCents: Number(r.balance_after_cents), effectiveDate: r.effective_date })) };
+}
