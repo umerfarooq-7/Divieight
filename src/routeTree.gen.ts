@@ -207,6 +207,7 @@ import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/o
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
 import { Route as OwnerPropertiesPropertyIdCapitalRouteImport } from './routes/owner.properties.$propertyId.capital'
 import { Route as OwnerPropertiesPropertyIdCapitalCallsRouteImport } from './routes/owner.properties.$propertyId.capital-calls'
+import { Route as OwnerPropertiesPropertyIdDistributionsRouteImport } from './routes/owner.properties.$propertyId.distributions'
 import { Route as OwnerPropertiesPropertyIdExpensesRouteImport } from './routes/owner.properties.$propertyId.expenses'
 import { Route as OwnerPropertiesPropertyIdLedgerRouteImport } from './routes/owner.properties.$propertyId.ledger'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
@@ -1255,6 +1256,12 @@ const OwnerPropertiesPropertyIdCapitalCallsRoute =
     path: '/owner/properties/$propertyId/capital-calls',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdDistributionsRoute =
+  OwnerPropertiesPropertyIdDistributionsRouteImport.update({
+    id: '/owner/properties/$propertyId/distributions',
+    path: '/owner/properties/$propertyId/distributions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdExpensesRoute =
   OwnerPropertiesPropertyIdExpensesRouteImport.update({
     id: '/owner/properties/$propertyId/expenses',
@@ -1507,6 +1514,7 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/distributions': typeof OwnerPropertiesPropertyIdDistributionsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
@@ -1709,6 +1717,7 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/distributions': typeof OwnerPropertiesPropertyIdDistributionsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
@@ -1919,6 +1928,7 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  '/owner/properties/$propertyId/distributions': typeof OwnerPropertiesPropertyIdDistributionsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
@@ -2130,6 +2140,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/distributions'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
@@ -2332,6 +2343,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/distributions'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
@@ -2541,6 +2553,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
+    | '/owner/properties/$propertyId/distributions'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
@@ -2655,6 +2668,7 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
   OwnerPropertiesPropertyIdCapitalRoute: typeof OwnerPropertiesPropertyIdCapitalRoute
   OwnerPropertiesPropertyIdCapitalCallsRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRoute
+  OwnerPropertiesPropertyIdDistributionsRoute: typeof OwnerPropertiesPropertyIdDistributionsRoute
   OwnerPropertiesPropertyIdExpensesRoute: typeof OwnerPropertiesPropertyIdExpensesRoute
   OwnerPropertiesPropertyIdLedgerRoute: typeof OwnerPropertiesPropertyIdLedgerRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
@@ -4055,6 +4069,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/distributions': {
+      id: '/owner/properties/$propertyId/distributions'
+      path: '/owner/properties/$propertyId/distributions'
+      fullPath: '/owner/properties/$propertyId/distributions'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdDistributionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/expenses': {
       id: '/owner/properties/$propertyId/expenses'
       path: '/owner/properties/$propertyId/expenses'
@@ -4492,6 +4513,8 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdCapitalRoute: OwnerPropertiesPropertyIdCapitalRoute,
   OwnerPropertiesPropertyIdCapitalCallsRoute:
     OwnerPropertiesPropertyIdCapitalCallsRoute,
+  OwnerPropertiesPropertyIdDistributionsRoute:
+    OwnerPropertiesPropertyIdDistributionsRoute,
   OwnerPropertiesPropertyIdExpensesRoute:
     OwnerPropertiesPropertyIdExpensesRoute,
   OwnerPropertiesPropertyIdLedgerRoute: OwnerPropertiesPropertyIdLedgerRoute,

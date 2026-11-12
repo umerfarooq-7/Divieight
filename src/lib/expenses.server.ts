@@ -398,7 +398,7 @@ function propertyLabel(p: { address?: string | null; city?: string | null; state
   return p ? [p.address, p.city, p.state].filter(Boolean).join(", ") : "Property";
 }
 
-async function holderLabeller(db: Db) {
+export async function holderLabeller(db: Db) {
   const cache = new Map<string, string>();
   return async (holderKey: string): Promise<string> => {
     if (cache.has(holderKey)) return cache.get(holderKey)!;
