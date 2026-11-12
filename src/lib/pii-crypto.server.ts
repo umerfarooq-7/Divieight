@@ -55,3 +55,11 @@ export function decryptPii(value: EncryptedValue, aad: string): string {
   decipher.setAuthTag(Buffer.from(value.auth_tag, "base64"));
   return Buffer.concat([decipher.update(Buffer.from(value.ciphertext, "base64")), decipher.final()]).toString("utf8");
 }
+
+/**
+ * The one decryption for an LLC's bank-feed item reference (llc_plaid_consents.plaid_item_ref). Bound to its property: a
+ * reference moved to another property won't decrypt. Used only by the bank feed job.
+ */
+export function decryptBankItemRef(value: EncryptedValue, propertyId: string): string {
+  return decryptPii(value, `llc_plaid:${propertyId}`);
+}

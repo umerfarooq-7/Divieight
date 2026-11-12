@@ -29,6 +29,7 @@ import { Route as AdminAgentAssignmentsRouteImport } from './routes/admin.agent-
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
+import { Route as AdminBankFeedRouteImport } from './routes/admin.bank-feed'
 import { Route as AdminBrokersRouteImport } from './routes/admin.brokers'
 import { Route as AdminBuyersRouteImport } from './routes/admin.buyers'
 import { Route as AdminClosingRouteImport } from './routes/admin.closing'
@@ -139,6 +140,7 @@ import { Route as AgentOnboardingLicenseCheckRouteImport } from './routes/agent.
 import { Route as AgentOnboardingLicenseDetailsRouteImport } from './routes/agent.onboarding.license-details'
 import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
 import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
+import { Route as ApiPublicBankFeedSweepRouteImport } from './routes/api.public.bank-feed-sweep'
 import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
 import { Route as ApiPublicCapitalCallSweepRouteImport } from './routes/api.public.capital-call-sweep'
 import { Route as ApiPublicClosingFundsSweepRouteImport } from './routes/api.public.closing-funds-sweep'
@@ -306,6 +308,11 @@ const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
 const AdminAuthorizationsRoute = AdminAuthorizationsRouteImport.update({
   id: '/authorizations',
   path: '/authorizations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBankFeedRoute = AdminBankFeedRouteImport.update({
+  id: '/bank-feed',
+  path: '/bank-feed',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBrokersRoute = AdminBrokersRouteImport.update({
@@ -869,6 +876,11 @@ const ApiPublicAuthorizationEscalationRoute =
     path: '/api/public/authorization-escalation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBankFeedSweepRoute = ApiPublicBankFeedSweepRouteImport.update({
+  id: '/api/public/bank-feed-sweep',
+  path: '/api/public/bank-feed-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBrokerRelationshipSweepRoute =
   ApiPublicBrokerRelationshipSweepRouteImport.update({
     id: '/api/public/broker-relationship-sweep',
@@ -1272,6 +1284,7 @@ export interface FileRoutesByFullPath {
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
+  '/admin/bank-feed': typeof AdminBankFeedRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
@@ -1378,6 +1391,7 @@ export interface FileRoutesByFullPath {
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
+  '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
   '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
@@ -1468,6 +1482,7 @@ export interface FileRoutesByTo {
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
+  '/admin/bank-feed': typeof AdminBankFeedRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
@@ -1571,6 +1586,7 @@ export interface FileRoutesByTo {
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
+  '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
   '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
@@ -1666,6 +1682,7 @@ export interface FileRoutesById {
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
+  '/admin/bank-feed': typeof AdminBankFeedRoute
   '/admin/brokers': typeof AdminBrokersRoute
   '/admin/buyers': typeof AdminBuyersRoute
   '/admin/closing': typeof AdminClosingRoute
@@ -1772,6 +1789,7 @@ export interface FileRoutesById {
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
+  '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
   '/api/public/capital-call-sweep': typeof ApiPublicCapitalCallSweepRoute
   '/api/public/closing-funds-sweep': typeof ApiPublicClosingFundsSweepRoute
@@ -1868,6 +1886,7 @@ export interface FileRouteTypes {
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
+    | '/admin/bank-feed'
     | '/admin/brokers'
     | '/admin/buyers'
     | '/admin/closing'
@@ -1974,6 +1993,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
+    | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
     | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
@@ -2064,6 +2084,7 @@ export interface FileRouteTypes {
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
+    | '/admin/bank-feed'
     | '/admin/brokers'
     | '/admin/buyers'
     | '/admin/closing'
@@ -2167,6 +2188,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
+    | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
     | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
@@ -2261,6 +2283,7 @@ export interface FileRouteTypes {
     | '/admin/agents'
     | '/admin/audit-log'
     | '/admin/authorizations'
+    | '/admin/bank-feed'
     | '/admin/brokers'
     | '/admin/buyers'
     | '/admin/closing'
@@ -2367,6 +2390,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
     | '/api/public/authorization-escalation'
+    | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
     | '/api/public/capital-call-sweep'
     | '/api/public/closing-funds-sweep'
@@ -2499,6 +2523,7 @@ export interface RootRouteChildren {
   PropertiesIndexRoute: typeof PropertiesIndexRoute
   ApiPublicArelloRetryRoute: typeof ApiPublicArelloRetryRoute
   ApiPublicAuthorizationEscalationRoute: typeof ApiPublicAuthorizationEscalationRoute
+  ApiPublicBankFeedSweepRoute: typeof ApiPublicBankFeedSweepRoute
   ApiPublicBrokerRelationshipSweepRoute: typeof ApiPublicBrokerRelationshipSweepRoute
   ApiPublicCapitalCallSweepRoute: typeof ApiPublicCapitalCallSweepRoute
   ApiPublicClosingFundsSweepRoute: typeof ApiPublicClosingFundsSweepRoute
@@ -2690,6 +2715,13 @@ declare module '@tanstack/react-router' {
       path: '/authorizations'
       fullPath: '/admin/authorizations'
       preLoaderRoute: typeof AdminAuthorizationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bank-feed': {
+      id: '/admin/bank-feed'
+      path: '/bank-feed'
+      fullPath: '/admin/bank-feed'
+      preLoaderRoute: typeof AdminBankFeedRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/brokers': {
@@ -3462,6 +3494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthorizationEscalationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bank-feed-sweep': {
+      id: '/api/public/bank-feed-sweep'
+      path: '/api/public/bank-feed-sweep'
+      fullPath: '/api/public/bank-feed-sweep'
+      preLoaderRoute: typeof ApiPublicBankFeedSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/broker-relationship-sweep': {
       id: '/api/public/broker-relationship-sweep'
       path: '/api/public/broker-relationship-sweep'
@@ -3970,6 +4009,7 @@ interface AdminRouteChildren {
   AdminAgentsRoute: typeof AdminAgentsRoute
   AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminAuthorizationsRoute: typeof AdminAuthorizationsRoute
+  AdminBankFeedRoute: typeof AdminBankFeedRoute
   AdminBrokersRoute: typeof AdminBrokersRoute
   AdminBuyersRoute: typeof AdminBuyersRoute
   AdminClosingRoute: typeof AdminClosingRoute
@@ -4017,6 +4057,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAgentsRoute: AdminAgentsRoute,
   AdminAuditLogRoute: AdminAuditLogRoute,
   AdminAuthorizationsRoute: AdminAuthorizationsRoute,
+  AdminBankFeedRoute: AdminBankFeedRoute,
   AdminBrokersRoute: AdminBrokersRoute,
   AdminBuyersRoute: AdminBuyersRoute,
   AdminClosingRoute: AdminClosingRoute,
@@ -4257,6 +4298,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesIndexRoute: PropertiesIndexRoute,
   ApiPublicArelloRetryRoute: ApiPublicArelloRetryRoute,
   ApiPublicAuthorizationEscalationRoute: ApiPublicAuthorizationEscalationRoute,
+  ApiPublicBankFeedSweepRoute: ApiPublicBankFeedSweepRoute,
   ApiPublicBrokerRelationshipSweepRoute: ApiPublicBrokerRelationshipSweepRoute,
   ApiPublicCapitalCallSweepRoute: ApiPublicCapitalCallSweepRoute,
   ApiPublicClosingFundsSweepRoute: ApiPublicClosingFundsSweepRoute,
