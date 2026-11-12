@@ -123,6 +123,7 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as ReserveIdRouteImport } from './routes/reserve.$id'
 import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password.index'
 import { Route as ResetPasswordConfirmRouteImport } from './routes/reset-password.confirm'
+import { Route as AdminBooksPropertyIdRouteImport } from './routes/admin.books.$propertyId'
 import { Route as AdminEligibilityHeldRouteImport } from './routes/admin.eligibility.held'
 import { Route as AdminEligibilitySanctionsRouteImport } from './routes/admin.eligibility.sanctions'
 import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin.entity-genesis_.$propertyId'
@@ -158,6 +159,7 @@ import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
 import { Route as ApiPublicOwnerRemindersSweepRouteImport } from './routes/api.public.owner-reminders-sweep'
+import { Route as ApiPublicRecurringSweepRouteImport } from './routes/api.public.recurring-sweep'
 import { Route as ApiPublicResaleExpirySweepRouteImport } from './routes/api.public.resale-expiry-sweep'
 import { Route as ApiPublicResaleSweepRouteImport } from './routes/api.public.resale-sweep'
 import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
@@ -195,6 +197,7 @@ import { Route as AdminPropertiesIdReportsRouteImport } from './routes/admin.pro
 import { Route as AdminPropertiesIdVotesRouteImport } from './routes/admin.properties.$id.votes'
 import { Route as AgentAuthorizationsIdCommissionRouteImport } from './routes/agent.authorizations.$id.commission'
 import { Route as AgentPodsIdIndexRouteImport } from './routes/agent.pods.$id.index'
+import { Route as AgentPodsIdBooksRouteImport } from './routes/agent.pods.$id.books'
 import { Route as AgentPodsIdBriefcaseRouteImport } from './routes/agent.pods.$id.briefcase'
 import { Route as AgentPodsIdHlaInvitationRouteImport } from './routes/agent.pods.$id.hla-invitation'
 import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.public.title-escrow.$provider'
@@ -783,6 +786,11 @@ const ResetPasswordConfirmRoute = ResetPasswordConfirmRouteImport.update({
   path: '/confirm',
   getParentRoute: () => ResetPasswordRoute,
 } as any)
+const AdminBooksPropertyIdRoute = AdminBooksPropertyIdRouteImport.update({
+  id: '/books/$propertyId',
+  path: '/books/$propertyId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminEligibilityHeldRoute = AdminEligibilityHeldRouteImport.update({
   id: '/eligibility/held',
   path: '/eligibility/held',
@@ -977,6 +985,11 @@ const ApiPublicOwnerRemindersSweepRoute =
     path: '/api/public/owner-reminders-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicRecurringSweepRoute = ApiPublicRecurringSweepRouteImport.update({
+  id: '/api/public/recurring-sweep',
+  path: '/api/public/recurring-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicResaleExpirySweepRoute =
   ApiPublicResaleExpirySweepRouteImport.update({
     id: '/api/public/resale-expiry-sweep',
@@ -1180,6 +1193,11 @@ const AgentPodsIdIndexRoute = AgentPodsIdIndexRouteImport.update({
   path: '/pods/$id/',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentPodsIdBooksRoute = AgentPodsIdBooksRouteImport.update({
+  id: '/pods/$id/books',
+  path: '/pods/$id/books',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentPodsIdBriefcaseRoute = AgentPodsIdBriefcaseRouteImport.update({
   id: '/pods/$id/briefcase',
   path: '/pods/$id/briefcase',
@@ -1379,6 +1397,7 @@ export interface FileRoutesByFullPath {
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/books/$propertyId': typeof AdminBooksPropertyIdRoute
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1409,6 +1428,7 @@ export interface FileRoutesByFullPath {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/recurring-sweep': typeof ApiPublicRecurringSweepRoute
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
@@ -1450,6 +1470,7 @@ export interface FileRoutesByFullPath {
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
+  '/agent/pods/$id/books': typeof AgentPodsIdBooksRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
@@ -1574,6 +1595,7 @@ export interface FileRoutesByTo {
   '/owner': typeof OwnerIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/reset-password': typeof ResetPasswordIndexRoute
+  '/admin/books/$propertyId': typeof AdminBooksPropertyIdRoute
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1604,6 +1626,7 @@ export interface FileRoutesByTo {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/recurring-sweep': typeof ApiPublicRecurringSweepRoute
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
@@ -1645,6 +1668,7 @@ export interface FileRoutesByTo {
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
+  '/agent/pods/$id/books': typeof AgentPodsIdBooksRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
@@ -1777,6 +1801,7 @@ export interface FileRoutesById {
   '/owner/': typeof OwnerIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/reset-password/': typeof ResetPasswordIndexRoute
+  '/admin/books/$propertyId': typeof AdminBooksPropertyIdRoute
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis_/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
@@ -1807,6 +1832,7 @@ export interface FileRoutesById {
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
   '/api/public/owner-reminders-sweep': typeof ApiPublicOwnerRemindersSweepRoute
+  '/api/public/recurring-sweep': typeof ApiPublicRecurringSweepRoute
   '/api/public/resale-expiry-sweep': typeof ApiPublicResaleExpirySweepRoute
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
@@ -1848,6 +1874,7 @@ export interface FileRoutesById {
   '/admin/properties/$id/reports': typeof AdminPropertiesIdReportsRoute
   '/admin/properties/$id/votes': typeof AdminPropertiesIdVotesRoute
   '/agent/authorizations/$id/commission': typeof AgentAuthorizationsIdCommissionRoute
+  '/agent/pods/$id/books': typeof AgentPodsIdBooksRoute
   '/agent/pods/$id/briefcase': typeof AgentPodsIdBriefcaseRoute
   '/agent/pods/$id/hla-invitation': typeof AgentPodsIdHlaInvitationRoute
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
@@ -1981,6 +2008,7 @@ export interface FileRouteTypes {
     | '/owner/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/books/$propertyId'
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
@@ -2011,6 +2039,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/recurring-sweep'
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
@@ -2052,6 +2081,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/reports'
     | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
+    | '/agent/pods/$id/books'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
@@ -2176,6 +2206,7 @@ export interface FileRouteTypes {
     | '/owner'
     | '/properties'
     | '/reset-password'
+    | '/admin/books/$propertyId'
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
@@ -2206,6 +2237,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/recurring-sweep'
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
@@ -2247,6 +2279,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/reports'
     | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
+    | '/agent/pods/$id/books'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
@@ -2378,6 +2411,7 @@ export interface FileRouteTypes {
     | '/owner/'
     | '/properties/'
     | '/reset-password/'
+    | '/admin/books/$propertyId'
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis_/$propertyId'
@@ -2408,6 +2442,7 @@ export interface FileRouteTypes {
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
     | '/api/public/owner-reminders-sweep'
+    | '/api/public/recurring-sweep'
     | '/api/public/resale-expiry-sweep'
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
@@ -2449,6 +2484,7 @@ export interface FileRouteTypes {
     | '/admin/properties/$id/reports'
     | '/admin/properties/$id/votes'
     | '/agent/authorizations/$id/commission'
+    | '/agent/pods/$id/books'
     | '/agent/pods/$id/briefcase'
     | '/agent/pods/$id/hla-invitation'
     | '/api/public/title-escrow/$provider'
@@ -2541,6 +2577,7 @@ export interface RootRouteChildren {
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
   ApiPublicOwnerRemindersSweepRoute: typeof ApiPublicOwnerRemindersSweepRoute
+  ApiPublicRecurringSweepRoute: typeof ApiPublicRecurringSweepRoute
   ApiPublicResaleExpirySweepRoute: typeof ApiPublicResaleExpirySweepRoute
   ApiPublicResaleSweepRoute: typeof ApiPublicResaleSweepRoute
   ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
@@ -3375,6 +3412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordConfirmRouteImport
       parentRoute: typeof ResetPasswordRoute
     }
+    '/admin/books/$propertyId': {
+      id: '/admin/books/$propertyId'
+      path: '/books/$propertyId'
+      fullPath: '/admin/books/$propertyId'
+      preLoaderRoute: typeof AdminBooksPropertyIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/eligibility/held': {
       id: '/admin/eligibility/held'
       path: '/eligibility/held'
@@ -3618,6 +3662,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/owner-reminders-sweep'
       fullPath: '/api/public/owner-reminders-sweep'
       preLoaderRoute: typeof ApiPublicOwnerRemindersSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/recurring-sweep': {
+      id: '/api/public/recurring-sweep'
+      path: '/api/public/recurring-sweep'
+      fullPath: '/api/public/recurring-sweep'
+      preLoaderRoute: typeof ApiPublicRecurringSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/resale-expiry-sweep': {
@@ -3879,6 +3930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentPodsIdIndexRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/pods/$id/books': {
+      id: '/agent/pods/$id/books'
+      path: '/pods/$id/books'
+      fullPath: '/agent/pods/$id/books'
+      preLoaderRoute: typeof AgentPodsIdBooksRouteImport
+      parentRoute: typeof AgentRoute
+    }
     '/agent/pods/$id/briefcase': {
       id: '/agent/pods/$id/briefcase'
       path: '/pods/$id/briefcase'
@@ -4044,6 +4102,7 @@ interface AdminRouteChildren {
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
   AdminTitleEscrowRoute: typeof AdminTitleEscrowRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBooksPropertyIdRoute: typeof AdminBooksPropertyIdRoute
   AdminEligibilityHeldRoute: typeof AdminEligibilityHeldRoute
   AdminEligibilitySanctionsRoute: typeof AdminEligibilitySanctionsRoute
   AdminEntityGenesisPropertyIdRoute: typeof AdminEntityGenesisPropertyIdRoute
@@ -4092,6 +4151,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
   AdminTitleEscrowRoute: AdminTitleEscrowRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBooksPropertyIdRoute: AdminBooksPropertyIdRoute,
   AdminEligibilityHeldRoute: AdminEligibilityHeldRoute,
   AdminEligibilitySanctionsRoute: AdminEligibilitySanctionsRoute,
   AdminEntityGenesisPropertyIdRoute: AdminEntityGenesisPropertyIdRoute,
@@ -4139,6 +4199,7 @@ interface AgentRouteChildren {
   AgentOnboardingLicenseDetailsRoute: typeof AgentOnboardingLicenseDetailsRoute
   AgentDocumentsIndexRoute: typeof AgentDocumentsIndexRoute
   AgentListingsIndexRoute: typeof AgentListingsIndexRoute
+  AgentPodsIdBooksRoute: typeof AgentPodsIdBooksRoute
   AgentPodsIdBriefcaseRoute: typeof AgentPodsIdBriefcaseRoute
   AgentPodsIdHlaInvitationRoute: typeof AgentPodsIdHlaInvitationRoute
   AgentPodsIdIndexRoute: typeof AgentPodsIdIndexRoute
@@ -4168,6 +4229,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentOnboardingLicenseDetailsRoute: AgentOnboardingLicenseDetailsRoute,
   AgentDocumentsIndexRoute: AgentDocumentsIndexRoute,
   AgentListingsIndexRoute: AgentListingsIndexRoute,
+  AgentPodsIdBooksRoute: AgentPodsIdBooksRoute,
   AgentPodsIdBriefcaseRoute: AgentPodsIdBriefcaseRoute,
   AgentPodsIdHlaInvitationRoute: AgentPodsIdHlaInvitationRoute,
   AgentPodsIdIndexRoute: AgentPodsIdIndexRoute,
@@ -4317,6 +4379,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,
   ApiPublicNarCertSweepRoute: ApiPublicNarCertSweepRoute,
   ApiPublicOwnerRemindersSweepRoute: ApiPublicOwnerRemindersSweepRoute,
+  ApiPublicRecurringSweepRoute: ApiPublicRecurringSweepRoute,
   ApiPublicResaleExpirySweepRoute: ApiPublicResaleExpirySweepRoute,
   ApiPublicResaleSweepRoute: ApiPublicResaleSweepRoute,
   ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,

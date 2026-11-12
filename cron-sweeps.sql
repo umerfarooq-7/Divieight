@@ -38,6 +38,7 @@ BEGIN
       ('divieight-retention-sweep',          'retention-sweep',           '25 * * * *',   'secret'),
       ('divieight-resale-sweep',             'resale-sweep',              '35 * * * *',   'secret'),
       ('divieight-bank-feed-sweep',          'bank-feed-sweep',           '0 11 * * *',   'secret'),
+      ('divieight-recurring-sweep',          'recurring-sweep',           '30 11 * * *',  'secret'),
       ('divieight-resale-expiry',            'resale-expiry-sweep',       '30 4 * * *',   'secret'),
       ('divieight-held-reminders',           'held-reminder-sweep',       '0 5 * * *',    'secret'),
       ('divieight-capital-call-sweep',       'capital-call-sweep',        '5 13 * * *',   'secret'),

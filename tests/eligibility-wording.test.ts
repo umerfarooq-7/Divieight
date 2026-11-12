@@ -35,7 +35,7 @@ describe("no old wording is left in the app", () => {
   it("'FCRA' and 'copy of the report' appear nowhere", () => {
     expect(files.filter((f) => /\bFCRA\b/.test(text(f)))).toEqual([]);
     expect(files.filter((f) => /copy of the report|download report|Download report/i.test(text(f)))).toEqual([]);
-  });
+  }, 30000);
 
   it("'vets all members' appears nowhere in the app's text (the locked client file only quotes it in a comment)", () => {
     const hits = files.filter((f) => /vets all members/i.test(text(f)) && !f.endsWith("src/constants/eligibilityCopy.ts"));

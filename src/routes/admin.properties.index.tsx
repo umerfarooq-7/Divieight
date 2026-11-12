@@ -180,6 +180,13 @@ function AdminProperties() {
                       >
                         Calendar →
                       </Link>
+                      <Link
+                        to="/admin/books/$propertyId"
+                        params={{ propertyId: r.id }}
+                        className="ml-3 font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        Books →
+                      </Link>
                     </td>
                   </tr>
                 ))

@@ -206,6 +206,15 @@ function AgentPodViewPage() {
               Open Master Briefcase
             </Link>
           ) : null}
+          {pod.viewerHlaAccepted ? (
+            <Link
+              to="/agent/pods/$id/books"
+              params={{ id }}
+              className="mt-4 ml-2 inline-flex h-9 items-center rounded-md border border-border px-4 text-xs font-semibold text-foreground"
+            >
+              Books (read-only)
+            </Link>
+          ) : null}
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
