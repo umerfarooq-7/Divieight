@@ -187,6 +187,7 @@ import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
 import { Route as EmbedLibrarySlugRouteImport } from './routes/embed.library.$slug'
 import { Route as ListingsIdEditRouteImport } from './routes/listings.$id.edit'
 import { Route as OwnerFormerPropertyIdRouteImport } from './routes/owner.former.$propertyId'
+import { Route as AdminBooksPropertyIdInquiriesRouteImport } from './routes/admin.books_.$propertyId.inquiries'
 import { Route as AdminPodsIdBriefcaseRouteImport } from './routes/admin.pods.$id.briefcase'
 import { Route as AdminPodsIdSelectHeavyLifterRouteImport } from './routes/admin.pods.$id.select-heavy-lifter'
 import { Route as AdminPropertiesIdCalendarRouteImport } from './routes/admin.properties.$id.calendar'
@@ -206,6 +207,7 @@ import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/o
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
 import { Route as OwnerPropertiesPropertyIdCapitalCallsRouteImport } from './routes/owner.properties.$propertyId.capital-calls'
 import { Route as OwnerPropertiesPropertyIdExpensesRouteImport } from './routes/owner.properties.$propertyId.expenses'
+import { Route as OwnerPropertiesPropertyIdLedgerRouteImport } from './routes/owner.properties.$propertyId.ledger'
 import { Route as OwnerPropertiesPropertyIdLlcRouteImport } from './routes/owner.properties.$propertyId.llc'
 import { Route as OwnerPropertiesPropertyIdMaintenanceRouteImport } from './routes/owner.properties.$propertyId.maintenance'
 import { Route as OwnerPropertiesPropertyIdResaleRouteImport } from './routes/owner.properties.$propertyId.resale'
@@ -1136,6 +1138,12 @@ const OwnerFormerPropertyIdRoute = OwnerFormerPropertyIdRouteImport.update({
   path: '/owner/former/$propertyId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBooksPropertyIdInquiriesRoute =
+  AdminBooksPropertyIdInquiriesRouteImport.update({
+    id: '/books_/$propertyId/inquiries',
+    path: '/books/$propertyId/inquiries',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminPodsIdBriefcaseRoute = AdminPodsIdBriefcaseRouteImport.update({
   id: '/pods/$id/briefcase',
   path: '/pods/$id/briefcase',
@@ -1243,6 +1251,12 @@ const OwnerPropertiesPropertyIdExpensesRoute =
   OwnerPropertiesPropertyIdExpensesRouteImport.update({
     id: '/owner/properties/$propertyId/expenses',
     path: '/owner/properties/$propertyId/expenses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdLedgerRoute =
+  OwnerPropertiesPropertyIdLedgerRouteImport.update({
+    id: '/owner/properties/$propertyId/ledger',
+    path: '/owner/properties/$propertyId/ledger',
     getParentRoute: () => rootRouteImport,
   } as any)
 const OwnerPropertiesPropertyIdLlcRoute =
@@ -1461,6 +1475,7 @@ export interface FileRoutesByFullPath {
   '/agent/listings/': typeof AgentListingsIndexRoute
   '/buyer/authorizations/': typeof BuyerAuthorizationsIndexRoute
   '/buyer/onboarding/': typeof BuyerOnboardingIndexRoute
+  '/admin/books/$propertyId/inquiries': typeof AdminBooksPropertyIdInquiriesRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
@@ -1478,6 +1493,7 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
+  '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -1659,6 +1675,7 @@ export interface FileRoutesByTo {
   '/agent/listings': typeof AgentListingsIndexRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsIndexRoute
   '/buyer/onboarding': typeof BuyerOnboardingIndexRoute
+  '/admin/books/$propertyId/inquiries': typeof AdminBooksPropertyIdInquiriesRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
@@ -1676,6 +1693,7 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
+  '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -1865,6 +1883,7 @@ export interface FileRoutesById {
   '/agent/listings/': typeof AgentListingsIndexRoute
   '/buyer/authorizations/': typeof BuyerAuthorizationsIndexRoute
   '/buyer/onboarding/': typeof BuyerOnboardingIndexRoute
+  '/admin/books_/$propertyId/inquiries': typeof AdminBooksPropertyIdInquiriesRoute
   '/admin/pods/$id/briefcase': typeof AdminPodsIdBriefcaseRoute
   '/admin/pods/$id/select-heavy-lifter': typeof AdminPodsIdSelectHeavyLifterRoute
   '/admin/properties/$id/calendar': typeof AdminPropertiesIdCalendarRoute
@@ -1882,6 +1901,7 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
+  '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
   '/owner/properties/$propertyId/llc': typeof OwnerPropertiesPropertyIdLlcRoute
   '/owner/properties/$propertyId/maintenance': typeof OwnerPropertiesPropertyIdMaintenanceRoute
   '/owner/properties/$propertyId/resale': typeof OwnerPropertiesPropertyIdResaleRoute
@@ -2072,6 +2092,7 @@ export interface FileRouteTypes {
     | '/agent/listings/'
     | '/buyer/authorizations/'
     | '/buyer/onboarding/'
+    | '/admin/books/$propertyId/inquiries'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/calendar'
@@ -2089,6 +2110,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
+    | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -2270,6 +2292,7 @@ export interface FileRouteTypes {
     | '/agent/listings'
     | '/buyer/authorizations'
     | '/buyer/onboarding'
+    | '/admin/books/$propertyId/inquiries'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/calendar'
@@ -2287,6 +2310,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
+    | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -2475,6 +2499,7 @@ export interface FileRouteTypes {
     | '/agent/listings/'
     | '/buyer/authorizations/'
     | '/buyer/onboarding/'
+    | '/admin/books_/$propertyId/inquiries'
     | '/admin/pods/$id/briefcase'
     | '/admin/pods/$id/select-heavy-lifter'
     | '/admin/properties/$id/calendar'
@@ -2492,6 +2517,7 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/calendar'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
+    | '/owner/properties/$propertyId/ledger'
     | '/owner/properties/$propertyId/llc'
     | '/owner/properties/$propertyId/maintenance'
     | '/owner/properties/$propertyId/resale'
@@ -2603,6 +2629,7 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
   OwnerPropertiesPropertyIdCapitalCallsRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   OwnerPropertiesPropertyIdExpensesRoute: typeof OwnerPropertiesPropertyIdExpensesRoute
+  OwnerPropertiesPropertyIdLedgerRoute: typeof OwnerPropertiesPropertyIdLedgerRoute
   OwnerPropertiesPropertyIdLlcRoute: typeof OwnerPropertiesPropertyIdLlcRoute
   OwnerPropertiesPropertyIdMaintenanceRoute: typeof OwnerPropertiesPropertyIdMaintenanceRoute
   OwnerPropertiesPropertyIdResaleRoute: typeof OwnerPropertiesPropertyIdResaleRoute
@@ -3860,6 +3887,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerFormerPropertyIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/books_/$propertyId/inquiries': {
+      id: '/admin/books_/$propertyId/inquiries'
+      path: '/books/$propertyId/inquiries'
+      fullPath: '/admin/books/$propertyId/inquiries'
+      preLoaderRoute: typeof AdminBooksPropertyIdInquiriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/pods/$id/briefcase': {
       id: '/admin/pods/$id/briefcase'
       path: '/pods/$id/briefcase'
@@ -3993,6 +4027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdExpensesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/ledger': {
+      id: '/owner/properties/$propertyId/ledger'
+      path: '/owner/properties/$propertyId/ledger'
+      fullPath: '/owner/properties/$propertyId/ledger'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdLedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/llc': {
       id: '/owner/properties/$propertyId/llc'
       path: '/owner/properties/$propertyId/llc'
@@ -4107,6 +4148,7 @@ interface AdminRouteChildren {
   AdminEligibilitySanctionsRoute: typeof AdminEligibilitySanctionsRoute
   AdminEntityGenesisPropertyIdRoute: typeof AdminEntityGenesisPropertyIdRoute
   AdminPodsIndexRoute: typeof AdminPodsIndexRoute
+  AdminBooksPropertyIdInquiriesRoute: typeof AdminBooksPropertyIdInquiriesRoute
   AdminPodsIdBriefcaseRoute: typeof AdminPodsIdBriefcaseRoute
   AdminPodsIdSelectHeavyLifterRoute: typeof AdminPodsIdSelectHeavyLifterRoute
 }
@@ -4156,6 +4198,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEligibilitySanctionsRoute: AdminEligibilitySanctionsRoute,
   AdminEntityGenesisPropertyIdRoute: AdminEntityGenesisPropertyIdRoute,
   AdminPodsIndexRoute: AdminPodsIndexRoute,
+  AdminBooksPropertyIdInquiriesRoute: AdminBooksPropertyIdInquiriesRoute,
   AdminPodsIdBriefcaseRoute: AdminPodsIdBriefcaseRoute,
   AdminPodsIdSelectHeavyLifterRoute: AdminPodsIdSelectHeavyLifterRoute,
 }
@@ -4408,6 +4451,7 @@ const rootRouteChildren: RootRouteChildren = {
     OwnerPropertiesPropertyIdCapitalCallsRoute,
   OwnerPropertiesPropertyIdExpensesRoute:
     OwnerPropertiesPropertyIdExpensesRoute,
+  OwnerPropertiesPropertyIdLedgerRoute: OwnerPropertiesPropertyIdLedgerRoute,
   OwnerPropertiesPropertyIdLlcRoute: OwnerPropertiesPropertyIdLlcRoute,
   OwnerPropertiesPropertyIdMaintenanceRoute:
     OwnerPropertiesPropertyIdMaintenanceRoute,

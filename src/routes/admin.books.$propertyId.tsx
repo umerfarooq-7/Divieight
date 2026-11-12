@@ -82,6 +82,11 @@ function AdminBooksPage() {
               Bank {data.reconciliation.bankBalanceCents == null ? "—" : formatCents(data.reconciliation.bankBalanceCents)} · ledger Cash {formatCents(data.reconciliation.ledgerCashCents)} · {data.reconciliation.needsReviewCount} waiting for review
             </p>
           ) : null}
+          <p className="mt-2 text-sm">
+            <Link to="/admin/books/$propertyId/inquiries" params={{ propertyId }} className="font-medium text-primary hover:underline">
+              Co-owner inquiries{data.openInquiries > 0 ? ` (${data.openInquiries} waiting)` : ""} →
+            </Link>
+          </p>
           <div role="tablist" className="mt-4 flex flex-wrap gap-2">
             {TABS.map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)} className={tab === id ? PRIMARY : SECONDARY}>

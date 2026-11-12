@@ -4,6 +4,7 @@
  * Heavy Lifting Agent gets a read-only coordination view with nothing personal in it.
  */
 import { ledgerRoleFor, ledgerTrialBalance } from "@/lib/bookkeeping.server";
+import { openInquiryCount } from "@/lib/inquiries.server";
 import type { BankReconciliationRow } from "@/lib/bank-feed";
 
 type Db = { from: (t: string) => any; rpc: (fn: string, args: Record<string, unknown>) => any; storage?: any };
@@ -185,6 +186,8 @@ export interface BooksOverview {
   periods: Array<{ year: number; month: number; status: string }>;
   periodHistory: Array<{ year: number; month: number; action: string; reason: string | null; at: string }>;
   reconciliation: BankReconciliationRow | null;
+  /** Co-owner inquiries still waiting (open or answered but not settled). */
+  openInquiries: number;
 }
 
 type Row = Record<string, any>;
@@ -254,6 +257,7 @@ export async function booksOverview(db: Db, p: { userId: string; propertyId: str
   const { data: recon } = await db.from("bank_reconciliation").select("*").eq("property_id", p.propertyId).maybeSingle();
 
   return {
+    openInquiries: await openInquiryCount(db, p.propertyId),
     property: { id: prop.id, label: [prop.address, prop.city, prop.state].filter(Boolean).join(", ") },
     review,
     accounts,

@@ -278,12 +278,12 @@ describe("preferences", () => {
     await expect(setOwnerNotificationPreference({ data: { type: "vote" as never, emailEnabled: false } })).rejects.toThrow("type");
   });
 
-  it("lists all nine types", async () => {
+  it("lists all ten types", async () => {
     seed();
     as(USERS.b1);
     const { preferences } = await getOwnerNotificationPreferences();
     expect(preferences.map((p) => p.type).sort()).toEqual(Object.keys(OWNER_NOTIFICATION_TYPES).sort());
-    expect(preferences).toHaveLength(9);
+    expect(preferences).toHaveLength(10);
     expect(preferences.find((p) => p.type === "expense_posted")).toMatchObject({ mandatory: false, emailEnabled: true });
   });
 

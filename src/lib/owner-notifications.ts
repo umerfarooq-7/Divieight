@@ -11,6 +11,8 @@ export const OWNER_NOTIFICATION_TYPES = {
   calendar_turn: { label: "Use Calendar turns", mandatory: false },
   retention_exception_update: { label: "Retention Lock requests", mandatory: false },
   notice_posted: { label: "Governance notices", mandatory: true },
+  /** The Manager's answer to a question or suggestion about a transaction. Optional: the email can be switched off, the bell is always on. */
+  inquiry_update: { label: "Answers about the books", mandatory: false },
 } as const;
 
 export type OwnerNotificationType = keyof typeof OWNER_NOTIFICATION_TYPES;
