@@ -64,3 +64,39 @@ export const syncMonth5EventsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { propertyId: string }) => ({ propertyId: id(input?.propertyId, "property") }))
   .handler(async ({ data, context }) => (await server()).syncMonth5Events(await adminDb(), { actorId: context.userId, ...data, request: await request() }));
+
+const text = (value: unknown, max = 500) => String(value ?? "").slice(0, max);
+
+export const getAllocationOverrides = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { propertyId: string }) => ({ propertyId: id(input?.propertyId, "property") }))
+  .handler(async ({ data, context }) => (await server()).allocationOverrides(await adminDb(), { userId: context.userId, ...data }));
+
+export const saveAllocationOverrideFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { propertyId: string; expenseCategory?: string | null; expenseId?: string | null; method: "custom_percent" | "usage_adjusted"; percents: Record<string, number>; basis?: string | null; sourceOaSection: string; effectiveFrom: string }) => {
+      if (input?.method !== "custom_percent" && input?.method !== "usage_adjusted") throw new Error("Choose a method.");
+      const percents: Record<string, number> = {};
+      for (const [k, v] of Object.entries(input?.percents ?? {}).slice(0, 12)) percents[text(k, 80)] = Number(v);
+      return {
+        propertyId: id(input?.propertyId, "property"),
+        expenseCategory: input?.expenseCategory ? text(input.expenseCategory, 80) : null,
+        expenseId: input?.expenseId ? id(input.expenseId, "expense") : null,
+        method: input.method,
+        percents,
+        basis: input?.basis ? text(input.basis) : null,
+        sourceOaSection: text(input?.sourceOaSection, 200),
+        effectiveFrom: day(input?.effectiveFrom, "date"),
+      };
+    },
+  )
+  .handler(async ({ data, context }) => (await server()).saveAllocationOverride(await adminDb(), { actorId: context.userId, ...data, request: await request() }));
+
+export const retireAllocationOverrideFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { overrideId: string; reason: string }) => ({ overrideId: id(input?.overrideId, "override"), reason: text(input?.reason) }))
+  .handler(async ({ data, context }) => {
+    await (await server()).retireAllocationOverride(await adminDb(), { actorId: context.userId, ...data, request: await request() });
+    return { ok: true };
+  });

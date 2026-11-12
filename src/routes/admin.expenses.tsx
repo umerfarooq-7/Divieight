@@ -223,7 +223,7 @@ function Preview({ preview }: { preview: SplitPreview | null }) {
   return (
     <div className="mt-3 border-t border-border pt-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Split on today's cap table
+        {preview.override ? `Split by the Operating Agreement override (${preview.override.sourceOaSection})` : "Default split on today's cap table"}
         <span className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-border text-[10px] font-semibold normal-case" title={ROUNDING_RULE_TEXT} aria-label={ROUNDING_RULE_TEXT} tabIndex={0}>
           i
         </span>

@@ -32,6 +32,7 @@ export const LAUNCH_ITEMS: LaunchItemDefinition[] = [
   { key: "adverse_action_template", group: "Legal and compliance", title: "Adverse-action notice template", status: "Needs counsel", detail: "The template in src/lib/adverse-action.ts must be reviewed by counsel before it is ever issued." },
   { key: "kyo_list", group: "Legal and compliance", title: "Know Your Owner sensitive-data list", status: "Needs counsel", detail: "The sensitive-data list and the retention wording are pending compliance review." },
   { key: "joint_interest", group: "Legal and compliance", title: "Joint-interest wording", status: "Needs counsel", detail: "The form of joint ownership for two members of one account is pending counsel." },
+  { key: "usage_adjusted_allocation", group: "Legal and compliance", title: "Usage-adjusted expense allocation", status: "Placeholder", detail: "ASSUMPTION: the Operating Agreement has not defined a usage-adjusted formula, so the platform calculates nothing. The Manager enters the percentages by hand (Expense allocation tab). Replace with a formula once the OA defines one." },
   { key: "learning_library", group: "Content", title: "Learning Library", status: "Placeholder", detail: "Seeded with placeholder cluster names and no videos, pending compliance review of the content." },
   { key: "w9_encryption_key", group: "Security", title: "W-9 encryption key", status: "Placeholder", detail: "W9_TIN_ENCRYPTION_KEY was committed by mistake and removed. Rotate it in Vercel before any real tax data is stored." },
 ];

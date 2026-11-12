@@ -128,3 +128,92 @@ export async function syncMonth5Events(db: Db, p: { actorId: string; propertyId:
   const r = data as { expenses: number; distributions: number; transfers: number; problems: Array<{ error: string }> };
   return { expenses: Number(r.expenses), distributions: Number(r.distributions), transfers: Number(r.transfers), problems: (r.problems ?? []).map((x) => x.error) };
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Operating Agreement overrides for expense allocation (Month 6, Prompt 8). Manager-entered, audit logged, with the OA section.
+// ---------------------------------------------------------------------------------------------------------
+import { percentsProblem, type OverrideMethod } from "@/lib/expenses";
+
+export interface OverrideRow {
+  id: string;
+  expenseCategory: string | null;
+  expenseId: string | null;
+  method: OverrideMethod;
+  percents: Array<{ holderKey: string; holder: string; percent: number }>;
+  basis: string | null;
+  sourceOaSection: string;
+  effectiveFrom: string;
+  retiredAt: string | null;
+  retireReason: string | null;
+}
+
+export interface OverridesView {
+  holders: Array<{ key: string; label: string; shares: number }>;
+  overrides: OverrideRow[];
+}
+
+const OVERRIDES_MISSING = "Database is missing the allocation overrides: run expense-books.sql in Supabase.";
+function overrideFail(error: { message?: string }): never {
+  const m = error.message ?? "";
+  if (/does not exist|schema cache|Could not find/i.test(m) && /allocation_overrides|save_allocation_override|retire_allocation_override/i.test(m)) throw new Error(OVERRIDES_MISSING);
+  throw new Error(m || "The ledger refused that.");
+}
+
+export async function allocationOverrides(db: Db, p: { userId: string; propertyId: string }): Promise<OverridesView> {
+  await requireManager(db, p.userId);
+  const { rankedHolders } = await import("@/lib/use-calendar.server");
+  const ranked = await rankedHolders(db as never, p.propertyId);
+  const ids = ranked.filter((h) => !h.isRetainedSeller).map((h) => h.holderKey);
+  const { data: buyers } = ids.length ? await db.from("buyer_accounts").select("id, email").in("id", ids) : { data: [] };
+  const emailBy = new Map(((buyers ?? []) as Raw[]).map((b) => [b.id as string, b.email as string | null]));
+  const holders = ranked.map((h) => ({ key: h.holderKey, label: h.isRetainedSeller ? `${h.name || "Retained seller"} (retained)` : (emailBy.get(h.holderKey) ?? (h.name || "Co-owner")), shares: h.shares }));
+  const labelOf = new Map(holders.map((h) => [h.key, h.label]));
+  const { data, error } = await db.from("allocation_overrides").select("*").eq("property_id", p.propertyId).order("created_at", { ascending: false });
+  if (error) {
+    if (/does not exist|schema cache|Could not find/i.test(error.message ?? "")) return { holders, overrides: [] }; // before expense-books.sql is run
+    overrideFail(error);
+  }
+  const overrides = ((data ?? []) as Raw[]).map((o) => ({
+    id: o.id as string,
+    expenseCategory: (o.expense_category as string | null) ?? null,
+    expenseId: (o.expense_id as string | null) ?? null,
+    method: o.method as OverrideMethod,
+    percents: Object.entries((o.parameters?.percents ?? {}) as Record<string, unknown>).map(([k, v]) => ({ holderKey: k, holder: labelOf.get(k) ?? k, percent: Number(v) })),
+    basis: (o.parameters?.basis as string | undefined) ?? null,
+    sourceOaSection: o.source_oa_section as string,
+    effectiveFrom: o.effective_from as string,
+    retiredAt: (o.retired_at as string | null) ?? null,
+    retireReason: (o.retire_reason as string | null) ?? null,
+  }));
+  return { holders, overrides };
+}
+
+export async function saveAllocationOverride(
+  db: Db,
+  p: { actorId: string; propertyId: string; expenseCategory?: string | null; expenseId?: string | null; method: OverrideMethod; percents: Record<string, number>; basis?: string | null; sourceOaSection: string; effectiveFrom: string; request?: RequestContext },
+) {
+  await requireManager(db, p.actorId);
+  if (!p.sourceOaSection.trim()) throw new Error("Name the Operating Agreement section this override comes from.");
+  const problem = percentsProblem(p.percents);
+  if (problem) throw new Error(problem);
+  if (p.method === "usage_adjusted" && !p.basis?.trim()) throw new Error("Say what the usage adjustment is based on. The platform has no usage formula: you enter the percentages.");
+  const { data, error } = await db.rpc("save_allocation_override", {
+    _property: p.propertyId,
+    _category: p.expenseCategory ?? null,
+    _expense: p.expenseId ?? null,
+    _method: p.method,
+    _params: { percents: p.percents, ...(p.basis?.trim() ? { basis: p.basis.trim() } : {}) },
+    _oa_section: p.sourceOaSection,
+    _effective_from: p.effectiveFrom,
+    _actor: p.actorId,
+    _meta: meta(p.request),
+  });
+  if (error) overrideFail(error);
+  return { id: data as string };
+}
+
+export async function retireAllocationOverride(db: Db, p: { actorId: string; overrideId: string; reason: string; request?: RequestContext }) {
+  await requireManager(db, p.actorId);
+  const { error } = await db.rpc("retire_allocation_override", { _id: p.overrideId, _reason: p.reason, _actor: p.actorId, _meta: meta(p.request) });
+  if (error) overrideFail(error);
+}

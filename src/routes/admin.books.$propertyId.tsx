@@ -25,7 +25,8 @@ import {
   setRecurringRuleActiveFn,
 } from "@/lib/books.functions";
 import { closeLedgerPeriodFn, reverseLedgerEntryFn } from "@/lib/bookkeeping.functions";
-import { allocateIncomeFn, enterDepreciationFn, getAdminRollForward, syncMonth5EventsFn } from "@/lib/capital.functions";
+import { allocateIncomeFn, enterDepreciationFn, getAdminRollForward, getAllocationOverrides, retireAllocationOverrideFn, saveAllocationOverrideFn, syncMonth5EventsFn } from "@/lib/capital.functions";
+import { EXPENSE_CATEGORIES, OVERRIDE_METHOD_LABELS, OVERRIDE_METHODS, ROUNDING_RULE_TEXT, USAGE_ADJUSTED_ASSUMPTION, percentsProblem, type OverrideMethod } from "@/lib/expenses";
 import type { BookEntry, BooksOverview } from "@/lib/books.server";
 
 /** The Manager's working screens for one LLC's books. Admin and founder only (the admin layout, and every call, checks). */
@@ -52,6 +53,7 @@ const TABS = [
   ["recurring", "Recurring"],
   ["rules", "Rules"],
   ["capital", "Capital"],
+  ["allocation", "Expense allocation"],
   ["periods", "Periods"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -107,6 +109,7 @@ function AdminBooksPage() {
             {tab === "recurring" ? <RecurringTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "rules" ? <RulesTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "capital" ? <CapitalTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
+            {tab === "allocation" ? <AllocationTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "periods" ? <PeriodsTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
           </div>
         </>
@@ -739,5 +742,162 @@ function LodgingTaxFlag({ propertyId }: { propertyId: string }) {
         </ul>
       ) : null}
     </section>
+  );
+}
+
+// ---------------------------------------------------------------- expense allocation (Operating Agreement overrides)
+function AllocationTab({ propertyId, done, fail }: { propertyId: string; done: () => void; fail: (e: Error) => void }) {
+  const load = useServerFn(getAllocationOverrides);
+  const save = useServerFn(saveAllocationOverrideFn);
+  const retire = useServerFn(retireAllocationOverrideFn);
+  const q = useQuery({ queryKey: ["allocation-overrides", propertyId], queryFn: () => load({ data: { propertyId } }), retry: false });
+  const [method, setMethod] = useState<OverrideMethod>("custom_percent");
+  const [category, setCategory] = useState<string>(EXPENSE_CATEGORIES[0]!);
+  const [section, setSection] = useState("");
+  const [basis, setBasis] = useState("");
+  const [from, setFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [pct, setPct] = useState<Record<string, string>>({});
+  const [retiring, setRetiring] = useState<string | null>(null);
+  const [why, setWhy] = useState("");
+  const percents = Object.fromEntries((q.data?.holders ?? []).map((h) => [h.key, Number(pct[h.key] ?? "")]));
+  const problem = (q.data?.holders ?? []).some((h) => !pct[h.key]) ? "Enter a percentage for every holder." : percentsProblem(percents);
+  const total = Object.values(percents).reduce((s, n) => s + (Number.isFinite(n) ? n : 0), 0);
+  const after = () => {
+    void q.refetch();
+    done();
+  };
+  const saveM = useMutation({
+    mutationFn: () => save({ data: { propertyId, expenseCategory: category, method, percents, basis: basis || null, sourceOaSection: section, effectiveFrom: from } }),
+    onSuccess: () => {
+      toast.success("Override saved");
+      setPct({});
+      setSection("");
+      setBasis("");
+      after();
+    },
+    onError: fail,
+  });
+  const retireM = useMutation({
+    mutationFn: (id: string) => retire({ data: { overrideId: id, reason: why } }),
+    onSuccess: () => {
+      toast.success("Override retired");
+      setRetiring(null);
+      setWhy("");
+      after();
+    },
+    onError: fail,
+  });
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Every expense is allocated pro rata to share count when it is posted. {ROUNDING_RULE_TEXT} An Operating Agreement override replaces that for the expenses it names, and only for them. Nothing is overridden unless you enter it here, with the OA section it comes from.
+      </p>
+      <p className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">Assumption: {USAGE_ADJUSTED_ASSUMPTION}</p>
+      {q.error ? <p className="text-sm text-destructive">{(q.error as Error).message}</p> : null}
+      {q.data ? (
+        <form
+          className="space-y-3 rounded-xl border border-border bg-card p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveM.mutate();
+          }}
+        >
+          <h3 className="text-sm font-semibold text-foreground">New override for an expense category</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium text-foreground">
+              Method
+              <select className={FIELD} value={method} onChange={(e) => setMethod(e.target.value as OverrideMethod)}>
+                {OVERRIDE_METHODS.map((m) => (
+                  <option key={m} value={m}>
+                    {OVERRIDE_METHOD_LABELS[m]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-medium text-foreground">
+              Expense category
+              <select className={FIELD} value={category} onChange={(e) => setCategory(e.target.value)}>
+                {EXPENSE_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-medium text-foreground">
+              Operating Agreement section
+              <input className={FIELD} value={section} onChange={(e) => setSection(e.target.value)} />
+            </label>
+            <label className="text-xs font-medium text-foreground">
+              Applies to expenses incurred from
+              <input type="date" className={FIELD} value={from} onChange={(e) => setFrom(e.target.value)} />
+            </label>
+          </div>
+          {method === "usage_adjusted" ? (
+            <label className="block text-xs font-medium text-foreground">
+              What the adjustment is based on
+              <input className={FIELD} value={basis} onChange={(e) => setBasis(e.target.value)} />
+            </label>
+          ) : null}
+          <div className="space-y-2">
+            {q.data.holders.map((h) => (
+              <label key={h.key} className="grid items-center gap-2 text-xs font-medium text-foreground sm:grid-cols-[1fr_8rem]">
+                <span>
+                  {h.label} <span className="text-muted-foreground">({h.shares} shares)</span>
+                </span>
+                <input aria-label={`Percent for ${h.label}`} className={FIELD} inputMode="decimal" value={pct[h.key] ?? ""} onChange={(e) => setPct({ ...pct, [h.key]: e.target.value })} />
+              </label>
+            ))}
+            <p className={`text-xs ${problem ? "text-destructive" : "text-muted-foreground"}`}>
+              {problem ?? "Adds up to 100%."} (Total entered: {total.toFixed(2)}%)
+            </p>
+          </div>
+          <button type="submit" className={PRIMARY} disabled={!!problem || !section.trim() || (method === "usage_adjusted" && !basis.trim()) || saveM.isPending}>
+            Save override
+          </button>
+        </form>
+      ) : null}
+      {q.data && q.data.overrides.length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No overrides. Every expense uses the default pro-rata split.</p> : null}
+      {q.data?.overrides.map((o) => (
+        <section key={o.id} className="rounded-xl border border-border bg-card p-4 text-sm">
+          <div className="flex flex-wrap justify-between gap-2">
+            <div className="font-medium text-foreground">
+              {o.expenseCategory ? `${o.expenseCategory} expenses` : "One expense"} · {OVERRIDE_METHOD_LABELS[o.method]}
+            </div>
+            <div className={o.retiredAt ? "text-muted-foreground" : "text-foreground"}>{o.retiredAt ? "Retired" : "In force"}</div>
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {o.sourceOaSection} · from {o.effectiveFrom}
+            {o.basis ? ` · based on ${o.basis}` : ""}
+            {o.retireReason ? ` · retired: ${o.retireReason}` : ""}
+          </div>
+          <ul className="mt-2 space-y-1">
+            {o.percents.map((p) => (
+              <li key={p.holderKey} className="flex justify-between gap-3">
+                <span>{p.holder}</span>
+                <span>{p.percent}%</span>
+              </li>
+            ))}
+          </ul>
+          {!o.retiredAt ? (
+            retiring === o.id ? (
+              <div className="mt-3 flex flex-wrap items-end gap-2">
+                <label className="flex-1 text-xs font-medium text-foreground">
+                  Why is it being retired?
+                  <input className={FIELD} value={why} onChange={(e) => setWhy(e.target.value)} />
+                </label>
+                <button type="button" className={SECONDARY} disabled={!why.trim() || retireM.isPending} onClick={() => retireM.mutate(o.id)}>
+                  Retire
+                </button>
+              </div>
+            ) : (
+              <button type="button" className={`${SECONDARY} mt-3`} onClick={() => setRetiring(o.id)}>
+                Retire…
+              </button>
+            )
+          ) : null}
+        </section>
+      ))}
+    </div>
   );
 }

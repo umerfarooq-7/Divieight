@@ -13,6 +13,8 @@ import {
   capitalCallNeedsVote,
   expenseMoney,
   isPastDue,
+  pickOverride,
+  splitByPercents,
   splitProRata,
   todayIso,
   type CapitalCallAllocationStatus,
@@ -20,6 +22,8 @@ import {
   type ExpenseAllocationStatus,
   type ExpenseStatus,
   type PaymentKind,
+  type AllocationOverride,
+  type OverrideMethod,
   type SplitLine,
 } from "@/lib/expenses";
 import { rankedHolders } from "@/lib/use-calendar.server";
@@ -99,10 +103,33 @@ async function rpc(db: Db, fn: string, args: Record<string, unknown>): Promise<R
   return (data ?? {}) as Record<string, unknown>;
 }
 
-/** Pro-rata on the cap table as it stands right now. */
-async function currentSplit(db: Db, propertyId: string, totalAmount: number): Promise<SplitLine[]> {
-  const holders = await rankedHolders(db as never, propertyId);
-  return splitProRata(Number(totalAmount), holders.map((h) => ({ holderKey: h.holderKey, shares: h.shares, rank: h.rank })));
+/** The Operating Agreement overrides in force on a property (none yet if allocation_overrides hasn't been created). */
+async function activeOverrides(db: Db, propertyId: string): Promise<AllocationOverride[]> {
+  const { data, error } = await db.from("allocation_overrides").select("*").eq("property_id", propertyId).is("retired_at", null);
+  if (error) return [];
+  return ((data ?? []) as Array<Record<string, any>>).map((o) => ({
+    id: o.id,
+    expenseCategory: o.expense_category ?? null,
+    expenseId: o.expense_id ?? null,
+    method: o.method as OverrideMethod,
+    percents: Object.fromEntries(Object.entries((o.parameters?.percents ?? {}) as Record<string, unknown>).map(([k, v]) => [k, Number(v)])),
+    sourceOaSection: o.source_oa_section,
+    effectiveFrom: o.effective_from,
+  }));
+}
+
+/**
+ * Today's cap table. For an expense: the Operating Agreement override if one applies to it, otherwise the default pro-rata split
+ * (the override applies only when configured). A capital call has no override and is always pro rata.
+ */
+async function currentSplit(db: Db, propertyId: string, totalAmount: number, expense?: { id: string; category: string; incurred_on: string }): Promise<SplitLine[]> {
+  return (await splitFor(db, propertyId, totalAmount, expense)).lines;
+}
+
+async function splitFor(db: Db, propertyId: string, totalAmount: number, expense?: { id: string; category: string; incurred_on: string }): Promise<{ lines: SplitLine[]; override: AllocationOverride | null }> {
+  const holders = (await rankedHolders(db as never, propertyId)).map((h) => ({ holderKey: h.holderKey, shares: h.shares, rank: h.rank }));
+  const override = expense ? pickOverride(await activeOverrides(db, propertyId), { id: expense.id, category: expense.category, incurredOn: expense.incurred_on }) : null;
+  return { lines: override ? splitByPercents(Number(totalAmount), holders, override.percents) : splitProRata(Number(totalAmount), holders), override };
 }
 
 // ---------------------------------------------------------------------------
@@ -331,6 +358,8 @@ export interface AdminAllocation {
 export interface SplitPreview {
   lines: Array<{ holderLabel: string; shareCount: number; amount: number }>;
   problem: string | null;
+  /** The Operating Agreement override this split follows, or null when the default pro-rata split applies. */
+  override: { method: OverrideMethod; sourceOaSection: string } | null;
 }
 
 export interface AdminExpense {
@@ -386,14 +415,14 @@ async function holderLabeller(db: Db) {
   };
 }
 
-async function previewSplit(db: Db, propertyId: string, totalAmount: number, labelOf: (k: string) => Promise<string>): Promise<SplitPreview> {
+async function previewSplit(db: Db, propertyId: string, totalAmount: number, labelOf: (k: string) => Promise<string>, expense?: { id: string; category: string; incurred_on: string }): Promise<SplitPreview> {
   try {
-    const lines = await currentSplit(db, propertyId, totalAmount);
+    const { lines, override } = await splitFor(db, propertyId, totalAmount, expense);
     const out = [];
     for (const l of lines) out.push({ holderLabel: await labelOf(l.holder_key), shareCount: l.share_count, amount: l.amount });
-    return { lines: out, problem: null };
+    return { lines: out, problem: null, override: override ? { method: override.method, sourceOaSection: override.sourceOaSection } : null };
   } catch (e) {
-    return { lines: [], problem: (e as Error).message };
+    return { lines: [], problem: (e as Error).message, override: null };
   }
 }
 
@@ -468,7 +497,7 @@ export async function adminExpenses(db: Db) {
       fromMaintenance: r.source === "maintenance",
       voidReason: r.void_reason,
       allocations: await adminAllocations(db, "expense", r.id, labelOf),
-      preview: r.status === "draft" ? await previewSplit(db, r.property_id, r.total_amount, labelOf) : null,
+      preview: r.status === "draft" ? await previewSplit(db, r.property_id, r.total_amount, labelOf, r) : null,
     });
   }
 
@@ -545,7 +574,7 @@ async function tellHolders(db: Db, lines: SplitLine[], build: (line: SplitLine) 
 export async function postExpense(db: Db, params: { adminId: string; expenseId: string }) {
   const expense = await loadExpense(db, params.expenseId);
   if (expense.status !== "draft") throw new Error("Only a draft expense can be posted.");
-  const lines = await currentSplit(db, expense.property_id, expense.total_amount);
+  const lines = await currentSplit(db, expense.property_id, expense.total_amount, expense);
   const result = await rpc(db, "post_expense", { _expense: expense.id, _allocations: lines, _actor: params.adminId });
   if (result["applied"] === false) return; // someone else just posted it, and told the owners
   await tellHolders(db, lines, (line) => ({
