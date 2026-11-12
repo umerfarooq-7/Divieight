@@ -278,6 +278,7 @@ DECLARE
   eff_c bigint := 0;
   eff_d bigint := 0;
   cur record;
+  has_row boolean;
 BEGIN
   IF NEW.line_type NOT IN ('contribution', 'distribution') THEN
     RETURN NULL;
@@ -293,8 +294,9 @@ BEGIN
   IF NEW.line_type = 'contribution' THEN eff_c := NEW.amount_cents; ELSE eff_d := -NEW.amount_cents; END IF;
   SELECT round(contributed_amount * 100)::bigint AS c, round(distributions_amount * 100)::bigint AS d INTO cur
   FROM public.owner_capital_accounts WHERE property_id = NEW.property_id AND user_id = holder;
+  has_row := FOUND;
   PERFORM set_config('app.ledger_sync', 'on', true);
-  IF NOT FOUND THEN
+  IF NOT has_row THEN
     INSERT INTO public.owner_capital_accounts (property_id, user_id, contributed_amount, distributions_amount, updated_at)
     VALUES (NEW.property_id, holder, t.contributed_cents / 100.0, t.distributions_cents / 100.0, now());
   ELSIF cur.c = t.contributed_cents - eff_c AND cur.d = t.distributions_cents - eff_d THEN

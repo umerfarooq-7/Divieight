@@ -205,6 +205,7 @@ import { Route as ApiPublicTitleEscrowProviderRouteImport } from './routes/api.p
 import { Route as OwnerPropertiesPropertyIdIndexRouteImport } from './routes/owner.properties.$propertyId.index'
 import { Route as OwnerPropertiesPropertyIdSectionRouteImport } from './routes/owner.properties.$propertyId.$section'
 import { Route as OwnerPropertiesPropertyIdCalendarRouteImport } from './routes/owner.properties.$propertyId.calendar'
+import { Route as OwnerPropertiesPropertyIdCapitalRouteImport } from './routes/owner.properties.$propertyId.capital'
 import { Route as OwnerPropertiesPropertyIdCapitalCallsRouteImport } from './routes/owner.properties.$propertyId.capital-calls'
 import { Route as OwnerPropertiesPropertyIdExpensesRouteImport } from './routes/owner.properties.$propertyId.expenses'
 import { Route as OwnerPropertiesPropertyIdLedgerRouteImport } from './routes/owner.properties.$propertyId.ledger'
@@ -1241,6 +1242,12 @@ const OwnerPropertiesPropertyIdCalendarRoute =
     path: '/owner/properties/$propertyId/calendar',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdCapitalRoute =
+  OwnerPropertiesPropertyIdCapitalRouteImport.update({
+    id: '/owner/properties/$propertyId/capital',
+    path: '/owner/properties/$propertyId/capital',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdCapitalCallsRoute =
   OwnerPropertiesPropertyIdCapitalCallsRouteImport.update({
     id: '/owner/properties/$propertyId/capital-calls',
@@ -1491,6 +1498,7 @@ export interface FileRoutesByFullPath {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
@@ -1691,6 +1699,7 @@ export interface FileRoutesByTo {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
@@ -1899,6 +1908,7 @@ export interface FileRoutesById {
   '/api/public/title-escrow/$provider': typeof ApiPublicTitleEscrowProviderRoute
   '/owner/properties/$propertyId/$section': typeof OwnerPropertiesPropertyIdSectionRoute
   '/owner/properties/$propertyId/calendar': typeof OwnerPropertiesPropertyIdCalendarRoute
+  '/owner/properties/$propertyId/capital': typeof OwnerPropertiesPropertyIdCapitalRoute
   '/owner/properties/$propertyId/capital-calls': typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   '/owner/properties/$propertyId/expenses': typeof OwnerPropertiesPropertyIdExpensesRoute
   '/owner/properties/$propertyId/ledger': typeof OwnerPropertiesPropertyIdLedgerRoute
@@ -2108,6 +2118,7 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
@@ -2308,6 +2319,7 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
@@ -2515,6 +2527,7 @@ export interface FileRouteTypes {
     | '/api/public/title-escrow/$provider'
     | '/owner/properties/$propertyId/$section'
     | '/owner/properties/$propertyId/calendar'
+    | '/owner/properties/$propertyId/capital'
     | '/owner/properties/$propertyId/capital-calls'
     | '/owner/properties/$propertyId/expenses'
     | '/owner/properties/$propertyId/ledger'
@@ -2627,6 +2640,7 @@ export interface RootRouteChildren {
   ApiPublicTitleEscrowProviderRoute: typeof ApiPublicTitleEscrowProviderRoute
   OwnerPropertiesPropertyIdSectionRoute: typeof OwnerPropertiesPropertyIdSectionRoute
   OwnerPropertiesPropertyIdCalendarRoute: typeof OwnerPropertiesPropertyIdCalendarRoute
+  OwnerPropertiesPropertyIdCapitalRoute: typeof OwnerPropertiesPropertyIdCapitalRoute
   OwnerPropertiesPropertyIdCapitalCallsRoute: typeof OwnerPropertiesPropertyIdCapitalCallsRoute
   OwnerPropertiesPropertyIdExpensesRoute: typeof OwnerPropertiesPropertyIdExpensesRoute
   OwnerPropertiesPropertyIdLedgerRoute: typeof OwnerPropertiesPropertyIdLedgerRoute
@@ -4013,6 +4027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OwnerPropertiesPropertyIdCalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/owner/properties/$propertyId/capital': {
+      id: '/owner/properties/$propertyId/capital'
+      path: '/owner/properties/$propertyId/capital'
+      fullPath: '/owner/properties/$propertyId/capital'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdCapitalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owner/properties/$propertyId/capital-calls': {
       id: '/owner/properties/$propertyId/capital-calls'
       path: '/owner/properties/$propertyId/capital-calls'
@@ -4447,6 +4468,7 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerPropertiesPropertyIdSectionRoute: OwnerPropertiesPropertyIdSectionRoute,
   OwnerPropertiesPropertyIdCalendarRoute:
     OwnerPropertiesPropertyIdCalendarRoute,
+  OwnerPropertiesPropertyIdCapitalRoute: OwnerPropertiesPropertyIdCapitalRoute,
   OwnerPropertiesPropertyIdCapitalCallsRoute:
     OwnerPropertiesPropertyIdCapitalCallsRoute,
   OwnerPropertiesPropertyIdExpensesRoute:

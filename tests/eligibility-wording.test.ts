@@ -1,5 +1,8 @@
 /** "Background Check" becomes "The Eligibility Check": wording, Hold Harmless, adverse action, vetting display, Hybrid Exit sellers. */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// This file scans the whole source tree; give each test room when the machine is busy.
+vi.setConfig({ testTimeout: 30_000 });
 import { readFileSync, readdirSync } from "node:fs";
 import { harness } from "./setup";
 import { seedPod, IDS, USERS } from "./fixtures";

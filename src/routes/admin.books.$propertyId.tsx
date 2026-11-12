@@ -22,6 +22,7 @@ import {
   setRecurringRuleActiveFn,
 } from "@/lib/books.functions";
 import { closeLedgerPeriodFn, reverseLedgerEntryFn } from "@/lib/bookkeeping.functions";
+import { allocateIncomeFn, enterDepreciationFn, getAdminRollForward, syncMonth5EventsFn } from "@/lib/capital.functions";
 import type { BookEntry, BooksOverview } from "@/lib/books.server";
 
 /** The Manager's working screens for one LLC's books. Admin and founder only (the admin layout, and every call, checks). */
@@ -47,6 +48,7 @@ const TABS = [
   ["ledger", "Ledger & corrections"],
   ["recurring", "Recurring"],
   ["rules", "Rules"],
+  ["capital", "Capital"],
   ["periods", "Periods"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -101,6 +103,7 @@ function AdminBooksPage() {
             {tab === "ledger" ? <LedgerTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "recurring" ? <RecurringTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "rules" ? <RulesTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
+            {tab === "capital" ? <CapitalTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "periods" ? <PeriodsTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
           </div>
         </>
@@ -521,6 +524,165 @@ function PeriodsTab({ data, propertyId, done, fail }: TabProps) {
           </ul>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- capital accounts
+function CapitalTab({ propertyId, done, fail }: TabProps) {
+  const rollForward = useServerFn(getAdminRollForward);
+  const allocate = useServerFn(allocateIncomeFn);
+  const depreciate = useServerFn(enterDepreciationFn);
+  const sync = useServerFn(syncMonth5EventsFn);
+  const thisYear = new Date().getUTCFullYear();
+  const [year, setYear] = useState(thisYear);
+  const [asOf, setAsOf] = useState(new Date().toISOString().slice(0, 10));
+  const [deprYear, setDeprYear] = useState(thisYear - 1);
+  const [amount, setAmount] = useState("");
+  const [schedule, setSchedule] = useState("");
+  const [note, setNote] = useState("");
+  const rf = useQuery({ queryKey: ["admin-roll-forward", propertyId, year], queryFn: () => rollForward({ data: { propertyId, year } }), retry: false });
+  const after = () => {
+    void rf.refetch();
+    done();
+  };
+  const allocateM = useMutation({
+    mutationFn: () => allocate({ data: { propertyId, asOf } }),
+    onSuccess: (r) => {
+      toast.success(r.status === "posted" ? `Allocated ${formatCents(r.totalCents ?? 0)} of income` : "No unallocated income");
+      after();
+    },
+    onError: fail,
+  });
+  const deprM = useMutation({
+    mutationFn: () => depreciate({ data: { propertyId, year: deprYear, amountCents: dollars(amount), scheduleRef: schedule, note: note || null } }),
+    onSuccess: () => {
+      toast.success("Depreciation entered and allocated");
+      setAmount("");
+      after();
+    },
+    onError: fail,
+  });
+  const syncM = useMutation({
+    mutationFn: () => sync({ data: { propertyId } }),
+    onSuccess: (r) => {
+      toast.success(`${r.expenses} expenses, ${r.distributions} distributions, ${r.transfers} transfers posted${r.problems.length ? `; ${r.problems.length} could not be: ${r.problems[0]}` : ""}`);
+      after();
+    },
+    onError: fail,
+  });
+  type Totals = NonNullable<typeof rf.data>["totals"];
+  const cols: Array<[string, (m: Totals) => number]> = [
+    ["Beginning", (m) => m.beginningCents],
+    ["Opening", (m) => m.openingCents],
+    ["Contributions", (m) => m.contributionsCents],
+    ["Income", (m) => m.incomeCents],
+    ["Expenses", (m) => m.expenseCents],
+    ["Depreciation", (m) => m.depreciationCents],
+    ["Distributions", (m) => m.distributionsCents],
+    ["Transfers", (m) => m.transferInCents + m.transferOutCents],
+    ["Ending", (m) => m.endingCents],
+  ];
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Every event that touches a member's capital account is a ledger entry. A joint account is one capital account. Depreciation is entered from the CPA's schedule; the platform never calculates it, and never computes a Section 754 adjustment.
+      </p>
+      <div className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-card p-4">
+        <label className="text-xs font-medium text-foreground">
+          Roll-forward year
+          <input type="number" className={FIELD} value={year} onChange={(e) => setYear(Number(e.target.value))} />
+        </label>
+        <button type="button" className={SECONDARY} disabled={syncM.isPending} onClick={() => syncM.mutate()}>
+          Post Month 5 events the ledger hasn't seen
+        </button>
+      </div>
+      {rf.error ? <p className="text-sm text-destructive">{(rf.error as Error).message}</p> : null}
+      {rf.data ? (
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground">
+                <th className="p-2">Member</th>
+                {cols.map(([l]) => (
+                  <th key={l} className="p-2 text-right">
+                    {l}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rf.data.members.map((m) => (
+                <tr key={m.member}>
+                  <td className="p-2">{m.member}</td>
+                  {cols.map(([l, f]) => (
+                    <td key={l} className="p-2 text-right">
+                      {formatCents(f(m))}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr className="font-medium">
+                <td className="p-2">Total</td>
+                {cols.map(([l, f]) => (
+                  <td key={l} className="p-2 text-right">
+                    {formatCents(f(rf.data!.totals))}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+      <div className="grid gap-4 md:grid-cols-2">
+        <form
+          className="space-y-2 rounded-xl border border-border bg-card p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            allocateM.mutate();
+          }}
+        >
+          <h3 className="text-sm font-semibold text-foreground">Allocate income</h3>
+          <p className="text-xs text-muted-foreground">Other Income not yet allocated, as of the date, goes to the members who held shares then, pro rata to shares.</p>
+          <label className="block text-xs font-medium text-foreground">
+            As of
+            <input type="date" className={FIELD} max={new Date().toISOString().slice(0, 10)} value={asOf} onChange={(e) => setAsOf(e.target.value)} />
+          </label>
+          <button type="submit" className={PRIMARY} disabled={allocateM.isPending}>
+            Allocate income
+          </button>
+        </form>
+        <form
+          className="space-y-2 rounded-xl border border-border bg-card p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            deprM.mutate();
+          }}
+        >
+          <h3 className="text-sm font-semibold text-foreground">Enter depreciation (from the CPA's schedule)</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs font-medium text-foreground">
+              Tax year
+              <input type="number" className={FIELD} value={deprYear} onChange={(e) => setDeprYear(Number(e.target.value))} />
+            </label>
+            <label className="text-xs font-medium text-foreground">
+              Amount ($)
+              <input className={FIELD} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </label>
+          </div>
+          <label className="block text-xs font-medium text-foreground">
+            CPA schedule it comes from
+            <input className={FIELD} value={schedule} onChange={(e) => setSchedule(e.target.value)} />
+          </label>
+          <label className="block text-xs font-medium text-foreground">
+            Note (optional)
+            <input className={FIELD} value={note} onChange={(e) => setNote(e.target.value)} />
+          </label>
+          <button type="submit" className={PRIMARY} disabled={deprM.isPending || !schedule.trim() || !(dollars(amount) > 0)}>
+            Enter and allocate
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

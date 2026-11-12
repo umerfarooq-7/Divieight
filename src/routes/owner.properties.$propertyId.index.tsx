@@ -215,6 +215,13 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
           Ledger
         </Link>
         <Link
+          to="/owner/properties/$propertyId/capital"
+          params={{ propertyId: p.propertyId }}
+          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          Capital account
+        </Link>
+        <Link
           to="/owner/properties/$propertyId/capital-calls"
           params={{ propertyId: p.propertyId }}
           className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
