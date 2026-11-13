@@ -51,6 +51,8 @@ function seedWorld() {
   db().table("agents").find((a) => a.id === IDS.hla)!.broker_id = "broker-2";
   db().seed("brokers", [{ id: "broker-2", auth_user_id: "u-broker2", brokerage_name: "Summit Realty", license_number: "BR-2", tax_form_verified: true }]);
   Object.assign(db().table("brokers").find((b) => b.id === IDS.broker)!, { brokerage_name: "Lusk Homes", license_number: "BR-1", tax_form_verified: true });
+  // Each Broker of Record has a valid W-9 on file (the payout gate reads broker_tax_forms).
+  db().seed("broker_tax_forms", [{ id: "tf-broker-2", broker_id: "broker-2", form_type: "W-9", status: "valid", expiry_date: null, created_at: "2026-01-01T00:00:00Z" }, { id: "tf-" + IDS.broker + "", broker_id: "" + IDS.broker + "", form_type: "W-9", status: "valid", expiry_date: null, created_at: "2026-01-01T00:00:00Z" }]);
   db().seed("sellers", [{ id: IDS.seller, email: "seller@test.local" }]);
   db().seed("pending_referral_agreements", [
     { buyer_account_id: IDS.b2, non_resident_agent_id: IDS.ra2, resident_agent_id: IDS.ra, referring_agent_role: "non_resident", status: "executed" },

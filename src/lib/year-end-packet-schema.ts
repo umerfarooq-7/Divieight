@@ -5,7 +5,7 @@
  * Money is whole US cents, as integers (debit_cents, credit_cents...). Dates are YYYY-MM-DD. A packet's general file never has a TIN in it; the
  * private "with TINs" file adds `tin` to each member and nothing else.
  */
-export const PACKET_SCHEMA_VERSION = "1.0.0";
+export const PACKET_SCHEMA_VERSION = "1.1.0";
 
 const cents = { type: "integer" };
 const date = { type: "string", format: "date" };
@@ -152,7 +152,8 @@ export const PACKET_SCHEMA = {
         properties: {
           member_key: uuid,
           legal_name: { type: "string", minLength: 1 },
-          share_count: { type: "integer", minimum: 1 },
+          // 0 for someone who held a share during the year and no longer does (their capital account is still in the packet).
+          share_count: { type: "integer", minimum: 0 },
           interest_percent: { type: "string", pattern: "^[0-9]{1,3}\\.[0-9]{2}$" },
           mailing_address: { type: ["string", "null"] },
           tin_kind: { type: ["string", "null"], enum: ["ssn", "ein", null] },
@@ -206,6 +207,68 @@ export const PACKET_SCHEMA = {
             },
             additionalProperties: false,
           },
+        },
+      },
+      additionalProperties: false,
+    },
+    // The Tax-Ready Folder's data for the year (1.1.0): per-share ownership, the 1099-S sale data and the reconciliation. No TIN.
+    tax_ready: {
+      type: "object",
+      required: ["year", "shares", "members", "transfers", "sales_1099s", "reconciliation"],
+      properties: {
+        year: { type: "integer" },
+        shares: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["share_number", "days_accounted_for", "periods"],
+            properties: {
+              share_number: { type: "integer", minimum: 1 },
+              year_end_holder_key: nullableUuid,
+              days_accounted_for: { type: "integer", minimum: 0 },
+              periods: { type: "array", items: { type: "object", required: ["holder_key", "from", "to", "days"], properties: { holder_key: nullableUuid, from: date, to: date, days: { type: "integer", minimum: 0 } }, additionalProperties: false } },
+            },
+            additionalProperties: false,
+          },
+        },
+        members: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["member_key", "year_end_shares", "share_days", "percent_of_share_days", "legal_names"],
+            properties: { member_key: uuid, year_end_shares: { type: "integer", minimum: 0 }, share_days: { type: "integer", minimum: 0 }, percent_of_share_days: { type: "string", pattern: "^[0-9]{1,3}\\.[0-9]{4}$" }, legal_names: { type: "array", items: { type: "string" } } },
+            additionalProperties: false,
+          },
+        },
+        transfers: {
+          type: "array",
+          items: { type: "object", required: ["share_number", "date", "transferor_member_key", "transferee_member_key"], properties: { share_number: { type: "integer" }, date, transferor_member_key: nullableUuid, transferee_member_key: nullableUuid, resale_transaction_id: nullableUuid }, additionalProperties: false },
+        },
+        sales_1099s: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["resale_transaction_id", "date", "share_number", "gross_proceeds_cents", "transferor_names", "transferee_names"],
+            properties: {
+              resale_transaction_id: uuid,
+              date,
+              share_number: { type: "integer" },
+              transferor_member_key: nullableUuid,
+              transferee_member_key: nullableUuid,
+              gross_proceeds_cents: cents,
+              property_address: { type: ["string", "null"] },
+              transferor_names: { type: "array", items: { type: "string" } },
+              transferee_names: { type: "array", items: { type: "string" } },
+              transferor_tin_status: { type: "string", enum: ["on_file", "missing"] },
+            },
+            additionalProperties: false,
+          },
+        },
+        reconciliation: {
+          type: "object",
+          required: ["total_shares", "year_end_shares", "days_in_year", "share_days_total", "share_days_expected", "reconciled"],
+          properties: { total_shares: { type: "integer" }, year_end_shares: { type: "integer" }, days_in_year: { type: "integer" }, share_days_total: { type: "integer" }, share_days_expected: { type: "integer" }, reconciled: { type: "boolean" } },
+          additionalProperties: false,
         },
       },
       additionalProperties: false,

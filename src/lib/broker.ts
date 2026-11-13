@@ -185,11 +185,10 @@ export async function submitBankingDetails(
     w9_or_w8_type: input.taxFormType,
   };
   if (input.taxFormPath) {
+    // A document upload is a copy for the file. It no longer clears anything: the payout gate reads the validated tax form
+    // (broker_tax_forms), submitted on the tax-form page, and the database keeps the old flag in step with it.
     patch.w9_or_w8_url = input.taxFormPath;
     patch.w9_or_w8_uploaded_at = now;
-    // Month 3: "reviewed" = on file. Clears the commission payout gate.
-    patch.tax_form_verified = true;
-    patch.tax_form_verified_at = now;
   }
 
   const { error } = await db.from("brokers").update(patch).eq("id", input.brokerId);

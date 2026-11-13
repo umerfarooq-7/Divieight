@@ -38,7 +38,7 @@ describe("the JSON schema", () => {
     const file = JSON.parse(readFileSync("schemas/year-end-packet.schema.json", "utf8"));
     expect(file).toEqual(JSON.parse(JSON.stringify(PACKET_SCHEMA)));
     expect(file.$schema).toBe("http://json-schema.org/draft-07/schema#");
-    expect(file.properties.schema_version.const).toBe("1.0.0");
+    expect(file.properties.schema_version.const).toBe("1.1.0");
     for (const k of ["schema_version", "packet_id", "property", "period", "accounts", "entries", "members", "roll_forwards", "worksheet"]) expect(file.required, k).toContain(k);
   });
 
@@ -90,7 +90,7 @@ describe("the JSON schema", () => {
     expect(bad((p) => (p.extra = 1))).toContain("$.extra: is not allowed");
     expect(bad((p) => (p.packet_id = "not-a-uuid"))).toContain("$.packet_id: is not a uuid");
     expect(bad((p) => (p.members[0].tin = "123456789")).join()).toMatch(/tin: does not match/);
-    expect(bad((p) => (p.schema_version = "2.0.0")).join()).toMatch(/schema_version: must be "1.0.0"/);
+    expect(bad((p) => (p.schema_version = "2.0.0")).join()).toMatch(/schema_version: must be "1.1.0"/);
     expect(bad((p) => (p.accounts[0].type = "revenue")).join()).toMatch(/type: must be one of/);
     expect(bad((p) => (p.entries[0].lines = [p.entries[0].lines[0]])).join()).toMatch(/needs at least 2 item/);
     expect(bad((p) => (p.worksheet.items[0].item_type = "k1"))).not.toEqual([]);
@@ -142,7 +142,7 @@ describe("the files", () => {
 
   it("each section is a table: whole cents come out as dollars in CSV and as numbers in XLSX", () => {
     const tables = packetTables(sample(2));
-    expect(tables.map((t) => t.name)).toEqual(["accounts", "general_ledger", "trial_balance", "balance_sheet", "income_statement", "roll_forwards", "members", "forms_1099", "worksheet"]);
+    expect(tables.map((t) => t.name)).toEqual(["accounts", "general_ledger", "trial_balance", "balance_sheet", "income_statement", "roll_forwards", "members", "forms_1099", "worksheet", "ownership_records", "sales_1099s"]);
     const tb = tables.find((t) => t.name === "trial_balance")!;
     const cash = tb.rows.find((r) => r[0] === "1000")!;
     expect(tableRowsForCsv(tb).find((r) => r[0] === "1000")![3]).toBe(((cash[3] as number) / 100).toFixed(2));
@@ -298,7 +298,9 @@ describe("generating a packet", () => {
     }
     // the worksheet, the roster by legal name and the capital roll-forward are in the JSON
     expect(row.data.worksheet.items[0]).toMatchObject({ item_type: "depreciation_needed", manager_note: "Waiting on Pat" });
-    expect(row.data.members.map((m: any) => [m.legal_name, m.tin_status])).toEqual([["Ann Example", "on_file"], ["Ben Example", "on_file"]]);
+    // People who held a share earlier in the year, or still have a capital account, are in the roster at zero shares.
+    expect(row.data.members.filter((m: any) => m.share_count > 0).map((m: any) => [m.legal_name, m.tin_status])).toEqual([["Ann Example", "on_file"], ["Ben Example", "on_file"]]);
+    expect(row.data.members.filter((m: any) => m.share_count === 0).every((m: any) => m.tin_status === "missing")).toBe(true);
     expect(row.data.members[0]).toMatchObject({ share_count: 4, interest_percent: "100.00", mailing_address: "12 Oak St, Lusk, WY 82225" });
     expect(db().rpcResults.refresh_worksheet_items).toHaveBeenCalledWith({ _property: A, _year: 2025, _actor: USERS.admin });
   });
@@ -377,7 +379,7 @@ describe("TINs: only through the audited decrypt, only into the private files", 
     expect(pii.map(([k]) => k.split("/").pop()).sort()).toEqual(["members-with-tins.csv", "members-with-tins.xlsx", "packet-with-tins.json"]);
     const full = JSON.parse(text(pii.find(([k]) => k.endsWith("packet-with-tins.json"))![1]));
     expect(validatePacket(full)).toEqual([]);
-    expect(full.members.map((m: any) => m.tin)).toEqual(["123-45-6789", "987-65-4321"]);
+    expect(full.members.filter((m: any) => m.share_count > 0).map((m: any) => m.tin)).toEqual(["123-45-6789", "987-65-4321"]);
     expect(text(pii.find(([k]) => k.endsWith("members-with-tins.csv"))![1])).toContain("987-65-4321");
     // the private files are the packet and nothing else changed
     expect(withoutTins(full)).toEqual(JSON.parse(text(general.find(([k]) => k.endsWith("packet.json"))![1])));
@@ -399,7 +401,7 @@ describe("TINs: only through the audited decrypt, only into the private files", 
     (db().table("member_w9_tin_secrets") as any[])[0].ciphertext = Buffer.from("tampered!!!!").toString("base64");
     await generate();
     const full = JSON.parse(text(filesIn("packet-pii").find(([k]) => k.endsWith("packet-with-tins.json"))![1]));
-    expect(full.members.map((m: any) => m.tin ?? null)).toEqual([null, "987-65-4321"]);
+    expect(full.members.filter((m: any) => m.share_count > 0).map((m: any) => m.tin ?? null)).toEqual([null, "987-65-4321"]);
   });
 
   it("a roster with no TINs on file makes no private files at all", async () => {

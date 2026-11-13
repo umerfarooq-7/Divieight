@@ -8,7 +8,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { splitProRata } from "@/lib/expenses";
-import { PACKET_SCHEMA, composePacket, validatePacket, type PacketMember } from "@/lib/year-end-packet";
+import { PACKET_SCHEMA, buildTaxReady, composePacket, validatePacket, type PacketMember } from "@/lib/year-end-packet";
 import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 
 type Db = { exec: (sql: string) => Promise<unknown>; query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, any>> }> };
@@ -114,7 +114,8 @@ describe.skipIf(!pg)("year-end-packet.sql", () => {
       CREATE TABLE buyer_accounts (id uuid PRIMARY KEY, auth_user_id uuid);
       CREATE TABLE audit_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), actor_id uuid, actor_type text NOT NULL DEFAULT 'seller', action_type text NOT NULL, entity_type text, entity_id text, metadata jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now());
       CREATE TABLE cap_table_entries (property_id uuid, share_number int, holder_type text, buyer_account_id uuid, seller_id uuid);
-      CREATE TABLE resale_transactions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), price numeric);
+      CREATE TABLE resale_transactions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), price numeric, status text NOT NULL DEFAULT 'completed');
+      CREATE TABLE brokers (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), auth_user_id uuid, tax_form_verified boolean NOT NULL DEFAULT false, tax_form_verified_at timestamptz);
       CREATE TABLE cap_table_history (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), property_id uuid, share_number int, from_buyer_account_id uuid, from_seller_id uuid, to_buyer_account_id uuid, to_seller_id uuid, resale_transaction_id uuid, changed_at timestamptz DEFAULT now());
       CREATE TABLE cpa_worksheet_flags (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), property_id uuid, resale_transaction_id uuid, flag_type text NOT NULL DEFAULT 'section_754_review', note text, created_at timestamptz NOT NULL DEFAULT now());
       CREATE TABLE closing_funds_obligations (property_id uuid, amount numeric, status text);
@@ -140,6 +141,7 @@ describe.skipIf(!pg)("year-end-packet.sql", () => {
     const sql = readFileSync("year-end-packet.sql", "utf8");
     await pg!.exec(sql);
     await pg!.exec(sql); // safe to run again
+    await pg!.exec(readFileSync("tax-forms.sql", "utf8")); // the Tax-Ready sections are part of the packet
   }, 120_000);
 
   describe("the ledger sections come from the journal", () => {
@@ -387,13 +389,14 @@ describe.skipIf(!pg)("year-end-packet.sql", () => {
       });
       return text + "\n";
     };
-    const members = (): PacketMember[] => [
+    // After a mid-year sale (sample 2) Casey holds four shares and Dana none: Dana stays in the roster at zero shares, because her capital account and the sale are in the packet.
+    const members = (sold = false): PacketMember[] => [
       { member_key: A1, legal_name: "Ann Example", share_count: 4, interest_percent: "50.00", mailing_address: "12 Oak St, Lusk, WY 82225", tin_kind: "ssn", tin_status: "on_file" },
       { member_key: A1, legal_name: "Ben Example", share_count: 4, interest_percent: "50.00", mailing_address: "12 Oak St, Lusk, WY 82225", tin_kind: "ssn", tin_status: "on_file" },
-      { member_key: A2, legal_name: "Casey Sample", share_count: 3, interest_percent: "37.50", mailing_address: "9 Pine Rd, Casper, WY 82601", tin_kind: "ein", tin_status: "on_file" },
-      { member_key: SELLER, legal_name: "Dana Seller (retained)", share_count: 1, interest_percent: "12.50", mailing_address: null, tin_kind: null, tin_status: "missing" },
+      { member_key: A2, legal_name: "Casey Sample", share_count: sold ? 4 : 3, interest_percent: sold ? "50.00" : "37.50", mailing_address: "9 Pine Rd, Casper, WY 82601", tin_kind: "ein", tin_status: "on_file" },
+      { member_key: SELLER, legal_name: "Dana Seller (retained)", share_count: sold ? 0 : 1, interest_percent: sold ? "0.00" : "12.50", mailing_address: null, tin_kind: null, tin_status: "missing" },
     ];
-    const build = async (p: string, worksheet: Array<Record<string, any>>, forms: any[], bank: Record<string, any>) =>
+    const build = async (p: string, worksheet: Array<Record<string, any>>, forms: any[], bank: Record<string, any>, sold = false) =>
       composePacket({
         packetId: "11111111-1111-4111-8111-111111111111",
         generatedAt: "2026-01-05T09:00:00Z",
@@ -401,7 +404,8 @@ describe.skipIf(!pg)("year-end-packet.sql", () => {
         property: { property_id: p, llc_name: "5632 Independence Ave LLC", address: "5632 Independence Ave", city: "Lusk", state: "WY", zip: "82225", total_shares: 8 },
         year: 2025,
         sections: await sections(p),
-        members: members(),
+        members: members(sold),
+        taxReady: buildTaxReady(await rpc("SELECT tax_ready_sections($1, 2025) AS r", [p]), members(sold), "5632 Independence Ave"),
         forms1099: forms,
         worksheetItems: worksheet as never,
         bank,
@@ -416,8 +420,12 @@ describe.skipIf(!pg)("year-end-packet.sql", () => {
       await rpc("SELECT post_depreciation($1, 2025, 9000, 'CPA schedule 2025-A', NULL, $2) AS r", [two, ADMIN]);
       await ok("INSERT INTO cpa_worksheet_flags (property_id, flag_type, note, created_at) VALUES ($1, 'section_754_review', 'A share was resold in June', '2025-06-01')", [two]);
       await rpc("SELECT refresh_worksheet_items($1, 2025, $2) AS r", [two, ADMIN]);
+      // Share 8 was Dana's; on 2025-06-15 it was sold to Casey for $2,000.
+      const sale = (await ok("INSERT INTO resale_transactions (price, status) VALUES (2000, 'completed') RETURNING id"))[0]!.id as string;
+      await ok("UPDATE cap_table_entries SET holder_type = 'buyer_account', buyer_account_id = $2, seller_id = NULL WHERE property_id = $1 AND share_number = 8", [two, A2]);
+      await ok("INSERT INTO cap_table_history (property_id, share_number, from_seller_id, to_buyer_account_id, resale_transaction_id, changed_at) VALUES ($1, 8, $2, $3, $4, '2025-06-15T12:00:00Z')", [two, SELLER, A2, sale]);
       const roof = (await sections(two)).entries.find((e: any) => e.memo === "2025 rent");
-      const sample2 = await build(two, await items(two), [{ vendor_name: "Lusk Roofing", form_type: "1099-NEC", tax_year: 2025, amount_cents: 80_000, issued_at: "2026-01-20T00:00:00Z", file: null }], { [roof.id]: { merchant: "Tenant ACH", raw_category: "INCOME" } });
+      const sample2 = await build(two, await items(two), [{ vendor_name: "Lusk Roofing", form_type: "1099-NEC", tax_year: 2025, amount_cents: 80_000, issued_at: "2026-01-20T00:00:00Z", file: null }], { [roof.id]: { merchant: "Tenant ACH", raw_category: "INCOME" } }, true);
       expect(validatePacket(sample1), "sample 1").toEqual([]);
       expect(validatePacket(sample2), "sample 2").toEqual([]);
       const write = !!process.env["UPDATE_SAMPLES"];

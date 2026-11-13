@@ -45,6 +45,8 @@ export interface PacketPayload {
   roll_forwards: Array<Record<string, any>>;
   forms_1099: Array<{ vendor_name: string; form_type: string; tax_year: number; amount_cents: number; issued_at: string | null; file: string | null }>;
   worksheet: { items: Array<{ item_type: string; title: string; status: string; manager_note: string | null; detail: Record<string, any> }> };
+  /** The Tax-Ready Folder's data for the year (no TIN). Present from schema 1.1.0. */
+  tax_ready?: Record<string, any>;
   totals: { entries: number; debit_cents: number; credit_cents: number };
 }
 
@@ -70,6 +72,8 @@ export function composePacket(a: {
   worksheetItems: PacketPayload["worksheet"]["items"];
   /** Bank-feed details for entries that came from the bank, by entry id. */
   bank?: Record<string, { merchant: string | null; raw_category: string | null }>;
+  /** What tax_ready_sections returns for the year, with legal names (see buildTaxReady). */
+  taxReady?: Record<string, any> | null;
 }): PacketPayload {
   const entries = a.sections.entries.map((e) => {
     const bank = a.bank?.[e.id as string];
@@ -97,7 +101,31 @@ export function composePacket(a: {
     roll_forwards: a.sections.roll_forwards,
     forms_1099: a.forms1099 ?? [],
     worksheet: { items: a.worksheetItems },
+    ...(a.taxReady ? { tax_ready: a.taxReady } : {}),
     totals: { entries: entries.length, debit_cents: debit, credit_cents: credit },
+  };
+}
+
+/**
+ * The Tax-Ready Folder's data for a packet: what tax_ready_sections returns, with each member's legal names added (from the roster) and nothing else.
+ * No TIN: a member's TIN is only ever in a private file.
+ */
+export function buildTaxReady(sections: Record<string, any>, members: PacketMember[], propertyAddress: string | null = null): Record<string, any> {
+  const names = (key: string | null) => (key ? members.filter((m) => m.member_key === key).map((m) => m.legal_name) : []);
+  const tinStatus = (key: string | null) => (key && members.filter((m) => m.member_key === key).length > 0 && members.filter((m) => m.member_key === key).every((m) => m.tin_status === "on_file") ? "on_file" : "missing");
+  return {
+    year: sections["year"],
+    shares: sections["shares"],
+    members: (sections["members"] as Array<Record<string, any>>).map((m) => ({ ...m, legal_names: names(m["member_key"]) })),
+    transfers: sections["transfers"],
+    sales_1099s: (sections["sales_1099s"] as Array<Record<string, any>>).map((s) => ({
+      ...s,
+      property_address: s["property_address"] ?? propertyAddress,
+      transferor_names: names(s["transferor_member_key"]),
+      transferee_names: names(s["transferee_member_key"]),
+      transferor_tin_status: tinStatus(s["transferor_member_key"]),
+    })),
+    reconciliation: sections["reconciliation"],
   };
 }
 
@@ -155,6 +183,13 @@ export function packetTables(p: PacketPayload): SectionTable[] {
   const alloc = p.income_statement.allocated_to_members as Record<string, number> | undefined;
   if (alloc) is.push(["Passed on to the members", "Income allocated", null, "", alloc.income_allocated_cents ?? 0], ["Passed on to the members", "Expense allocated", null, "", alloc.expense_allocated_cents ?? 0]);
   const nameOf = new Map(p.members.map((m) => [m.member_key, m.legal_name]));
+  const tr = p.tax_ready as Record<string, any> | undefined;
+  const taxReadyTables: SectionTable[] = tr
+    ? [
+        { name: "ownership_records", title: `Per-share ownership ${p.period.year}`, headers: ["share_number", "holder", "from", "to", "days"], rows: (tr["shares"] as Array<Record<string, any>>).flatMap((s) => (s["periods"] as Array<Record<string, any>>).map((x): Cell[] => [s["share_number"], nameOf.get(x["holder_key"] as string) ?? String(x["holder_key"]).slice(0, 8), x["from"], x["to"], x["days"]])), money: [] },
+        { name: "sales_1099s", title: `1099-S data ${p.period.year}`, headers: ["date", "share_number", "property", "gross_proceeds", "transferor", "transferee", "transferor_tin_status"], rows: (tr["sales_1099s"] as Array<Record<string, any>>).map((s): Cell[] => [s["date"], s["share_number"], s["property_address"] ?? null, s["gross_proceeds_cents"], (s["transferor_names"] as string[]).join(" & "), (s["transferee_names"] as string[]).join(" & "), s["transferor_tin_status"] ?? null]), money: [3] },
+      ]
+    : [];
   return [
     { name: "accounts", title: "Chart of accounts", headers: ["code", "name", "type", "normal_balance", "member_control"], rows: p.accounts.map((a) => [a.code, a.name, a.type, a.normal_balance, a.member_control ? "yes" : "no"]), money: [] },
     { name: "general_ledger", title: `General ledger ${p.period.year}`, headers: ["date", "entry_id", "source", "source_ref", "memo", "account_code", "account_name", "category", "member_key", "debit", "credit", "reverses_entry_id", "bank_merchant", "bank_category"], rows: gl, money: [9, 10] },
@@ -165,6 +200,7 @@ export function packetTables(p: PacketPayload): SectionTable[] {
     { name: "members", title: "Member roster", headers: ["member_key", "legal_name", "share_count", "interest_percent", "mailing_address", "tin_kind", "tin_status", ...(p.members.some((m) => m.tin) ? ["tin"] : [])], rows: p.members.map((m) => [m.member_key, m.legal_name, m.share_count, m.interest_percent, m.mailing_address, m.tin_kind, m.tin_status, ...(p.members.some((x) => x.tin) ? [m.tin ?? null] : [])]), money: [] },
     { name: "forms_1099", title: "1099 forms issued to LLC vendors", headers: ["vendor_name", "form_type", "tax_year", "amount", "issued_at", "file"], rows: p.forms_1099.map((f) => [f.vendor_name, f.form_type, f.tax_year, f.amount_cents, f.issued_at, f.file]), money: [3] },
     { name: "worksheet", title: "CPA Cooperation Worksheet", headers: ["item", "title", "status", "manager_note", "detail"], rows: p.worksheet.items.map((i) => [i.item_type, i.title, i.status, i.manager_note, JSON.stringify(i.detail)]), money: [] },
+    ...taxReadyTables,
   ];
 }
 

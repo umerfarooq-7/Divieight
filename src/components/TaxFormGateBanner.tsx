@@ -15,13 +15,13 @@ export function TaxFormGateBanner() {
         <p className="text-sm font-semibold text-destructive">{TAX_FORM_GATE_MESSAGE}</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Commission disbursement at closing is blocked for this brokerage until a completed
-          W-9, W-8BEN or W-8BEN-E is uploaded.
+          W-9 (US) or W-8BEN / W-8BEN-E (non-US) is submitted and valid. A W-8 expires, so it is blocked again when it lapses.
         </p>
         <Link
-          to="/broker/onboarding/banking"
+          to="/broker/tax-form"
           className="mt-3 inline-flex items-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground transition-opacity hover:opacity-90"
         >
-          Upload W-9 / W-8
+          Submit your tax form
         </Link>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { toCsv } from "@/lib/csv";
 import { renderPacketPdf } from "@/lib/packet-pdf";
 import { decryptTinsForPacket, formatTin } from "@/lib/w9.server";
 import { buildXlsx } from "@/lib/xlsx";
-import { PACKET_DEADLINE_DAYS, composePacket, packetDeadline, packetTables, packetYearFor, tableRowsForCsv, tableRowsForXlsx, validatePacket, withTins, withoutTins, type LedgerSections, type PacketMember, type PacketPayload } from "@/lib/year-end-packet";
+import { PACKET_DEADLINE_DAYS, buildTaxReady, composePacket, packetDeadline, packetTables, packetYearFor, tableRowsForCsv, tableRowsForXlsx, validatePacket, withTins, withoutTins, type LedgerSections, type PacketMember, type PacketPayload } from "@/lib/year-end-packet";
 
 type Db = { from: (t: string) => any; rpc: (fn: string, args: Record<string, unknown>) => any; storage?: any; auth?: any };
 export interface RequestContext {
@@ -49,34 +49,55 @@ export interface PacketFile {
 // ---------------------------------------------------------------------------------------------------------
 // The roster
 // ---------------------------------------------------------------------------------------------------------
-/** Who held shares at year-end, by legal name. One row per person (a two-member account is one capital account with two people). */
-async function buildRoster(db: Db, propertyId: string, year: number): Promise<{ members: PacketMember[]; w9: Array<{ w9Id: string; key: string; kind: string }>; totalShares: number }> {
+/**
+ * Who held shares at year-end, by legal name. One row per person (a two-member account is one capital account with two people).
+ * `extraIds` are people who held a share earlier in the year and don't now (a seller whose share was sold): they come back in `others` (names and tax-form
+ * status, for the sale records), never in the year-end roster.
+ */
+export async function buildRoster(
+  db: Db,
+  propertyId: string,
+  year: number,
+  extraIds: string[] = [],
+): Promise<{ members: PacketMember[]; others: PacketMember[]; w9: Array<{ w9Id: string; key: string; kind: string }>; totalShares: number }> {
   const { data: held } = await db.rpc("holder_shares_as_of", { _property: propertyId, _date: `${year}-12-31` });
   const holders = ((held ?? []) as Array<{ member_id: string; shares: number }>).map((h) => ({ id: h.member_id, shares: Number(h.shares) }));
   const total = holders.reduce((n, h) => n + h.shares, 0);
   const members: PacketMember[] = [];
+  const others: PacketMember[] = [];
   const w9: Array<{ w9Id: string; key: string; kind: string }> = [];
   const percent = (shares: number) => (total > 0 ? (Math.round((shares * 10000) / total) / 100).toFixed(2) : "0.00");
-  for (const h of holders) {
-    const { data: account } = await db.from("buyer_accounts").select("id").eq("id", h.id).maybeSingle();
+  const people = async (id: string, shares: number, into: PacketMember[]) => {
+    const { data: account } = await db.from("buyer_accounts").select("id").eq("id", id).maybeSingle();
     if (account) {
-      const { data: people } = await db.from("account_members").select("id, full_name, status").eq("buyer_account_id", h.id);
-      const { data: forms } = await db.from("member_w9").select("id, account_member_id, legal_name, address, tin_kind").eq("buyer_account_id", h.id);
+      const { data: persons } = await db.from("account_members").select("id, full_name, status").eq("buyer_account_id", id);
+      const { data: forms } = await db.from("member_w9").select("id, account_member_id, legal_name, address, tin_kind").eq("buyer_account_id", id);
       const byMember = new Map(((forms ?? []) as Array<Record<string, any>>).map((f) => [f.account_member_id as string, f]));
-      const active = ((people ?? []) as Array<Record<string, any>>).filter((p) => p.status !== "removed");
+      const active = ((persons ?? []) as Array<Record<string, any>>).filter((x) => x.status !== "removed");
       const rows = active.length > 0 ? active : (forms ?? []).map((f: Record<string, any>) => ({ id: f.account_member_id, full_name: f.legal_name }));
       for (const person of rows as Array<Record<string, any>>) {
         const f = byMember.get(person.id as string);
-        const legal = ((f?.legal_name as string | undefined) ?? (person.full_name as string | undefined) ?? "").trim() || `Member account ${h.id.slice(0, 8)}`;
-        members.push({ member_key: h.id, legal_name: legal, share_count: h.shares, interest_percent: percent(h.shares), mailing_address: (f?.address as string | undefined) ?? null, tin_kind: (f?.tin_kind as "ssn" | "ein" | undefined) ?? null, tin_status: f ? "on_file" : "missing" });
-        if (f) w9.push({ w9Id: f.id as string, key: `${h.id}:${legal}`, kind: f.tin_kind as string });
+        const legal = ((f?.legal_name as string | undefined) ?? (person.full_name as string | undefined) ?? "").trim() || `Member account ${id.slice(0, 8)}`;
+        into.push({ member_key: id, legal_name: legal, share_count: shares, interest_percent: percent(shares), mailing_address: (f?.address as string | undefined) ?? null, tin_kind: (f?.tin_kind as "ssn" | "ein" | undefined) ?? null, tin_status: f ? "on_file" : "missing" });
+        if (f) w9.push({ w9Id: f.id as string, key: `${id}:${legal}`, kind: f.tin_kind as string });
       }
-      continue;
+      return;
     }
-    const { data: seller } = await db.from("sellers").select("full_name, address").eq("id", h.id).maybeSingle();
-    members.push({ member_key: h.id, legal_name: ((seller?.full_name as string | undefined) ?? "").trim() || `Retained seller ${h.id.slice(0, 8)}`, share_count: h.shares, interest_percent: percent(h.shares), mailing_address: (seller?.address as string | undefined) ?? null, tin_kind: null, tin_status: "missing" });
-  }
-  return { members, w9, totalShares: total };
+    const { data: seller } = await db.from("sellers").select("full_name, address").eq("id", id).maybeSingle();
+    into.push({ member_key: id, legal_name: ((seller?.full_name as string | undefined) ?? "").trim() || `Retained seller ${id.slice(0, 8)}`, share_count: shares, interest_percent: percent(shares), mailing_address: (seller?.address as string | undefined) ?? null, tin_kind: null, tin_status: "missing" });
+  };
+  for (const h of holders) await people(h.id, h.shares, members);
+  for (const id of [...new Set(extraIds)].filter((x) => x && !holders.some((h) => h.id === x))) await people(id, 0, others);
+  return { members, others, w9, totalShares: total };
+}
+
+/** Everyone named in a Tax-Ready section: holders at any point in the year and the parties to a sale. */
+export function taxReadyPeople(sections: Record<string, any> | null | undefined): string[] {
+  if (!sections) return [];
+  const ids: string[] = [];
+  for (const s of (sections["shares"] ?? []) as Array<Record<string, any>>) for (const x of (s["periods"] ?? []) as Array<Record<string, any>>) if (x["holder_key"]) ids.push(x["holder_key"] as string);
+  for (const t of [...(sections["transfers"] ?? []), ...(sections["sales_1099s"] ?? [])] as Array<Record<string, any>>) for (const k of [t["transferor_member_key"], t["transferee_member_key"]]) if (k) ids.push(k as string);
+  return ids;
 }
 
 async function firstAdmin(db: Db): Promise<string> {
@@ -111,7 +132,10 @@ export async function generatePacket(db: Db, p: GenerateParams) {
 
   const { data: prop } = await db.from("properties").select("address, city, state, zip").eq("id", p.propertyId).maybeSingle();
   const { data: genesis } = await db.from("entity_genesis").select("llc_name").eq("property_id", p.propertyId).maybeSingle();
-  const roster = await buildRoster(db, p.propertyId, p.year);
+  // The Tax-Ready Folder's data (1099-S sales and per-share ownership), without TINs. If tax-forms.sql hasn't been run the packet simply has none.
+  const taxSections = await db.rpc("tax_ready_sections", { _property: p.propertyId, _year: p.year });
+  const taxData = taxSections.error || !taxSections.data ? null : (taxSections.data as Record<string, any>);
+  const roster = await buildRoster(db, p.propertyId, p.year, [...taxReadyPeople(taxData), ...sections.roll_forwards.map((r) => String(r["member_key"]))]);
   const { data: items } = await db.from("cpa_worksheet_items").select("*").eq("property_id", p.propertyId).eq("year", p.year);
   const worksheetItems = ((items ?? []) as Array<Record<string, any>>)
     .sort((a, b) => String(a.item_type).localeCompare(String(b.item_type)) || String(a.title).localeCompare(String(b.title)))
@@ -126,6 +150,8 @@ export async function generatePacket(db: Db, p: GenerateParams) {
     if (!error) for (const t of (txns ?? []) as Array<Record<string, any>>) if (t.journal_entry_id) bank[t.journal_entry_id as string] = { merchant: (t.merchant_name ?? null) as string | null, raw_category: (t.raw_category ?? null) as string | null };
   }
 
+  const taxReady = taxData ? buildTaxReady(taxData, [...roster.members, ...roster.others], (prop?.address ?? null) as string | null) : null;
+
   const packetId = randomUUID();
   const payload = composePacket({
     packetId,
@@ -134,10 +160,11 @@ export async function generatePacket(db: Db, p: GenerateParams) {
     property: { property_id: p.propertyId, llc_name: (genesis?.llc_name ?? null) as string | null, address: (prop?.address ?? null) as string | null, city: (prop?.city ?? null) as string | null, state: (prop?.state ?? null) as string | null, zip: (prop?.zip ?? null) as string | null, total_shares: roster.totalShares },
     year: p.year,
     sections,
-    members: roster.members,
+    members: [...roster.members, ...roster.others],
     forms1099,
     worksheetItems,
     bank,
+    taxReady,
   });
   // Checked against its own schema before anything is recorded.
   const problems = validatePacket(payload);

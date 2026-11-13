@@ -83,10 +83,6 @@ function BrokerBankingPage() {
       setError("Enter the full account number.");
       return;
     }
-    if (!file && !broker.w9_or_w8_url) {
-      setError(`Upload your completed ${taxType} form.`);
-      return;
-    }
 
     setSubmitting(true);
     let path = broker.w9_or_w8_url;

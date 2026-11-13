@@ -61,6 +61,7 @@ import { Route as AdminSettlementRouteImport } from './routes/admin.settlement'
 import { Route as AdminStandardRouteImport } from './routes/admin.standard'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminTaxRouteImport } from './routes/admin.tax'
 import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
 import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escrow'
 import { Route as AgentIndexRouteImport } from './routes/agent.index'
@@ -83,6 +84,7 @@ import { Route as BrokerClosingHoldsRouteImport } from './routes/broker.closing-
 import { Route as BrokerDashboardRouteImport } from './routes/broker.dashboard'
 import { Route as BrokerLoginRouteImport } from './routes/broker.login'
 import { Route as BrokerRegisterRouteImport } from './routes/broker.register'
+import { Route as BrokerTaxFormRouteImport } from './routes/broker.tax-form'
 import { Route as BuyerAdverseActionRouteImport } from './routes/buyer.adverse-action'
 import { Route as BuyerAuthorityRouteImport } from './routes/buyer.authority'
 import { Route as BuyerAuthorizationsRouteImport } from './routes/buyer.authorizations'
@@ -168,6 +170,7 @@ import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public
 import { Route as ApiPublicStandardRulesCheckRouteImport } from './routes/api.public.standard-rules-check'
 import { Route as ApiPublicStatementsSweepRouteImport } from './routes/api.public.statements-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
+import { Route as ApiPublicTaxFormSweepRouteImport } from './routes/api.public.tax-form-sweep'
 import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
 import { Route as ApiPublicYearEndPacketSweepRouteImport } from './routes/api.public.year-end-packet-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
@@ -486,6 +489,11 @@ const AdminSupportRoute = AdminSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTaxRoute = AdminTaxRouteImport.update({
+  id: '/tax',
+  path: '/tax',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminTetherResolutionRoute = AdminTetherResolutionRouteImport.update({
   id: '/tether-resolution',
   path: '/tether-resolution',
@@ -594,6 +602,11 @@ const BrokerLoginRoute = BrokerLoginRouteImport.update({
 const BrokerRegisterRoute = BrokerRegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => BrokerRoute,
+} as any)
+const BrokerTaxFormRoute = BrokerTaxFormRouteImport.update({
+  id: '/tax-form',
+  path: '/tax-form',
   getParentRoute: () => BrokerRoute,
 } as any)
 const BuyerAdverseActionRoute = BuyerAdverseActionRouteImport.update({
@@ -1045,6 +1058,11 @@ const ApiPublicSubstitutionSweepRoute =
     path: '/api/public/substitution-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTaxFormSweepRoute = ApiPublicTaxFormSweepRouteImport.update({
+  id: '/api/public/tax-form-sweep',
+  path: '/api/public/tax-form-sweep',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicUseCalendarSweepRoute =
   ApiPublicUseCalendarSweepRouteImport.update({
     id: '/api/public/use-calendar-sweep',
@@ -1409,6 +1427,7 @@ export interface FileRoutesByFullPath {
   '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
+  '/admin/tax': typeof AdminTaxRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -1429,6 +1448,7 @@ export interface FileRoutesByFullPath {
   '/broker/dashboard': typeof BrokerDashboardRoute
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
+  '/broker/tax-form': typeof BrokerTaxFormRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
   '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
@@ -1512,6 +1532,7 @@ export interface FileRoutesByFullPath {
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/tax-form-sweep': typeof ApiPublicTaxFormSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1620,6 +1641,7 @@ export interface FileRoutesByTo {
   '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
+  '/admin/tax': typeof AdminTaxRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -1639,6 +1661,7 @@ export interface FileRoutesByTo {
   '/broker/dashboard': typeof BrokerDashboardRoute
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
+  '/broker/tax-form': typeof BrokerTaxFormRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
   '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/closing-funds': typeof BuyerClosingFundsRoute
@@ -1721,6 +1744,7 @@ export interface FileRoutesByTo {
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/tax-form-sweep': typeof ApiPublicTaxFormSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1835,6 +1859,7 @@ export interface FileRoutesById {
   '/admin/standard': typeof AdminStandardRoute
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
+  '/admin/tax': typeof AdminTaxRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -1855,6 +1880,7 @@ export interface FileRoutesById {
   '/broker/dashboard': typeof BrokerDashboardRoute
   '/broker/login': typeof BrokerLoginRoute
   '/broker/register': typeof BrokerRegisterRoute
+  '/broker/tax-form': typeof BrokerTaxFormRoute
   '/buyer/adverse-action': typeof BuyerAdverseActionRoute
   '/buyer/authority': typeof BuyerAuthorityRoute
   '/buyer/authorizations': typeof BuyerAuthorizationsRouteWithChildren
@@ -1938,6 +1964,7 @@ export interface FileRoutesById {
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
+  '/api/public/tax-form-sweep': typeof ApiPublicTaxFormSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -2053,6 +2080,7 @@ export interface FileRouteTypes {
     | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
+    | '/admin/tax'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2073,6 +2101,7 @@ export interface FileRouteTypes {
     | '/broker/dashboard'
     | '/broker/login'
     | '/broker/register'
+    | '/broker/tax-form'
     | '/buyer/adverse-action'
     | '/buyer/authority'
     | '/buyer/authorizations'
@@ -2156,6 +2185,7 @@ export interface FileRouteTypes {
     | '/api/public/standard-rules-check'
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/tax-form-sweep'
     | '/api/public/use-calendar-sweep'
     | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
@@ -2264,6 +2294,7 @@ export interface FileRouteTypes {
     | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
+    | '/admin/tax'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2283,6 +2314,7 @@ export interface FileRouteTypes {
     | '/broker/dashboard'
     | '/broker/login'
     | '/broker/register'
+    | '/broker/tax-form'
     | '/buyer/adverse-action'
     | '/buyer/authority'
     | '/buyer/closing-funds'
@@ -2365,6 +2397,7 @@ export interface FileRouteTypes {
     | '/api/public/standard-rules-check'
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/tax-form-sweep'
     | '/api/public/use-calendar-sweep'
     | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
@@ -2478,6 +2511,7 @@ export interface FileRouteTypes {
     | '/admin/standard'
     | '/admin/substitutions'
     | '/admin/support'
+    | '/admin/tax'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2498,6 +2532,7 @@ export interface FileRouteTypes {
     | '/broker/dashboard'
     | '/broker/login'
     | '/broker/register'
+    | '/broker/tax-form'
     | '/buyer/adverse-action'
     | '/buyer/authority'
     | '/buyer/authorizations'
@@ -2581,6 +2616,7 @@ export interface FileRouteTypes {
     | '/api/public/standard-rules-check'
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
+    | '/api/public/tax-form-sweep'
     | '/api/public/use-calendar-sweep'
     | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
@@ -2727,6 +2763,7 @@ export interface RootRouteChildren {
   ApiPublicStandardRulesCheckRoute: typeof ApiPublicStandardRulesCheckRoute
   ApiPublicStatementsSweepRoute: typeof ApiPublicStatementsSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
+  ApiPublicTaxFormSweepRoute: typeof ApiPublicTaxFormSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   ApiPublicYearEndPacketSweepRoute: typeof ApiPublicYearEndPacketSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
@@ -3129,6 +3166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSupportRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/tax': {
+      id: '/admin/tax'
+      path: '/tax'
+      fullPath: '/admin/tax'
+      preLoaderRoute: typeof AdminTaxRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/tether-resolution': {
       id: '/admin/tether-resolution'
       path: '/tether-resolution'
@@ -3281,6 +3325,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/broker/register'
       preLoaderRoute: typeof BrokerRegisterRouteImport
+      parentRoute: typeof BrokerRoute
+    }
+    '/broker/tax-form': {
+      id: '/broker/tax-form'
+      path: '/tax-form'
+      fullPath: '/broker/tax-form'
+      preLoaderRoute: typeof BrokerTaxFormRouteImport
       parentRoute: typeof BrokerRoute
     }
     '/buyer/adverse-action': {
@@ -3878,6 +3929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSubstitutionSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tax-form-sweep': {
+      id: '/api/public/tax-form-sweep'
+      path: '/api/public/tax-form-sweep'
+      fullPath: '/api/public/tax-form-sweep'
+      preLoaderRoute: typeof ApiPublicTaxFormSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/use-calendar-sweep': {
       id: '/api/public/use-calendar-sweep'
       path: '/api/public/use-calendar-sweep'
@@ -4327,6 +4385,7 @@ interface AdminRouteChildren {
   AdminStandardRoute: typeof AdminStandardRoute
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
+  AdminTaxRoute: typeof AdminTaxRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
   AdminTitleEscrowRoute: typeof AdminTitleEscrowRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -4377,6 +4436,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminStandardRoute: AdminStandardRoute,
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
   AdminSupportRoute: AdminSupportRoute,
+  AdminTaxRoute: AdminTaxRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
   AdminTitleEscrowRoute: AdminTitleEscrowRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -4472,6 +4532,7 @@ interface BrokerRouteChildren {
   BrokerDashboardRoute: typeof BrokerDashboardRoute
   BrokerLoginRoute: typeof BrokerLoginRoute
   BrokerRegisterRoute: typeof BrokerRegisterRoute
+  BrokerTaxFormRoute: typeof BrokerTaxFormRoute
   BrokerIndexRoute: typeof BrokerIndexRoute
   BrokerOnboardingBankingRoute: typeof BrokerOnboardingBankingRoute
   BrokerOnboardingComplianceRoute: typeof BrokerOnboardingComplianceRoute
@@ -4484,6 +4545,7 @@ const BrokerRouteChildren: BrokerRouteChildren = {
   BrokerDashboardRoute: BrokerDashboardRoute,
   BrokerLoginRoute: BrokerLoginRoute,
   BrokerRegisterRoute: BrokerRegisterRoute,
+  BrokerTaxFormRoute: BrokerTaxFormRoute,
   BrokerIndexRoute: BrokerIndexRoute,
   BrokerOnboardingBankingRoute: BrokerOnboardingBankingRoute,
   BrokerOnboardingComplianceRoute: BrokerOnboardingComplianceRoute,
@@ -4618,6 +4680,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicStandardRulesCheckRoute: ApiPublicStandardRulesCheckRoute,
   ApiPublicStatementsSweepRoute: ApiPublicStatementsSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
+  ApiPublicTaxFormSweepRoute: ApiPublicTaxFormSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   ApiPublicYearEndPacketSweepRoute: ApiPublicYearEndPacketSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,

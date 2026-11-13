@@ -69,7 +69,7 @@ describe("pre-closing gates — any failure blocks generation", () => {
   const cases: Array<[string, () => void, string]> = [
     ["Broker Closing Hold", () => (db().table("pods")[0].closing_hold_active = true), "closing_hold_active"],
     ["agent transactions_held", () => (db().table("agents").find((a) => a.id === IDS.ra2)!.transactions_held = true), "agent_transactions_held"],
-    ["broker without W-9/W-8", () => (db().table("brokers").find((b) => b.id === "broker-2")!.tax_form_verified = false), "broker_payment_gate"],
+    ["broker without W-9/W-8", () => (db().table("broker_tax_forms").find((x) => x.broker_id === "broker-2")!.status = "rejected"), "broker_payment_gate"],
     ["dual agency", () => (db().table("properties")[0].listing_agent_id = IDS.ra), "dual_agency_violation"],
     ["no bound insurance", () => (db().table("insurance_policies")[0].status = "pending"), "insurance_not_bound"],
     ["TIN not matched", () => (db().table("entity_genesis")[0].tin_match_result = "name_mismatch"), "llc_tin_not_verified"],

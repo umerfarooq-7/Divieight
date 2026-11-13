@@ -64,6 +64,19 @@ export function renderPacketPdf(p: PacketPayload, version: number, hash: string)
   if (p.forms_1099.length === 0) doc.text("The platform issued no 1099 forms to this LLC's vendors in this year.");
   for (const f of p.forms_1099) doc.row(`${f.vendor_name} · ${f.form_type}`, m(f.amount_cents));
 
+  if (p.tax_ready) {
+    const tr = p.tax_ready as Record<string, any>;
+    doc.heading(`Tax-Ready Folder ${p.period.year}`);
+    doc.text("Per-share ownership and 1099-S data for the CPA's K-1 preparation. No TIN is in this packet's general files.");
+    const rec = tr["reconciliation"] as Record<string, any>;
+    doc.row("Shares reconciled to the cap table", rec["reconciled"] ? "Yes" : "NO", { bold: true });
+    doc.row("Share-days counted / expected", `${rec["share_days_total"]} / ${rec["share_days_expected"]}`);
+    for (const x of tr["members"] as Array<Record<string, any>>) doc.row((x["legal_names"] as string[]).join(" & ") || `Member ${String(x["member_key"]).slice(0, 8)}`, `${x["year_end_shares"]} shares at year-end · ${x["percent_of_share_days"]}% of share-days`, { indent: 12 });
+    const sales = tr["sales_1099s"] as Array<Record<string, any>>;
+    if (sales.length === 0) doc.text("No completed sales of a share in this year (no 1099-S data).");
+    for (const s of sales) doc.row(`${s["date"]}  Share ${s["share_number"]}: ${(s["transferor_names"] as string[]).join(" & ") || "transferor"} to ${(s["transferee_names"] as string[]).join(" & ") || "transferee"}`, m(Number(s["gross_proceeds_cents"])), { indent: 12 });
+  }
+
   doc.heading("CPA Cooperation Worksheet");
   doc.text("Flags for the CPA. The platform computes no depreciation and no Section 754 step-up.");
   if (p.worksheet.items.length === 0) doc.text("Nothing is flagged.");

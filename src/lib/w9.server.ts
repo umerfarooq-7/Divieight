@@ -133,16 +133,53 @@ export async function decryptTinForTaxExport(db: Db, params: { actorId: string |
  * The TINs for a year-end packet's private roster, one audited decryption each (reason: the packet and its year). A W-9 with no TIN is simply left out.
  * If the audit row can't be written the whole thing stops. Never a TIN in an error.
  */
-export async function decryptTinsForPacket(db: Db, params: { actorId: string | null; propertyId: string; year: number; w9Ids: string[] }): Promise<Record<string, string>> {
+export async function decryptTinsForPacket(db: Db, params: { actorId: string | null; propertyId: string; year: number; w9Ids: string[]; purpose?: string }): Promise<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const w9Id of params.w9Ids) {
     try {
-      out[w9Id] = await decryptTinForTaxExport(db, { actorId: params.actorId, w9Id, reason: `Year-end CPA export packet ${params.year}`, propertyId: params.propertyId });
+      out[w9Id] = await decryptTinForTaxExport(db, { actorId: params.actorId, w9Id, reason: params.purpose ?? `Year-end CPA export packet ${params.year}`, propertyId: params.propertyId });
     } catch (e) {
       if (/audit log/.test((e as Error).message)) throw new Error("The TINs can't be shown: the audit log could not be written.");
     }
   }
   return out;
+}
+
+/** Which encrypted table holds a broker's or an influencer's tax ID, and what binds a ciphertext to its row. */
+const VAULT_SECRETS = {
+  broker_tax_form: { table: "broker_tax_form_secrets", key: "form_id", entity: "broker_tax_form" },
+  influencer_payee: { table: "influencer_payee_secrets", key: "payee_id", entity: "influencer_payee" },
+} as const;
+export type VaultSecretKind = keyof typeof VAULT_SECRETS;
+/** What a ciphertext is bound to: moved to another row it won't decrypt. */
+export const secretAad = (kind: VaultSecretKind, id: string) => `${kind}:${id}`;
+
+/**
+ * A broker's or an influencer's tax ID, for someone with the tax-vault permission and a reason. Every view is audit logged first (with who, why and
+ * when, never the value); if the log can't be written nothing is shown. Whatever goes wrong, the message never carries the value.
+ */
+export async function viewTaxIdAsVault(db: Db & { rpc: (fn: string, args: Record<string, unknown>) => any }, params: { userId: string; kind: VaultSecretKind; id: string; reason: string }): Promise<{ tin: string }> {
+  const reason = params.reason.trim();
+  if (!reason) throw new Error("Give the reason for viewing this tax ID.");
+  const { data: allowed } = await db.rpc("has_tax_vault_access", { _user: params.userId });
+  if (allowed !== true) throw new Error("You don't have access to the tax vault.");
+  const t = VAULT_SECRETS[params.kind];
+  const { data } = await db.from(t.table).select(`${t.key}, ciphertext, iv, auth_tag, key_version`).eq(t.key, params.id).maybeSingle();
+  if (!data) throw new Error("No tax ID is on file.");
+  const { error } = await db.from("audit_log").insert({
+    actor_id: params.userId,
+    actor_type: "admin",
+    action_type: `tax_vault.${params.kind}_tin_viewed`,
+    entity_type: t.entity,
+    entity_id: params.id,
+    metadata: { reason: reason.slice(0, 500), at: new Date().toISOString() },
+  });
+  if (error) throw new Error("The tax ID can't be shown: the audit log could not be written.");
+  try {
+    return { tin: decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, secretAad(params.kind, params.id)) };
+  } catch {
+    throw new Error("The tax ID could not be shown.");
+  }
 }
 
 /** The permissible purpose for a CPA's TIN view. */

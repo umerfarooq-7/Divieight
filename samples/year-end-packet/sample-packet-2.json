@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "packet_id": "00000000-0000-4000-8000-000000000001",
   "generated_at": "2026-01-05T09:00:00Z",
   "trigger": "scheduled",
@@ -312,6 +312,33 @@
     },
     {
       "id": "00000000-0000-4000-8000-000000000012",
+      "date": "2025-06-15",
+      "memo": "Capital transfer for share #8 at the recorded price of 2000. No Section 754 adjustment computed.",
+      "lines": [
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000008",
+          "debit_cents": 0,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 91375
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000009",
+          "debit_cents": 91375,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        }
+      ],
+      "source": "resale",
+      "adjustment": false,
+      "source_ref": "resale:00000000-0000-4000-8000-000000000013",
+      "reverses_entry_id": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
       "date": "2025-12-31",
       "memo": "Depreciation for 2025 per the CPA's schedule CPA schedule 2025-A",
       "lines": [
@@ -400,8 +427,8 @@
         "code": "3200",
         "name": "Member Capital Account (control)",
         "type": "equity",
-        "debit_cents": 169000,
-        "credit_cents": 100000,
+        "debit_cents": 260375,
+        "credit_cents": 191375,
         "balance_cents": -69000
       },
       {
@@ -423,8 +450,8 @@
     ],
     "as_of": "2025-12-31",
     "balanced": true,
-    "total_debit_cents": 1389000,
-    "total_credit_cents": 1389000
+    "total_debit_cents": 1480375,
+    "total_credit_cents": 1480375
   },
   "balance_sheet": {
     "as_of": "2025-12-31",
@@ -454,11 +481,11 @@
       },
       {
         "member_key": "00000000-0000-4000-8000-000000000008",
-        "balance_cents": 274125
+        "balance_cents": 365500
       },
       {
         "member_key": "00000000-0000-4000-8000-000000000009",
-        "balance_cents": 91375
+        "balance_cents": 0
       }
     ],
     "total_assets_cents": 671000,
@@ -525,8 +552,8 @@
     {
       "member_key": "00000000-0000-4000-8000-000000000008",
       "legal_name": "Casey Sample",
-      "share_count": 3,
-      "interest_percent": "37.50",
+      "share_count": 4,
+      "interest_percent": "50.00",
       "mailing_address": "9 Pine Rd, Casper, WY 82601",
       "tin_kind": "ein",
       "tin_status": "on_file"
@@ -534,8 +561,8 @@
     {
       "member_key": "00000000-0000-4000-8000-000000000009",
       "legal_name": "Dana Seller (retained)",
-      "share_count": 1,
-      "interest_percent": "12.50",
+      "share_count": 0,
+      "interest_percent": "0.00",
       "mailing_address": null,
       "tin_kind": null,
       "tin_status": "missing"
@@ -557,11 +584,11 @@
     },
     {
       "member_key": "00000000-0000-4000-8000-000000000008",
-      "ending_cents": 274125,
+      "ending_cents": 365500,
       "income_cents": 18750,
       "expense_cents": -30000,
       "beginning_cents": 288750,
-      "transfers_cents": 0,
+      "transfers_cents": 91375,
       "depreciation_cents": -3375,
       "contributions_cents": 0,
       "distributions_cents": 0,
@@ -570,11 +597,11 @@
     },
     {
       "member_key": "00000000-0000-4000-8000-000000000009",
-      "ending_cents": 91375,
+      "ending_cents": 0,
       "income_cents": 6250,
       "expense_cents": -10000,
       "beginning_cents": 96250,
-      "transfers_cents": 0,
+      "transfers_cents": -91375,
       "depreciation_cents": -1125,
       "contributions_cents": 0,
       "distributions_cents": 0,
@@ -629,7 +656,7 @@
         "manager_note": null,
         "detail": {
           "note": "A share was resold in June",
-          "flag_id": "00000000-0000-4000-8000-000000000013",
+          "flag_id": "00000000-0000-4000-8000-000000000015",
           "flag_type": "section_754_review",
           "flagged_on": "2025-06-01",
           "resale_transaction_id": null
@@ -637,9 +664,189 @@
       }
     ]
   },
+  "tax_ready": {
+    "year": 2025,
+    "shares": [
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 1,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 2,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 3,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 4,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 5,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 6,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 7,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-06-14",
+            "days": 165,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000009"
+          },
+          {
+            "to": "2025-12-31",
+            "days": 200,
+            "from": "2025-06-15",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 8,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      }
+    ],
+    "members": [
+      {
+        "member_key": "00000000-0000-4000-8000-000000000007",
+        "share_days": 1460,
+        "year_end_shares": 4,
+        "percent_of_share_days": "50.0000",
+        "legal_names": [
+          "Ann Example",
+          "Ben Example"
+        ]
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000008",
+        "share_days": 1295,
+        "year_end_shares": 4,
+        "percent_of_share_days": "44.3493",
+        "legal_names": [
+          "Casey Sample"
+        ]
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000009",
+        "share_days": 165,
+        "year_end_shares": 0,
+        "percent_of_share_days": "5.6507",
+        "legal_names": [
+          "Dana Seller (retained)"
+        ]
+      }
+    ],
+    "transfers": [
+      {
+        "date": "2025-06-15",
+        "share_number": 8,
+        "resale_transaction_id": "00000000-0000-4000-8000-000000000013",
+        "transferee_member_key": "00000000-0000-4000-8000-000000000008",
+        "transferor_member_key": "00000000-0000-4000-8000-000000000009"
+      }
+    ],
+    "sales_1099s": [
+      {
+        "date": "2025-06-15",
+        "share_number": 8,
+        "property_address": "5632 Independence Ave",
+        "gross_proceeds_cents": 200000,
+        "resale_transaction_id": "00000000-0000-4000-8000-000000000013",
+        "transferee_member_key": "00000000-0000-4000-8000-000000000008",
+        "transferor_member_key": "00000000-0000-4000-8000-000000000009",
+        "transferor_names": [
+          "Dana Seller (retained)"
+        ],
+        "transferee_names": [
+          "Casey Sample"
+        ],
+        "transferor_tin_status": "missing"
+      }
+    ],
+    "reconciliation": {
+      "reconciled": true,
+      "days_in_year": 365,
+      "total_shares": 8,
+      "year_end_shares": 8,
+      "share_days_total": 2920,
+      "share_days_expected": 2920
+    }
+  },
   "totals": {
-    "entries": 6,
-    "debit_cents": 299000,
-    "credit_cents": 299000
+    "entries": 7,
+    "debit_cents": 390375,
+    "credit_cents": 390375
   }
 }

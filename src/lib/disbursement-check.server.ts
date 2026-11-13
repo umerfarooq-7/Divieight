@@ -15,6 +15,8 @@ type Db = { from: (t: string) => any };
 export type TitleSource = "webhook" | "manual_entry";
 
 export interface CheckLine {
+  /** The payee's tax-form state: a payout is refused to a Broker of Record with no valid form. */
+  taxForm?: { ok: boolean; code?: string; reason?: string; link?: string };
   brokerId: string;
   brokerage: string;
   platformCents: number | null;
@@ -32,6 +34,8 @@ export interface CheckDifference {
   titleCents?: number | null;
   deltaCents?: number;
   detail?: string;
+  /** Where the broker fixes a tax-form problem. */
+  link?: string;
 }
 
 export interface DisbursementCheckResult {
@@ -139,12 +143,22 @@ export async function runDisbursementCheck(
     if (!payees.some((p) => p.brokerId === t.brokerId))
       lines.push({ brokerId: t.brokerId, brokerage: "Unknown payee", platformCents: null, titleCents: t.cents, deltaCents: t.cents, match: false, kind: "unexpected_in_title" });
 
+  // The tax-form gate: a HARD stop. Every payee must have a valid W-9 (or W-8BEN / W-8BEN-E) on file, whatever the amounts say.
+  const { checkCommissionPaymentGate } = await import("@/lib/payment-gate");
+  for (const l of lines) {
+    if (l.kind === "unexpected_in_title") continue;
+    const gate = await checkCommissionPaymentGate(l.brokerId, db);
+    l.taxForm = { ok: gate.allowed, code: gate.code, reason: gate.reason, link: gate.link };
+  }
+
   const platformTotal = sot.structured.totals.commissionCents;
   const titleTotal = titleLines.length ? titleLines.reduce((a, t) => a + t.cents, 0) : null;
   const differences: CheckDifference[] = [];
   if (!title) differences.push({ kind: "no_title_figures", detail: "The title company hasn't reported final commission figures." });
   for (const l of lines.filter((x) => !x.match))
     differences.push({ kind: l.kind, brokerId: l.brokerId, brokerage: l.brokerage, platformCents: l.platformCents, titleCents: l.titleCents, deltaCents: l.deltaCents });
+  for (const l of lines.filter((x) => x.taxForm && !x.taxForm.ok))
+    differences.push({ kind: l.taxForm!.code ?? "tax_form_missing", brokerId: l.brokerId, brokerage: l.brokerage, detail: l.taxForm!.reason, link: l.taxForm!.link });
   if (titleTotal != null && titleTotal !== platformTotal)
     differences.push({ kind: "total_mismatch", platformCents: platformTotal, titleCents: titleTotal, deltaCents: titleTotal - platformTotal });
   const status: "pass" | "fail" = differences.length ? "fail" : "pass";
@@ -157,11 +171,11 @@ export async function runDisbursementCheck(
       (l, i) =>
         `${i + 1}. ${l.brokerage} [${l.brokerId}] — platform ${usd(l.platformCents)} · title ${usd(l.titleCents)} · ${
           l.match ? "MATCH" : `MISMATCH ${signed(l.deltaCents)} (${l.kind.replace(/_/g, " ")})`
-        }`,
+        }${l.taxForm && !l.taxForm.ok ? ` · ${l.taxForm.reason ?? "Tax form missing"} (broker fixes it at ${l.taxForm.link})` : ""}`,
     ),
     "",
     `Total — platform ${usd(platformTotal)} · title ${usd(titleTotal)}${titleTotal != null && titleTotal !== platformTotal ? ` · MISMATCH ${signed(titleTotal - platformTotal)}` : ""}`,
-    status === "fail" ? "The wire must not proceed until every line is reconciled to the cent." : "Every line matches to the cent.",
+    status === "fail" ? "The wire must not proceed until every line is reconciled to the cent and every payee has a valid tax form." : "Every line matches to the cent.",
   ].join("\n");
 
   const { data: row } = await db

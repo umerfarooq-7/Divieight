@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "packet_id": "00000000-0000-4000-8000-000000000001",
   "generated_at": "2026-01-05T09:00:00Z",
   "trigger": "scheduled",
@@ -554,6 +554,155 @@
         }
       }
     ]
+  },
+  "tax_ready": {
+    "year": 2025,
+    "shares": [
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 1,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 2,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 3,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000007"
+          }
+        ],
+        "share_number": 4,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000007"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 5,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 6,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000008"
+          }
+        ],
+        "share_number": 7,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000008"
+      },
+      {
+        "periods": [
+          {
+            "to": "2025-12-31",
+            "days": 365,
+            "from": "2025-01-01",
+            "holder_key": "00000000-0000-4000-8000-000000000009"
+          }
+        ],
+        "share_number": 8,
+        "days_accounted_for": 365,
+        "year_end_holder_key": "00000000-0000-4000-8000-000000000009"
+      }
+    ],
+    "members": [
+      {
+        "member_key": "00000000-0000-4000-8000-000000000007",
+        "share_days": 1460,
+        "year_end_shares": 4,
+        "percent_of_share_days": "50.0000",
+        "legal_names": [
+          "Ann Example",
+          "Ben Example"
+        ]
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000008",
+        "share_days": 1095,
+        "year_end_shares": 3,
+        "percent_of_share_days": "37.5000",
+        "legal_names": [
+          "Casey Sample"
+        ]
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000009",
+        "share_days": 365,
+        "year_end_shares": 1,
+        "percent_of_share_days": "12.5000",
+        "legal_names": [
+          "Dana Seller (retained)"
+        ]
+      }
+    ],
+    "transfers": [],
+    "sales_1099s": [],
+    "reconciliation": {
+      "reconciled": true,
+      "days_in_year": 365,
+      "total_shares": 8,
+      "year_end_shares": 8,
+      "share_days_total": 2920,
+      "share_days_expected": 2920
+    }
   },
   "totals": {
     "entries": 5,
