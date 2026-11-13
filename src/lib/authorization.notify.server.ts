@@ -133,7 +133,7 @@ export async function deliver(
   let emailed = false;
   if (addresses.length > 0 && !(await emailSwitchedOff(db, recipient.authUserId, args.type))) {
     for (const to of addresses) {
-      const ok = await sendEmail(to, args.subject, args.message, args.link ?? null, args.type && (isOwnerNotificationType(args.type) || args.type === "former_seller_weeks" || args.type === "held_reminder") ? "Open in divieight" : "Open the authorization request");
+      const ok = await sendEmail(to, args.subject, args.message, args.link ?? null, args.type === "tc_update" ? "See what changed" : args.type && (isOwnerNotificationType(args.type) || args.type === "former_seller_weeks" || args.type === "held_reminder") ? "Open in divieight" : "Open the authorization request");
       emailed = emailed || ok;
     }
   }

@@ -213,9 +213,12 @@ export function NavBar() {
                   <span className="hidden sm:inline">Owner</span>
                 </Link>
               ) : null}
-              <span className="hidden max-w-[180px] truncate text-xs text-muted-foreground sm:inline">
+              <Link
+                to="/account/settings"
+                className="hidden max-w-[180px] truncate text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:inline"
+              >
                 {user.email}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={onSignOut}

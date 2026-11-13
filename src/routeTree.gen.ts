@@ -24,7 +24,9 @@ import { Route as ResaleRouteImport } from './routes/resale'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TermsChangesRouteImport } from './routes/terms-changes'
 import { Route as ATokenRouteImport } from './routes/a.$token'
+import { Route as AccountSettingsRouteImport } from './routes/account.settings'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAgentAssignmentsRouteImport } from './routes/admin.agent-assignments'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
@@ -63,6 +65,7 @@ import { Route as AdminStandardRouteImport } from './routes/admin.standard'
 import { Route as AdminSubstitutionsRouteImport } from './routes/admin.substitutions'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminTaxRouteImport } from './routes/admin.tax'
+import { Route as AdminTermsRouteImport } from './routes/admin.terms'
 import { Route as AdminTetherResolutionRouteImport } from './routes/admin.tether-resolution'
 import { Route as AdminTitleEscrowRouteImport } from './routes/admin.title-escrow'
 import { Route as AgentIndexRouteImport } from './routes/agent.index'
@@ -310,9 +313,19 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsChangesRoute = TermsChangesRouteImport.update({
+  id: '/terms-changes',
+  path: '/terms-changes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ATokenRoute = ATokenRouteImport.update({
   id: '/a/$token',
   path: '/a/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSettingsRoute = AccountSettingsRouteImport.update({
+  id: '/account/settings',
+  path: '/account/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -505,6 +518,11 @@ const AdminSupportRoute = AdminSupportRouteImport.update({
 const AdminTaxRoute = AdminTaxRouteImport.update({
   id: '/tax',
   path: '/tax',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTermsRoute = AdminTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTetherResolutionRoute = AdminTetherResolutionRouteImport.update({
@@ -1442,7 +1460,9 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/terms-changes': typeof TermsChangesRoute
   '/a/$token': typeof ATokenRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
@@ -1480,6 +1500,7 @@ export interface FileRoutesByFullPath {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tax': typeof AdminTaxRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -1665,7 +1686,9 @@ export interface FileRoutesByTo {
   '/resale': typeof ResaleRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/terms-changes': typeof TermsChangesRoute
   '/a/$token': typeof ATokenRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
@@ -1702,6 +1725,7 @@ export interface FileRoutesByTo {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tax': typeof AdminTaxRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -1890,7 +1914,9 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/terms-changes': typeof TermsChangesRoute
   '/a/$token': typeof ATokenRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
@@ -1928,6 +1954,7 @@ export interface FileRoutesById {
   '/admin/substitutions': typeof AdminSubstitutionsRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/tax': typeof AdminTaxRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/tether-resolution': typeof AdminTetherResolutionRoute
   '/admin/title-escrow': typeof AdminTitleEscrowRoute
   '/agent/attribution': typeof AgentAttributionRoute
@@ -2119,7 +2146,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/terms-changes'
     | '/a/$token'
+    | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
@@ -2157,6 +2186,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tax'
+    | '/admin/terms'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2342,7 +2372,9 @@ export interface FileRouteTypes {
     | '/resale'
     | '/support'
     | '/terms'
+    | '/terms-changes'
     | '/a/$token'
+    | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
@@ -2379,6 +2411,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tax'
+    | '/admin/terms'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2566,7 +2599,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/terms-changes'
     | '/a/$token'
+    | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
     | '/admin/audit-log'
@@ -2604,6 +2639,7 @@ export interface FileRouteTypes {
     | '/admin/substitutions'
     | '/admin/support'
     | '/admin/tax'
+    | '/admin/terms'
     | '/admin/tether-resolution'
     | '/admin/title-escrow'
     | '/agent/attribution'
@@ -2794,7 +2830,9 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRouteWithChildren
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  TermsChangesRoute: typeof TermsChangesRoute
   ATokenRoute: typeof ATokenRoute
+  AccountSettingsRoute: typeof AccountSettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BuyerAdverseActionRoute: typeof BuyerAdverseActionRoute
   BuyerAuthorityRoute: typeof BuyerAuthorityRoute
@@ -3012,11 +3050,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms-changes': {
+      id: '/terms-changes'
+      path: '/terms-changes'
+      fullPath: '/terms-changes'
+      preLoaderRoute: typeof TermsChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/a/$token': {
       id: '/a/$token'
       path: '/a/$token'
       fullPath: '/a/$token'
       preLoaderRoute: typeof ATokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/settings': {
+      id: '/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AccountSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -3283,6 +3335,13 @@ declare module '@tanstack/react-router' {
       path: '/tax'
       fullPath: '/admin/tax'
       preLoaderRoute: typeof AdminTaxRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/terms': {
+      id: '/admin/terms'
+      path: '/terms'
+      fullPath: '/admin/terms'
+      preLoaderRoute: typeof AdminTermsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/tether-resolution': {
@@ -4547,6 +4606,7 @@ interface AdminRouteChildren {
   AdminSubstitutionsRoute: typeof AdminSubstitutionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminTaxRoute: typeof AdminTaxRoute
+  AdminTermsRoute: typeof AdminTermsRoute
   AdminTetherResolutionRoute: typeof AdminTetherResolutionRoute
   AdminTitleEscrowRoute: typeof AdminTitleEscrowRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -4598,6 +4658,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSubstitutionsRoute: AdminSubstitutionsRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminTaxRoute: AdminTaxRoute,
+  AdminTermsRoute: AdminTermsRoute,
   AdminTetherResolutionRoute: AdminTetherResolutionRoute,
   AdminTitleEscrowRoute: AdminTitleEscrowRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -4776,7 +4837,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRouteWithChildren,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  TermsChangesRoute: TermsChangesRoute,
   ATokenRoute: ATokenRoute,
+  AccountSettingsRoute: AccountSettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BuyerAdverseActionRoute: BuyerAdverseActionRoute,
   BuyerAuthorityRoute: BuyerAuthorityRoute,

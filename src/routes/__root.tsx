@@ -16,6 +16,7 @@ import { NavBar } from "@/components/NavBar";
 import { CoOwnerBanner } from "@/components/owner/CoOwnerBanner";
 import { Toaster } from "sonner";
 import { SiteFooter } from "@/components/SiteFooter";
+import { TermsContinuedUse } from "@/components/TermsContinuedUse";
 import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -177,6 +178,7 @@ function RootComponent() {
         </main>
         {!isPortal && !isStandalone && <SiteFooter />}
       </div>
+      <TermsContinuedUse />
       <Toaster position="top-right" richColors closeButton />
     </QueryClientProvider>
   );
