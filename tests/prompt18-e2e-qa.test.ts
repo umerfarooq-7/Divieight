@@ -179,7 +179,7 @@ describe("1. Full happy path, end to end", () => {
     expect(db().table("pods")[0].governance_status).toBe("active");
     expect(db().table("co_owner_digital_keys")).toHaveLength(3);
     expect(db().table("property_records_vault").map((v) => v.document_type).sort()).toEqual(
-      ["certificate_of_formation", "closing_statement", "ein_confirmation", "executed_operating_agreement", "recorded_deed", "source_of_truth_cda"].sort(),
+      ["acknowledgment_posture", "certificate_of_formation", "closing_statement", "ein_confirmation", "executed_operating_agreement", "recorded_deed", "source_of_truth_cda"].sort(),
     );
 
     as(USERS.b2);

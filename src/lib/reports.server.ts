@@ -165,6 +165,9 @@ export async function deliverReport(db: Db, actorId: string, input: DeliverRepor
       source: "report_delivery",
     },
   });
+  // A report (or a revised one) is a Required document arriving: the gate re-closes, and when and who owed it is recorded.
+  const { recordRetrigger } = await import("@/lib/ack-gate.server");
+  await recordRetrigger(db as never, { documentId: dd.id, propertyId: input.propertyId, priorDocumentId: priorDiligenceId, actorId });
 
   // 3. Material-Adverse-Finding filter (non-substantive).
   const flags: ReportFlag[] = detectReportFlags({

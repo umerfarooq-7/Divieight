@@ -763,6 +763,9 @@ export const placeDiligenceDocument = createServerFn({ method: "POST" })
     });
 
     if (data.required) {
+      // The gate has re-closed by itself (it is worked out from the documents). Record when, and who owed the new item; then tell everyone who does.
+      const { recordRetrigger } = await import("@/lib/ack-gate.server");
+      await recordRetrigger(db, { documentId: inserted.id, propertyId: data.propertyId, priorDocumentId: data.supersedesId, actorId: userId });
       await notifyNewRequiredDocument(db, {
         id: inserted.id,
         property_id: data.propertyId,
@@ -931,6 +934,8 @@ export const placeSellerDisclosure = createServerFn({ method: "POST" })
       },
     });
 
+    const { recordRetrigger } = await import("@/lib/ack-gate.server");
+    await recordRetrigger(db, { documentId: inserted.id, propertyId: data.propertyId, priorDocumentId: data.supersedesId, actorId: context.userId });
     await notifyNewRequiredDocument(db, {
       id: inserted.id,
       property_id: data.propertyId,

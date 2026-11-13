@@ -79,7 +79,18 @@ function steps(db: Db, propertyId: string): SagaStep[] {
       const stored = (sot.structured as SourceOfTruth).payees.map(payeeKey).sort().join("|");
       if (fresh.payees.map(payeeKey).sort().join("|") !== stored)
         throw new Error("Source of Truth is stale — commission inputs changed since it was generated. Regenerate and retransmit it.");
-      return { settlementDocumentId: sot.id, version: sot.version, contentHash: sot.content_hash };
+      // The Final Acknowledgment Posture Record, made here at the Closing Ping: every member and every tethered agent, each Required document and version, when,
+      // from where and how it was acknowledged, and any late-arrival re-triggers. Hashed, immutable, in the Audit Vault. If any acknowledgment is missing it
+      // is refused, and the saga fails to the dead-letter queue (nothing is retried: someone has to acknowledge).
+      const { generatePostureRecord, PostureIncompleteError } = await import("@/lib/ack-gate.server");
+      let posture;
+      try {
+        posture = await generatePostureRecord(db, { propertyId, sagaKey: propertyId });
+      } catch (e) {
+        if (e instanceof PostureIncompleteError) throw new NonRetryableError(e.message);
+        throw e;
+      }
+      return { settlementDocumentId: sot.id, version: sot.version, contentHash: sot.content_hash, postureRecord: { id: posture.id, version: posture.version, hash: posture.hash } };
     },
   };
 
@@ -316,7 +327,10 @@ function steps(db: Db, propertyId: string): SagaStep[] {
         if (error) throw new Error(error.message);
         stored.push(d.type);
       }
-      return { stored, placeholders: true };
+      // The Final Acknowledgment Posture Record (made in step 1) goes in the Records Vault too: Manager only, it names every member with their IP and device.
+      const { attachPostureToVault } = await import("@/lib/ack-gate.server");
+      const posture = await attachPostureToVault(db, { propertyId });
+      return { stored, placeholders: true, postureRecord: posture };
     },
   };
 

@@ -39,7 +39,7 @@ export interface SettlementBlocker {
     | "no_title_order"
     | "commission_not_authorized"
     | "agent_without_broker"
-    | "buyer_without_resident_agent";
+    | "buyer_without_resident_agent" | "acknowledgments_missing";
   message: string;
 }
 
@@ -239,6 +239,14 @@ export async function settlementPreconditions(db: Db, propertyId: string, parts?
         code: "broker_payment_gate",
         message: `${x.brokers.get(a.broker_id)?.brokerage_name ?? "Broker of Record"}: ${gate.reason ?? "cannot receive payment"}`,
       });
+  }
+
+  // 3b. The acknowledgment gate (Month 4), checked again for every Buyer Account: every member (or documented authority) and the Resident Agent on this
+  // property have acknowledged every Required document and every material report item. A document added late re-closes this.
+  const { acknowledgmentGate } = await import("@/lib/ack-gate.server");
+  for (const buyerId of x.buyers.keys()) {
+    const gate = await acknowledgmentGate(db, propertyId, buyerId);
+    if (!gate.clear) blockers.push({ code: "acknowledgments_missing", message: `Buyer Account ${buyerId.slice(0, 8)}: ${gate.message}` });
   }
 
   // 4. Dual agency — final safety check (logs a compliance alert if it fires)

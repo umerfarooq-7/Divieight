@@ -1,3 +1,4 @@
+import { deliver } from "@/lib/authorization.notify.server";
 import { withPropertyAgents } from "@/lib/property-agent.server";
 /**
  * Due-diligence notifications (server-only).
@@ -28,6 +29,14 @@ async function insertNotification(
       metadata: { auth_user_id: row.authUserId, error: error.message },
     });
   }
+}
+
+/**
+ * The New Document Alert: the portal notice AND an email, to the account's login and to each member's own address (deliver does both), once per person per
+ * document however often it is sent. It says the gate is closed again until each member and the Resident Agent have acknowledged the new item.
+ */
+async function newDocumentAlert(db: Db, row: { authUserId: string; message: string; docId: string; propertyId: string; link: string }) {
+  await deliver(db as never, { authUserId: row.authUserId, email: null }, { subject: "New Document Alert", message: row.message, link: row.link, type: "diligence", propertyId: row.propertyId, dedupeKey: `dd_new_doc:${row.docId}:${row.authUserId}` });
 }
 
 async function agentAuthUserId(db: Db, agentId: string): Promise<string | null> {
@@ -70,13 +79,13 @@ export async function notifyNewRequiredDocument(
 
   const agentIds = new Set<string>();
   for (const b of (buyers ?? []) as any[]) {
-    if (b.auth_user_id) await insertNotification(db, { authUserId: b.auth_user_id, message: buyerMessage });
+    if (b.auth_user_id) await newDocumentAlert(db, { authUserId: b.auth_user_id, message: `${buyerMessage} Until every member of your account and your Resident Agent have acknowledged it, your Authorization steps and wire instructions stay locked.`, docId: doc.id, propertyId: doc.property_id, link: "/buyer/due-diligence" });
     if (b.tethered_resident_agent_id) agentIds.add(b.tethered_resident_agent_id as string);
   }
 
   for (const agentId of agentIds) {
     const authUserId = await agentAuthUserId(db, agentId);
-    if (authUserId) await insertNotification(db, { authUserId, message: agentMessage });
+    if (authUserId) await newDocumentAlert(db, { authUserId, message: agentMessage, docId: doc.id, propertyId: doc.property_id, link: "/agent/due-diligence" });
   }
 }
 

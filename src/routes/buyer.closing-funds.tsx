@@ -55,6 +55,7 @@ function BuyerClosingFunds() {
               obligation={r.obligation}
               terms={r.terms}
               propertyLabel={r.propertyLabel}
+              lock={r.lock}
             />
           ))}
         </div>

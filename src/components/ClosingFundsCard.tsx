@@ -24,12 +24,18 @@ export function ClosingFundsCard({
   terms,
   propertyLabel,
   eyebrow = "Closing Funds Notice",
+  lock = null,
+  lockHref = "/buyer/due-diligence",
   children,
 }: {
   obligation: ClosingObligation;
   terms: ClosingTerms | null;
   propertyLabel: string;
   eyebrow?: string;
+  /** While set, the wire instructions are not shown: every member and the Resident Agent still have documents to acknowledge. */
+  lock?: { message: string; missing: Array<{ documentId: string; title: string; version: number; who: string; name: string; materialFlags: number }> } | null;
+  /** Where the person acknowledges what is missing. */
+  lockHref?: string;
   children?: ReactNode;
 }) {
   return (
@@ -65,7 +71,24 @@ export function ClosingFundsCard({
         </div>
       </div>
 
-      {terms ? (
+      {lock ? (
+        <div role="alert" className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+          <p className="font-semibold text-destructive">Wire instructions locked</p>
+          <p className="mt-1 text-foreground">{lock.message}</p>
+          <ul className="mt-2 list-disc pl-5 text-muted-foreground">
+            {lock.missing.map((m, i) => (
+              <li key={i}>
+                {m.title} (v{m.version}
+                {m.materialFlags > 0 ? `, material report: ${m.materialFlags} flagged finding${m.materialFlags === 1 ? "" : "s"}` : ""}): {m.who === "agent" ? `Resident Agent ${m.name}` : m.name}
+              </li>
+            ))}
+          </ul>
+          <a href={lockHref} className="mt-2 inline-block font-medium text-primary underline">
+            Open Due diligence
+          </a>
+        </div>
+      ) : null}
+      {terms && !lock ? (
         <div className="mt-4 rounded-lg border border-border bg-background p-4 text-sm">
           <p className="flex items-center gap-2 font-medium text-foreground">
             <Banknote className="h-4 w-4 text-accent" />

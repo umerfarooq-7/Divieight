@@ -136,7 +136,7 @@ describe("Prompt 17 — Records Vault and Co-owner access", () => {
   it("every closing document ends up in the vault", async () => {
     await closeTheDeal();
     expect(db().table("property_records_vault").map((v) => v.document_type).sort()).toEqual(
-      ["certificate_of_formation", "closing_statement", "ein_confirmation", "executed_operating_agreement", "recorded_deed", "source_of_truth_cda"].sort(),
+      ["acknowledgment_posture", "certificate_of_formation", "closing_statement", "ein_confirmation", "executed_operating_agreement", "recorded_deed", "source_of_truth_cda"].sort(),
     );
   });
 

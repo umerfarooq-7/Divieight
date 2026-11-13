@@ -87,7 +87,8 @@ export const listMyPropertyRecords = createServerFn({ method: "GET" })
         .select("id, document_type, title, file_url, stored_at")
         .eq("property_id", o.propertyId)
         .order("stored_at", { ascending: true });
-      const rows = (data ?? []) as Array<{ id: string; document_type: string; title: string | null; file_url: string; stored_at: string }>;
+      // The Final Acknowledgment Posture Record names every member with their IP and device: the Manager's, not a co-owner's.
+      const rows = ((data ?? []) as Array<{ id: string; document_type: string; title: string | null; file_url: string; stored_at: string }>).filter((r) => r.document_type !== "acknowledgment_posture");
       const signed = new Map<string, string>();
       if (rows.length) {
         try {

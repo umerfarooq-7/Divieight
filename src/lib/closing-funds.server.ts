@@ -32,6 +32,8 @@ export const CLOSING_KIND: FundingKind = {
   pra8Notice: CLOSING_PRA8_NOTICE,
   substituteNotice: CLOSING_SUBSTITUTE_NOTICE,
   issueLead: (where) => `Closing for ${where} is approaching.`,
+  // The wire instructions and the funding confirmation are locked until every member and the Resident Agent have acknowledged every Required document.
+  wireGate: async (db, propertyId, buyerAccountId) => (await import("@/lib/ack-gate.server")).gateForWire(db, propertyId, buyerAccountId),
 };
 
 export const issueClosingObligations = (db: Db, actorId: string | null, input: IssueFundingInput) =>

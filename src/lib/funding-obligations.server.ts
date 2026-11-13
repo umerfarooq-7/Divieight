@@ -45,6 +45,11 @@ export interface FundingKind {
   substituteNotice: string;
   /** Opening sentence of the instruction notice. */
   issueLead: (propertyLabel: string) => string;
+  /**
+   * An optional gate on the wire instructions and the funding confirmation (closing funds): until it is clear, a notice carries the amount and the deadline but
+   * NOT where to wire, and the funding can't be confirmed. The message says what is missing.
+   */
+  wireGate?: (db: Db, propertyId: string, buyerAccountId: string) => Promise<{ clear: boolean; message: string }>;
 }
 
 const DEFAULT_GRACE_HOURS = 24;
@@ -289,12 +294,16 @@ export async function issueObligations(
         missed_at: null,
         is_substitute: false,
       };
+      const lock = kind.wireGate ? await kind.wireGate(db, input.propertyId, part.buyerAccountId) : null;
       await deliver(
         db,
         { authUserId: buyer.auth_user_id, email: buyer.email },
         {
-          subject: `${kind.title} funding instruction`,
-          message: `${kind.issueLead(label(property))} ${kind.instruction(obligation, terms)} ${kind.pra8Notice}`,
+          subject: lock && !lock.clear ? `${kind.title} notice: wire instructions locked` : `${kind.title} funding instruction`,
+          message:
+            lock && !lock.clear
+              ? `${kind.issueLead(label(property))} Your ${kind.noun} amount is ${money(amount)}, due ${new Date(input.fundingDeadline).toLocaleString("en-US")}. ${lock.message} ${kind.pra8Notice}`
+              : `${kind.issueLead(label(property))} ${kind.instruction(obligation, terms)} ${kind.pra8Notice}`,
           link: kind.portalLink,
         },
       );
@@ -346,6 +355,11 @@ export async function markFunded(
   // A missed obligation has already been declared a Default and its slice
   // released to substitution — marking it funded would contradict that.
   if (row.status === "missed") return { ok: false as const, reason: "already_defaulted" as const };
+  // A hard gate: the funding is not confirmed for an account whose members and Resident Agent have not acknowledged every Required document.
+  if (kind.wireGate) {
+    const lock = await kind.wireGate(db, row.property_id, row.buyer_account_id);
+    if (!lock.clear) return { ok: false as const, reason: "wire_gate_locked" as const, message: lock.message };
+  }
 
   const fundedAt = params.fundedAt || new Date().toISOString();
   await db
@@ -678,12 +692,16 @@ export async function createSubstituteObligation(
       missed_at: null,
       is_substitute: true,
     };
+    const lock = kind.wireGate ? await kind.wireGate(db, params.propertyId, params.buyerAccountId) : null;
     await deliver(
       db,
       { authUserId: buyer.auth_user_id, email: buyer.email },
       {
         subject: `${kind.title} due for your new share`,
-        message: `${kind.instruction(obligation, terms)} ${kind.substituteNotice} ${kind.pra8Notice}`,
+        message:
+          lock && !lock.clear
+            ? `Your ${kind.noun} amount for your new share is ${money(amount)}. ${lock.message} ${kind.substituteNotice} ${kind.pra8Notice}`
+            : `${kind.instruction(obligation, terms)} ${kind.substituteNotice} ${kind.pra8Notice}`,
         link: kind.portalLink,
       },
     );

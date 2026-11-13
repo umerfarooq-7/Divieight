@@ -38,6 +38,27 @@ async function termsById(db: Db, ids: string[]) {
   return new Map(((data ?? []) as ClosingTerms[]).map((t) => [t.property_id, t]));
 }
 
+/** Why a buyer's wire instructions are hidden: what is still unacknowledged, by whom. */
+export interface WireLock {
+  message: string;
+  missing: Array<{ documentId: string; title: string; version: number; who: string; name: string; materialFlags: number }>;
+}
+
+/**
+ * The wire instructions (who to wire to, the account details, the escrow reference) are shown only once every member of the Buyer Account and the Resident
+ * Agent have acknowledged every Required document and every material report item. Until then they are not sent to the screen at all, and the lock says
+ * what is missing.
+ */
+async function withWireGate(db: Db, o: ClosingObligation, terms: ClosingTerms | null): Promise<{ terms: ClosingTerms | null; lock: WireLock | null }> {
+  const { gateForWire } = await import("@/lib/ack-gate.server");
+  const g = await gateForWire(db, o.property_id, o.buyer_account_id);
+  if (g.clear) return { terms, lock: null };
+  return {
+    terms: terms ? { ...terms, escrow_company: "", escrow_account_details: "", escrow_reference: null, escrow_contact_email: null } : null,
+    lock: { message: g.message, missing: g.missing.map((m) => ({ documentId: m.documentId, title: m.title, version: m.version, who: m.who, name: m.name, materialFlags: m.materialFlags })) },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Admin
 // ---------------------------------------------------------------------------
@@ -154,7 +175,9 @@ export const markClosingFundsFunded = createServerFn({ method: "POST" })
       throw new Error(
         result.reason === "already_defaulted"
           ? "This obligation was already declared a Default and its share released to substitution."
-          : "Obligation not found",
+          : result.reason === "wire_gate_locked"
+            ? result.message
+            : "Obligation not found",
       );
     return result;
   });
@@ -177,6 +200,8 @@ export interface ClosingRow {
   obligation: ClosingObligation;
   terms: ClosingTerms | null;
   propertyLabel: string;
+  /** Set while the wire instructions are locked behind the acknowledgment gate. */
+  lock: WireLock | null;
 }
 
 export const listBuyerClosingFunds = createServerFn({ method: "GET" })
@@ -201,13 +226,12 @@ export const listBuyerClosingFunds = createServerFn({ method: "GET" })
     const ids = [...new Set(rows.map((o) => o.property_id))];
     const props = await propertiesById(db, ids);
     const terms = await termsById(db, ids);
-    return {
-      rows: rows.map((o) => ({
-        obligation: o,
-        terms: terms.get(o.property_id) ?? null,
-        propertyLabel: labelOf(props.get(o.property_id)),
-      })),
-    };
+    const out: ClosingRow[] = [];
+    for (const o of rows) {
+      const gated = await withWireGate(db, o, terms.get(o.property_id) ?? null);
+      out.push({ obligation: o, terms: gated.terms, propertyLabel: labelOf(props.get(o.property_id)), lock: gated.lock });
+    }
+    return { rows: out };
   });
 
 // ---------------------------------------------------------------------------
@@ -246,14 +270,12 @@ export const listAgentClosingFunds = createServerFn({ method: "GET" })
     const props = await propertiesById(db, ids);
     const terms = await termsById(db, ids);
     const email = new Map(buyerList.map((b) => [b.id, b.email]));
-    return {
-      rows: rows.map((o) => ({
-        obligation: o,
-        terms: terms.get(o.property_id) ?? null,
-        propertyLabel: labelOf(props.get(o.property_id)),
-        buyerEmail: email.get(o.buyer_account_id) ?? null,
-      })),
-    };
+    const out: Array<ClosingRow & { buyerEmail: string | null }> = [];
+    for (const o of rows) {
+      const gated = await withWireGate(db, o, terms.get(o.property_id) ?? null);
+      out.push({ obligation: o, terms: gated.terms, propertyLabel: labelOf(props.get(o.property_id)), lock: gated.lock, buyerEmail: email.get(o.buyer_account_id) ?? null });
+    }
+    return { rows: out };
   });
 
 // ---------------------------------------------------------------------------

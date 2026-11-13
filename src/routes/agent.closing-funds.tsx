@@ -46,6 +46,8 @@ function AgentClosingFunds() {
               key={r.obligation.id}
               obligation={r.obligation}
               terms={r.terms}
+              lock={r.lock}
+              lockHref="/agent/due-diligence"
               propertyLabel={r.propertyLabel}
               eyebrow={`Buyer: ${r.buyerEmail ?? "Buyer Account"}`}
             />
