@@ -11,5 +11,5 @@ export const Route = createFileRoute("/buyer/onboarding/eligibility")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: () => <EligibilityStandardPage next="/buyer/onboarding/payment" />,
+  component: () => <EligibilityStandardPage next="/buyer/onboarding/pra-review" />,
 });

@@ -1,3 +1,4 @@
+import { TermsNotice } from "@/components/TermsNotice";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -192,6 +193,7 @@ function RegisterPage() {
         <p className="text-center text-xs text-muted-foreground">
           By creating an account you agree to our terms and privacy policy.
         </p>
+        <TermsNotice />
       </form>
     </AuthCard>
   );

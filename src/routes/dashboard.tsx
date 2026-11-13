@@ -228,6 +228,12 @@ function Dashboard() {
             </Link>
           ) : null}
           <Link
+            to="/seller/documents"
+            className="inline-flex h-10 items-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+          >
+            My documents
+          </Link>
+          <Link
             to="/onboarding"
             className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >

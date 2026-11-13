@@ -141,7 +141,10 @@ function BrokerPortalLayout() {
 
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
         Brokers receive only real-estate commission paid at closing by the title/escrow company
-        from sale proceeds. divieight never pays brokers directly.
+        from sale proceeds. divieight never pays brokers directly.{" "}
+        <Link to="/terms" className="font-medium underline underline-offset-2">
+          Terms and Conditions
+        </Link>
       </footer>
     </div>
   );

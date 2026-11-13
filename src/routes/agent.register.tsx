@@ -1,3 +1,4 @@
+import { TermsNotice } from "@/components/TermsNotice";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -341,6 +342,7 @@ function AgentRegisterPage() {
           Agents are compensated only through buyer-side commission paid at closing by their Broker
           of Record. divieight never pays agents directly.
         </p>
+        <TermsNotice />
       </form>
     </AuthCard>
   );

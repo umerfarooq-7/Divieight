@@ -1,3 +1,4 @@
+import { TermsNotice } from "@/components/TermsNotice";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -259,6 +260,7 @@ function BrokerRegisterPage() {
         >
           {submitting ? "Creating account…" : "Create broker account"}
         </button>
+        <TermsNotice />
       </form>
     </AuthCard>
   );

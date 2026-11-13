@@ -46,6 +46,7 @@ const PORTAL_NAV = [
   { to: "/agent/qr", label: "QR code & link", icon: QrCode },
   { to: "/agent/listings", label: "My listings", icon: ListChecks },
   { to: "/agent/documents", label: "Agreements", icon: FileSignature },
+  { to: "/agent/executed-documents", label: "Executed documents", icon: FileSignature },
   { to: "/agent/due-diligence", label: "Due diligence", icon: FileCheck2 },
   { to: "/agent/authorizations", label: "Authorizations", icon: ShieldCheck },
   { to: "/agent/reports", label: "Reports", icon: FileSearch },

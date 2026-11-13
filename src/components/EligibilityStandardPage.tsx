@@ -11,7 +11,7 @@ import { getLiveStandardFn } from "@/lib/standard-version.functions";
  * Shown once per Account Member through the "Who is acting?" switcher. When the other
  * member still has to read it, Continue hands over to them; once everyone has, it moves on.
  */
-export function EligibilityStandardPage({ next }: { next: "/buyer/onboarding/payment" | "/buyer/dashboard" }) {
+export function EligibilityStandardPage({ next }: { next: "/buyer/onboarding/pra-review" | "/buyer/onboarding/payment" | "/buyer/dashboard" }) {
   return (
     <ActingMemberGate step="Participant Eligibility Standard">
       {({ member, switchPerson }) => <ForMember key={member.id} actingMemberId={member.id} next={next} onSwitch={switchPerson} />}

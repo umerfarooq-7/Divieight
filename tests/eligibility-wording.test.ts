@@ -61,7 +61,10 @@ describe("no old wording is left in the app", () => {
   });
 
   it("the Hold Harmless is no longer labelled with a background check consent", () => {
-    expect(readFileSync("src/routes/buyer.documents.tsx", "utf8")).toContain('HOLD_HARMLESS: "Hold Harmless",');
+    // The label moved with the documents list into the shared Member Documents titles.
+    const titles = readFileSync("src/lib/document-access.ts", "utf8");
+    expect(titles).toContain('hold_harmless: "Hold Harmless",');
+    expect(titles).not.toMatch(/background check/i);
   });
 });
 

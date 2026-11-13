@@ -59,6 +59,11 @@ export function SiteFooter() {
         <p className="mx-auto max-w-7xl px-4 pb-2 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
           {STANDARD_ON_REQUEST.label}: {STANDARD_ON_REQUEST.text}
         </p>
+        <p className="mx-auto max-w-7xl px-4 pb-2 text-center text-sm sm:px-6 lg:px-8">
+          <Link to="/terms" className="font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground">
+            Terms and Conditions
+          </Link>
+        </p>
         <p className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
           © {new Date().getFullYear()} divieight — Fractional real estate co-ownership. All rights
           reserved.

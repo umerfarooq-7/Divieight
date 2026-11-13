@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ExternalLink, FileText, Landmark } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyPropertyRecords } from "@/lib/ownership.functions";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  BLOCK_5_DOCUMENT_TYPE,
-  BLOCK_5_TEXT,
-} from "@/components/Block5AdviceNotice";
+import { MemberDocuments } from "@/components/MemberDocuments";
+import { BLOCK_5_TEXT } from "@/components/Block5AdviceNotice";
 
 export const Route = createFileRoute("/buyer/documents")({
   head: () => ({
@@ -30,68 +26,10 @@ export const Route = createFileRoute("/buyer/documents")({
   component: BuyerDocumentsPage,
 });
 
-interface SignedDoc {
-  id: string;
-  document_type: string;
-  document_version: string;
-  signed_name: string;
-  document_hash: string | null;
-  created_at: string;
-  /** Set when a member signed for another under documented authority. */
-  acted_by_member_id?: string | null;
-  on_behalf_of_member_id?: string | null;
-  authority_grant_id?: string | null;
-}
-
-const LABELS: Record<string, string> = {
-  PRA: "Priority Reservation Agreement",
-  HOLD_HARMLESS: "Hold Harmless",
-  [BLOCK_5_DOCUMENT_TYPE]: "Independent Professional Advice Acknowledgment",
-};
-
 function BuyerDocumentsPage() {
-  const navigate = useNavigate();
   const loadRecords = useServerFn(listMyPropertyRecords);
   const { data: records } = useQuery({ queryKey: ["my-property-records"], queryFn: () => loadRecords(), retry: false });
   const owned = records?.properties ?? [];
-  const [docs, setDocs] = useState<SignedDoc[]>([]);
-  const [names, setNames] = useState<Map<string, string>>(new Map());
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (cancelled) return;
-      if (!auth.user) {
-        navigate({ to: "/buyer/login" });
-        return;
-      }
-      const { data: acct } = await supabase
-        .from("buyer_accounts")
-        .select("id")
-        .eq("auth_user_id", auth.user.id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (!acct) {
-        navigate({ to: "/buyer/register" });
-        return;
-      }
-      const { data } = await supabase
-        .from("signed_documents")
-        .select("id, document_type, document_version, signed_name, document_hash, created_at, acted_by_member_id, on_behalf_of_member_id, authority_grant_id")
-        .eq("buyer_account_id", acct.id)
-        .order("created_at", { ascending: false });
-      const { data: people } = await supabase.from("account_members").select("id, full_name").eq("buyer_account_id", acct.id);
-      if (cancelled) return;
-      setNames(new Map(((people ?? []) as Array<{ id: string; full_name: string }>).map((p) => [p.id, p.full_name])));
-      setDocs((data as SignedDoc[]) ?? []);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
@@ -102,47 +40,11 @@ function BuyerDocumentsPage() {
         My documents
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Signed agreements are stored immutably with a hash and timestamp.
+        Every document you have executed, exactly as you signed it, with the version, who signed, its hash and its Audit Vault reference. An executed document is never edited or replaced.
       </p>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
-        {loading ? (
-          <p className="px-6 py-10 text-center text-sm text-muted-foreground">Loading…</p>
-        ) : docs.length === 0 ? (
-          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-            You haven't signed any documents yet.
-          </p>
-        ) : (
-          docs.map((d) => (
-            <div
-              key={d.id}
-              className="flex items-start gap-3 border-b border-border/60 px-5 py-4 last:border-0"
-            >
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <FileText className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {LABELS[d.document_type] ?? d.document_type}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Version {d.document_version} · signed by {d.signed_name} ·{" "}
-                  {new Date(d.created_at).toLocaleString()}
-                </p>
-                {d.authority_grant_id ? (
-                  <p className="mt-1 text-xs font-medium text-foreground">
-                    Signed by {names.get(d.acted_by_member_id ?? "") ?? "another member"} on behalf of {names.get(d.on_behalf_of_member_id ?? "") ?? "a member"}, under documented authority (grant {d.authority_grant_id.slice(0, 8)}).
-                  </p>
-                ) : null}
-                {d.document_hash ? (
-                  <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
-                    {d.document_hash}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          ))
-        )}
+      <div className="mt-6">
+        <MemberDocuments role="buyer" />
       </div>
 
       <div className="mt-6 rounded-xl border border-border bg-card p-6">

@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { OnboardingStepper } from "@/components/OnboardingStepper";
 
+import { buildListingAgreement, hashDocument, LISTING_EFFECTIVE, LISTING_VERSION } from "@/lib/legal-documents";
+import { DocumentReader } from "@/components/DocumentReader";
+import { keepExecutedText } from "@/lib/document-access.functions";
 import { cn } from "@/lib/utils";
 import { logAudit } from "@/lib/audit";
 import { markListingStep } from "@/lib/listing-progress";
@@ -24,7 +27,6 @@ export const Route = createFileRoute("/onboarding/agreement")({
   component: AgreementScreen,
 });
 
-const DOCUMENT_VERSION = "v1";
 
 type SellerRow = {
   id: string;
@@ -41,75 +43,6 @@ type PropertyRow = {
   zip: string;
 };
 
-function buildAgreement(seller: SellerRow | null, property: PropertyRow | null) {
-  const name = seller?.full_name?.trim() || "Seller";
-  const exit = seller?.exit_type;
-  const retained = seller?.retained_shares ?? 0;
-  const soldShares = exit === "hybrid_exit" ? 8 - retained : 8;
-  const propertyLine = property
-    ? `${property.address}, ${property.city}, ${property.state} ${property.zip}`
-    : "the property described in your listing";
-
-  const exitParagraph =
-    exit === "hybrid_exit"
-      ? `As a Hybrid Exit Seller, you have elected to sell ${soldShares} of 8 fractional shares (${soldShares}/8ths) of the Property and to retain ${retained} of 8 fractional shares (${retained}/8ths) as a continuing co-owner. Retained shares are subject to the divieight Co-Ownership Rules, including scheduled-use allocation, cost-sharing obligations, and the Right of First Refusal on any subsequent share transfer. Retained shares may not be re-listed on the marketplace for a period of ninety (90) days from the Effective Date without written consent of the Platform.`
-      : `As a Full Exit Seller, you have elected to sell all 8 of 8 fractional shares (8/8ths) of the Property and to exit ownership in its entirety upon closing of the final share sale.`;
-
-  return `LISTING AGREEMENT
-Document Version: ${DOCUMENT_VERSION}
-Effective Date: ${new Date().toLocaleDateString()}
-
-BETWEEN: ${name} ("Seller")
-AND: divieight, Inc. ("Platform")
-RE: ${propertyLine} ("Property")
-
-1. ENGAGEMENT AND ROLE OF THE PLATFORM
-The Seller hereby engages divieight, Inc. as the exclusive marketplace administrator for the fractional listing and sale of undivided 1/8th ownership shares in the Property. The Platform acts as a technology-enabled marketplace and transaction coordinator. The Platform is not a licensed real estate broker in every jurisdiction and does not provide legal, tax, or investment advice. The Seller acknowledges that the Platform's role is limited to marketing, buyer matching, document coordination, and post-sale co-ownership administration.
-
-2. EXIT ELECTION
-${exitParagraph}
-
-3. LISTING PRICE AND SHARE PRICING
-The Property shall be listed at the Seller-selected total valuation. The per-share list price shall be computed as the total listing price divided by eight (8) and rounded to the nearest whole dollar. The Seller may adjust the listing price with seventy-two (72) hours' written notice, subject to any active offers.
-
-4. TIMELINE AND EXCLUSIVITY
-This Agreement grants divieight an exclusive listing period of one hundred eighty (180) days from the Effective Date. The Seller may not list the same Property, in whole or by fractional share, on any competing marketplace during the exclusivity period. Either party may terminate this Agreement with thirty (30) days' written notice after the initial ninety (90) day marketing window.
-
-5. FEES AND DISBURSEMENT
-The Platform shall charge a marketplace facilitation fee equal to a percentage of the gross proceeds from each share sold, as disclosed in the Seller Fee Schedule. Fees are deducted at closing of each share transaction and net proceeds are disbursed to the Seller within five (5) business days of settlement.
-
-6. REPRESENTATIONS AND WARRANTIES
-The Seller represents and warrants that (a) they are the record owner of the Property or the duly authorized agent thereof, (b) they have disclosed all known liens, easements, encumbrances, and covenants affecting the Property, and (c) all information provided to the Platform, including identity, ownership, and property details, is true and accurate to the best of their knowledge.
-
-7. CO-OWNERSHIP GOVERNANCE
-Upon closing of one or more fractional share sales, the Property shall be governed by the divieight Co-Ownership Operating Agreement, which shall be executed by all co-owners of record. This includes rules on scheduled use, shared expenses, capital improvements, dispute resolution, and voluntary or involuntary share transfers.
-
-8. COMPLIANCE AND FAIR HOUSING
-The Seller agrees to comply with all applicable federal, state, and local laws, including the Fair Housing Act. The Platform reserves the right to remove any listing that violates its Content and Compliance Policies.
-
-9. LIMITATION OF LIABILITY
-To the fullest extent permitted by law, the Platform's aggregate liability under this Agreement shall not exceed the total fees actually paid by the Seller to the Platform in the twelve (12) months preceding the event giving rise to the claim.
-
-10. GOVERNING LAW AND DISPUTE RESOLUTION
-This Agreement shall be governed by the laws of the State of Delaware, without regard to conflicts of law principles. Any dispute arising hereunder shall be resolved by binding arbitration administered by the American Arbitration Association in accordance with its Commercial Arbitration Rules.
-
-11. ELECTRONIC SIGNATURE
-The Seller consents to conducting this transaction by electronic means and agrees that their typed full legal name, together with a timestamp and cryptographic record, constitutes a legally binding electronic signature under the E-SIGN Act and applicable state UETA statutes.
-
-12. ENTIRE AGREEMENT
-This Agreement constitutes the entire understanding of the parties with respect to the subject matter hereof and supersedes all prior agreements, whether written or oral.
-
-BY SIGNING BELOW, THE SELLER ACKNOWLEDGES THAT THEY HAVE READ, UNDERSTOOD, AND AGREED TO THE TERMS OF THIS LISTING AGREEMENT.`;
-}
-
-// Simple deterministic hash placeholder (djb2). Replace with real digest later.
-function hashDocument(text: string) {
-  let hash = 5381;
-  for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) + hash + text.charCodeAt(i)) & 0xffffffff;
-  }
-  return `djb2_${(hash >>> 0).toString(16)}_${text.length}`;
-}
 
 function AgreementScreen() {
   const navigate = useNavigate();
@@ -122,7 +55,6 @@ function AgreementScreen() {
   const [signedName, setSignedName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -159,15 +91,9 @@ function AgreementScreen() {
     })();
   }, [user, propertyParam, navigate]);
 
-  const agreement = useMemo(() => buildAgreement(seller, property), [seller, property]);
+  const agreement = useMemo(() => buildListingAgreement(seller, property), [seller, property]);
   const documentHash = useMemo(() => hashDocument(agreement), [agreement]);
 
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-    const el = e.currentTarget;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) {
-      setScrolledEnd(true);
-    }
-  }
 
   async function handleConfirmSign() {
     if (!user || !seller) {
@@ -193,7 +119,7 @@ function AgreementScreen() {
     const { error: signErr } = await supabase.from("signed_documents").insert({
       seller_id: user.id,
       document_type: "listing_agreement",
-      document_version: DOCUMENT_VERSION,
+      document_version: LISTING_VERSION,
       signed_name: typed,
       document_hash: documentHash,
       ip_address: ip,
@@ -232,13 +158,15 @@ function AgreementScreen() {
       entityType: "property",
       entityId: property?.id ?? null,
       metadata: {
-        document_version: DOCUMENT_VERSION,
+        document_version: LISTING_VERSION,
         document_hash: documentHash,
         signed_name: typed,
         ip_address: ip,
       },
     });
 
+    // Keep the exact executed text (accepted only if it hashes to the signed hash). Best effort: the signature is already recorded.
+    void keepExecutedText({ data: { documentType: "listing_agreement", documentVersion: LISTING_VERSION, text: agreement } }).catch(() => undefined);
     setSubmitting(false);
     setModalOpen(false);
     setDone(true);
@@ -274,26 +202,25 @@ function AgreementScreen() {
         </div>
       ) : (
         <>
-          <div className="mt-8 rounded-xl border border-border bg-card shadow-sm">
-
-            <div className="border-b border-border px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Listing Agreement · {DOCUMENT_VERSION}
-            </div>
-            <div
-              ref={scrollRef}
-              onScroll={handleScroll}
-              className="h-[440px] overflow-y-auto px-6 py-5 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap font-serif"
-            >
-              {agreement}
-            </div>
-            <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
-              <span>
-                {scrolledEnd
-                  ? "✓ You've reviewed the full document."
-                  : "Scroll to the bottom to enable signing."}
-              </span>
-              <span className="font-mono">{documentHash.slice(0, 18)}…</span>
-            </div>
+          <p className="mt-6 text-sm text-muted-foreground">
+            You can read this agreement on its own first, search it and download a draft on the{" "}
+            <a href={`/onboarding/agreement-review${property?.id ? `?property=${property.id}` : ""}`} className="font-medium text-primary underline">
+              Pre-Signing Review
+            </a>{" "}
+            screen. This is the signing screen: below is the exact text you are signing.
+          </p>
+          <div className="mt-4">
+            <DocumentReader
+              title="Listing Agreement"
+              version={LISTING_VERSION}
+              effectiveDate={LISTING_EFFECTIVE}
+              text={agreement}
+              hash={documentHash}
+              hashLabel="Document hash (the hash stored with your signature)"
+              crossRefs={{ terms: true, pra: false }}
+              onReachedEnd={(v) => v && setScrolledEnd(true)}
+              heightClass="h-[440px]"
+            />
           </div>
 
           <div className="mt-8 flex flex-col items-center gap-3">

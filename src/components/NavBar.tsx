@@ -145,6 +145,13 @@ export function NavBar() {
             About
           </Link>
           <Link
+            to="/terms"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            activeProps={{ className: "text-foreground" }}
+          >
+            Terms
+          </Link>
+          <Link
             to="/contact"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             activeProps={{ className: "text-foreground" }}

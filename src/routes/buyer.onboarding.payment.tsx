@@ -9,8 +9,12 @@ import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
 import { confirmBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { logAudit } from "@/lib/audit";
+import { buildPRA, hashDocument, PRA_VERSION } from "@/lib/legal-documents";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
 import { getSignatureState, signMemberDocumentFn } from "@/lib/member-steps.functions";
+import { DocumentReader } from "@/components/DocumentReader";
+import { getPraReviewState, keepExecutedText } from "@/lib/document-access.functions";
+import { PRA_EFFECTIVE } from "@/lib/legal-documents";
 import {
   Block5AdviceNotice,
   BLOCK_5_DOCUMENT_TYPE,
@@ -42,7 +46,6 @@ export const Route = createFileRoute("/buyer/onboarding/payment")({
   component: PaymentScreen,
 });
 
-const DOCUMENT_VERSION = "v1";
 const BUYER_ENROLLMENT_CENTS = 257000;
 
 type BuyerRow = {
@@ -53,68 +56,6 @@ type BuyerRow = {
   primary_target_market: string | null;
 };
 
-function buildPRA(name: string, buyer: BuyerRow | null) {
-  const market = buyer?.primary_target_market?.trim() || "your declared target market";
-  const intent =
-    buyer?.intent === "short_term_rental"
-      ? "Short-Term Rental (income-focused) use"
-      : "Personal Use (long-term ownership)";
-
-  return `PRIORITY RESERVATION AGREEMENT (PRA)
-Document Version: ${DOCUMENT_VERSION}
-Effective Date: ${new Date().toLocaleDateString()}
-
-BETWEEN: ${name || "Buyer"} ("Buyer")
-AND: divieight, LLC ("divieight", the "Platform", the "Manager")
-RE: Priority reservation of undivided 1/8th fractional ownership shares
-
-1. PURPOSE AND NATURE OF THIS AGREEMENT
-This Priority Reservation Agreement establishes the Buyer's place in the divieight priority queue for fractional 1/8th ownership shares in properties matching the Buyer's declared preferences, including ${market} and ${intent}. This Agreement is not a contract for the purchase of real property and conveys no title, deed, equitable interest, or possessory right in any specific property. It reserves process priority only.
-
-2. PLATFORM PROTOCOLS
-The Buyer agrees to conduct all reservation, offer, matching, document exchange, and communication activity through the divieight platform. The Buyer agrees to (a) maintain accurate identity, financial, and preference information, (b) respond to reservation offers within the stated response window, and (c) refrain from soliciting sellers, co-owners, or other buyers outside the Platform for transactions originating on the Platform. Repeated non-response to matched reservations may result in re-ranking or suspension of queue position.
-
-3. PRIORITY RANK AND SENIORITY
-Buyer seniority is determined by the timestamp, recorded to millisecond precision, at which the Buyer's Platform Enrollment Fee is confirmed as successfully paid. Priority rank is personal to the Buyer Account, is non-transferable and non-assignable, and may not be sold, pledged, or shared. Priority rank governs the order in which matched share opportunities are presented; it does not guarantee that any specific property, share, or price will become available.
-
-4. USE-CALENDAR RULES
-Upon closing on one or more 1/8th shares, the Buyer's occupancy rights are governed by the divieight Use-Calendar Protocol. Each 1/8th share entitles the holder to a proportionate allocation of annual use nights, allocated by rotating selection rounds so that peak, shoulder, and off-peak periods rotate equitably among co-owners across years. Unused nights do not accrue beyond the limits stated in the Protocol. Holiday and high-demand periods are allocated by rotation, not by seniority or priority rank. Guest use, pet policies, quiet hours, maximum occupancy, and any short-term rental activity are subject to the property-level rules and applicable local ordinances. Unauthorized occupancy beyond an allocated period is subject to overstay fees and, on repetition, to suspension of use rights.
-
-5. CO-OWNERSHIP OBLIGATIONS
-Upon closing, the Buyer becomes a co-owner subject to the divieight Co-Ownership Operating Agreement, which the Buyer agrees to execute as a condition of closing. Co-ownership obligations include: (a) proportionate payment of property taxes, insurance, utilities, maintenance, management fees, and reserve contributions, assessed monthly per share held; (b) participation in approved capital improvement assessments; (c) compliance with the property care standard and post-stay condition rules; (d) adherence to the Right of First Refusal and transfer-approval provisions on any resale of a share; and (e) good-faith participation in the dispute-resolution process before pursuing external remedies. Delinquency in cost-sharing obligations may result in suspension of use rights and, if unremedied, forced-sale remedies as set out in the Operating Agreement.
-
-6. AUTHORIZATION OF divieight LLC AS MANAGER AND LEAD BUYER
-The Buyer irrevocably authorizes and appoints divieight, LLC to act as (i) Manager of the property-holding entity or co-ownership arrangement into which the Buyer's share is placed, with authority to administer the use calendar, collect and disburse shared expenses, procure insurance, engage vendors, maintain records, and enforce co-ownership rules; and (ii) Lead Buyer in the acquisition process, with authority to negotiate on behalf of the assembled buyer pool, submit and coordinate offers, execute purchase documents in the assembling entity's name, order and coordinate inspections, appraisals, and title work, open and administer escrow, and take such further acts as are reasonably necessary to complete the acquisition. This authorization is limited to transactions the Buyer expressly opts into and does not authorize divieight to obligate the Buyer beyond amounts and terms the Buyer has confirmed in writing on the Platform. divieight acts as a coordinator and fiduciary of process; it does not provide legal, tax, brokerage, or investment advice, and the Buyer is advised to obtain independent counsel.
-
-7. PLATFORM ENROLLMENT FEE — NON-REFUNDABLE
-The Buyer shall pay a one-time Platform Enrollment Fee of $2,570 (USD). THIS FEE IS FULLY EARNED UPON PAYMENT AND EXECUTION OF THIS AGREEMENT, REGARDLESS OF TRANSACTION OUTCOME. The fee is non-refundable in whole or in part, including where no matching property becomes available, where the Buyer withdraws, where vetting is not completed or is not approved, or where any prospective transaction fails to close for any reason.
-
-8. VETTING
-Placement in the priority queue is conditional on completion of divieight's buyer vetting, which may include identity confirmation, funds verification, and screening. divieight may decline or discontinue vetting at its discretion. Declination does not entitle the Buyer to a refund of the Platform Enrollment Fee.
-
-9. LIMITATION OF LIABILITY
-To the fullest extent permitted by law, divieight's aggregate liability arising out of or relating to this Agreement shall not exceed the amount of the Platform Enrollment Fee actually paid by the Buyer.
-
-10. GOVERNING LAW AND DISPUTE RESOLUTION
-This Agreement is governed by the laws of the State of Delaware, without regard to conflicts of law principles. Any dispute arising hereunder shall be resolved by binding arbitration administered by the American Arbitration Association under its Commercial Arbitration Rules.
-
-11. ELECTRONIC SIGNATURE
-The Buyer consents to transacting electronically and agrees that their typed full legal name, together with a timestamp, IP address, and cryptographic document record, constitutes a legally binding electronic signature under the E-SIGN Act and applicable state UETA statutes.
-
-12. ENTIRE AGREEMENT
-This Agreement is the entire understanding of the parties as to its subject matter and supersedes all prior agreements, written or oral.
-
-BY SIGNING BELOW, THE BUYER ACKNOWLEDGES THAT THEY HAVE READ, UNDERSTOOD, AND AGREED TO THE TERMS OF THIS PRIORITY RESERVATION AGREEMENT.`;
-}
-
-// Simple deterministic hash placeholder (djb2). Replace with real digest later.
-function hashDocument(text: string) {
-  let hash = 5381;
-  for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) + hash + text.charCodeAt(i)) & 0xffffffff;
-  }
-  return `djb2_${(hash >>> 0).toString(16)}_${text.length}`;
-}
 
 /** Every active member signs their own PRA (through the picker). The fee is the account's, paid once. */
 function PaymentScreen() {
@@ -148,7 +89,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const [modalOpen, setModalOpen] = useState(false);
   const [signedName, setSignedName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Pre-Payment Review (its own screen, before this one): this member has read the PRA to the bottom and acknowledged it.
+  const [reviewed, setReviewed] = useState(false);
 
   // Block 5 — Independent Professional Advice gate (precedes PRA review).
   const [members, setMembers] = useState<Block5Member[]>([]);
@@ -204,6 +146,14 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
         if (cancelled) return;
         setPraSigned(sig.signed);
         setPraWaitingOn(sig.waitingOn);
+        const rv = await getPraReviewState({ data: { actingMemberId } });
+        if (cancelled) return;
+        setReviewed(rv.acknowledged);
+        // Not yet through the Pre-Payment Review (and not back from Stripe): that screen comes first.
+        if (!rv.acknowledged && !account.priority_rank_timestamp && !sessionId) {
+          navigate({ to: "/buyer/onboarding/pra-review", replace: true });
+          return;
+        }
       } catch {
         // Shown as not signed; signing reports any problem.
       }
@@ -254,18 +204,6 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const pra = useMemo(() => buildPRA(memberName, buyer), [memberName, buyer]);
   const documentHash = useMemo(() => hashDocument(pra), [pra]);
 
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-    const el = e.currentTarget;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledEnd(true);
-  }
-
-  // On tall screens the agreement can fit without scrolling — the scroll event
-  // would then never fire and the signature block would stay locked forever.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (el.scrollHeight - el.clientHeight <= 8) setScrolledEnd(true);
-  }, [pra]);
 
   async function handleConfirmSign() {
     if (!user || !buyer) return;
@@ -279,7 +217,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     // Checked on the server against this member's own name; recorded against this member only.
     let waitingOn: string[] = [];
     try {
-      ({ waitingOn } = await signMemberDocumentFn({ data: { actingMemberId, documentType: "PRA", documentVersion: DOCUMENT_VERSION, documentHash, typedName: typed } }));
+      ({ waitingOn } = await signMemberDocumentFn({ data: { actingMemberId, documentType: "PRA", documentVersion: PRA_VERSION, documentHash, typedName: typed } }));
     } catch (e) {
       setSubmitting(false);
       toast.error(e instanceof Error ? e.message : "The PRA wasn't signed.");
@@ -287,6 +225,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     }
     setPraSigned(true);
     setPraWaitingOn(waitingOn);
+    // The exact text just executed is kept, so the executed copy never depends on a template. Best effort: the signature is already recorded.
+    void keepExecutedText({ data: { documentType: "PRA", documentVersion: PRA_VERSION, text: pra } }).catch(() => undefined);
     setSubmitting(false);
     setModalOpen(false);
     if (waitingOn.length) {
@@ -297,7 +237,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     navigate({ to: "/buyer/onboarding/vetting" });
   }
 
-  const canPay = scrolledEnd && acknowledged && nonRefundable;
+  const canPay = reviewed && scrolledEnd && acknowledged && nonRefundable;
 
   return (
     <div>
@@ -329,22 +269,18 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
           />
         ) : (
           <>
-            <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-              <div
-                ref={scrollRef}
-                onScroll={handleScroll}
-                className="h-[320px] overflow-y-auto sm:h-[440px] whitespace-pre-wrap px-6 py-5 font-serif text-sm leading-relaxed text-foreground/90"
-              >
-                {pra}
-              </div>
-              <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
-                <span>
-                  {scrolledEnd
-                    ? "✓ You've reviewed the full agreement."
-                    : "Scroll to the bottom to continue."}
-                </span>
-                <span className="font-mono">{documentHash.slice(0, 18)}…</span>
-              </div>
+            <div className="mt-8">
+              <DocumentReader
+                title="Priority Reservation Agreement"
+                version={PRA_VERSION}
+                effectiveDate={PRA_EFFECTIVE}
+                text={pra}
+                hash={documentHash}
+                hashLabel="Document hash (the hash stored with your signature)"
+                crossRefs={{ terms: true, pra: false }}
+                onReachedEnd={(v) => v && setScrolledEnd(true)}
+                heightClass="h-[320px] sm:h-[440px]"
+              />
             </div>
 
             {paid ? (
@@ -391,6 +327,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
             ) : showCheckout ? (
               <BuyerEnrollmentCheckout
                 returnUrl={`${window.location.origin}/buyer/onboarding/payment?session_id={CHECKOUT_SESSION_ID}`}
+                actingMemberId={actingMemberId}
               />
             ) : (
               <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -449,6 +386,15 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
                 <p className="mt-2 text-xs text-muted-foreground">
                   Your priority rank timestamp is recorded only after payment clears.
                 </p>
+                {!reviewed ? (
+                  <p role="alert" className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground">
+                    Payment is locked until you have read the Priority Reservation Agreement to the bottom and ticked the acknowledgment on the{" "}
+                    <a href="/buyer/onboarding/pra-review" className="font-medium text-primary underline">
+                      Pre-Payment Review
+                    </a>{" "}
+                    screen.
+                  </p>
+                ) : null}
               </div>
             )}
           </>

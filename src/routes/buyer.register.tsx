@@ -1,3 +1,4 @@
+import { TermsNotice } from "@/components/TermsNotice";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -229,6 +230,7 @@ function BuyerRegisterPage() {
           A Buyer Account supports up to two people. You can add a second member during
           onboarding.
         </p>
+        <TermsNotice />
       </form>
     </AuthCard>
   );

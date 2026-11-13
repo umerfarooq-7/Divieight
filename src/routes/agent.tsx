@@ -188,7 +188,10 @@ function AgentPortalLayout() {
 
           <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
             Agents are compensated solely through buyer-side commission paid at closing by their
-            Broker of Record. divieight does not pay agents.
+            Broker of Record. divieight does not pay agents.{" "}
+            <Link to="/terms" className="font-medium underline underline-offset-2">
+              Terms and Conditions
+            </Link>
           </footer>
         </div>
       </div>

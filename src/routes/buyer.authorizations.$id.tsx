@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertTriangle, CheckCircle2, Lock, ShieldCheck } from "lucide-react";
+import { DocumentReader } from "@/components/DocumentReader";
 import { toast } from "sonner";
 import {
   SecondaryVerification,
@@ -31,6 +32,7 @@ import {
   COMMISSION_PROPOSER_NOTE,
   NON_CONTINGENT_TEXT,
   commissionItemState,
+  commissionStatement,
   formatCents,
   formatRate,
   fundingSourceSentence,
@@ -503,6 +505,25 @@ function BuyerAuthorizationDetail() {
               Buyer-side commission provision
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">{COMMISSION_PROPOSER_NOTE}</p>
+
+            <p className="mt-3 text-sm text-muted-foreground">
+              Read it on its own first on the{" "}
+              <a href={`/buyer/commission-review/${id}`} className="font-medium text-primary underline">
+                Pre-Signing Review
+              </a>{" "}
+              screen. Below is the exact text you are authorizing, with the version hash stored with your response.
+            </p>
+            <div className="mt-3">
+              <DocumentReader
+                title="Commission Authorization"
+                version={`instrument ${item.instrument_hash.slice(0, 14)}`}
+                text={`COMMISSION AUTHORIZATION\n\n${commissionStatement(item)}\n\n${COMMISSION_CONFIRMATION_TEXT}`}
+                hash={item.instrument_hash}
+                hashLabel="Instrument version hash (stored with your response)"
+                crossRefs={{ terms: true, pra: true }}
+                heightClass="h-56"
+              />
+            </div>
 
             <dl className="mt-4 divide-y divide-border rounded-lg border border-border">
               <div className="grid gap-1 px-4 py-3 sm:grid-cols-[220px_1fr]">

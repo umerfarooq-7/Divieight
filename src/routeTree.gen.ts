@@ -23,6 +23,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResaleRouteImport } from './routes/resale'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAgentAssignmentsRouteImport } from './routes/admin.agent-assignments'
@@ -72,6 +73,7 @@ import { Route as AgentClosingFundsRouteImport } from './routes/agent.closing-fu
 import { Route as AgentCommissionsRouteImport } from './routes/agent.commissions'
 import { Route as AgentDashboardRouteImport } from './routes/agent.dashboard'
 import { Route as AgentDueDiligenceRouteImport } from './routes/agent.due-diligence'
+import { Route as AgentExecutedDocumentsRouteImport } from './routes/agent.executed-documents'
 import { Route as AgentLeadsRouteImport } from './routes/agent.leads'
 import { Route as AgentLoginRouteImport } from './routes/agent.login'
 import { Route as AgentPoolsRouteImport } from './routes/agent.pools'
@@ -98,6 +100,7 @@ import { Route as BuyerInsuranceRouteImport } from './routes/buyer.insurance'
 import { Route as BuyerKyoRouteImport } from './routes/buyer.kyo'
 import { Route as BuyerLoginRouteImport } from './routes/buyer.login'
 import { Route as BuyerOperatingAgreementRouteImport } from './routes/buyer.operating-agreement'
+import { Route as BuyerOperatingAgreementReviewRouteImport } from './routes/buyer.operating-agreement-review'
 import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
 import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
@@ -111,6 +114,7 @@ import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 import { Route as ListingsNewRouteImport } from './routes/listings.new'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as OnboardingAgreementRouteImport } from './routes/onboarding.agreement'
+import { Route as OnboardingAgreementReviewRouteImport } from './routes/onboarding.agreement-review'
 import { Route as OnboardingEligibilityRouteImport } from './routes/onboarding.eligibility'
 import { Route as OnboardingFeeRouteImport } from './routes/onboarding.fee'
 import { Route as OnboardingIdentityRouteImport } from './routes/onboarding.identity'
@@ -127,6 +131,7 @@ import { Route as RTokenRouteImport } from './routes/r.$token'
 import { Route as ReserveIdRouteImport } from './routes/reserve.$id'
 import { Route as ResetPasswordIndexRouteImport } from './routes/reset-password.index'
 import { Route as ResetPasswordConfirmRouteImport } from './routes/reset-password.confirm'
+import { Route as SellerDocumentsRouteImport } from './routes/seller.documents'
 import { Route as AdminBooksPropertyIdRouteImport } from './routes/admin.books.$propertyId'
 import { Route as AdminEligibilityHeldRouteImport } from './routes/admin.eligibility.held'
 import { Route as AdminEligibilitySanctionsRouteImport } from './routes/admin.eligibility.sanctions'
@@ -134,6 +139,7 @@ import { Route as AdminEntityGenesisPropertyIdRouteImport } from './routes/admin
 import { Route as AdminPodsIndexRouteImport } from './routes/admin.pods.index'
 import { Route as AdminPropertiesIndexRouteImport } from './routes/admin.properties.index'
 import { Route as AgentAuthorizationsIndexRouteImport } from './routes/agent.authorizations.index'
+import { Route as AgentDocumentReviewIdRouteImport } from './routes/agent.document-review.$id'
 import { Route as AgentDocumentsIndexRouteImport } from './routes/agent.documents.index'
 import { Route as AgentDocumentsIdRouteImport } from './routes/agent.documents.$id'
 import { Route as AgentListingsIndexRouteImport } from './routes/agent.listings.index'
@@ -179,6 +185,7 @@ import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.o
 import { Route as BrokerOnboardingLicenseCheckRouteImport } from './routes/broker.onboarding.license-check'
 import { Route as BuyerAuthorizationsIndexRouteImport } from './routes/buyer.authorizations.index'
 import { Route as BuyerAuthorizationsIdRouteImport } from './routes/buyer.authorizations.$id'
+import { Route as BuyerCommissionReviewIdRouteImport } from './routes/buyer.commission-review.$id'
 import { Route as BuyerDueDiligenceIdRouteImport } from './routes/buyer.due-diligence.$id'
 import { Route as BuyerOnboardingIndexRouteImport } from './routes/buyer.onboarding.index'
 import { Route as BuyerOnboardingEligibilityRouteImport } from './routes/buyer.onboarding.eligibility'
@@ -188,6 +195,7 @@ import { Route as BuyerOnboardingLiquidityRouteImport } from './routes/buyer.onb
 import { Route as BuyerOnboardingLivenessRouteImport } from './routes/buyer.onboarding.liveness'
 import { Route as BuyerOnboardingMembersRouteImport } from './routes/buyer.onboarding.members'
 import { Route as BuyerOnboardingPaymentRouteImport } from './routes/buyer.onboarding.payment'
+import { Route as BuyerOnboardingPraReviewRouteImport } from './routes/buyer.onboarding.pra-review'
 import { Route as BuyerOnboardingVettingRouteImport } from './routes/buyer.onboarding.vetting'
 import { Route as BuyerOnboardingW9RouteImport } from './routes/buyer.onboarding.w9'
 import { Route as BuyerPodsIdRouteImport } from './routes/buyer.pods.$id'
@@ -295,6 +303,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ATokenRoute = ATokenRouteImport.update({
@@ -544,6 +557,11 @@ const AgentDueDiligenceRoute = AgentDueDiligenceRouteImport.update({
   path: '/due-diligence',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentExecutedDocumentsRoute = AgentExecutedDocumentsRouteImport.update({
+  id: '/executed-documents',
+  path: '/executed-documents',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentLeadsRoute = AgentLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -675,6 +693,12 @@ const BuyerOperatingAgreementRoute = BuyerOperatingAgreementRouteImport.update({
   path: '/buyer/operating-agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerOperatingAgreementReviewRoute =
+  BuyerOperatingAgreementReviewRouteImport.update({
+    id: '/buyer/operating-agreement-review',
+    path: '/buyer/operating-agreement-review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BuyerRegisterRoute = BuyerRegisterRouteImport.update({
   id: '/buyer/register',
   path: '/buyer/register',
@@ -740,6 +764,12 @@ const OnboardingAgreementRoute = OnboardingAgreementRouteImport.update({
   path: '/onboarding/agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingAgreementReviewRoute =
+  OnboardingAgreementReviewRouteImport.update({
+    id: '/onboarding/agreement-review',
+    path: '/onboarding/agreement-review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OnboardingEligibilityRoute = OnboardingEligibilityRouteImport.update({
   id: '/onboarding/eligibility',
   path: '/onboarding/eligibility',
@@ -820,6 +850,11 @@ const ResetPasswordConfirmRoute = ResetPasswordConfirmRouteImport.update({
   path: '/confirm',
   getParentRoute: () => ResetPasswordRoute,
 } as any)
+const SellerDocumentsRoute = SellerDocumentsRouteImport.update({
+  id: '/seller/documents',
+  path: '/seller/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminBooksPropertyIdRoute = AdminBooksPropertyIdRouteImport.update({
   id: '/books/$propertyId',
   path: '/books/$propertyId',
@@ -858,6 +893,11 @@ const AgentAuthorizationsIndexRoute =
     path: '/',
     getParentRoute: () => AgentAuthorizationsRoute,
   } as any)
+const AgentDocumentReviewIdRoute = AgentDocumentReviewIdRouteImport.update({
+  id: '/document-review/$id',
+  path: '/document-review/$id',
+  getParentRoute: () => AgentRoute,
+} as any)
 const AgentDocumentsIndexRoute = AgentDocumentsIndexRouteImport.update({
   id: '/documents/',
   path: '/documents/',
@@ -1109,6 +1149,11 @@ const BuyerAuthorizationsIdRoute = BuyerAuthorizationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => BuyerAuthorizationsRoute,
 } as any)
+const BuyerCommissionReviewIdRoute = BuyerCommissionReviewIdRouteImport.update({
+  id: '/buyer/commission-review/$id',
+  path: '/buyer/commission-review/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerDueDiligenceIdRoute = BuyerDueDiligenceIdRouteImport.update({
   id: '/buyer/due-diligence/$id',
   path: '/buyer/due-diligence/$id',
@@ -1157,6 +1202,12 @@ const BuyerOnboardingPaymentRoute = BuyerOnboardingPaymentRouteImport.update({
   path: '/buyer/onboarding/payment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuyerOnboardingPraReviewRoute =
+  BuyerOnboardingPraReviewRouteImport.update({
+    id: '/buyer/onboarding/pra-review',
+    path: '/buyer/onboarding/pra-review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BuyerOnboardingVettingRoute = BuyerOnboardingVettingRouteImport.update({
   id: '/buyer/onboarding/vetting',
   path: '/buyer/onboarding/vetting',
@@ -1390,6 +1441,7 @@ export interface FileRoutesByFullPath {
   '/resale': typeof ResaleRoute
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/a/$token': typeof ATokenRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -1437,6 +1489,7 @@ export interface FileRoutesByFullPath {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
+  '/agent/executed-documents': typeof AgentExecutedDocumentsRoute
   '/agent/leads': typeof AgentLeadsRoute
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
@@ -1462,6 +1515,7 @@ export interface FileRoutesByFullPath {
   '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
+  '/buyer/operating-agreement-review': typeof BuyerOperatingAgreementReviewRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -1472,6 +1526,7 @@ export interface FileRoutesByFullPath {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/agreement-review': typeof OnboardingAgreementReviewRoute
   '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
@@ -1485,6 +1540,7 @@ export interface FileRoutesByFullPath {
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
   '/reset-password/confirm': typeof ResetPasswordConfirmRoute
+  '/seller/documents': typeof SellerDocumentsRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
@@ -1498,6 +1554,7 @@ export interface FileRoutesByFullPath {
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
+  '/agent/document-review/$id': typeof AgentDocumentReviewIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1540,6 +1597,7 @@ export interface FileRoutesByFullPath {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
@@ -1548,6 +1606,7 @@ export interface FileRoutesByFullPath {
   '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
+  '/buyer/onboarding/pra-review': typeof BuyerOnboardingPraReviewRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -1605,6 +1664,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/resale': typeof ResaleRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/a/$token': typeof ATokenRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -1650,6 +1710,7 @@ export interface FileRoutesByTo {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
+  '/agent/executed-documents': typeof AgentExecutedDocumentsRoute
   '/agent/leads': typeof AgentLeadsRoute
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
@@ -1674,6 +1735,7 @@ export interface FileRoutesByTo {
   '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
+  '/buyer/operating-agreement-review': typeof BuyerOperatingAgreementReviewRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -1684,6 +1746,7 @@ export interface FileRoutesByTo {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/agreement-review': typeof OnboardingAgreementReviewRoute
   '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
@@ -1697,6 +1760,7 @@ export interface FileRoutesByTo {
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
   '/reset-password/confirm': typeof ResetPasswordConfirmRoute
+  '/seller/documents': typeof SellerDocumentsRoute
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
   '/broker': typeof BrokerIndexRoute
@@ -1710,6 +1774,7 @@ export interface FileRoutesByTo {
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
+  '/agent/document-review/$id': typeof AgentDocumentReviewIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1752,6 +1817,7 @@ export interface FileRoutesByTo {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
@@ -1760,6 +1826,7 @@ export interface FileRoutesByTo {
   '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
+  '/buyer/onboarding/pra-review': typeof BuyerOnboardingPraReviewRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -1822,6 +1889,7 @@ export interface FileRoutesById {
   '/resale': typeof ResaleRoute
   '/reset-password': typeof ResetPasswordRouteWithChildren
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/a/$token': typeof ATokenRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
@@ -1869,6 +1937,7 @@ export interface FileRoutesById {
   '/agent/commissions': typeof AgentCommissionsRoute
   '/agent/dashboard': typeof AgentDashboardRoute
   '/agent/due-diligence': typeof AgentDueDiligenceRoute
+  '/agent/executed-documents': typeof AgentExecutedDocumentsRoute
   '/agent/leads': typeof AgentLeadsRoute
   '/agent/login': typeof AgentLoginRoute
   '/agent/pools': typeof AgentPoolsRoute
@@ -1894,6 +1963,7 @@ export interface FileRoutesById {
   '/buyer/kyo': typeof BuyerKyoRoute
   '/buyer/login': typeof BuyerLoginRoute
   '/buyer/operating-agreement': typeof BuyerOperatingAgreementRoute
+  '/buyer/operating-agreement-review': typeof BuyerOperatingAgreementReviewRoute
   '/buyer/register': typeof BuyerRegisterRoute
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
@@ -1904,6 +1974,7 @@ export interface FileRoutesById {
   '/listings/$id': typeof ListingsIdRouteWithChildren
   '/listings/new': typeof ListingsNewRoute
   '/onboarding/agreement': typeof OnboardingAgreementRoute
+  '/onboarding/agreement-review': typeof OnboardingAgreementReviewRoute
   '/onboarding/eligibility': typeof OnboardingEligibilityRoute
   '/onboarding/fee': typeof OnboardingFeeRoute
   '/onboarding/identity': typeof OnboardingIdentityRoute
@@ -1917,6 +1988,7 @@ export interface FileRoutesById {
   '/r/$token': typeof RTokenRoute
   '/reserve/$id': typeof ReserveIdRoute
   '/reset-password/confirm': typeof ResetPasswordConfirmRoute
+  '/seller/documents': typeof SellerDocumentsRoute
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
@@ -1930,6 +2002,7 @@ export interface FileRoutesById {
   '/admin/eligibility/held': typeof AdminEligibilityHeldRoute
   '/admin/eligibility/sanctions': typeof AdminEligibilitySanctionsRoute
   '/admin/entity-genesis_/$propertyId': typeof AdminEntityGenesisPropertyIdRoute
+  '/agent/document-review/$id': typeof AgentDocumentReviewIdRoute
   '/agent/documents/$id': typeof AgentDocumentsIdRoute
   '/agent/listings/$id': typeof AgentListingsIdRoute
   '/agent/onboarding/broker': typeof AgentOnboardingBrokerRoute
@@ -1972,6 +2045,7 @@ export interface FileRoutesById {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
   '/buyer/onboarding/identity': typeof BuyerOnboardingIdentityRoute
@@ -1980,6 +2054,7 @@ export interface FileRoutesById {
   '/buyer/onboarding/liveness': typeof BuyerOnboardingLivenessRoute
   '/buyer/onboarding/members': typeof BuyerOnboardingMembersRoute
   '/buyer/onboarding/payment': typeof BuyerOnboardingPaymentRoute
+  '/buyer/onboarding/pra-review': typeof BuyerOnboardingPraReviewRoute
   '/buyer/onboarding/vetting': typeof BuyerOnboardingVettingRoute
   '/buyer/onboarding/w9': typeof BuyerOnboardingW9Route
   '/buyer/pods/$id': typeof BuyerPodsIdRoute
@@ -2043,6 +2118,7 @@ export interface FileRouteTypes {
     | '/resale'
     | '/reset-password'
     | '/support'
+    | '/terms'
     | '/a/$token'
     | '/admin/agent-assignments'
     | '/admin/agents'
@@ -2090,6 +2166,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
+    | '/agent/executed-documents'
     | '/agent/leads'
     | '/agent/login'
     | '/agent/pools'
@@ -2115,6 +2192,7 @@ export interface FileRouteTypes {
     | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
+    | '/buyer/operating-agreement-review'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -2125,6 +2203,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/agreement-review'
     | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
@@ -2138,6 +2217,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/reserve/$id'
     | '/reset-password/confirm'
+    | '/seller/documents'
     | '/admin/'
     | '/agent/'
     | '/broker/'
@@ -2151,6 +2231,7 @@ export interface FileRouteTypes {
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
+    | '/agent/document-review/$id'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -2193,6 +2274,7 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
@@ -2201,6 +2283,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
+    | '/buyer/onboarding/pra-review'
     | '/buyer/onboarding/vetting'
     | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
@@ -2258,6 +2341,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/resale'
     | '/support'
+    | '/terms'
     | '/a/$token'
     | '/admin/agent-assignments'
     | '/admin/agents'
@@ -2303,6 +2387,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
+    | '/agent/executed-documents'
     | '/agent/leads'
     | '/agent/login'
     | '/agent/pools'
@@ -2327,6 +2412,7 @@ export interface FileRouteTypes {
     | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
+    | '/buyer/operating-agreement-review'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -2337,6 +2423,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/agreement-review'
     | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
@@ -2350,6 +2437,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/reserve/$id'
     | '/reset-password/confirm'
+    | '/seller/documents'
     | '/admin'
     | '/agent'
     | '/broker'
@@ -2363,6 +2451,7 @@ export interface FileRouteTypes {
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis/$propertyId'
+    | '/agent/document-review/$id'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -2405,6 +2494,7 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
@@ -2413,6 +2503,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
+    | '/buyer/onboarding/pra-review'
     | '/buyer/onboarding/vetting'
     | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
@@ -2474,6 +2565,7 @@ export interface FileRouteTypes {
     | '/resale'
     | '/reset-password'
     | '/support'
+    | '/terms'
     | '/a/$token'
     | '/admin/agent-assignments'
     | '/admin/agents'
@@ -2521,6 +2613,7 @@ export interface FileRouteTypes {
     | '/agent/commissions'
     | '/agent/dashboard'
     | '/agent/due-diligence'
+    | '/agent/executed-documents'
     | '/agent/leads'
     | '/agent/login'
     | '/agent/pools'
@@ -2546,6 +2639,7 @@ export interface FileRouteTypes {
     | '/buyer/kyo'
     | '/buyer/login'
     | '/buyer/operating-agreement'
+    | '/buyer/operating-agreement-review'
     | '/buyer/register'
     | '/buyer/reports'
     | '/buyer/verification'
@@ -2556,6 +2650,7 @@ export interface FileRouteTypes {
     | '/listings/$id'
     | '/listings/new'
     | '/onboarding/agreement'
+    | '/onboarding/agreement-review'
     | '/onboarding/eligibility'
     | '/onboarding/fee'
     | '/onboarding/identity'
@@ -2569,6 +2664,7 @@ export interface FileRouteTypes {
     | '/r/$token'
     | '/reserve/$id'
     | '/reset-password/confirm'
+    | '/seller/documents'
     | '/admin/'
     | '/agent/'
     | '/broker/'
@@ -2582,6 +2678,7 @@ export interface FileRouteTypes {
     | '/admin/eligibility/held'
     | '/admin/eligibility/sanctions'
     | '/admin/entity-genesis_/$propertyId'
+    | '/agent/document-review/$id'
     | '/agent/documents/$id'
     | '/agent/listings/$id'
     | '/agent/onboarding/broker'
@@ -2624,6 +2721,7 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
     | '/buyer/onboarding/identity'
@@ -2632,6 +2730,7 @@ export interface FileRouteTypes {
     | '/buyer/onboarding/liveness'
     | '/buyer/onboarding/members'
     | '/buyer/onboarding/payment'
+    | '/buyer/onboarding/pra-review'
     | '/buyer/onboarding/vetting'
     | '/buyer/onboarding/w9'
     | '/buyer/pods/$id'
@@ -2694,6 +2793,7 @@ export interface RootRouteChildren {
   ResaleRoute: typeof ResaleRoute
   ResetPasswordRoute: typeof ResetPasswordRouteWithChildren
   SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
   ATokenRoute: typeof ATokenRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   BuyerAdverseActionRoute: typeof BuyerAdverseActionRoute
@@ -2709,6 +2809,7 @@ export interface RootRouteChildren {
   BuyerKyoRoute: typeof BuyerKyoRoute
   BuyerLoginRoute: typeof BuyerLoginRoute
   BuyerOperatingAgreementRoute: typeof BuyerOperatingAgreementRoute
+  BuyerOperatingAgreementReviewRoute: typeof BuyerOperatingAgreementReviewRoute
   BuyerRegisterRoute: typeof BuyerRegisterRoute
   BuyerReportsRoute: typeof BuyerReportsRoute
   BuyerVerificationRoute: typeof BuyerVerificationRoute
@@ -2719,6 +2820,7 @@ export interface RootRouteChildren {
   ListingsIdRoute: typeof ListingsIdRouteWithChildren
   ListingsNewRoute: typeof ListingsNewRoute
   OnboardingAgreementRoute: typeof OnboardingAgreementRoute
+  OnboardingAgreementReviewRoute: typeof OnboardingAgreementReviewRoute
   OnboardingEligibilityRoute: typeof OnboardingEligibilityRoute
   OnboardingFeeRoute: typeof OnboardingFeeRoute
   OnboardingIdentityRoute: typeof OnboardingIdentityRoute
@@ -2731,6 +2833,7 @@ export interface RootRouteChildren {
   PropertiesIdRoute: typeof PropertiesIdRoute
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
+  SellerDocumentsRoute: typeof SellerDocumentsRoute
   CpaIndexRoute: typeof CpaIndexRoute
   LibraryIndexRoute: typeof LibraryIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
@@ -2766,6 +2869,7 @@ export interface RootRouteChildren {
   ApiPublicTaxFormSweepRoute: typeof ApiPublicTaxFormSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   ApiPublicYearEndPacketSweepRoute: typeof ApiPublicYearEndPacketSweepRoute
+  BuyerCommissionReviewIdRoute: typeof BuyerCommissionReviewIdRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
   BuyerOnboardingEligibilityRoute: typeof BuyerOnboardingEligibilityRoute
   BuyerOnboardingIdentityRoute: typeof BuyerOnboardingIdentityRoute
@@ -2774,6 +2878,7 @@ export interface RootRouteChildren {
   BuyerOnboardingLivenessRoute: typeof BuyerOnboardingLivenessRoute
   BuyerOnboardingMembersRoute: typeof BuyerOnboardingMembersRoute
   BuyerOnboardingPaymentRoute: typeof BuyerOnboardingPaymentRoute
+  BuyerOnboardingPraReviewRoute: typeof BuyerOnboardingPraReviewRoute
   BuyerOnboardingVettingRoute: typeof BuyerOnboardingVettingRoute
   BuyerOnboardingW9Route: typeof BuyerOnboardingW9Route
   BuyerPodsIdRoute: typeof BuyerPodsIdRoute
@@ -2898,6 +3003,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/a/$token': {
@@ -3243,6 +3355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentDueDiligenceRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/executed-documents': {
+      id: '/agent/executed-documents'
+      path: '/executed-documents'
+      fullPath: '/agent/executed-documents'
+      preLoaderRoute: typeof AgentExecutedDocumentsRouteImport
+      parentRoute: typeof AgentRoute
+    }
     '/agent/leads': {
       id: '/agent/leads'
       path: '/leads'
@@ -3425,6 +3544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerOperatingAgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buyer/operating-agreement-review': {
+      id: '/buyer/operating-agreement-review'
+      path: '/buyer/operating-agreement-review'
+      fullPath: '/buyer/operating-agreement-review'
+      preLoaderRoute: typeof BuyerOperatingAgreementReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/register': {
       id: '/buyer/register'
       path: '/buyer/register'
@@ -3514,6 +3640,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/agreement'
       fullPath: '/onboarding/agreement'
       preLoaderRoute: typeof OnboardingAgreementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/agreement-review': {
+      id: '/onboarding/agreement-review'
+      path: '/onboarding/agreement-review'
+      fullPath: '/onboarding/agreement-review'
+      preLoaderRoute: typeof OnboardingAgreementReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/eligibility': {
@@ -3628,6 +3761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordConfirmRouteImport
       parentRoute: typeof ResetPasswordRoute
     }
+    '/seller/documents': {
+      id: '/seller/documents'
+      path: '/seller/documents'
+      fullPath: '/seller/documents'
+      preLoaderRoute: typeof SellerDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/books/$propertyId': {
       id: '/admin/books/$propertyId'
       path: '/books/$propertyId'
@@ -3676,6 +3816,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/agent/authorizations/'
       preLoaderRoute: typeof AgentAuthorizationsIndexRouteImport
       parentRoute: typeof AgentAuthorizationsRoute
+    }
+    '/agent/document-review/$id': {
+      id: '/agent/document-review/$id'
+      path: '/document-review/$id'
+      fullPath: '/agent/document-review/$id'
+      preLoaderRoute: typeof AgentDocumentReviewIdRouteImport
+      parentRoute: typeof AgentRoute
     }
     '/agent/documents/': {
       id: '/agent/documents/'
@@ -3992,6 +4139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerAuthorizationsIdRouteImport
       parentRoute: typeof BuyerAuthorizationsRoute
     }
+    '/buyer/commission-review/$id': {
+      id: '/buyer/commission-review/$id'
+      path: '/buyer/commission-review/$id'
+      fullPath: '/buyer/commission-review/$id'
+      preLoaderRoute: typeof BuyerCommissionReviewIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/due-diligence/$id': {
       id: '/buyer/due-diligence/$id'
       path: '/buyer/due-diligence/$id'
@@ -4053,6 +4207,13 @@ declare module '@tanstack/react-router' {
       path: '/buyer/onboarding/payment'
       fullPath: '/buyer/onboarding/payment'
       preLoaderRoute: typeof BuyerOnboardingPaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/onboarding/pra-review': {
+      id: '/buyer/onboarding/pra-review'
+      path: '/buyer/onboarding/pra-review'
+      fullPath: '/buyer/onboarding/pra-review'
+      preLoaderRoute: typeof BuyerOnboardingPraReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/buyer/onboarding/vetting': {
@@ -4473,6 +4634,7 @@ interface AgentRouteChildren {
   AgentCommissionsRoute: typeof AgentCommissionsRoute
   AgentDashboardRoute: typeof AgentDashboardRoute
   AgentDueDiligenceRoute: typeof AgentDueDiligenceRoute
+  AgentExecutedDocumentsRoute: typeof AgentExecutedDocumentsRoute
   AgentLeadsRoute: typeof AgentLeadsRoute
   AgentLoginRoute: typeof AgentLoginRoute
   AgentPoolsRoute: typeof AgentPoolsRoute
@@ -4480,6 +4642,7 @@ interface AgentRouteChildren {
   AgentRegisterRoute: typeof AgentRegisterRoute
   AgentReportsRoute: typeof AgentReportsRoute
   AgentIndexRoute: typeof AgentIndexRoute
+  AgentDocumentReviewIdRoute: typeof AgentDocumentReviewIdRoute
   AgentDocumentsIdRoute: typeof AgentDocumentsIdRoute
   AgentListingsIdRoute: typeof AgentListingsIdRoute
   AgentOnboardingBrokerRoute: typeof AgentOnboardingBrokerRoute
@@ -4503,6 +4666,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentCommissionsRoute: AgentCommissionsRoute,
   AgentDashboardRoute: AgentDashboardRoute,
   AgentDueDiligenceRoute: AgentDueDiligenceRoute,
+  AgentExecutedDocumentsRoute: AgentExecutedDocumentsRoute,
   AgentLeadsRoute: AgentLeadsRoute,
   AgentLoginRoute: AgentLoginRoute,
   AgentPoolsRoute: AgentPoolsRoute,
@@ -4510,6 +4674,7 @@ const AgentRouteChildren: AgentRouteChildren = {
   AgentRegisterRoute: AgentRegisterRoute,
   AgentReportsRoute: AgentReportsRoute,
   AgentIndexRoute: AgentIndexRoute,
+  AgentDocumentReviewIdRoute: AgentDocumentReviewIdRoute,
   AgentDocumentsIdRoute: AgentDocumentsIdRoute,
   AgentListingsIdRoute: AgentListingsIdRoute,
   AgentOnboardingBrokerRoute: AgentOnboardingBrokerRoute,
@@ -4610,6 +4775,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResaleRoute: ResaleRoute,
   ResetPasswordRoute: ResetPasswordRouteWithChildren,
   SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
   ATokenRoute: ATokenRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   BuyerAdverseActionRoute: BuyerAdverseActionRoute,
@@ -4625,6 +4791,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerKyoRoute: BuyerKyoRoute,
   BuyerLoginRoute: BuyerLoginRoute,
   BuyerOperatingAgreementRoute: BuyerOperatingAgreementRoute,
+  BuyerOperatingAgreementReviewRoute: BuyerOperatingAgreementReviewRoute,
   BuyerRegisterRoute: BuyerRegisterRoute,
   BuyerReportsRoute: BuyerReportsRoute,
   BuyerVerificationRoute: BuyerVerificationRoute,
@@ -4635,6 +4802,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingsIdRoute: ListingsIdRouteWithChildren,
   ListingsNewRoute: ListingsNewRoute,
   OnboardingAgreementRoute: OnboardingAgreementRoute,
+  OnboardingAgreementReviewRoute: OnboardingAgreementReviewRoute,
   OnboardingEligibilityRoute: OnboardingEligibilityRoute,
   OnboardingFeeRoute: OnboardingFeeRoute,
   OnboardingIdentityRoute: OnboardingIdentityRoute,
@@ -4647,6 +4815,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesIdRoute: PropertiesIdRoute,
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,
+  SellerDocumentsRoute: SellerDocumentsRoute,
   CpaIndexRoute: CpaIndexRoute,
   LibraryIndexRoute: LibraryIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
@@ -4683,6 +4852,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTaxFormSweepRoute: ApiPublicTaxFormSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   ApiPublicYearEndPacketSweepRoute: ApiPublicYearEndPacketSweepRoute,
+  BuyerCommissionReviewIdRoute: BuyerCommissionReviewIdRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
   BuyerOnboardingEligibilityRoute: BuyerOnboardingEligibilityRoute,
   BuyerOnboardingIdentityRoute: BuyerOnboardingIdentityRoute,
@@ -4691,6 +4861,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerOnboardingLivenessRoute: BuyerOnboardingLivenessRoute,
   BuyerOnboardingMembersRoute: BuyerOnboardingMembersRoute,
   BuyerOnboardingPaymentRoute: BuyerOnboardingPaymentRoute,
+  BuyerOnboardingPraReviewRoute: BuyerOnboardingPraReviewRoute,
   BuyerOnboardingVettingRoute: BuyerOnboardingVettingRoute,
   BuyerOnboardingW9Route: BuyerOnboardingW9Route,
   BuyerPodsIdRoute: BuyerPodsIdRoute,

@@ -13,6 +13,7 @@ import {
 } from "@/lib/entity-genesis-stage2.functions";
 import { deviceFingerprint } from "@/lib/due-diligence";
 import { SecondaryVerification } from "@/components/SecondaryVerification";
+import { DocumentReader } from "@/components/DocumentReader";
 
 export const Route = createFileRoute("/buyer/operating-agreement")({
   head: () => ({
@@ -63,7 +64,6 @@ function BuyerOperatingAgreement() {
 function Agreement({ a }: { a: BuyerOaView }) {
   const qc = useQueryClient();
   const sign = useServerFn(signMyOperatingAgreement);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolledEnd, setScrolledEnd] = useState(false);
   const pending = a.members.filter((m) => !m.signedAt);
   const [memberId, setMemberId] = useState(pending[0]?.id ?? "");
@@ -76,12 +76,6 @@ function Agreement({ a }: { a: BuyerOaView }) {
   useEffect(() => {
     if (!pending.some((m) => m.id === memberId) && pending[0]) setMemberId(pending[0].id);
   }, [pending, memberId]);
-
-  // Short documents can fit without scrolling — treat them as read to the end.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el && el.scrollHeight - el.clientHeight <= 8) setScrolledEnd(true);
-  }, [a.text]);
 
   const signMut = useMutation({
     mutationFn: () =>
@@ -112,17 +106,25 @@ function Agreement({ a }: { a: BuyerOaView }) {
         </span>
       </div>
 
-      <div
-        ref={scrollRef}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledEnd(true);
-        }}
-        className="mt-4 max-h-96 overflow-y-auto rounded-lg border border-border bg-background p-4"
-      >
-        <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-foreground">{a.text}</pre>
+      <p className="mt-3 text-sm text-muted-foreground">
+        You can read the agreement on its own first, search it and download a draft on the{" "}
+        <a href={`/buyer/operating-agreement-review?property=${a.propertyId}`} className="font-medium text-primary underline">
+          Pre-Signing Review
+        </a>{" "}
+        screen. This is the signing screen: below is the exact text you are signing.
+      </p>
+      <div className="mt-3">
+        <DocumentReader
+          title={`LLC Operating Agreement (${a.llcName})`}
+          version={a.documentHash ? `text ${a.documentHash.slice(0, 12)}` : ""}
+          text={a.text ?? ""}
+          hash={a.documentHash}
+          hashLabel="Document hash (the hash stored with each signature)"
+          crossRefs={{ terms: true, pra: false }}
+          onReachedEnd={(v) => v && setScrolledEnd(true)}
+          heightClass="h-96"
+        />
       </div>
-      <p className="mt-1 text-[11px] text-muted-foreground">Document version {a.documentHash?.slice(0, 19)}…</p>
 
       <ul className="mt-4 space-y-1 text-sm">
         {a.members.map((m) => (

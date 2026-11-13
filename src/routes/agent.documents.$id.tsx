@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Circle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { DocumentReader } from "@/components/DocumentReader";
 import {
   getAgentReferralDocument,
   signReferralAgreement,
@@ -122,16 +123,24 @@ function SignReferralAgreementPage() {
       ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_18rem]">
-        <div
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) setScrolled(true);
-          }}
-          className="max-h-[28rem] overflow-y-auto rounded-xl border border-border bg-card p-5"
-        >
-          <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground/90">
-            {doc.body}
-          </pre>
+        <div>
+          <p className="mb-2 text-sm text-muted-foreground">
+            You can read this agreement on its own first, search it and download a draft on the{" "}
+            <Link to="/agent/document-review/$id" params={{ id }} className="font-medium text-primary underline">
+              Pre-Signing Review
+            </Link>{" "}
+            screen. This is the signing screen: below is the exact text being signed.
+          </p>
+          <DocumentReader
+            title="Standard NAR Referral Agreement"
+            version={doc.version}
+            text={doc.body}
+            hash={doc.hash}
+            hashLabel="Document hash (the hash stored with each signature)"
+            crossRefs={{ terms: true, pra: false }}
+            onReachedEnd={(v) => v && setScrolled(true)}
+            heightClass="h-[28rem]"
+          />
         </div>
 
         <aside className="space-y-4">

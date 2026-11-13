@@ -147,9 +147,18 @@ const BUYER_ENROLLMENT_CENTS = 257000;
 
 export const createBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { returnUrl: string; environment: StripeEnv }) => data)
+  .inputValidator((data: { returnUrl: string; environment: StripeEnv; actingMemberId?: string }) => data)
   .handler(async ({ data, context }): Promise<CheckoutResult> => {
     const { supabase, userId } = context;
+
+    // Pre-Payment Review: the member paying has read the PRA to the bottom and acknowledged it. Checked here, not only on the screen.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+      const { assertPrePaymentReview } = await import("@/lib/document-access.server");
+      await assertPrePaymentReview(supabaseAdmin as never, { userId, actingMemberId: data.actingMemberId });
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Complete the Pre-Payment Review first." };
+    }
 
     const { data: account } = await supabase
       .from("buyer_accounts")
