@@ -82,12 +82,12 @@ export interface FounderFilters {
 const DAY_MS = 86_400_000;
 export const UNKNOWN_MARKET = "Not recognized";
 
-const inRange = (iso: string | null | undefined, f: FounderFilters) => {
+export const inRange = (iso: string | null | undefined, f: FounderFilters) => {
   if (!iso) return false;
   const day = iso.slice(0, 10);
   return (!f.from || day >= f.from) && (!f.to || day <= f.to);
 };
-const inState = (raw: string | null | undefined, f: FounderFilters) => !f.state || stateForMarket(raw) === f.state;
+export const inState = (raw: string | null | undefined, f: FounderFilters) => !f.state || stateForMarket(raw) === f.state;
 const dayLabel = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const average = (values: number[]) => (values.length ? round1(values.reduce((s, v) => s + v, 0) / values.length) : null);
@@ -281,14 +281,14 @@ export const AGENT_YIELD_DEFINITION =
 export type FounderWidget = "gtv" | "revenue" | "velocity" | "referrals" | "demand" | "retention";
 
 /** A leading = + - @ would run as a formula in a spreadsheet: names here are typed by people. */
-function csvCell(value: string | number | null): string {
+export function csvCell(value: string | number | null): string {
   if (value == null) return "";
   if (typeof value === "number") return String(value);
   const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
-const csv = (rows: Array<Array<string | number | null>>) => rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
-const dollars = (cents: number) => Math.round(cents) / 100;
+export const csv = (rows: Array<Array<string | number | null>>) => rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+export const dollars = (cents: number) => Math.round(cents) / 100;
 
 /** Aggregates only, the same figures the page shows. */
 export function founderCsv(widget: FounderWidget, d: FounderDashboard): string {

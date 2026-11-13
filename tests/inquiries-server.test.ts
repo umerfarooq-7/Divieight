@@ -145,7 +145,8 @@ describe("an inquiry never blocks anything", () => {
       }
     };
     walk("src");
-    expect(users.sort()).toEqual(["src/lib/inquiries.server.ts"]);
+    // The one other reader is the admin analytics: a read-only count of open inquiries for the compliance report. It gates nothing.
+    expect(users.sort()).toEqual(["src/lib/analytics.server.ts", "src/lib/inquiries.server.ts"]);
     // And the one reader that feeds the ledger treats a failure as "no inquiries", never as "no ledger".
     expect(readFileSync("src/lib/inquiries.server.ts", "utf8")).toMatch(/inquiriesAvailable = false/);
   });

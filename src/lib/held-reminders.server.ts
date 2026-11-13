@@ -19,7 +19,7 @@ const DAY = 86_400_000;
 const TABLE = "held_followups";
 const MISSING_SCHEMA = "Database is missing the held-account follow-ups: run rules-and-held-decisions.sql in Supabase.";
 
-interface HeldMember {
+export interface HeldMember {
   memberId: string;
   accountId: string;
   label: string;
@@ -41,7 +41,7 @@ export interface HeldAccountRow {
 type ResultRow = { account_member_id: string; declaration_id: string; determined_at: string; result: EligibilityResult };
 
 /** Every active member whose current result is held, and since when (the start of the unbroken run of held results). */
-async function heldMembers(db: Db): Promise<HeldMember[]> {
+export async function heldMembers(db: Db): Promise<HeldMember[]> {
   const { data: members } = await db.from("account_members").select("id, buyer_account_id, full_name, role").eq("status", "active");
   const { data: results, error } = await db.from("eligibility_results").select("account_member_id, declaration_id, determined_at, result");
   if (error) return [];

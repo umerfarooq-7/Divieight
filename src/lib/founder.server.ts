@@ -18,7 +18,8 @@ async function readAll<T>(db: Db, view: string, key: string): Promise<T[]> {
   }
 }
 
-export async function founderDashboard(db: Db, filters: FounderFilters) {
+/** Every founder fact, read once. The Founder Dashboard and the analytics and admin reports are both fed from this, so no figure is worked out twice. */
+export async function loadFounderFacts(db: Db): Promise<FounderFacts & { refreshedAt: string | null }> {
   const [properties, pef, commissions, buyers, shares, exceptions, resale] = await Promise.all([
     readAll<FounderFacts["properties"][number]>(db, "founder_mv_properties", "id"),
     readAll<FounderFacts["pef"][number]>(db, "founder_mv_pef", "key"),
@@ -29,10 +30,12 @@ export async function founderDashboard(db: Db, filters: FounderFilters) {
     readAll<FounderFacts["resale"][number]>(db, "founder_mv_resale", "id"),
   ]);
   const { data: stamp } = await db.from("founder_dashboard_refreshes").select("refreshed_at").eq("id", 1).maybeSingle();
-  return {
-    ...computeFounderDashboard({ properties, pef, commissions, buyers, shares, exceptions, resale }, filters),
-    refreshedAt: (stamp?.refreshed_at as string | undefined) ?? null,
-  };
+  return { properties, pef, commissions, buyers, shares, exceptions, resale, refreshedAt: (stamp?.refreshed_at as string | undefined) ?? null };
+}
+
+export async function founderDashboard(db: Db, filters: FounderFilters) {
+  const { refreshedAt, ...facts } = await loadFounderFacts(db);
+  return { ...computeFounderDashboard(facts, filters), refreshedAt };
 }
 
 export async function refreshFounder(db: Db): Promise<{ refreshedAt: string }> {

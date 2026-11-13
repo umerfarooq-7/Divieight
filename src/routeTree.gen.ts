@@ -30,6 +30,7 @@ import { Route as AccountSettingsRouteImport } from './routes/account.settings'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAgentAssignmentsRouteImport } from './routes/admin.agent-assignments'
 import { Route as AdminAgentsRouteImport } from './routes/admin.agents'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAuthorizationsRouteImport } from './routes/admin.authorizations'
 import { Route as AdminBankFeedRouteImport } from './routes/admin.bank-feed'
@@ -56,6 +57,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResaleRouteImport } from './routes/admin.resale'
 import { Route as AdminRetentionExceptionsRouteImport } from './routes/admin.retention-exceptions'
 import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
@@ -343,6 +345,11 @@ const AdminAgentsRoute = AdminAgentsRouteImport.update({
   path: '/agents',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
   id: '/audit-log',
   path: '/audit-log',
@@ -472,6 +479,11 @@ const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
 const AdminPropertiesRoute = AdminPropertiesRouteImport.update({
   id: '/properties',
   path: '/properties',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminResaleRoute = AdminResaleRouteImport.update({
@@ -1465,6 +1477,7 @@ export interface FileRoutesByFullPath {
   '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/bank-feed': typeof AdminBankFeedRoute
@@ -1491,6 +1504,7 @@ export interface FileRoutesByFullPath {
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
@@ -1691,6 +1705,7 @@ export interface FileRoutesByTo {
   '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/bank-feed': typeof AdminBankFeedRoute
@@ -1716,6 +1731,7 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
@@ -1919,6 +1935,7 @@ export interface FileRoutesById {
   '/account/settings': typeof AccountSettingsRoute
   '/admin/agent-assignments': typeof AdminAgentAssignmentsRoute
   '/admin/agents': typeof AdminAgentsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/authorizations': typeof AdminAuthorizationsRoute
   '/admin/bank-feed': typeof AdminBankFeedRoute
@@ -1945,6 +1962,7 @@ export interface FileRoutesById {
   '/admin/maintenance': typeof AdminMaintenanceRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
@@ -2151,6 +2169,7 @@ export interface FileRouteTypes {
     | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/authorizations'
     | '/admin/bank-feed'
@@ -2177,6 +2196,7 @@ export interface FileRouteTypes {
     | '/admin/maintenance'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/reports'
     | '/admin/resale'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
@@ -2377,6 +2397,7 @@ export interface FileRouteTypes {
     | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/authorizations'
     | '/admin/bank-feed'
@@ -2402,6 +2423,7 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/maintenance'
     | '/admin/payments'
+    | '/admin/reports'
     | '/admin/resale'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
@@ -2604,6 +2626,7 @@ export interface FileRouteTypes {
     | '/account/settings'
     | '/admin/agent-assignments'
     | '/admin/agents'
+    | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/authorizations'
     | '/admin/bank-feed'
@@ -2630,6 +2653,7 @@ export interface FileRouteTypes {
     | '/admin/maintenance'
     | '/admin/payments'
     | '/admin/properties'
+    | '/admin/reports'
     | '/admin/resale'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
@@ -3092,6 +3116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAgentsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/audit-log': {
       id: '/admin/audit-log'
       path: '/audit-log'
@@ -3272,6 +3303,13 @@ declare module '@tanstack/react-router' {
       path: '/properties'
       fullPath: '/admin/properties'
       preLoaderRoute: typeof AdminPropertiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/resale': {
@@ -4571,6 +4609,7 @@ const AdminPropertiesRouteWithChildren = AdminPropertiesRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAgentAssignmentsRoute: typeof AdminAgentAssignmentsRoute
   AdminAgentsRoute: typeof AdminAgentsRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminAuthorizationsRoute: typeof AdminAuthorizationsRoute
   AdminBankFeedRoute: typeof AdminBankFeedRoute
@@ -4597,6 +4636,7 @@ interface AdminRouteChildren {
   AdminMaintenanceRoute: typeof AdminMaintenanceRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
+  AdminReportsRoute: typeof AdminReportsRoute
   AdminResaleRoute: typeof AdminResaleRoute
   AdminRetentionExceptionsRoute: typeof AdminRetentionExceptionsRoute
   AdminSagaPocRoute: typeof AdminSagaPocRoute
@@ -4623,6 +4663,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAgentAssignmentsRoute: AdminAgentAssignmentsRoute,
   AdminAgentsRoute: AdminAgentsRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminAuditLogRoute: AdminAuditLogRoute,
   AdminAuthorizationsRoute: AdminAuthorizationsRoute,
   AdminBankFeedRoute: AdminBankFeedRoute,
@@ -4649,6 +4690,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMaintenanceRoute: AdminMaintenanceRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
+  AdminReportsRoute: AdminReportsRoute,
   AdminResaleRoute: AdminResaleRoute,
   AdminRetentionExceptionsRoute: AdminRetentionExceptionsRoute,
   AdminSagaPocRoute: AdminSagaPocRoute,

@@ -73,6 +73,8 @@ const NAV = [
   { to: "/admin/bank-feed", label: "Bank feed", icon: CreditCard },
   { to: "/admin/conversions", label: "Conversions", icon: ScrollText },
   { to: "/admin/founder", label: "Founder dashboard", icon: ScrollText },
+  { to: "/admin/analytics", label: "Platform analytics", icon: ScrollText },
+  { to: "/admin/reports", label: "Admin reports", icon: ScrollText },
   { to: "/admin/governance-settings", label: "Governance settings", icon: ShieldCheck },
   { to: "/admin/launch-readiness", label: "Launch readiness", icon: AlertTriangle },
   { to: "/admin/library", label: "Library", icon: FileSignature },
