@@ -567,12 +567,12 @@ describe("10. notices", () => {
   });
 
   it("voting windows, capital calls and governance notices stay mandatory; expense_posted is optional", async () => {
-    for (const type of ["governance_vote_window", "capital_call_alert", "notice_posted"]) expect(isMandatoryNotification(type)).toBe(true);
+    for (const type of ["governance_vote_window", "capital_call_alert", "notice_posted", "monthly_statement"]) expect(isMandatoryNotification(type)).toBe(true);
     expect(isMandatoryNotification("expense_posted")).toBe(false);
     as(USERS.b1);
     const { preferences } = await getOwnerNotificationPreferences();
     expect(preferences.find((p) => p.type === "expense_posted")).toMatchObject({ mandatory: false, emailEnabled: true, label: "Expenses" });
-    expect(preferences.filter((p) => p.mandatory).map((p) => p.type).sort()).toEqual(["capital_call_alert", "governance_vote_window", "notice_posted"]);
+    expect(preferences.filter((p) => p.mandatory).map((p) => p.type).sort()).toEqual(["capital_call_alert", "governance_vote_window", "monthly_statement", "notice_posted"]);
   });
 
   it("the expense email can be switched off; the bell stays on", async () => {

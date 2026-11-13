@@ -25,6 +25,9 @@ import {
   setRecurringRuleActiveFn,
 } from "@/lib/books.functions";
 import { closeLedgerPeriodFn, reverseLedgerEntryFn } from "@/lib/bookkeeping.functions";
+import { StatementView } from "@/components/StatementView";
+import { generateStatementsFn, getStatement, getStatementBoard, issueStatementsFn, saveStatementNotesFn } from "@/lib/statements.functions";
+import { STATEMENT_HOLIDAY_ASSUMPTION, STATEMENT_STATUS_LABELS, statementMoney } from "@/lib/statements";
 import { allocateIncomeFn, enterDepreciationFn, getAdminRollForward, getAllocationOverrides, retireAllocationOverrideFn, saveAllocationOverrideFn, syncMonth5EventsFn } from "@/lib/capital.functions";
 import { EXPENSE_CATEGORIES, OVERRIDE_METHOD_LABELS, OVERRIDE_METHODS, ROUNDING_RULE_TEXT, USAGE_ADJUSTED_ASSUMPTION, percentsProblem, type OverrideMethod } from "@/lib/expenses";
 import type { BookEntry, BooksOverview } from "@/lib/books.server";
@@ -54,6 +57,7 @@ const TABS = [
   ["rules", "Rules"],
   ["capital", "Capital"],
   ["allocation", "Expense allocation"],
+  ["statements", "Statements"],
   ["periods", "Periods"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -110,6 +114,7 @@ function AdminBooksPage() {
             {tab === "rules" ? <RulesTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "capital" ? <CapitalTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "allocation" ? <AllocationTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
+            {tab === "statements" ? <StatementsTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "periods" ? <PeriodsTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
           </div>
         </>
@@ -898,6 +903,123 @@ function AllocationTab({ propertyId, done, fail }: { propertyId: string; done: (
           ) : null}
         </section>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- monthly statements
+function StatementPreview({ statementId }: { statementId: string }) {
+  const load = useServerFn(getStatement);
+  const q = useQuery({ queryKey: ["statement-preview", statementId], queryFn: () => load({ data: { statementId } }), retry: false });
+  if (q.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (q.error) return <p className="text-sm text-destructive">{(q.error as Error).message}</p>;
+  if (!q.data) return null;
+  return <StatementView snapshot={q.data.snapshot} holder={q.data.holder} version={q.data.version} status={q.data.status} issuedAt={q.data.issuedAt} />;
+}
+
+function StatementsTab({ propertyId, done, fail }: { propertyId: string; done: () => void; fail: (e: Error) => void }) {
+  const load = useServerFn(getStatementBoard);
+  const generate = useServerFn(generateStatementsFn);
+  const saveNotes = useServerFn(saveStatementNotesFn);
+  const issue = useServerFn(issueStatementsFn);
+  const [period, setPeriod] = useState("");
+  const q = useQuery({ queryKey: ["statement-board", propertyId, period], queryFn: () => load({ data: { propertyId, period: period || null } }), retry: false });
+  const [notes, setNotes] = useState<string | null>(null);
+  const [force, setForce] = useState("");
+  const [open, setOpen] = useState<string | null>(null);
+  const shown = period || q.data?.period || "";
+  const refresh = () => {
+    void q.refetch();
+    done();
+  };
+  const generateM = useMutation({
+    mutationFn: () => generate({ data: { propertyId, period: shown } }),
+    onSuccess: (r) => {
+      toast.success(`${r.created} new draft(s), ${r.refreshed} refreshed, ${r.corrections} correction version(s), ${r.unchanged} unchanged`);
+      refresh();
+    },
+    onError: fail,
+  });
+  const notesM = useMutation({
+    mutationFn: () => saveNotes({ data: { propertyId, period: shown, notes: notes ?? q.data?.notes ?? "" } }),
+    onSuccess: (r) => {
+      toast.success(`Notes saved on ${r.drafts} draft(s)`);
+      refresh();
+    },
+    onError: fail,
+  });
+  const issueM = useMutation({
+    mutationFn: () => issue({ data: { propertyId, period: shown, forceReason: force } }),
+    onSuccess: (r) => {
+      toast.success(`${r.issued} statement(s) issued. ${r.notified} owner(s) told, ${r.filed} PDF(s) filed.`);
+      setForce("");
+      refresh();
+    },
+    onError: fail,
+  });
+  const b = q.data;
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        One statement per capital account per month, built from the ledger. They stay drafts until you have been through the needs-review queue and added your notes; then Issue sends them to every owner (in the app and by email), with a PDF. An issued statement never changes: a correction to a past month makes a new version and the old one stays viewable. {STATEMENT_HOLIDAY_ASSUMPTION}
+      </p>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-xs font-medium text-foreground">
+          Month
+          <input type="month" className={FIELD} value={shown} onChange={(e) => { setPeriod(e.target.value); setNotes(null); }} />
+        </label>
+        <button type="button" className={SECONDARY} disabled={!shown || generateM.isPending} onClick={() => generateM.mutate()}>
+          {generateM.isPending ? "Working…" : "Generate drafts / check for corrections"}
+        </button>
+      </div>
+      {q.error ? <p className="text-sm text-destructive">{(q.error as Error).message}</p> : null}
+      {b ? (
+        <>
+          <p className="rounded-xl border border-border bg-card p-3 text-sm text-muted-foreground">
+            Schedule: statements for {b.schedule.period} start {b.schedule.starts}, due {b.schedule.deadline}.
+            {b.schedule.overdue && b.drafts > 0 ? <strong className="ml-1 text-destructive">The deadline has passed and drafts are waiting.</strong> : null}
+          </p>
+          {b.statements.length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No statements for this month yet. Generate the drafts.</p> : null}
+          {b.drafts > 0 ? (
+            <section className="space-y-3 rounded-xl border border-border bg-card p-4">
+              <h3 className="text-sm font-semibold text-foreground">Manager&apos;s notes (on all {b.drafts} draft(s))</h3>
+              <textarea rows={4} maxLength={4000} className={FIELD} placeholder="An upcoming capital call, an unusual expense, items flagged for the CPA" value={notes ?? b.notes} onChange={(e) => setNotes(e.target.value)} />
+              <button type="button" className={SECONDARY} disabled={notesM.isPending} onClick={() => notesM.mutate()}>
+                Save notes
+              </button>
+              <p className={`text-sm ${b.needsReview > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                {b.needsReview > 0 ? `${b.needsReview} bank transaction(s) are still in the needs-review queue. Review them first, or issue anyway and say why:` : "The needs-review queue is clear."}
+              </p>
+              {b.needsReview > 0 ? <input className={FIELD} placeholder="Why you are issuing with items still in the queue" value={force} onChange={(e) => setForce(e.target.value)} /> : null}
+              <button type="button" className={PRIMARY} disabled={issueM.isPending || (b.needsReview > 0 && !force.trim())} onClick={() => issueM.mutate()}>
+                {issueM.isPending ? "Issuing…" : `Issue all ${b.drafts} draft(s)`}
+              </button>
+            </section>
+          ) : null}
+          {b.statements.map((s) => (
+            <section key={s.id} className="rounded-xl border border-border bg-card p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium text-foreground">
+                  {s.holder} · version {s.version} · {STATEMENT_STATUS_LABELS[s.status]}
+                </span>
+                <span className="text-foreground">Closing {statementMoney(s.closingCents)}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {s.reconciles === null ? "" : s.reconciles ? "Totals match the ledger." : "Totals no longer match the ledger: generate to draft a correction."}
+                {s.issuedAt ? ` Issued ${s.issuedAt.slice(0, 10)}.` : ""}
+              </p>
+              <button type="button" className="mt-2 text-sm font-medium text-primary hover:underline" onClick={() => setOpen(open === s.id ? null : s.id)}>
+                {open === s.id ? "Hide" : "Preview"}
+              </button>
+              {open === s.id ? (
+                <div className="mt-3">
+                  <StatementPreview statementId={s.id} />
+                </div>
+              ) : null}
+            </section>
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }

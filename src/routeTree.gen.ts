@@ -164,6 +164,7 @@ import { Route as ApiPublicResaleExpirySweepRouteImport } from './routes/api.pub
 import { Route as ApiPublicResaleSweepRouteImport } from './routes/api.public.resale-sweep'
 import { Route as ApiPublicRetentionSweepRouteImport } from './routes/api.public.retention-sweep'
 import { Route as ApiPublicStandardRulesCheckRouteImport } from './routes/api.public.standard-rules-check'
+import { Route as ApiPublicStatementsSweepRouteImport } from './routes/api.public.statements-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
 import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
@@ -215,6 +216,8 @@ import { Route as OwnerPropertiesPropertyIdMaintenanceRouteImport } from './rout
 import { Route as OwnerPropertiesPropertyIdResaleRouteImport } from './routes/owner.properties.$propertyId.resale'
 import { Route as OwnerPropertiesPropertyIdRetentionRouteImport } from './routes/owner.properties.$propertyId.retention'
 import { Route as OwnerPropertiesPropertyIdStrRouteImport } from './routes/owner.properties.$propertyId.str'
+import { Route as OwnerPropertiesPropertyIdStatementsIndexRouteImport } from './routes/owner.properties.$propertyId.statements.index'
+import { Route as OwnerPropertiesPropertyIdStatementsStatementIdRouteImport } from './routes/owner.properties.$propertyId.statements.$statementId'
 import { Route as OwnerPropertiesPropertyIdVotesIndexRouteImport } from './routes/owner.properties.$propertyId.votes.index'
 import { Route as OwnerPropertiesPropertyIdVotesVoteIdRouteImport } from './routes/owner.properties.$propertyId.votes.$voteId'
 
@@ -1017,6 +1020,12 @@ const ApiPublicStandardRulesCheckRoute =
     path: '/api/public/standard-rules-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicStatementsSweepRoute =
+  ApiPublicStatementsSweepRouteImport.update({
+    id: '/api/public/statements-sweep',
+    path: '/api/public/statements-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSubstitutionSweepRoute =
   ApiPublicSubstitutionSweepRouteImport.update({
     id: '/api/public/substitution-sweep',
@@ -1304,6 +1313,18 @@ const OwnerPropertiesPropertyIdStrRoute =
     path: '/owner/properties/$propertyId/str',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OwnerPropertiesPropertyIdStatementsIndexRoute =
+  OwnerPropertiesPropertyIdStatementsIndexRouteImport.update({
+    id: '/owner/properties/$propertyId/statements/',
+    path: '/owner/properties/$propertyId/statements/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OwnerPropertiesPropertyIdStatementsStatementIdRoute =
+  OwnerPropertiesPropertyIdStatementsStatementIdRouteImport.update({
+    id: '/owner/properties/$propertyId/statements/$statementId',
+    path: '/owner/properties/$propertyId/statements/$statementId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const OwnerPropertiesPropertyIdVotesIndexRoute =
   OwnerPropertiesPropertyIdVotesIndexRouteImport.update({
     id: '/owner/properties/$propertyId/votes/',
@@ -1468,6 +1489,7 @@ export interface FileRoutesByFullPath {
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
+  '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1524,7 +1546,9 @@ export interface FileRoutesByFullPath {
   '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/statements/$statementId': typeof OwnerPropertiesPropertyIdStatementsStatementIdRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/statements/': typeof OwnerPropertiesPropertyIdStatementsIndexRoute
   '/owner/properties/$propertyId/votes/': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -1671,6 +1695,7 @@ export interface FileRoutesByTo {
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
+  '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1727,7 +1752,9 @@ export interface FileRoutesByTo {
   '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/statements/$statementId': typeof OwnerPropertiesPropertyIdStatementsStatementIdRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/statements': typeof OwnerPropertiesPropertyIdStatementsIndexRoute
   '/owner/properties/$propertyId/votes': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRoutesById {
@@ -1882,6 +1909,7 @@ export interface FileRoutesById {
   '/api/public/resale-sweep': typeof ApiPublicResaleSweepRoute
   '/api/public/retention-sweep': typeof ApiPublicRetentionSweepRoute
   '/api/public/standard-rules-check': typeof ApiPublicStandardRulesCheckRoute
+  '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
@@ -1938,7 +1966,9 @@ export interface FileRoutesById {
   '/owner/properties/$propertyId/str': typeof OwnerPropertiesPropertyIdStrRoute
   '/agent/pods/$id/': typeof AgentPodsIdIndexRoute
   '/owner/properties/$propertyId/': typeof OwnerPropertiesPropertyIdIndexRoute
+  '/owner/properties/$propertyId/statements/$statementId': typeof OwnerPropertiesPropertyIdStatementsStatementIdRoute
   '/owner/properties/$propertyId/votes/$voteId': typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  '/owner/properties/$propertyId/statements/': typeof OwnerPropertiesPropertyIdStatementsIndexRoute
   '/owner/properties/$propertyId/votes/': typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 export interface FileRouteTypes {
@@ -2094,6 +2124,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/standard-rules-check'
+    | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2150,7 +2181,9 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
+    | '/owner/properties/$propertyId/statements/$statementId'
     | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/statements/'
     | '/owner/properties/$propertyId/votes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -2297,6 +2330,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/standard-rules-check'
+    | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2353,7 +2387,9 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id'
     | '/owner/properties/$propertyId'
+    | '/owner/properties/$propertyId/statements/$statementId'
     | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/statements'
     | '/owner/properties/$propertyId/votes'
   id:
     | '__root__'
@@ -2507,6 +2543,7 @@ export interface FileRouteTypes {
     | '/api/public/resale-sweep'
     | '/api/public/retention-sweep'
     | '/api/public/standard-rules-check'
+    | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
     | '/broker/onboarding/banking'
@@ -2563,7 +2600,9 @@ export interface FileRouteTypes {
     | '/owner/properties/$propertyId/str'
     | '/agent/pods/$id/'
     | '/owner/properties/$propertyId/'
+    | '/owner/properties/$propertyId/statements/$statementId'
     | '/owner/properties/$propertyId/votes/$voteId'
+    | '/owner/properties/$propertyId/statements/'
     | '/owner/properties/$propertyId/votes/'
   fileRoutesById: FileRoutesById
 }
@@ -2647,6 +2686,7 @@ export interface RootRouteChildren {
   ApiPublicResaleSweepRoute: typeof ApiPublicResaleSweepRoute
   ApiPublicRetentionSweepRoute: typeof ApiPublicRetentionSweepRoute
   ApiPublicStandardRulesCheckRoute: typeof ApiPublicStandardRulesCheckRoute
+  ApiPublicStatementsSweepRoute: typeof ApiPublicStatementsSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
@@ -2677,7 +2717,9 @@ export interface RootRouteChildren {
   OwnerPropertiesPropertyIdRetentionRoute: typeof OwnerPropertiesPropertyIdRetentionRoute
   OwnerPropertiesPropertyIdStrRoute: typeof OwnerPropertiesPropertyIdStrRoute
   OwnerPropertiesPropertyIdIndexRoute: typeof OwnerPropertiesPropertyIdIndexRoute
+  OwnerPropertiesPropertyIdStatementsStatementIdRoute: typeof OwnerPropertiesPropertyIdStatementsStatementIdRoute
   OwnerPropertiesPropertyIdVotesVoteIdRoute: typeof OwnerPropertiesPropertyIdVotesVoteIdRoute
+  OwnerPropertiesPropertyIdStatementsIndexRoute: typeof OwnerPropertiesPropertyIdStatementsIndexRoute
   OwnerPropertiesPropertyIdVotesIndexRoute: typeof OwnerPropertiesPropertyIdVotesIndexRoute
 }
 
@@ -3768,6 +3810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStandardRulesCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/statements-sweep': {
+      id: '/api/public/statements-sweep'
+      path: '/api/public/statements-sweep'
+      fullPath: '/api/public/statements-sweep'
+      preLoaderRoute: typeof ApiPublicStatementsSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/substitution-sweep': {
       id: '/api/public/substitution-sweep'
       path: '/api/public/substitution-sweep'
@@ -4123,6 +4172,20 @@ declare module '@tanstack/react-router' {
       path: '/owner/properties/$propertyId/str'
       fullPath: '/owner/properties/$propertyId/str'
       preLoaderRoute: typeof OwnerPropertiesPropertyIdStrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/properties/$propertyId/statements/': {
+      id: '/owner/properties/$propertyId/statements/'
+      path: '/owner/properties/$propertyId/statements'
+      fullPath: '/owner/properties/$propertyId/statements/'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdStatementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/owner/properties/$propertyId/statements/$statementId': {
+      id: '/owner/properties/$propertyId/statements/$statementId'
+      path: '/owner/properties/$propertyId/statements/$statementId'
+      fullPath: '/owner/properties/$propertyId/statements/$statementId'
+      preLoaderRoute: typeof OwnerPropertiesPropertyIdStatementsStatementIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/owner/properties/$propertyId/votes/': {
@@ -4490,6 +4553,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicResaleSweepRoute: ApiPublicResaleSweepRoute,
   ApiPublicRetentionSweepRoute: ApiPublicRetentionSweepRoute,
   ApiPublicStandardRulesCheckRoute: ApiPublicStandardRulesCheckRoute,
+  ApiPublicStatementsSweepRoute: ApiPublicStatementsSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
@@ -4526,8 +4590,12 @@ const rootRouteChildren: RootRouteChildren = {
     OwnerPropertiesPropertyIdRetentionRoute,
   OwnerPropertiesPropertyIdStrRoute: OwnerPropertiesPropertyIdStrRoute,
   OwnerPropertiesPropertyIdIndexRoute: OwnerPropertiesPropertyIdIndexRoute,
+  OwnerPropertiesPropertyIdStatementsStatementIdRoute:
+    OwnerPropertiesPropertyIdStatementsStatementIdRoute,
   OwnerPropertiesPropertyIdVotesVoteIdRoute:
     OwnerPropertiesPropertyIdVotesVoteIdRoute,
+  OwnerPropertiesPropertyIdStatementsIndexRoute:
+    OwnerPropertiesPropertyIdStatementsIndexRoute,
   OwnerPropertiesPropertyIdVotesIndexRoute:
     OwnerPropertiesPropertyIdVotesIndexRoute,
 }

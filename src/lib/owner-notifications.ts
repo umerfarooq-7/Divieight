@@ -12,6 +12,8 @@ export const OWNER_NOTIFICATION_TYPES = {
   retention_exception_update: { label: "Retention Lock requests", mandatory: false },
   notice_posted: { label: "Governance notices", mandatory: true },
   /** The Manager's answer to a question or suggestion about a transaction. Optional: the email can be switched off, the bell is always on. */
+  /** The monthly statement. Rev 48 floor: a statement is never withheld, so the email can't be switched off. */
+  monthly_statement: { label: "Monthly statements", mandatory: true },
   inquiry_update: { label: "Answers about the books", mandatory: false },
 } as const;
 

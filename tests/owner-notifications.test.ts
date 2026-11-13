@@ -222,7 +222,7 @@ describe("preferences", () => {
   it("governance, capital call and voting window can't be switched off", async () => {
     seed();
     as(USERS.b1);
-    for (const type of ["governance_vote_window", "capital_call_alert", "notice_posted"] as const) {
+    for (const type of ["governance_vote_window", "capital_call_alert", "notice_posted", "monthly_statement"] as const) {
       expect(isMandatoryNotification(type)).toBe(true);
       await expect(setOwnerNotificationPreference({ data: { type, emailEnabled: false } })).rejects.toThrow("required");
     }
@@ -232,6 +232,7 @@ describe("preferences", () => {
       ["capital_call_alert", true],
       ["governance_vote_window", true],
       ["notice_posted", true],
+      ["monthly_statement", true],
     ]);
   });
 
@@ -278,12 +279,12 @@ describe("preferences", () => {
     await expect(setOwnerNotificationPreference({ data: { type: "vote" as never, emailEnabled: false } })).rejects.toThrow("type");
   });
 
-  it("lists all ten types", async () => {
+  it("lists all eleven types", async () => {
     seed();
     as(USERS.b1);
     const { preferences } = await getOwnerNotificationPreferences();
     expect(preferences.map((p) => p.type).sort()).toEqual(Object.keys(OWNER_NOTIFICATION_TYPES).sort());
-    expect(preferences).toHaveLength(10);
+    expect(preferences).toHaveLength(11);
     expect(preferences.find((p) => p.type === "expense_posted")).toMatchObject({ mandatory: false, emailEnabled: true });
   });
 
