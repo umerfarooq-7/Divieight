@@ -39,7 +39,7 @@ function wrap(text: string, size: number, width: number, bold = false): string[]
 
 type Draw = { x: number; y: number; text: string; size: number; bold: boolean } | { rule: number };
 
-class Doc {
+export class Doc {
   pages: Draw[][] = [[]];
   y = PAGE_H - MARGIN - 8;
   private room(h: number) {
@@ -168,7 +168,11 @@ export function renderStatementPdf(input: StatementPdfInput): Uint8Array<ArrayBu
   doc.space(10);
   doc.text("This statement is a record of the LLC's books for your records and your CPA. It is not a tax return or a K-1.", { size: BODY });
 
-  // Emit.
+  return emitPdf(doc, `Monthly statement ${s.period}`);
+}
+
+/** Draws a laid-out document as a PDF (Helvetica, US Letter, the page count on every page). */
+export function emitPdf(doc: Doc, title: string): Uint8Array<ArrayBuffer> {
   const total = doc.pages.length;
   const objects: string[] = [];
   const pageIds = doc.pages.map((_, i) => 6 + i * 2);
@@ -176,7 +180,7 @@ export function renderStatementPdf(input: StatementPdfInput): Uint8Array<ArrayBu
   objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${total} >>`;
   objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
   objects[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
-  objects[5] = `<< /Title (${esc(`Monthly statement ${s.period}`)}) /Producer (divieight) >>`;
+  objects[5] = `<< /Title (${esc(title)}) /Producer (divieight) >>`;
   doc.pages.forEach((draws, i) => {
     const ops: string[] = [];
     for (const d of draws) {

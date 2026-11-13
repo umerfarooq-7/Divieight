@@ -169,6 +169,7 @@ import { Route as ApiPublicStandardRulesCheckRouteImport } from './routes/api.pu
 import { Route as ApiPublicStatementsSweepRouteImport } from './routes/api.public.statements-sweep'
 import { Route as ApiPublicSubstitutionSweepRouteImport } from './routes/api.public.substitution-sweep'
 import { Route as ApiPublicUseCalendarSweepRouteImport } from './routes/api.public.use-calendar-sweep'
+import { Route as ApiPublicYearEndPacketSweepRouteImport } from './routes/api.public.year-end-packet-sweep'
 import { Route as BrokerOnboardingBankingRouteImport } from './routes/broker.onboarding.banking'
 import { Route as BrokerOnboardingComplianceRouteImport } from './routes/broker.onboarding.compliance'
 import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.onboarding.insurance'
@@ -1050,6 +1051,12 @@ const ApiPublicUseCalendarSweepRoute =
     path: '/api/public/use-calendar-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicYearEndPacketSweepRoute =
+  ApiPublicYearEndPacketSweepRouteImport.update({
+    id: '/api/public/year-end-packet-sweep',
+    path: '/api/public/year-end-packet-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BrokerOnboardingBankingRoute = BrokerOnboardingBankingRouteImport.update({
   id: '/onboarding/banking',
   path: '/onboarding/banking',
@@ -1506,6 +1513,7 @@ export interface FileRoutesByFullPath {
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
+  '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -1714,6 +1722,7 @@ export interface FileRoutesByTo {
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
+  '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -1930,6 +1939,7 @@ export interface FileRoutesById {
   '/api/public/statements-sweep': typeof ApiPublicStatementsSweepRoute
   '/api/public/substitution-sweep': typeof ApiPublicSubstitutionSweepRoute
   '/api/public/use-calendar-sweep': typeof ApiPublicUseCalendarSweepRoute
+  '/api/public/year-end-packet-sweep': typeof ApiPublicYearEndPacketSweepRoute
   '/broker/onboarding/banking': typeof BrokerOnboardingBankingRoute
   '/broker/onboarding/compliance': typeof BrokerOnboardingComplianceRoute
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
@@ -2147,6 +2157,7 @@ export interface FileRouteTypes {
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
+    | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -2355,6 +2366,7 @@ export interface FileRouteTypes {
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
+    | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -2570,6 +2582,7 @@ export interface FileRouteTypes {
     | '/api/public/statements-sweep'
     | '/api/public/substitution-sweep'
     | '/api/public/use-calendar-sweep'
+    | '/api/public/year-end-packet-sweep'
     | '/broker/onboarding/banking'
     | '/broker/onboarding/compliance'
     | '/broker/onboarding/insurance'
@@ -2715,6 +2728,7 @@ export interface RootRouteChildren {
   ApiPublicStatementsSweepRoute: typeof ApiPublicStatementsSweepRoute
   ApiPublicSubstitutionSweepRoute: typeof ApiPublicSubstitutionSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
+  ApiPublicYearEndPacketSweepRoute: typeof ApiPublicYearEndPacketSweepRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
   BuyerOnboardingEligibilityRoute: typeof BuyerOnboardingEligibilityRoute
   BuyerOnboardingIdentityRoute: typeof BuyerOnboardingIdentityRoute
@@ -3871,6 +3885,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicUseCalendarSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/year-end-packet-sweep': {
+      id: '/api/public/year-end-packet-sweep'
+      path: '/api/public/year-end-packet-sweep'
+      fullPath: '/api/public/year-end-packet-sweep'
+      preLoaderRoute: typeof ApiPublicYearEndPacketSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/broker/onboarding/banking': {
       id: '/broker/onboarding/banking'
       path: '/onboarding/banking'
@@ -4598,6 +4619,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicStatementsSweepRoute: ApiPublicStatementsSweepRoute,
   ApiPublicSubstitutionSweepRoute: ApiPublicSubstitutionSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
+  ApiPublicYearEndPacketSweepRoute: ApiPublicYearEndPacketSweepRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
   BuyerOnboardingEligibilityRoute: BuyerOnboardingEligibilityRoute,
   BuyerOnboardingIdentityRoute: BuyerOnboardingIdentityRoute,

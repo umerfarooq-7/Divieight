@@ -25,6 +25,8 @@ import {
   setRecurringRuleActiveFn,
 } from "@/lib/books.functions";
 import { closeLedgerPeriodFn, reverseLedgerEntryFn } from "@/lib/bookkeeping.functions";
+import { annotateWorksheetFn, downloadPacketFileFn, generatePacketFn, getPacketBoard, refreshWorksheetFn } from "@/lib/year-end-packet.functions";
+import { PACKET_DEADLINE_DAYS, PACKET_JSON_ASSUMPTION } from "@/lib/year-end-packet";
 import { designateCpaFn, getCpaBoard, rescindCpaFn } from "@/lib/cpa.functions";
 import { StatementView } from "@/components/StatementView";
 import { generateStatementsFn, getStatement, getStatementBoard, issueStatementsFn, saveStatementNotesFn } from "@/lib/statements.functions";
@@ -60,6 +62,7 @@ const TABS = [
   ["allocation", "Expense allocation"],
   ["statements", "Statements"],
   ["cpa", "CPA"],
+  ["packet", "Year-End Packet"],
   ["periods", "Periods"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -116,6 +119,7 @@ function AdminBooksPage() {
             {tab === "rules" ? <RulesTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "capital" ? <CapitalTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "allocation" ? <AllocationTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
+            {tab === "packet" ? <PacketTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "cpa" ? <CpaTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "statements" ? <StatementsTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "periods" ? <PeriodsTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
@@ -1135,6 +1139,141 @@ function CpaTab({ propertyId, done, fail }: { propertyId: string; done: () => vo
           </ul>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- year-end CPA export packet
+function downloadBase64(filename: string, base64: string, type: string) {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+const FILE_TYPES: Record<string, string> = { pdf: "application/pdf", json: "application/json", csv: "text/csv", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+
+function PacketTab({ propertyId, done, fail }: { propertyId: string; done: () => void; fail: (e: Error) => void }) {
+  const load = useServerFn(getPacketBoard);
+  const generate = useServerFn(generatePacketFn);
+  const refreshWs = useServerFn(refreshWorksheetFn);
+  const annotate = useServerFn(annotateWorksheetFn);
+  const download = useServerFn(downloadPacketFileFn);
+  const q = useQuery({ queryKey: ["packet-board", propertyId], queryFn: () => load({ data: { propertyId } }), retry: false });
+  const [year, setYear] = useState<number | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const b = q.data;
+  const shown = year ?? b?.year ?? new Date().getUTCFullYear() - 1;
+  const refresh = () => {
+    void q.refetch();
+    done();
+  };
+  const generateM = useMutation({
+    mutationFn: () => generate({ data: { propertyId, year: shown } }),
+    onSuccess: (r) => {
+      toast.success(`Version ${r.version} generated: ${r.files} files${r.piiFiles ? ` and ${r.piiFiles} private TIN file(s)` : ""}.`);
+      refresh();
+    },
+    onError: fail,
+  });
+  const refreshM = useMutation({
+    mutationFn: () => refreshWs({ data: { propertyId, year: shown } }),
+    onSuccess: (r) => {
+      toast.success(`${r.made} new worksheet item(s)`);
+      refresh();
+    },
+    onError: fail,
+  });
+  const annotateM = useMutation({
+    mutationFn: (v: { itemId: string; note: string; status: "open" | "reviewed" }) => annotate({ data: v }),
+    onSuccess: () => {
+      toast.success("Saved");
+      refresh();
+    },
+    onError: fail,
+  });
+  const get = async (packetId: string, file: string) => {
+    try {
+      const f = await download({ data: { packetId, file } });
+      downloadBase64(f.filename, f.base64, FILE_TYPES[file.split(".").pop() ?? ""] ?? "application/octet-stream");
+    } catch (e) {
+      fail(e as Error);
+    }
+  };
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        The Year-End CPA Export Packet: the general ledger, trial balance, balance sheet, income statement, each member&apos;s capital roll-forward, the member roster, 1099 copies and the CPA Cooperation Worksheet, as a PDF, CSV and XLSX per section, and JSON for tax software. It is made automatically within {PACKET_DEADLINE_DAYS} days of year-end, and you can generate it now. Each generation is a new version with a hash; nothing is edited. It contains no K-1, no Form 1065, no depreciation and no Section 754 figure. {PACKET_JSON_ASSUMPTION}
+      </p>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-xs font-medium text-foreground">
+          Year
+          <input type="number" className={FIELD} value={shown} onChange={(e) => setYear(Number(e.target.value))} />
+        </label>
+        <button type="button" className={PRIMARY} disabled={generateM.isPending} onClick={() => generateM.mutate()}>
+          {generateM.isPending ? "Generating…" : "Generate now"}
+        </button>
+        <button type="button" className={SECONDARY} disabled={refreshM.isPending} onClick={() => refreshM.mutate()}>
+          Refresh the worksheet
+        </button>
+      </div>
+      {b ? <p className="text-xs text-muted-foreground">The {b.year} packet is due by {b.deadline}.</p> : null}
+      {q.error ? <p className="text-sm text-destructive">{(q.error as Error).message}</p> : null}
+      {(b?.worksheet ?? []).filter((i) => i.year === shown).length > 0 ? (
+        <section className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">CPA Cooperation Worksheet {shown}</h3>
+          {b!.worksheet
+            .filter((i) => i.year === shown)
+            .map((i) => (
+              <div key={i.id} className="space-y-2 rounded-lg border border-border p-3 text-sm">
+                <p className="font-medium text-foreground">
+                  {i.title} <span className="text-muted-foreground">({i.status})</span>
+                </p>
+                <textarea rows={2} className={FIELD} placeholder="Your note for the CPA" value={notes[i.id] ?? i.note ?? ""} onChange={(e) => setNotes({ ...notes, [i.id]: e.target.value })} />
+                <div className="flex gap-2">
+                  <button type="button" className={SECONDARY} onClick={() => annotateM.mutate({ itemId: i.id, note: notes[i.id] ?? i.note ?? "", status: i.status })}>
+                    Save note
+                  </button>
+                  <button type="button" className={SECONDARY} onClick={() => annotateM.mutate({ itemId: i.id, note: notes[i.id] ?? i.note ?? "", status: i.status === "open" ? "reviewed" : "open" })}>
+                    {i.status === "open" ? "Mark reviewed" : "Reopen"}
+                  </button>
+                </div>
+              </div>
+            ))}
+        </section>
+      ) : null}
+      {(b?.packets ?? []).length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No packet has been generated for this LLC yet.</p> : null}
+      {b?.packets.map((p) => (
+        <section key={p.id} className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
+          <p className="font-medium text-foreground">
+            {p.year} · version {p.version} · {p.trigger === "scheduled" ? "scheduled job" : "generated by"} {p.generatedBy} · {p.generatedAt.slice(0, 10)}
+          </p>
+          <p className="break-all text-xs text-muted-foreground">
+            Hash {p.hash} · {p.reconciles ? "Totals reconcile to the ledger." : "Totals no longer match the ledger (the books changed after it was made): generate a new version."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {p.files.map((f) => (
+              <button key={f.name} type="button" className={SECONDARY} onClick={() => get(p.id, f.name)}>
+                {f.name}
+              </button>
+            ))}
+          </div>
+          {p.piiFiles.length > 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-3">
+              <p className="text-xs font-medium text-foreground">Private files with TINs (Manager only, every download is logged)</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {p.piiFiles.map((f) => (
+                  <button key={f.name} type="button" className={SECONDARY} onClick={() => get(p.id, f.name)}>
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ))}
     </div>
   );
 }

@@ -285,11 +285,38 @@ export async function cpaWorksheet(db: Db, p: { userId: string; propertyId: stri
   };
 }
 
-/** The Year-End Export Packets generated for this LLC (none until that feature exists). Downloads of packets with TINs are not offered here. */
+/** The Year-End Export Packets generated for this LLC. Only their general files are listed: the files with TINs are never offered here. */
 export async function cpaPackets(db: Db, p: { userId: string; propertyId: string }) {
   await requireCpa(db, p.userId, p.propertyId);
-  const r = await db.from("year_end_packets").select("id, year, version, hash, created_at").eq("property_id", p.propertyId).order("year", { ascending: false });
-  return { packets: r.error ? [] : ((r.data ?? []) as Array<Record<string, any>>).map((x) => ({ id: x.id as string, year: x.year as number, version: x.version as number, hash: x.hash as string, createdAt: x.created_at as string })) };
+  const r = await db.from("year_end_packets").select("id, year, version, hash, generated_at, files").eq("property_id", p.propertyId).order("year", { ascending: false });
+  return {
+    packets: r.error
+      ? []
+      : ((r.data ?? []) as Array<Record<string, any>>).map((x) => ({
+          id: x.id as string,
+          year: x.year as number,
+          version: x.version as number,
+          hash: x.hash as string,
+          createdAt: x.generated_at as string,
+          files: ((x.files ?? []) as Array<{ name: string; kind: string; bytes: number; pii: boolean }>).filter((f) => !f.pii).map((f) => ({ name: f.name, kind: f.kind, bytes: f.bytes })),
+        })),
+  };
+}
+
+/** Download a general file of a packet (the CPA never gets the TIN files). Logged. */
+export async function cpaDownloadPacketFile(db: Db, p: { userId: string; packetId: string; file: string }) {
+  const denied = new Error("File not found.");
+  const { data } = await db.from("year_end_packets").select("id, property_id").eq("id", p.packetId).maybeSingle();
+  if (!data) throw denied;
+  try {
+    await requireCpa(db, p.userId, data.property_id as string);
+  } catch {
+    throw denied;
+  }
+  const { readGeneralPacketFile } = await import("@/lib/year-end-packet.server");
+  const f = await readGeneralPacketFile(db, { propertyId: data.property_id as string, packetId: p.packetId, file: p.file });
+  await audit(db, p.userId, "cpa.packet_downloaded", "year_end_packet", p.packetId, { property_id: data.property_id, file: f.filename });
+  return { filename: f.filename, base64: f.base64 };
 }
 
 /** The members of the LLC, by legal name. The TIN is not here: it is shown only through cpaRevealTin, which logs every view. */

@@ -111,7 +111,7 @@ export async function submitW9(
  * the LLC they are designated to (viewTinAsCpa below checks that). Every call is audited with who, when, why and, for a CPA, which
  * property: never with the TIN. The audit row is written first; if it can't be written nothing is decrypted.
  */
-export async function decryptTinForTaxExport(db: Db, params: { actorId: string; w9Id: string; reason: string; actorType?: "admin" | "cpa"; propertyId?: string }): Promise<string> {
+export async function decryptTinForTaxExport(db: Db, params: { actorId: string | null; w9Id: string; reason: string; actorType?: "admin" | "cpa"; propertyId?: string }): Promise<string> {
   const reason = params.reason.trim();
   if (!reason) throw new Error("Give the reason for decrypting this TIN.");
   const { data, error } = await db.from("member_w9_tin_secrets").select("w9_id, ciphertext, iv, auth_tag, key_version").eq("w9_id", params.w9Id).maybeSingle();
@@ -119,7 +119,7 @@ export async function decryptTinForTaxExport(db: Db, params: { actorId: string; 
   const cpa = params.actorType === "cpa";
   const { error: auditError } = await db.from("audit_log").insert({
     actor_id: params.actorId,
-    actor_type: cpa ? "cpa" : "admin",
+    actor_type: cpa ? "cpa" : params.actorId === null ? "system" : "admin",
     action_type: cpa ? "cpa.w9_tin_viewed" : "admin.w9_tin_decrypted",
     entity_type: "member_w9",
     entity_id: params.w9Id,
@@ -127,6 +127,22 @@ export async function decryptTinForTaxExport(db: Db, params: { actorId: string; 
   });
   if (auditError) throw new Error("The TIN can't be shown: the audit log could not be written.");
   return decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, `member_w9:${params.w9Id}`);
+}
+
+/**
+ * The TINs for a year-end packet's private roster, one audited decryption each (reason: the packet and its year). A W-9 with no TIN is simply left out.
+ * If the audit row can't be written the whole thing stops. Never a TIN in an error.
+ */
+export async function decryptTinsForPacket(db: Db, params: { actorId: string | null; propertyId: string; year: number; w9Ids: string[] }): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  for (const w9Id of params.w9Ids) {
+    try {
+      out[w9Id] = await decryptTinForTaxExport(db, { actorId: params.actorId, w9Id, reason: `Year-end CPA export packet ${params.year}`, propertyId: params.propertyId });
+    } catch (e) {
+      if (/audit log/.test((e as Error).message)) throw new Error("The TINs can't be shown: the audit log could not be written.");
+    }
+  }
+  return out;
 }
 
 /** The permissible purpose for a CPA's TIN view. */

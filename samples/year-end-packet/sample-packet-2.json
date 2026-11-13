@@ -1,0 +1,645 @@
+{
+  "schema_version": "1.0.0",
+  "packet_id": "00000000-0000-4000-8000-000000000001",
+  "generated_at": "2026-01-05T09:00:00Z",
+  "trigger": "scheduled",
+  "property": {
+    "property_id": "00000000-0000-4000-8000-000000000002",
+    "llc_name": "5632 Independence Ave LLC",
+    "address": "5632 Independence Ave",
+    "city": "Lusk",
+    "state": "WY",
+    "zip": "82225",
+    "total_shares": 8
+  },
+  "period": {
+    "year": 2025,
+    "start": "2025-01-01",
+    "end": "2025-12-31"
+  },
+  "accounts": [
+    {
+      "code": "1000",
+      "name": "Cash (LLC operating account)",
+      "type": "asset",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "1100",
+      "name": "Prepaid and Other Assets",
+      "type": "asset",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "1200",
+      "name": "Property (acquisition cost)",
+      "type": "asset",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "1210",
+      "name": "Furnishings and Capital Improvements",
+      "type": "asset",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "1290",
+      "name": "Accumulated Depreciation",
+      "type": "asset",
+      "member_control": false,
+      "normal_balance": "credit"
+    },
+    {
+      "code": "3000",
+      "name": "Member Capital Contributions",
+      "type": "equity",
+      "member_control": true,
+      "normal_balance": "credit"
+    },
+    {
+      "code": "3100",
+      "name": "Member Distributions",
+      "type": "equity",
+      "member_control": true,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "3200",
+      "name": "Member Capital Account (control)",
+      "type": "equity",
+      "member_control": true,
+      "normal_balance": "credit"
+    },
+    {
+      "code": "4000",
+      "name": "Other Income (incidental LLC income only)",
+      "type": "income",
+      "member_control": false,
+      "normal_balance": "credit"
+    },
+    {
+      "code": "6000",
+      "name": "Property Tax Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6100",
+      "name": "Hazard Insurance Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6110",
+      "name": "Umbrella Insurance Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6200",
+      "name": "HOA Dues Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6300",
+      "name": "Utilities Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6400",
+      "name": "Repairs and Maintenance Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6500",
+      "name": "Property Management Fee Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    },
+    {
+      "code": "6600",
+      "name": "Cleaning and Turnover Expense",
+      "type": "expense",
+      "member_control": false,
+      "normal_balance": "debit"
+    }
+  ],
+  "entries": [
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "date": "2025-04-10",
+      "memo": "2025 rent",
+      "lines": [
+        {
+          "category": "asset",
+          "member_key": null,
+          "debit_cents": 50000,
+          "account_code": "1000",
+          "account_name": "Cash (LLC operating account)",
+          "credit_cents": 0
+        },
+        {
+          "category": "income",
+          "member_key": null,
+          "debit_cents": 0,
+          "account_code": "4000",
+          "account_name": "Other Income (incidental LLC income only)",
+          "credit_cents": 50000
+        }
+      ],
+      "source": "manual",
+      "adjustment": false,
+      "source_ref": null,
+      "reverses_entry_id": null,
+      "bank": {
+        "merchant": "Tenant ACH",
+        "raw_category": "INCOME"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "date": "2025-04-15",
+      "memo": "Expense: Repair",
+      "lines": [
+        {
+          "category": "asset",
+          "member_key": null,
+          "debit_cents": 0,
+          "account_code": "1000",
+          "account_name": "Cash (LLC operating account)",
+          "credit_cents": 80000
+        },
+        {
+          "category": "expense",
+          "member_key": null,
+          "debit_cents": 80000,
+          "account_code": "6400",
+          "account_name": "Repairs and Maintenance Expense",
+          "credit_cents": 0
+        }
+      ],
+      "source": "expense",
+      "adjustment": false,
+      "source_ref": "expense:00000000-0000-4000-8000-000000000005",
+      "reverses_entry_id": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "date": "2025-04-15",
+      "memo": "Expense allocated to members: Repair",
+      "lines": [
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000007",
+          "debit_cents": 40000,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000008",
+          "debit_cents": 30000,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000009",
+          "debit_cents": 10000,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        },
+        {
+          "category": "expense",
+          "member_key": null,
+          "debit_cents": 0,
+          "account_code": "6400",
+          "account_name": "Repairs and Maintenance Expense",
+          "credit_cents": 80000
+        }
+      ],
+      "source": "expense",
+      "adjustment": false,
+      "source_ref": "allocation-expense:00000000-0000-4000-8000-000000000005",
+      "reverses_entry_id": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "date": "2025-04-20",
+      "memo": "2025 distribution",
+      "lines": [
+        {
+          "category": "asset",
+          "member_key": null,
+          "debit_cents": 0,
+          "account_code": "1000",
+          "account_name": "Cash (LLC operating account)",
+          "credit_cents": 30000
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000007",
+          "debit_cents": 30000,
+          "account_code": "3100",
+          "account_name": "Member Distributions",
+          "credit_cents": 0
+        }
+      ],
+      "source": "distribution",
+      "adjustment": false,
+      "source_ref": "distribution:test-00000000-0000-4000-8000-000000000002-2025:00000000-0000-4000-8000-000000000007",
+      "reverses_entry_id": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "date": "2025-04-30",
+      "memo": "Income allocated to members pro rata to shares",
+      "lines": [
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000007",
+          "debit_cents": 0,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 25000
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000008",
+          "debit_cents": 0,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 18750
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000009",
+          "debit_cents": 0,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 6250
+        },
+        {
+          "category": "income",
+          "member_key": null,
+          "debit_cents": 50000,
+          "account_code": "4000",
+          "account_name": "Other Income (incidental LLC income only)",
+          "credit_cents": 0
+        }
+      ],
+      "source": "system",
+      "adjustment": false,
+      "source_ref": "allocation-income:00000000-0000-4000-8000-000000000002:2025-04-30:1",
+      "reverses_entry_id": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "date": "2025-12-31",
+      "memo": "Depreciation for 2025 per the CPA's schedule CPA schedule 2025-A",
+      "lines": [
+        {
+          "category": "asset",
+          "member_key": null,
+          "debit_cents": 0,
+          "account_code": "1290",
+          "account_name": "Accumulated Depreciation",
+          "credit_cents": 9000
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000007",
+          "debit_cents": 4500,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000008",
+          "debit_cents": 3375,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        },
+        {
+          "category": "equity",
+          "member_key": "00000000-0000-4000-8000-000000000009",
+          "debit_cents": 1125,
+          "account_code": "3200",
+          "account_name": "Member Capital Account (control)",
+          "credit_cents": 0
+        }
+      ],
+      "source": "system",
+      "adjustment": false,
+      "source_ref": "depreciation:00000000-0000-4000-8000-000000000002:2025:1",
+      "reverses_entry_id": null
+    }
+  ],
+  "trial_balance": {
+    "rows": [
+      {
+        "code": "1000",
+        "name": "Cash (LLC operating account)",
+        "type": "asset",
+        "debit_cents": 100000,
+        "credit_cents": 220000,
+        "balance_cents": -120000
+      },
+      {
+        "code": "1200",
+        "name": "Property (acquisition cost)",
+        "type": "asset",
+        "debit_cents": 800000,
+        "credit_cents": 0,
+        "balance_cents": 800000
+      },
+      {
+        "code": "1290",
+        "name": "Accumulated Depreciation",
+        "type": "asset",
+        "debit_cents": 0,
+        "credit_cents": 9000,
+        "balance_cents": 9000
+      },
+      {
+        "code": "3000",
+        "name": "Member Capital Contributions",
+        "type": "equity",
+        "debit_cents": 0,
+        "credit_cents": 800000,
+        "balance_cents": 800000
+      },
+      {
+        "code": "3100",
+        "name": "Member Distributions",
+        "type": "equity",
+        "debit_cents": 60000,
+        "credit_cents": 0,
+        "balance_cents": 60000
+      },
+      {
+        "code": "3200",
+        "name": "Member Capital Account (control)",
+        "type": "equity",
+        "debit_cents": 169000,
+        "credit_cents": 100000,
+        "balance_cents": -69000
+      },
+      {
+        "code": "4000",
+        "name": "Other Income (incidental LLC income only)",
+        "type": "income",
+        "debit_cents": 100000,
+        "credit_cents": 100000,
+        "balance_cents": 0
+      },
+      {
+        "code": "6400",
+        "name": "Repairs and Maintenance Expense",
+        "type": "expense",
+        "debit_cents": 160000,
+        "credit_cents": 160000,
+        "balance_cents": 0
+      }
+    ],
+    "as_of": "2025-12-31",
+    "balanced": true,
+    "total_debit_cents": 1389000,
+    "total_credit_cents": 1389000
+  },
+  "balance_sheet": {
+    "as_of": "2025-12-31",
+    "assets": [
+      {
+        "code": "1000",
+        "name": "Cash (LLC operating account)",
+        "balance_cents": -120000
+      },
+      {
+        "code": "1200",
+        "name": "Property (acquisition cost)",
+        "balance_cents": 800000
+      },
+      {
+        "code": "1290",
+        "name": "Accumulated Depreciation",
+        "balance_cents": -9000
+      }
+    ],
+    "balanced": true,
+    "liabilities": [],
+    "member_capital": [
+      {
+        "member_key": "00000000-0000-4000-8000-000000000007",
+        "balance_cents": 305500
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000008",
+        "balance_cents": 274125
+      },
+      {
+        "member_key": "00000000-0000-4000-8000-000000000009",
+        "balance_cents": 91375
+      }
+    ],
+    "total_assets_cents": 671000,
+    "unallocated_net_income_cents": 0,
+    "total_liabilities_and_equity_cents": 671000
+  },
+  "income_statement": {
+    "year": 2025,
+    "income": [
+      {
+        "code": "4000",
+        "name": "Other Income (incidental LLC income only)",
+        "items": [
+          {
+            "date": "2025-04-10",
+            "memo": "2025 rent",
+            "amount_cents": 50000
+          }
+        ],
+        "total_cents": 50000
+      }
+    ],
+    "expense": [
+      {
+        "code": "6400",
+        "name": "Repairs and Maintenance Expense",
+        "items": [
+          {
+            "date": "2025-04-15",
+            "memo": "Expense: Repair",
+            "amount_cents": 80000
+          }
+        ],
+        "total_cents": 80000
+      }
+    ],
+    "net_cents": -30000,
+    "income_cents": 50000,
+    "expense_cents": 80000,
+    "allocated_to_members": {
+      "income_allocated_cents": 50000,
+      "expense_allocated_cents": 80000
+    }
+  },
+  "members": [
+    {
+      "member_key": "00000000-0000-4000-8000-000000000007",
+      "legal_name": "Ann Example",
+      "share_count": 4,
+      "interest_percent": "50.00",
+      "mailing_address": "12 Oak St, Lusk, WY 82225",
+      "tin_kind": "ssn",
+      "tin_status": "on_file"
+    },
+    {
+      "member_key": "00000000-0000-4000-8000-000000000007",
+      "legal_name": "Ben Example",
+      "share_count": 4,
+      "interest_percent": "50.00",
+      "mailing_address": "12 Oak St, Lusk, WY 82225",
+      "tin_kind": "ssn",
+      "tin_status": "on_file"
+    },
+    {
+      "member_key": "00000000-0000-4000-8000-000000000008",
+      "legal_name": "Casey Sample",
+      "share_count": 3,
+      "interest_percent": "37.50",
+      "mailing_address": "9 Pine Rd, Casper, WY 82601",
+      "tin_kind": "ein",
+      "tin_status": "on_file"
+    },
+    {
+      "member_key": "00000000-0000-4000-8000-000000000009",
+      "legal_name": "Dana Seller (retained)",
+      "share_count": 1,
+      "interest_percent": "12.50",
+      "mailing_address": null,
+      "tin_kind": null,
+      "tin_status": "missing"
+    }
+  ],
+  "roll_forwards": [
+    {
+      "member_key": "00000000-0000-4000-8000-000000000007",
+      "ending_cents": 305500,
+      "income_cents": 25000,
+      "expense_cents": -40000,
+      "beginning_cents": 355000,
+      "transfers_cents": 0,
+      "depreciation_cents": -4500,
+      "contributions_cents": 0,
+      "distributions_cents": -30000,
+      "prior_year_ending_cents": 355000,
+      "beginning_matches_prior_ending": true
+    },
+    {
+      "member_key": "00000000-0000-4000-8000-000000000008",
+      "ending_cents": 274125,
+      "income_cents": 18750,
+      "expense_cents": -30000,
+      "beginning_cents": 288750,
+      "transfers_cents": 0,
+      "depreciation_cents": -3375,
+      "contributions_cents": 0,
+      "distributions_cents": 0,
+      "prior_year_ending_cents": 288750,
+      "beginning_matches_prior_ending": true
+    },
+    {
+      "member_key": "00000000-0000-4000-8000-000000000009",
+      "ending_cents": 91375,
+      "income_cents": 6250,
+      "expense_cents": -10000,
+      "beginning_cents": 96250,
+      "transfers_cents": 0,
+      "depreciation_cents": -1125,
+      "contributions_cents": 0,
+      "distributions_cents": 0,
+      "prior_year_ending_cents": 96250,
+      "beginning_matches_prior_ending": true
+    }
+  ],
+  "forms_1099": [
+    {
+      "vendor_name": "Lusk Roofing",
+      "form_type": "1099-NEC",
+      "tax_year": 2025,
+      "amount_cents": 80000,
+      "issued_at": "2026-01-20T00:00:00Z",
+      "file": null
+    }
+  ],
+  "worksheet": {
+    "items": [
+      {
+        "item_type": "depreciation_needed",
+        "title": "Depreciation for 2025 was entered from the CPA's schedule",
+        "status": "open",
+        "manager_note": null,
+        "detail": {
+          "note": "The platform does not calculate depreciation. The Manager enters the figure from the CPA's schedule.",
+          "entered": true,
+          "entered_cents": 9000
+        }
+      },
+      {
+        "item_type": "lodging_tax_exposure",
+        "title": "State and local lodging-tax exposure: owners with short-term-rental activity (no amounts)",
+        "status": "open",
+        "manager_note": null,
+        "detail": {
+          "members": [
+            {
+              "statuses": [
+                "owed"
+              ],
+              "member_key": "00000000-0000-4000-8000-000000000008",
+              "record_count": 3
+            }
+          ]
+        }
+      },
+      {
+        "item_type": "section_754_review",
+        "title": "Section 754 question: a share changed hands (flag only; the platform never computes basis)",
+        "status": "open",
+        "manager_note": null,
+        "detail": {
+          "note": "A share was resold in June",
+          "flag_id": "00000000-0000-4000-8000-000000000013",
+          "flag_type": "section_754_review",
+          "flagged_on": "2025-06-01",
+          "resale_transaction_id": null
+        }
+      }
+    ]
+  },
+  "totals": {
+    "entries": 6,
+    "debit_cents": 299000,
+    "credit_cents": 299000
+  }
+}

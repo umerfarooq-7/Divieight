@@ -7,6 +7,7 @@ import { StatementView } from "@/components/StatementView";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCents } from "@/lib/bank-feed-display";
+import { cpaDownloadPacketFileFn } from "@/lib/year-end-packet.functions";
 import { getCpaCapitalAccounts, getCpaLedger, getCpaPackets, getCpaPortal, getCpaRoster, getCpaStatement, getCpaStatementPdf, getCpaStatements, getCpaWorksheet, revealCpaTinFn } from "@/lib/cpa.functions";
 import { CAPITAL_TYPE_LABELS, STATEMENT_STATUS_LABELS, periodLabel, type StatementStatus } from "@/lib/statements";
 
@@ -309,18 +310,42 @@ function WorksheetTab({ propertyId }: { propertyId: string }) {
 
 function PacketsTab({ propertyId }: { propertyId: string }) {
   const load = useServerFn(getCpaPackets);
+  const get = useServerFn(cpaDownloadPacketFileFn);
   const q = useQuery({ queryKey: ["cpa-packets", propertyId], queryFn: () => load({ data: { propertyId } }), retry: false });
+  const types: Record<string, string> = { pdf: "application/pdf", json: "application/json", csv: "text/csv", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+  const download = async (packetId: string, file: string) => {
+    try {
+      const f = await get({ data: { packetId, file } });
+      const bytes = Uint8Array.from(atob(f.base64), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: types[file.split(".").pop() ?? ""] ?? "application/octet-stream" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = f.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
   if (q.isLoading) return <p className="text-muted-foreground">Loading…</p>;
   if (q.error) return <Problem error={q.error} />;
   return (
     <div className="space-y-3">
+      <p className="text-muted-foreground">Each version is a fixed snapshot with a hash. Member TINs are not in these files: view them one at a time under Members and TINs, where every view is logged.</p>
       {q.data!.packets.length === 0 ? <p className="text-muted-foreground">No Year-End Export Packet has been generated for this LLC yet.</p> : null}
       {q.data!.packets.map((p) => (
-        <section key={p.id} className="rounded-xl border border-border bg-card p-4">
+        <section key={p.id} className="space-y-2 rounded-xl border border-border bg-card p-4">
           <p className="font-medium">
             {p.year} · version {p.version}
           </p>
-          <p className="text-sm text-muted-foreground">Hash {p.hash.slice(0, 16)}…</p>
+          <p className="break-all text-sm text-muted-foreground">Hash {p.hash}</p>
+          <div className="flex flex-wrap gap-2">
+            {p.files.map((f) => (
+              <button key={f.name} type="button" className={BTN} onClick={() => download(p.id, f.name)}>
+                {f.name}
+              </button>
+            ))}
+          </div>
         </section>
       ))}
     </div>
