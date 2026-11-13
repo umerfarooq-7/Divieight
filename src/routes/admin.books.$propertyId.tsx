@@ -25,6 +25,7 @@ import {
   setRecurringRuleActiveFn,
 } from "@/lib/books.functions";
 import { closeLedgerPeriodFn, reverseLedgerEntryFn } from "@/lib/bookkeeping.functions";
+import { designateCpaFn, getCpaBoard, rescindCpaFn } from "@/lib/cpa.functions";
 import { StatementView } from "@/components/StatementView";
 import { generateStatementsFn, getStatement, getStatementBoard, issueStatementsFn, saveStatementNotesFn } from "@/lib/statements.functions";
 import { STATEMENT_HOLIDAY_ASSUMPTION, STATEMENT_STATUS_LABELS, statementMoney } from "@/lib/statements";
@@ -58,6 +59,7 @@ const TABS = [
   ["capital", "Capital"],
   ["allocation", "Expense allocation"],
   ["statements", "Statements"],
+  ["cpa", "CPA"],
   ["periods", "Periods"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -114,6 +116,7 @@ function AdminBooksPage() {
             {tab === "rules" ? <RulesTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "capital" ? <CapitalTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "allocation" ? <AllocationTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
+            {tab === "cpa" ? <CpaTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "statements" ? <StatementsTab propertyId={propertyId} done={refresh} fail={fail} /> : null}
             {tab === "periods" ? <PeriodsTab data={data} propertyId={propertyId} done={refresh} fail={fail} /> : null}
           </div>
@@ -1019,6 +1022,118 @@ function StatementsTab({ propertyId, done, fail }: { propertyId: string; done: (
             </section>
           ))}
         </>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- the designated CPA
+function CpaTab({ propertyId, done, fail }: { propertyId: string; done: () => void; fail: (e: Error) => void }) {
+  const load = useServerFn(getCpaBoard);
+  const designate = useServerFn(designateCpaFn);
+  const rescind = useServerFn(rescindCpaFn);
+  const q = useQuery({ queryKey: ["cpa-board", propertyId], queryFn: () => load({ data: { propertyId } }), retry: false });
+  const [f, setF] = useState({ name: "", firm: "", email: "", licenseNo: "" });
+  const [why, setWhy] = useState("");
+  const [rescinding, setRescinding] = useState(false);
+  const refresh = () => {
+    void q.refetch();
+    done();
+  };
+  const designateM = useMutation({
+    mutationFn: () => designate({ data: { propertyId, ...f } }),
+    onSuccess: (r) => {
+      toast.success(r.invited ? "CPA designated. An invitation was emailed to them." : "CPA designated. They can sign in with their existing login.");
+      setF({ name: "", firm: "", email: "", licenseNo: "" });
+      refresh();
+    },
+    onError: fail,
+  });
+  const rescindM = useMutation({
+    mutationFn: (id: string) => rescind({ data: { designationId: id, reason: why } }),
+    onSuccess: (r) => {
+      toast.success(r.loginClosed ? "Rescinded. Their access ended at once and their login is closed." : "Rescinded. Their access ended at once.");
+      setWhy("");
+      setRescinding(false);
+      refresh();
+    },
+    onError: fail,
+  });
+  const cur = q.data?.current;
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        One CPA per LLC. The CPA gets a limited, read-only login for this LLC only: the general ledger, the capital account ledgers, the monthly statements, the Year-End Export Packet and the CPA Cooperation Worksheet. They can change nothing and see no other property. They can view a member&apos;s TIN only for K-1 preparation, and every view is logged. Members see their name and firm. Access lasts until you rescind it.
+      </p>
+      {q.error ? <p className="text-sm text-destructive">{(q.error as Error).message}</p> : null}
+      {cur ? (
+        <section className="space-y-2 rounded-xl border border-border bg-card p-4 text-sm">
+          <p className="font-medium text-foreground">
+            {cur.name}, {cur.firm} · {cur.status === "active" ? "Active" : "Invited (hasn't signed in yet)"}
+          </p>
+          <p className="text-muted-foreground">
+            {cur.email}
+            {cur.licenseNo ? ` · License ${cur.licenseNo}` : ""} · Designated {cur.designatedAt.slice(0, 10)}
+            {cur.activatedAt ? ` · Active since ${cur.activatedAt.slice(0, 10)}` : ""}
+          </p>
+          {rescinding ? (
+            <div className="space-y-2">
+              <input className={FIELD} placeholder="Why (change of CPA, dissolution…)" value={why} onChange={(e) => setWhy(e.target.value)} />
+              <div className="flex gap-2">
+                <button type="button" className={PRIMARY} disabled={!why.trim() || rescindM.isPending} onClick={() => rescindM.mutate(cur.id)}>
+                  {rescindM.isPending ? "Rescinding…" : "Rescind now"}
+                </button>
+                <button type="button" className={SECONDARY} onClick={() => setRescinding(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className={SECONDARY} onClick={() => setRescinding(true)}>
+              Rescind…
+            </button>
+          )}
+        </section>
+      ) : (
+        <form
+          className="space-y-3 rounded-xl border border-border bg-card p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            designateM.mutate();
+          }}
+        >
+          <h3 className="text-sm font-semibold text-foreground">Designate a CPA</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["name", "Name", "text"],
+                ["firm", "Firm", "text"],
+                ["email", "Email (the invite goes here)", "email"],
+                ["licenseNo", "License no. (optional)", "text"],
+              ] as const
+            ).map(([k, label, type]) => (
+              <label key={k} className="text-xs font-medium text-foreground">
+                {label}
+                <input type={type} className={FIELD} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
+              </label>
+            ))}
+          </div>
+          <button type="submit" className={PRIMARY} disabled={!f.name.trim() || !f.firm.trim() || !f.email.trim() || designateM.isPending}>
+            {designateM.isPending ? "Sending the invite…" : "Designate and invite"}
+          </button>
+        </form>
+      )}
+      {(q.data?.history ?? []).length > 0 ? (
+        <section className="rounded-xl border border-border bg-card p-4 text-sm">
+          <h3 className="font-semibold text-foreground">Earlier CPAs</h3>
+          <ul className="mt-1 space-y-1 text-muted-foreground">
+            {q.data!.history.map((h) => (
+              <li key={h.id}>
+                {h.name}, {h.firm} · {h.designatedAt.slice(0, 10)} to {h.rescindedAt?.slice(0, 10)} · rescinded: {h.reason}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </div>
   );

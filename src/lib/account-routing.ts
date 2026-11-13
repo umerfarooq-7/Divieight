@@ -54,6 +54,8 @@ export async function resolveSignIn(
   // The sessionStorage hint is lost when the user confirms via an email link in
   // a new tab, so fall back to the account_type captured at signup.
   const metaRole = user.user_metadata?.account_type;
+  // A designated CPA signs in from the invitation: their portal is read-only and has no marketplace profile.
+  if (metaRole === "cpa") return { to: "/cpa" };
   const effectiveRole: AccountRole | null =
     role ??
     (metaRole === "buyer" ||

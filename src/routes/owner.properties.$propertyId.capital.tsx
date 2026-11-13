@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { OwnerLoading, OwnerPageShell } from "@/components/owner/useOwnerProperty";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCents } from "@/lib/bank-feed-display";
+import { DesignatedCpaCard } from "@/components/DesignatedCpaCard";
 import { getOwnerCapitalAccount } from "@/lib/capital.functions";
 import type { RollForwardRow } from "@/lib/capital.server";
 
@@ -60,6 +61,9 @@ function OwnerCapitalPage() {
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
         Your share of the LLC, year by year, from the books. Each year starts where the last one ended. This is for your records and your CPA; it is read-only. A joint account is one capital account.
       </p>
+      <div className="mt-4">
+        <DesignatedCpaCard propertyId={propertyId} />
+      </div>
       <div className="mt-6 space-y-4">
         {isLoading || authLoading ? <OwnerLoading /> : null}
         {isError ? (

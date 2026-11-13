@@ -107,21 +107,53 @@ export async function submitW9(
 }
 
 /**
- * The one place a TIN is decrypted: tax exports (Month 6), for admin/finance only (checked by the
- * caller). Every call is audited with who, when and why — but never with the TIN.
+ * The one place a TIN is decrypted: tax exports (Month 6), for admin/finance only (checked by the caller), and the designated CPA for
+ * the LLC they are designated to (viewTinAsCpa below checks that). Every call is audited with who, when, why and, for a CPA, which
+ * property: never with the TIN. The audit row is written first; if it can't be written nothing is decrypted.
  */
-export async function decryptTinForTaxExport(db: Db, params: { actorId: string; w9Id: string; reason: string }): Promise<string> {
+export async function decryptTinForTaxExport(db: Db, params: { actorId: string; w9Id: string; reason: string; actorType?: "admin" | "cpa"; propertyId?: string }): Promise<string> {
   const reason = params.reason.trim();
   if (!reason) throw new Error("Give the reason for decrypting this TIN.");
   const { data, error } = await db.from("member_w9_tin_secrets").select("w9_id, ciphertext, iv, auth_tag, key_version").eq("w9_id", params.w9Id).maybeSingle();
   if (error || !data) throw new Error("No TIN on file for that W-9.");
-  await db.from("audit_log").insert({
+  const cpa = params.actorType === "cpa";
+  const { error: auditError } = await db.from("audit_log").insert({
     actor_id: params.actorId,
-    actor_type: "admin",
-    action_type: "admin.w9_tin_decrypted",
+    actor_type: cpa ? "cpa" : "admin",
+    action_type: cpa ? "cpa.w9_tin_viewed" : "admin.w9_tin_decrypted",
     entity_type: "member_w9",
     entity_id: params.w9Id,
-    metadata: { w9_id: params.w9Id, reason: reason.slice(0, 500), at: new Date().toISOString() },
+    metadata: { w9_id: params.w9Id, reason: reason.slice(0, 500), at: new Date().toISOString(), ...(params.propertyId ? { property_id: params.propertyId } : {}) },
   });
+  if (auditError) throw new Error("The TIN can't be shown: the audit log could not be written.");
   return decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, `member_w9:${params.w9Id}`);
+}
+
+/** The permissible purpose for a CPA's TIN view. */
+export const CPA_TIN_PURPOSE = "K-1 preparation (CPA permissible purpose)";
+
+/** 123-45-6789 for an SSN, 12-3456789 for an EIN. */
+export function formatTin(tin: string, kind: string): string {
+  const d = tin.replace(/\D/g, "");
+  if (d.length !== 9) return d;
+  return kind === "ein" ? `${d.slice(0, 2)}-${d.slice(2)}` : `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+}
+
+/**
+ * The designated CPA views a member's TIN, for K-1 preparation. Allowed only for the property they are designated to and only a W-9 of a member
+ * whose account holds shares in it (the database says so); every view is logged by the one decryption above, with the property. Whatever goes wrong,
+ * the message never carries the TIN or anything about the ciphertext.
+ */
+export async function viewTinAsCpa(db: Db & { rpc: (fn: string, args: Record<string, unknown>) => any }, params: { userId: string; propertyId: string; w9Id: string; note?: string | null }): Promise<{ tin: string; legalName: string; tinKind: string }> {
+  const { data: allowed } = await db.rpc("cpa_can_view_tin", { _user: params.userId, _property: params.propertyId, _w9: params.w9Id });
+  if (allowed !== true) throw new Error("Not authorized");
+  const { data: w9 } = await db.from("member_w9").select("legal_name, tin_kind").eq("id", params.w9Id).maybeSingle();
+  if (!w9) throw new Error("Not authorized");
+  try {
+    const reason = params.note?.trim() ? `${CPA_TIN_PURPOSE}: ${params.note.trim().slice(0, 300)}` : CPA_TIN_PURPOSE;
+    const tin = await decryptTinForTaxExport(db, { actorId: params.userId, w9Id: params.w9Id, reason, actorType: "cpa", propertyId: params.propertyId });
+    return { tin: formatTin(tin, w9.tin_kind as string), legalName: w9.legal_name as string, tinKind: w9.tin_kind as string };
+  } catch {
+    throw new Error("The TIN could not be shown.");
+  }
 }

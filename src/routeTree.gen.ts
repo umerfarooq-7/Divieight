@@ -100,6 +100,8 @@ import { Route as BuyerRegisterRouteImport } from './routes/buyer.register'
 import { Route as BuyerReportsRouteImport } from './routes/buyer.reports'
 import { Route as BuyerVerificationRouteImport } from './routes/buyer.verification'
 import { Route as BuyerWishlistRouteImport } from './routes/buyer.wishlist'
+import { Route as CpaIndexRouteImport } from './routes/cpa.index'
+import { Route as CpaLoginRouteImport } from './routes/cpa.login'
 import { Route as DataRoomIdRouteImport } from './routes/data-room.$id'
 import { Route as LibraryIndexRouteImport } from './routes/library.index'
 import { Route as LibrarySlugRouteImport } from './routes/library.$slug'
@@ -677,6 +679,16 @@ const BuyerVerificationRoute = BuyerVerificationRouteImport.update({
 const BuyerWishlistRoute = BuyerWishlistRouteImport.update({
   id: '/buyer/wishlist',
   path: '/buyer/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CpaIndexRoute = CpaIndexRouteImport.update({
+  id: '/cpa/',
+  path: '/cpa/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CpaLoginRoute = CpaLoginRouteImport.update({
+  id: '/cpa/login',
+  path: '/cpa/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataRoomIdRoute = DataRoomIdRouteImport.update({
@@ -1427,6 +1439,7 @@ export interface FileRoutesByFullPath {
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
+  '/cpa/login': typeof CpaLoginRoute
   '/data-room/$id': typeof DataRoomIdRoute
   '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
@@ -1448,6 +1461,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
+  '/cpa/': typeof CpaIndexRoute
   '/library/': typeof LibraryIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/owner/': typeof OwnerIndexRoute
@@ -1633,6 +1647,7 @@ export interface FileRoutesByTo {
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
+  '/cpa/login': typeof CpaLoginRoute
   '/data-room/$id': typeof DataRoomIdRoute
   '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
@@ -1654,6 +1669,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/agent': typeof AgentIndexRoute
   '/broker': typeof BrokerIndexRoute
+  '/cpa': typeof CpaIndexRoute
   '/library': typeof LibraryIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/owner': typeof OwnerIndexRoute
@@ -1847,6 +1863,7 @@ export interface FileRoutesById {
   '/buyer/reports': typeof BuyerReportsRoute
   '/buyer/verification': typeof BuyerVerificationRoute
   '/buyer/wishlist': typeof BuyerWishlistRoute
+  '/cpa/login': typeof CpaLoginRoute
   '/data-room/$id': typeof DataRoomIdRoute
   '/library/$slug': typeof LibrarySlugRoute
   '/listings/$id': typeof ListingsIdRouteWithChildren
@@ -1868,6 +1885,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/agent/': typeof AgentIndexRoute
   '/broker/': typeof BrokerIndexRoute
+  '/cpa/': typeof CpaIndexRoute
   '/library/': typeof LibraryIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/owner/': typeof OwnerIndexRoute
@@ -2062,6 +2080,7 @@ export interface FileRouteTypes {
     | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
+    | '/cpa/login'
     | '/data-room/$id'
     | '/library/$slug'
     | '/listings/$id'
@@ -2083,6 +2102,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/broker/'
+    | '/cpa/'
     | '/library/'
     | '/onboarding/'
     | '/owner/'
@@ -2268,6 +2288,7 @@ export interface FileRouteTypes {
     | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
+    | '/cpa/login'
     | '/data-room/$id'
     | '/library/$slug'
     | '/listings/$id'
@@ -2289,6 +2310,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/agent'
     | '/broker'
+    | '/cpa'
     | '/library'
     | '/onboarding'
     | '/owner'
@@ -2481,6 +2503,7 @@ export interface FileRouteTypes {
     | '/buyer/reports'
     | '/buyer/verification'
     | '/buyer/wishlist'
+    | '/cpa/login'
     | '/data-room/$id'
     | '/library/$slug'
     | '/listings/$id'
@@ -2502,6 +2525,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/agent/'
     | '/broker/'
+    | '/cpa/'
     | '/library/'
     | '/onboarding/'
     | '/owner/'
@@ -2640,6 +2664,7 @@ export interface RootRouteChildren {
   BuyerReportsRoute: typeof BuyerReportsRoute
   BuyerVerificationRoute: typeof BuyerVerificationRoute
   BuyerWishlistRoute: typeof BuyerWishlistRoute
+  CpaLoginRoute: typeof CpaLoginRoute
   DataRoomIdRoute: typeof DataRoomIdRoute
   LibrarySlugRoute: typeof LibrarySlugRoute
   ListingsIdRoute: typeof ListingsIdRouteWithChildren
@@ -2657,6 +2682,7 @@ export interface RootRouteChildren {
   PropertiesIdRoute: typeof PropertiesIdRoute
   RTokenRoute: typeof RTokenRoute
   ReserveIdRoute: typeof ReserveIdRoute
+  CpaIndexRoute: typeof CpaIndexRoute
   LibraryIndexRoute: typeof LibraryIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   OwnerIndexRoute: typeof OwnerIndexRoute
@@ -3360,6 +3386,20 @@ declare module '@tanstack/react-router' {
       path: '/buyer/wishlist'
       fullPath: '/buyer/wishlist'
       preLoaderRoute: typeof BuyerWishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cpa/': {
+      id: '/cpa/'
+      path: '/cpa'
+      fullPath: '/cpa/'
+      preLoaderRoute: typeof CpaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cpa/login': {
+      id: '/cpa/login'
+      path: '/cpa/login'
+      fullPath: '/cpa/login'
+      preLoaderRoute: typeof CpaLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-room/$id': {
@@ -4506,6 +4546,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuyerReportsRoute: BuyerReportsRoute,
   BuyerVerificationRoute: BuyerVerificationRoute,
   BuyerWishlistRoute: BuyerWishlistRoute,
+  CpaLoginRoute: CpaLoginRoute,
   DataRoomIdRoute: DataRoomIdRoute,
   LibrarySlugRoute: LibrarySlugRoute,
   ListingsIdRoute: ListingsIdRouteWithChildren,
@@ -4523,6 +4564,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesIdRoute: PropertiesIdRoute,
   RTokenRoute: RTokenRoute,
   ReserveIdRoute: ReserveIdRoute,
+  CpaIndexRoute: CpaIndexRoute,
   LibraryIndexRoute: LibraryIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   OwnerIndexRoute: OwnerIndexRoute,

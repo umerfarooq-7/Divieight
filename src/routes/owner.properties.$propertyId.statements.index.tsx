@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { OwnerLoading, OwnerPageShell } from "@/components/owner/useOwnerProperty";
 import { useAuth } from "@/hooks/use-auth";
+import { DesignatedCpaCard } from "@/components/DesignatedCpaCard";
 import { getOwnerStatements } from "@/lib/statements.functions";
 import { STATEMENT_STATUS_LABELS, periodLabel, statementMoney } from "@/lib/statements";
 
@@ -47,6 +48,9 @@ function OwnerStatementsPage() {
       <p className="mt-1 max-w-3xl text-base text-muted-foreground">
         One statement a month for your capital account (a joint account has one, shared by both members). If the books for a past month are corrected you get a new version; the earlier one stays here.
       </p>
+      <div className="mt-4">
+        <DesignatedCpaCard propertyId={propertyId} />
+      </div>
       <div className="mt-6 space-y-3">
         {isLoading || authLoading ? <OwnerLoading /> : null}
         {isError ? (
