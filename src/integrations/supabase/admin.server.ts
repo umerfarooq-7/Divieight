@@ -3,6 +3,7 @@
 // stored as DB_SERVICE_ROLE_KEY (the SUPABASE_ prefix is reserved by Lovable).
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { withAuditContext } from '@/lib/audit-context.server';
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
@@ -55,6 +56,11 @@ let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
 export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
   get(_, prop, receiver) {
     if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
+    // Every insert into the audit log carries where it came from (address, browser, route) unless the writer said.
+    if (prop === 'from') {
+      const client = _supabaseAdmin;
+      return (table: string) => withAuditContext(table, client.from(table as never));
+    }
     return Reflect.get(_supabaseAdmin, prop, receiver);
   },
 });

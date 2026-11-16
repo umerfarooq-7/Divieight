@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuditVault } from "@/lib/audit-vault.functions";
 import {
   runEnrollmentMaintenance,
   type MaintenanceRunResult,
@@ -52,12 +52,8 @@ function AuditLogPage() {
     try {
       const result = await runEnrollmentMaintenance();
       setRunResult(result);
-      const { data } = await supabase
-        .from("audit_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      setRows((data as AuditRow[] | null) ?? []);
+      const { rows: fresh } = await getAuditVault({ data: { limit: 500 } });
+      setRows((fresh as AuditRow[] | null) ?? []);
     } catch (e) {
       setRunError(e instanceof Error ? e.message : "Maintenance run failed");
     } finally {
@@ -68,13 +64,13 @@ function AuditLogPage() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("audit_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
-      if (error) console.error(error);
-      setRows((data as AuditRow[] | null) ?? []);
+      // Read through the logged door: opening this page is itself a row in the Audit Vault.
+      try {
+        const { rows: fresh } = await getAuditVault({ data: { limit: 500 } });
+        setRows((fresh as AuditRow[] | null) ?? []);
+      } catch (e) {
+        console.error(e);
+      }
       setLoading(false);
     })();
   }, []);

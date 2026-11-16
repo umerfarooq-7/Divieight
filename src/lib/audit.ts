@@ -186,7 +186,8 @@ export async function logAudit(params: {
     action_type: actionType,
     entity_type: entityType,
     entity_id: entityId ?? null,
-    metadata: (metadata ?? {}) as never,
+    // Which page it came from; the database adds the address and browser from the request itself.
+    metadata: { route: typeof window !== "undefined" ? window.location.pathname : undefined, ...(metadata ?? {}) } as never,
   });
   if (error) console.error("[audit] insert failed", error);
 }

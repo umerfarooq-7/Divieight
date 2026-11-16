@@ -7,6 +7,7 @@
  * picks the key for the row's version.
  */
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { noteDecrypt } from "@/lib/pii-access.server";
 
 export const CURRENT_KEY_VERSION = 1;
 
@@ -50,6 +51,8 @@ export function encryptPii(plaintext: string, aad: string): EncryptedValue {
 
 /** Throws when the ciphertext, iv, tag or associated data were altered. */
 export function decryptPii(value: EncryptedValue, aad: string): string {
+  // A TIN decrypted outside a declared, audited rule raises a Suspicious Activity Alert (pii-access.server.ts).
+  noteDecrypt(aad);
   const decipher = createDecipheriv("aes-256-gcm", keyFor(value.key_version), Buffer.from(value.iv, "base64"));
   decipher.setAAD(Buffer.from(aad, "utf8"));
   decipher.setAuthTag(Buffer.from(value.auth_tag, "base64"));

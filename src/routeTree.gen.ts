@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgentRouteImport } from './routes/agent'
+import { Route as AuditVaultRouteImport } from './routes/audit-vault'
 import { Route as BrokerRouteImport } from './routes/broker'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -155,6 +156,7 @@ import { Route as AgentOnboardingInsuranceRouteImport } from './routes/agent.onb
 import { Route as AgentOnboardingLicenseCheckRouteImport } from './routes/agent.onboarding.license-check'
 import { Route as AgentOnboardingLicenseDetailsRouteImport } from './routes/agent.onboarding.license-details'
 import { Route as ApiPublicArelloRetryRouteImport } from './routes/api.public.arello-retry'
+import { Route as ApiPublicAuditVaultSweepRouteImport } from './routes/api.public.audit-vault-sweep'
 import { Route as ApiPublicAuthorizationEscalationRouteImport } from './routes/api.public.authorization-escalation'
 import { Route as ApiPublicBankFeedSweepRouteImport } from './routes/api.public.bank-feed-sweep'
 import { Route as ApiPublicBrokerRelationshipSweepRouteImport } from './routes/api.public.broker-relationship-sweep'
@@ -258,6 +260,11 @@ const AdminRoute = AdminRouteImport.update({
 const AgentRoute = AgentRouteImport.update({
   id: '/agent',
   path: '/agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditVaultRoute = AuditVaultRouteImport.update({
+  id: '/audit-vault',
+  path: '/audit-vault',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrokerRoute = BrokerRouteImport.update({
@@ -982,6 +989,12 @@ const ApiPublicArelloRetryRoute = ApiPublicArelloRetryRouteImport.update({
   path: '/api/public/arello-retry',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuditVaultSweepRoute =
+  ApiPublicAuditVaultSweepRouteImport.update({
+    id: '/api/public/audit-vault-sweep',
+    path: '/api/public/audit-vault-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthorizationEscalationRoute =
   ApiPublicAuthorizationEscalationRouteImport.update({
     id: '/api/public/authorization-escalation',
@@ -1461,6 +1474,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
+  '/audit-vault': typeof AuditVaultRoute
   '/broker': typeof BrokerRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
@@ -1598,6 +1612,7 @@ export interface FileRoutesByFullPath {
   '/agent/onboarding/license-check': typeof AgentOnboardingLicenseCheckRoute
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
+  '/api/public/audit-vault-sweep': typeof ApiPublicAuditVaultSweepRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
@@ -1691,6 +1706,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audit-vault': typeof AuditVaultRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -1823,6 +1839,7 @@ export interface FileRoutesByTo {
   '/agent/onboarding/license-check': typeof AgentOnboardingLicenseCheckRoute
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
+  '/api/public/audit-vault-sweep': typeof ApiPublicAuditVaultSweepRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
@@ -1919,6 +1936,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/agent': typeof AgentRouteWithChildren
+  '/audit-vault': typeof AuditVaultRoute
   '/broker': typeof BrokerRouteWithChildren
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
@@ -2056,6 +2074,7 @@ export interface FileRoutesById {
   '/agent/onboarding/license-check': typeof AgentOnboardingLicenseCheckRoute
   '/agent/onboarding/license-details': typeof AgentOnboardingLicenseDetailsRoute
   '/api/public/arello-retry': typeof ApiPublicArelloRetryRoute
+  '/api/public/audit-vault-sweep': typeof ApiPublicAuditVaultSweepRoute
   '/api/public/authorization-escalation': typeof ApiPublicAuthorizationEscalationRoute
   '/api/public/bank-feed-sweep': typeof ApiPublicBankFeedSweepRoute
   '/api/public/broker-relationship-sweep': typeof ApiPublicBrokerRelationshipSweepRoute
@@ -2153,6 +2172,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/agent'
+    | '/audit-vault'
     | '/broker'
     | '/contact'
     | '/dashboard'
@@ -2290,6 +2310,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-check'
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
+    | '/api/public/audit-vault-sweep'
     | '/api/public/authorization-escalation'
     | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
@@ -2383,6 +2404,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/audit-vault'
     | '/contact'
     | '/dashboard'
     | '/forgot-password'
@@ -2515,6 +2537,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-check'
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
+    | '/api/public/audit-vault-sweep'
     | '/api/public/authorization-escalation'
     | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
@@ -2610,6 +2633,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/agent'
+    | '/audit-vault'
     | '/broker'
     | '/contact'
     | '/dashboard'
@@ -2747,6 +2771,7 @@ export interface FileRouteTypes {
     | '/agent/onboarding/license-check'
     | '/agent/onboarding/license-details'
     | '/api/public/arello-retry'
+    | '/api/public/audit-vault-sweep'
     | '/api/public/authorization-escalation'
     | '/api/public/bank-feed-sweep'
     | '/api/public/broker-relationship-sweep'
@@ -2843,6 +2868,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   AgentRoute: typeof AgentRouteWithChildren
+  AuditVaultRoute: typeof AuditVaultRoute
   BrokerRoute: typeof BrokerRouteWithChildren
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
@@ -2902,6 +2928,7 @@ export interface RootRouteChildren {
   OwnerIndexRoute: typeof OwnerIndexRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
   ApiPublicArelloRetryRoute: typeof ApiPublicArelloRetryRoute
+  ApiPublicAuditVaultSweepRoute: typeof ApiPublicAuditVaultSweepRoute
   ApiPublicAuthorizationEscalationRoute: typeof ApiPublicAuthorizationEscalationRoute
   ApiPublicBankFeedSweepRoute: typeof ApiPublicBankFeedSweepRoute
   ApiPublicBrokerRelationshipSweepRoute: typeof ApiPublicBrokerRelationshipSweepRoute
@@ -2995,6 +3022,13 @@ declare module '@tanstack/react-router' {
       path: '/agent'
       fullPath: '/agent'
       preLoaderRoute: typeof AgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit-vault': {
+      id: '/audit-vault'
+      path: '/audit-vault'
+      fullPath: '/audit-vault'
+      preLoaderRoute: typeof AuditVaultRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/broker': {
@@ -3991,6 +4025,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicArelloRetryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/audit-vault-sweep': {
+      id: '/api/public/audit-vault-sweep'
+      path: '/api/public/audit-vault-sweep'
+      fullPath: '/api/public/audit-vault-sweep'
+      preLoaderRoute: typeof ApiPublicAuditVaultSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/authorization-escalation': {
       id: '/api/public/authorization-escalation'
       path: '/api/public/authorization-escalation'
@@ -4868,6 +4909,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   AgentRoute: AgentRouteWithChildren,
+  AuditVaultRoute: AuditVaultRoute,
   BrokerRoute: BrokerRouteWithChildren,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
@@ -4927,6 +4969,7 @@ const rootRouteChildren: RootRouteChildren = {
   OwnerIndexRoute: OwnerIndexRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
   ApiPublicArelloRetryRoute: ApiPublicArelloRetryRoute,
+  ApiPublicAuditVaultSweepRoute: ApiPublicAuditVaultSweepRoute,
   ApiPublicAuthorizationEscalationRoute: ApiPublicAuthorizationEscalationRoute,
   ApiPublicBankFeedSweepRoute: ApiPublicBankFeedSweepRoute,
   ApiPublicBrokerRelationshipSweepRoute: ApiPublicBrokerRelationshipSweepRoute,

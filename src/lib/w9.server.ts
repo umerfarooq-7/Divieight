@@ -11,6 +11,17 @@ import { randomUUID } from "node:crypto";
 import { requireActingMember, type RequestContext } from "@/lib/account-members.server";
 import { legalNamesMatch } from "@/lib/eligibility-declaration";
 import { assertEncryptionKey, decryptPii, encryptPii } from "@/lib/pii-crypto.server";
+import { runWithPiiRule } from "@/lib/pii-access.server";
+
+/** A person who decrypts an unusual number of TINs in an hour is an alert. Never blocks and never throws: the audit row has already been written. */
+async function watchDecryptBurst(db: unknown, actorId: string | null) {
+  try {
+    const { checkDecryptBurst } = await import("@/lib/audit-vault.server");
+    await checkDecryptBurst(db as never, { actorId });
+  } catch {
+    /* the alert is best effort */
+  }
+}
 import { TAX_CLASSIFICATIONS, normalizeTin, tinLast4, type TaxClassification, type TinKind } from "@/lib/w9";
 
 type Db = { from: (t: string) => any };
@@ -126,7 +137,9 @@ export async function decryptTinForTaxExport(db: Db, params: { actorId: string |
     metadata: { w9_id: params.w9Id, reason: reason.slice(0, 500), at: new Date().toISOString(), ...(params.propertyId ? { property_id: params.propertyId } : {}) },
   });
   if (auditError) throw new Error("The TIN can't be shown: the audit log could not be written.");
-  return decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, `member_w9:${params.w9Id}`);
+  await watchDecryptBurst(db, params.actorId);
+  // The declared business rule: who, and why. The decryption is only ever done inside it.
+  return runWithPiiRule({ actorId: params.actorId, actorType: cpa ? "cpa" : params.actorId === null ? "system" : "admin", reason }, () => decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, `member_w9:${params.w9Id}`));
 }
 
 /**
@@ -175,8 +188,9 @@ export async function viewTaxIdAsVault(db: Db & { rpc: (fn: string, args: Record
     metadata: { reason: reason.slice(0, 500), at: new Date().toISOString() },
   });
   if (error) throw new Error("The tax ID can't be shown: the audit log could not be written.");
+  await watchDecryptBurst(db, params.userId);
   try {
-    return { tin: decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, secretAad(params.kind, params.id)) };
+    return { tin: runWithPiiRule({ actorId: params.userId, actorType: "admin", reason }, () => decryptPii(data as { ciphertext: string; iv: string; auth_tag: string; key_version: number }, secretAad(params.kind, params.id))) };
   } catch {
     throw new Error("The tax ID could not be shown.");
   }

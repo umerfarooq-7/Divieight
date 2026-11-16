@@ -38,6 +38,7 @@ const UNIQUE: Record<string, string[][]> = {
   resale_rofr_elections: [["listing_id", "holder_key"]],
   resale_rofr_member_positions: [["listing_id", "account_member_id"]],
   resale_interest_requests: [["listing_id", "buyer_account_id"]],
+  suspicious_activity_alerts: [["dedupe_key"]],
 };
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */

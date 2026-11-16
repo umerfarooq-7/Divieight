@@ -259,6 +259,19 @@ export const createReservation = createServerFn({ method: "POST" })
             ...(applySystemLock ? { listing_status: "system_lock" as const } : {}),
           })
           .eq("id", data.propertyId);
+        // The lock itself is recorded (only the Entity Genesis step after it used to be).
+        const lockWhen = new Date().toISOString();
+        for (const [applied, action] of [[applyHardLock, "pod.hard_locked"], [applySystemLock, "pod.system_locked"]] as const) {
+          if (!applied) continue;
+          await supabaseAdmin.from("audit_log").insert({
+            actor_id: userId,
+            actor_type: "buyer",
+            action_type: action,
+            entity_type: "property",
+            entity_id: data.propertyId,
+            metadata: { property_id: data.propertyId, triggered_by_reservation_of: buyer.id, at: lockWhen, shares_available_after: after?.availableShares ?? null },
+          });
+        }
       }
 
       // Entity Genesis Stage 1 reacts to the Hard-Lock trigger. It never

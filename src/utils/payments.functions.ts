@@ -132,6 +132,15 @@ export const confirmEnrollmentPayment = createServerFn({ method: "POST" })
         .update({ status: "paid" })
         .eq("stripe_session_id", session.id)
         .eq("seller_id", context.userId);
+      // The server's own record that Stripe confirmed it (the browser also logs it, but a closed tab leaves nothing).
+      await supabaseAdmin.from("audit_log").insert({
+        actor_id: context.userId,
+        actor_type: "seller",
+        action_type: "payment.enrollment_fee_confirmed",
+        entity_type: "payment",
+        entity_id: session.id,
+        metadata: { kind: "seller_enrollment_fee", stripe_session_id: session.id, environment: data.environment, amount_total: session.amount_total ?? null, currency: session.currency ?? null },
+      });
 
       return { paid: true };
     } catch (error) {
@@ -246,6 +255,14 @@ export const confirmBuyerEnrollmentPayment = createServerFn({ method: "POST" })
         .update({ status: "paid" })
         .eq("stripe_session_id", session.id)
         .eq("auth_user_id", context.userId);
+      await supabaseAdmin.from("audit_log").insert({
+        actor_id: context.userId,
+        actor_type: "buyer",
+        action_type: "payment.enrollment_fee_confirmed",
+        entity_type: "payment",
+        entity_id: session.id,
+        metadata: { kind: "buyer_enrollment_fee", stripe_session_id: session.id, environment: data.environment, amount_total: session.amount_total ?? null, currency: session.currency ?? null },
+      });
 
       const { data: account } = await supabaseAdmin
         .from("buyer_accounts")

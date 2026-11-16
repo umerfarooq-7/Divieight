@@ -81,6 +81,7 @@ const NAV = [
   { to: "/admin/substitutions", label: "Substitutions", icon: Users2 },
   { to: "/admin/tether-resolution", label: "Tether alerts", icon: AlertTriangle },
   { to: "/admin/listing-compliance", label: "Listing compliance", icon: ShieldCheck },
+  { to: "/audit-vault", label: "Audit Vault", icon: ShieldCheck },
   { to: "/admin/audit-log", label: "Audit log", icon: ScrollText },
 ] as const;
 
