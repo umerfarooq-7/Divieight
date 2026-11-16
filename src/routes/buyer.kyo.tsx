@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
 import { CORRECTION_FIELDS, DECLARATION_CORRECTION_NOTE, KYO_MOST_SENSITIVE_PII, type CorrectionField } from "@/lib/kyo";
 import { getMyKyo, requestKyoCorrectionFn } from "@/lib/kyo.functions";
+import { getMyRetention, requestMyKyoDeletion } from "@/lib/kyo-retention.functions";
 
 export const Route = createFileRoute("/buyer/kyo")({
   head: () => ({ meta: [{ title: "My data — divieight" }, { name: "description", content: "See the data divieight holds about you as an Account Member, and ask for a correction." }] }),
@@ -30,6 +31,11 @@ function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; on
   const load = useServerFn(getMyKyo);
   const request = useServerFn(requestKyoCorrectionFn);
   const [view, setView] = useState<View | null>(null);
+  const loadRetention = useServerFn(getMyRetention);
+  const requestDeletion = useServerFn(requestMyKyoDeletion);
+  const [retention, setRetention] = useState<Awaited<ReturnType<typeof getMyRetention>> | null>(null);
+  const [deleteNote, setDeleteNote] = useState("");
+  const [deleteAnswer, setDeleteAnswer] = useState<string | null>(null);
   const [field, setField] = useState<CorrectionField>("full_name");
   const [change, setChange] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,10 +43,11 @@ function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; on
   const refresh = useCallback(async () => {
     try {
       setView(await load({ data: { actingMemberId } }));
+      setRetention(await loadRetention({ data: { actingMemberId } }).catch(() => null));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't load your data.");
     }
-  }, [load, actingMemberId]);
+  }, [load, loadRetention, actingMemberId]);
 
   useEffect(() => {
     if (loading) return;
@@ -57,6 +64,20 @@ function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; on
       await request({ data: { actingMemberId, field, requestedChange: change } });
       toast.success("Your correction request was sent.");
       setChange("");
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't send the request.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function askToDelete() {
+    setBusy(true);
+    try {
+      const r = await requestDeletion({ data: { actingMemberId, note: deleteNote } });
+      setDeleteAnswer(r.reason);
+      setDeleteNote("");
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't send the request.");
@@ -129,6 +150,35 @@ function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; on
                   <li key={c.id}>
                     {CORRECTION_FIELDS.find((f) => f.value === c.field)?.label ?? c.field} · {c.status === "open" ? "open" : `handled ${c.resolved_at ? new Date(c.resolved_at).toLocaleDateString() : ""}`}
                     {c.resolution_note ? ` · ${c.resolution_note}` : ""}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+          <section className="mt-6 space-y-3 rounded-xl border border-border bg-card p-6" aria-labelledby="kyo-keep">
+            <h2 id="kyo-keep" className="font-display text-lg font-semibold text-foreground">How long we keep it, and deleting it</h2>
+            {retention ? (
+              <p className="text-sm text-foreground">
+                Your record is <strong>{retention.retention.class.toLowerCase()}</strong>.{" "}
+                {retention.retention.retainUntil
+                  ? `It is kept until ${retention.retention.retainUntil}.`
+                  : retention.retention.class.startsWith("In use")
+                    ? "It has no retention clock yet: that starts if your account ends."
+                    : "It is kept for as long as the LLC you are tied to exists, and for 7 years after it dissolves."}
+              </p>
+            ) : null}
+            <p className="text-xs text-muted-foreground">We keep these records for 7 years after an account ends, and for the life of an LLC plus 7 years after it dissolves, because the law and the LLC's own records require it. A request to delete before then is declined, with the reason; after then it goes to the founder.</p>
+            <textarea aria-label="Anything you want to add" value={deleteNote} onChange={(e) => setDeleteNote(e.target.value)} rows={2} maxLength={2000} className="w-full rounded-md border border-border bg-background p-3 text-sm" placeholder="Optional note" />
+            <Button variant="outline" onClick={() => void askToDelete()} disabled={busy}>
+              Ask for my data to be deleted
+            </Button>
+            {deleteAnswer ? <p role="status" className="text-sm text-foreground">{deleteAnswer}</p> : null}
+            {retention?.requests.length ? (
+              <ul className="space-y-2 pt-1 text-xs text-muted-foreground">
+                {retention.requests.map((r) => (
+                  <li key={r.id}>
+                    {new Date(r.requestedAt).toLocaleDateString()} · {r.status === "open" ? "waiting for a decision" : r.status}
+                    {r.decisionReason ? ` · ${r.decisionReason}` : ""}
                   </li>
                 ))}
               </ul>

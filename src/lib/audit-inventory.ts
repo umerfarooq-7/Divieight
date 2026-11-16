@@ -115,6 +115,13 @@ export const AUDIT_INVENTORY: InventoryEvent[] = [
   E("Configuration", "Standard version published", "covered", { actions: ["standard.version_published"], files: ["src/lib/standard-version.server.ts"] }),
   E("Configuration", "Terms and Conditions published", "covered", { actions: ["tc.version_published", "tc.implicit_acceptance"], files: ["src/lib/tc.server.ts"] }),
   E("Configuration", "Platform settings changed", "fixed_db", { tables: ["platform_settings"], note: "No audit row was written when a setting changed." }),
+  // ---- Know Your Owner retention ------------------------------------------------------------------
+  E("KYO retention", "Account archived", "new", { actions: ["retention.account_archived"], files: ["src/lib/kyo-retention.server.ts"] }),
+  E("KYO retention", "Nightly retention run and review opened", "new", { actions: ["retention.sweep_run", "retention.review_opened"], files: ["src/lib/kyo-retention.server.ts"] }),
+  E("KYO retention", "Record erased (personal data anonymized)", "new", { actions: ["retention.erased"], files: ["kyo-retention.sql"], note: "Logged with counts and dates, never the erased data." }),
+  E("KYO retention", "Erasure blocked by a legal hold or by the retention period", "new", { actions: ["retention.erasure_blocked_legal_hold", "retention.erasure_blocked_inside_retention"], files: ["src/lib/kyo-retention.server.ts", "kyo-retention.sql"] }),
+  E("KYO retention", "Review kept, legal hold placed or lifted, LLC dissolution recorded", "new", { actions: ["retention.review_kept", "retention.legal_hold_placed", "retention.legal_hold_released", "retention.llc_dissolution_recorded"], files: ["src/lib/kyo-retention.server.ts"] }),
+  E("KYO retention", "Member asks for deletion; request declined", "new", { actions: ["kyo.deletion_requested", "kyo.deletion_declined"], files: ["src/lib/kyo-retention.server.ts"], note: "A request inside the retention period is declined with the reason recorded." }),
   // ---- The Audit Vault itself ---------------------------------------------------------------------
   E("Audit Vault", "The Audit Vault is read", "new", { actions: ["audit.vault_accessed"], files: ["src/lib/audit-vault.server.ts", "audit-vault.sql"] }),
   E("Audit Vault", "Chain verification and Suspicious Activity Alerts", "new", { actions: ["audit.chain_verified", "security.suspicious_activity"], files: ["src/lib/audit-vault.server.ts"] }),

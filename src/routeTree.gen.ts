@@ -60,6 +60,7 @@ import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminPropertiesRouteImport } from './routes/admin.properties'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminResaleRouteImport } from './routes/admin.resale'
+import { Route as AdminRetentionRouteImport } from './routes/admin.retention'
 import { Route as AdminRetentionExceptionsRouteImport } from './routes/admin.retention-exceptions'
 import { Route as AdminSagaPocRouteImport } from './routes/admin.saga-poc'
 import { Route as AdminSellersRouteImport } from './routes/admin.sellers'
@@ -172,6 +173,7 @@ import { Route as ApiPublicFounderRefreshRouteImport } from './routes/api.public
 import { Route as ApiPublicHeldReminderSweepRouteImport } from './routes/api.public.held-reminder-sweep'
 import { Route as ApiPublicHlaSweepRouteImport } from './routes/api.public.hla-sweep'
 import { Route as ApiPublicInsuranceSweepRouteImport } from './routes/api.public.insurance-sweep'
+import { Route as ApiPublicKyoRetentionSweepRouteImport } from './routes/api.public.kyo-retention-sweep'
 import { Route as ApiPublicListingApprovalEscalationRouteImport } from './routes/api.public.listing-approval-escalation'
 import { Route as ApiPublicLoggingHealthRouteImport } from './routes/api.public.logging-health'
 import { Route as ApiPublicNarCertSweepRouteImport } from './routes/api.public.nar-cert-sweep'
@@ -496,6 +498,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
 const AdminResaleRoute = AdminResaleRouteImport.update({
   id: '/resale',
   path: '/resale',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRetentionRoute = AdminRetentionRouteImport.update({
+  id: '/retention',
+  path: '/retention',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRetentionExceptionsRoute =
@@ -1080,6 +1087,12 @@ const ApiPublicInsuranceSweepRoute = ApiPublicInsuranceSweepRouteImport.update({
   path: '/api/public/insurance-sweep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicKyoRetentionSweepRoute =
+  ApiPublicKyoRetentionSweepRouteImport.update({
+    id: '/api/public/kyo-retention-sweep',
+    path: '/api/public/kyo-retention-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicListingApprovalEscalationRoute =
   ApiPublicListingApprovalEscalationRouteImport.update({
     id: '/api/public/listing-approval-escalation',
@@ -1520,6 +1533,7 @@ export interface FileRoutesByFullPath {
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
+  '/admin/retention': typeof AdminRetentionRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
@@ -1628,6 +1642,7 @@ export interface FileRoutesByFullPath {
   '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
+  '/api/public/kyo-retention-sweep': typeof ApiPublicKyoRetentionSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -1749,6 +1764,7 @@ export interface FileRoutesByTo {
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
+  '/admin/retention': typeof AdminRetentionRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
@@ -1855,6 +1871,7 @@ export interface FileRoutesByTo {
   '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
+  '/api/public/kyo-retention-sweep': typeof ApiPublicKyoRetentionSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -1982,6 +1999,7 @@ export interface FileRoutesById {
   '/admin/properties': typeof AdminPropertiesRouteWithChildren
   '/admin/reports': typeof AdminReportsRoute
   '/admin/resale': typeof AdminResaleRoute
+  '/admin/retention': typeof AdminRetentionRoute
   '/admin/retention-exceptions': typeof AdminRetentionExceptionsRoute
   '/admin/saga-poc': typeof AdminSagaPocRoute
   '/admin/sellers': typeof AdminSellersRoute
@@ -2090,6 +2108,7 @@ export interface FileRoutesById {
   '/api/public/held-reminder-sweep': typeof ApiPublicHeldReminderSweepRoute
   '/api/public/hla-sweep': typeof ApiPublicHlaSweepRoute
   '/api/public/insurance-sweep': typeof ApiPublicInsuranceSweepRoute
+  '/api/public/kyo-retention-sweep': typeof ApiPublicKyoRetentionSweepRoute
   '/api/public/listing-approval-escalation': typeof ApiPublicListingApprovalEscalationRoute
   '/api/public/logging-health': typeof ApiPublicLoggingHealthRoute
   '/api/public/nar-cert-sweep': typeof ApiPublicNarCertSweepRoute
@@ -2218,6 +2237,7 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/reports'
     | '/admin/resale'
+    | '/admin/retention'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
@@ -2326,6 +2346,7 @@ export interface FileRouteTypes {
     | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
+    | '/api/public/kyo-retention-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -2447,6 +2468,7 @@ export interface FileRouteTypes {
     | '/admin/payments'
     | '/admin/reports'
     | '/admin/resale'
+    | '/admin/retention'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
@@ -2553,6 +2575,7 @@ export interface FileRouteTypes {
     | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
+    | '/api/public/kyo-retention-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -2679,6 +2702,7 @@ export interface FileRouteTypes {
     | '/admin/properties'
     | '/admin/reports'
     | '/admin/resale'
+    | '/admin/retention'
     | '/admin/retention-exceptions'
     | '/admin/saga-poc'
     | '/admin/sellers'
@@ -2787,6 +2811,7 @@ export interface FileRouteTypes {
     | '/api/public/held-reminder-sweep'
     | '/api/public/hla-sweep'
     | '/api/public/insurance-sweep'
+    | '/api/public/kyo-retention-sweep'
     | '/api/public/listing-approval-escalation'
     | '/api/public/logging-health'
     | '/api/public/nar-cert-sweep'
@@ -2944,6 +2969,7 @@ export interface RootRouteChildren {
   ApiPublicHeldReminderSweepRoute: typeof ApiPublicHeldReminderSweepRoute
   ApiPublicHlaSweepRoute: typeof ApiPublicHlaSweepRoute
   ApiPublicInsuranceSweepRoute: typeof ApiPublicInsuranceSweepRoute
+  ApiPublicKyoRetentionSweepRoute: typeof ApiPublicKyoRetentionSweepRoute
   ApiPublicListingApprovalEscalationRoute: typeof ApiPublicListingApprovalEscalationRoute
   ApiPublicLoggingHealthRoute: typeof ApiPublicLoggingHealthRoute
   ApiPublicNarCertSweepRoute: typeof ApiPublicNarCertSweepRoute
@@ -3351,6 +3377,13 @@ declare module '@tanstack/react-router' {
       path: '/resale'
       fullPath: '/admin/resale'
       preLoaderRoute: typeof AdminResaleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/retention': {
+      id: '/admin/retention'
+      path: '/retention'
+      fullPath: '/admin/retention'
+      preLoaderRoute: typeof AdminRetentionRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/retention-exceptions': {
@@ -4137,6 +4170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInsuranceSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/kyo-retention-sweep': {
+      id: '/api/public/kyo-retention-sweep'
+      path: '/api/public/kyo-retention-sweep'
+      fullPath: '/api/public/kyo-retention-sweep'
+      preLoaderRoute: typeof ApiPublicKyoRetentionSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/listing-approval-escalation': {
       id: '/api/public/listing-approval-escalation'
       path: '/api/public/listing-approval-escalation'
@@ -4679,6 +4719,7 @@ interface AdminRouteChildren {
   AdminPropertiesRoute: typeof AdminPropertiesRouteWithChildren
   AdminReportsRoute: typeof AdminReportsRoute
   AdminResaleRoute: typeof AdminResaleRoute
+  AdminRetentionRoute: typeof AdminRetentionRoute
   AdminRetentionExceptionsRoute: typeof AdminRetentionExceptionsRoute
   AdminSagaPocRoute: typeof AdminSagaPocRoute
   AdminSellersRoute: typeof AdminSellersRoute
@@ -4733,6 +4774,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPropertiesRoute: AdminPropertiesRouteWithChildren,
   AdminReportsRoute: AdminReportsRoute,
   AdminResaleRoute: AdminResaleRoute,
+  AdminRetentionRoute: AdminRetentionRoute,
   AdminRetentionExceptionsRoute: AdminRetentionExceptionsRoute,
   AdminSagaPocRoute: AdminSagaPocRoute,
   AdminSellersRoute: AdminSellersRoute,
@@ -4985,6 +5027,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHeldReminderSweepRoute: ApiPublicHeldReminderSweepRoute,
   ApiPublicHlaSweepRoute: ApiPublicHlaSweepRoute,
   ApiPublicInsuranceSweepRoute: ApiPublicInsuranceSweepRoute,
+  ApiPublicKyoRetentionSweepRoute: ApiPublicKyoRetentionSweepRoute,
   ApiPublicListingApprovalEscalationRoute:
     ApiPublicListingApprovalEscalationRoute,
   ApiPublicLoggingHealthRoute: ApiPublicLoggingHealthRoute,

@@ -43,6 +43,10 @@ const UNIQUE: Record<string, string[][]> = {
 
 /** Column DEFAULTs from the SQL schema files that the code relies on. */
 const DEFAULTS: Record<string, Row> = {
+  // The database defaults for the KYO retention tables (kyo-retention.sql).
+  retention_reviews: { status: "open", decided_at: null },
+  kyo_deletion_requests: { status: "open", decided_at: null },
+  kyo_retention: { status: "in_use", legal_hold: false, legal_hold_reason: null, property_ids: [], next_review_at: null },
   authorization_requests: { status: "pending", market_driven: false, terms: {} },
   authorization_commission_items: { status: "proposed", provision_text: "" },
   earnest_money_obligations: { status: "pending", shares: 1, is_substitute: false },
