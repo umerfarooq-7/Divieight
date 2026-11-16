@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { uploadProblem } from "@/lib/upload-rules";
 import { ENTITY_CONFIG, type EntityType } from "@/lib/credentialing";
 import { defaultEoExpiry } from "@/lib/eo-expiry";
 import { logAudit } from "@/lib/audit";
@@ -37,6 +38,8 @@ export async function uploadEoInsurance(
   authUserId: string,
   file: File,
 ): Promise<{ path?: string; error?: string }> {
+  const problem = uploadProblem(file, "compliance");
+  if (problem) return { error: problem };
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
   const path = `${authUserId}/eo-insurance-${Date.now()}.${ext}`;
   const { error } = await supabase.storage

@@ -13,6 +13,11 @@ export const Route = createFileRoute("/api/public/title-escrow/$provider")({
   server: {
     handlers: {
       POST: async ({ request, params }) => {
+        const { callerKey, checkRateLimit, LIMITS, tooMany } = await import("@/lib/rate-limit.server");
+        const limited = checkRateLimit("webhook", callerKey(request), LIMITS.webhook);
+        if (!limited.ok) return tooMany(limited);
+        // A body larger than any real delivery is refused before it is read.
+        if (Number(request.headers.get("content-length") ?? 0) > 1_000_000) return new Response("Payload too large", { status: 413 });
         const rawBody = await request.text();
         const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
         const { ingestTitleWebhook } = await import("@/lib/title-escrow.server");

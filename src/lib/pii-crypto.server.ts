@@ -3,13 +3,20 @@
  * base64). There is no plaintext fallback: without a valid key, nothing is encrypted or saved.
  *
  * The key is never logged and plaintext never leaves the function that needs it.
- * key_version lets the key be rotated later: new rows use CURRENT_KEY_VERSION, and decryption
+ * key_version lets the key be rotated later: new rows use currentKeyVersion(), and decryption
  * picks the key for the row's version.
  */
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { noteDecrypt } from "@/lib/pii-access.server";
 
-export const CURRENT_KEY_VERSION = 1;
+/**
+ * The key version new values are sealed with. Rotation needs no deploy of code: add W9_TIN_ENCRYPTION_KEY_V2 and set PII_KEY_VERSION=2. Values sealed under an earlier
+ * version keep decrypting with that version's key until scripts/rotate-pii-keys.mjs re-seals them.
+ */
+export function currentKeyVersion(): number {
+  const v = Number(process.env.PII_KEY_VERSION ?? 1);
+  return Number.isInteger(v) && v >= 1 ? v : 1;
+}
 
 export class MissingEncryptionKeyError extends Error {
   constructor() {
@@ -29,7 +36,7 @@ function keyFor(version: number): Buffer {
 
 /** Throws MissingEncryptionKeyError when the key is absent or not 32 bytes. */
 export function assertEncryptionKey(): void {
-  keyFor(CURRENT_KEY_VERSION);
+  keyFor(currentKeyVersion());
 }
 
 export interface EncryptedValue {
@@ -40,13 +47,13 @@ export interface EncryptedValue {
 }
 
 export function encryptPii(plaintext: string, aad: string): EncryptedValue {
-  const key = keyFor(CURRENT_KEY_VERSION);
+  const key = keyFor(currentKeyVersion());
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
   // The row's identity is bound in as associated data: a ciphertext moved to another row won't decrypt.
   cipher.setAAD(Buffer.from(aad, "utf8"));
   const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
-  return { ciphertext: ciphertext.toString("base64"), iv: iv.toString("base64"), auth_tag: cipher.getAuthTag().toString("base64"), key_version: CURRENT_KEY_VERSION };
+  return { ciphertext: ciphertext.toString("base64"), iv: iv.toString("base64"), auth_tag: cipher.getAuthTag().toString("base64"), key_version: currentKeyVersion() };
 }
 
 /** Throws when the ciphertext, iv, tag or associated data were altered. */

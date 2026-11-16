@@ -66,7 +66,7 @@ async function loadReports(db: Db, propertyIds: string[]): Promise<ReportView[]>
         .from("property-documents")
         .createSignedUrls(
           rows.map((r) => r.file_url),
-          60 * 60,
+          600,
         );
       for (const u of (urls ?? []) as Array<{ path: string; signedUrl: string }>)
         if (u.path && u.signedUrl) signed.set(u.path, u.signedUrl);

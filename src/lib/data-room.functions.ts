@@ -59,7 +59,7 @@ export const getDataRoom = createServerFn({ method: "GET" })
           .from("property-documents")
           .createSignedUrls(
             rows.map((r) => r.file_url),
-            60 * 60,
+            600,
           );
         (signed ?? []).forEach((s) => {
           if (s.path && s.signedUrl) byPath.set(s.path, s.signedUrl);

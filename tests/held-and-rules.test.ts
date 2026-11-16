@@ -216,7 +216,7 @@ describe("1. the held-account reminder", () => {
   it("is scheduled nightly, behind the shared secret, and the page is in the admin navigation", () => {
     expect(readFileSync("cron-sweeps.sql", "utf8")).toMatch(/divieight-held-reminders.*held-reminder-sweep.*'0 5 \* \* \*'.*'secret'/);
     const route = readFileSync("src/routes/api.public.held-reminder-sweep.ts", "utf8");
-    expect(route).toMatch(/x-sweep-secret/);
+    expect(route).toContain("runSweep(");
     expect(route).toMatch(/runHeldReminders/);
     expect(readFileSync("src/routes/admin.tsx", "utf8")).toMatch(/\/admin\/held-accounts/);
     expect(readFileSync("rules-and-held-decisions.sql", "utf8")).toMatch(/CREATE TABLE IF NOT EXISTS public\.held_followups/);

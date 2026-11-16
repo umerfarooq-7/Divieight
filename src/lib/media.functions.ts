@@ -8,6 +8,7 @@ import { z } from "zod";
 export const signPropertyPhotos = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ paths: z.array(z.string()).max(100) }).parse(data))
   .handler(async ({ data }): Promise<Record<string, string>> => {
+    await (await import("@/lib/rate-limit.server")).enforceRateLimit("public-read", (await import("@/lib/rate-limit.server")).LIMITS.publicRead);
     if (data.paths.length === 0) return {};
     const { resolvePropertyMediaUrls } = await import("@/lib/property-media.server");
     return Object.fromEntries(await resolvePropertyMediaUrls(data.paths));
@@ -18,6 +19,7 @@ export const getPropertyCoverPhotos = createServerFn({ method: "POST" })
     z.object({ propertyIds: z.array(z.string().uuid()).max(100) }).parse(data),
   )
   .handler(async ({ data }): Promise<Record<string, string>> => {
+    await (await import("@/lib/rate-limit.server")).enforceRateLimit("public-read", (await import("@/lib/rate-limit.server")).LIMITS.publicRead);
     if (data.propertyIds.length === 0) return {};
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");

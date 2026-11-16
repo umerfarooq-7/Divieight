@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { uploadProblem } from "@/lib/upload-rules";
 import type { CredentialEntity } from "@/lib/credentialing";
 
 /**
@@ -144,6 +145,8 @@ export async function uploadTaxForm(
   authUserId: string,
   file: File,
 ): Promise<{ path?: string; error?: string }> {
+  const problem = uploadProblem(file, "compliance");
+  if (problem) return { error: problem };
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "pdf";
   const path = `${authUserId}/tax-form-${Date.now()}.${ext}`;
   const { error } = await supabase.storage

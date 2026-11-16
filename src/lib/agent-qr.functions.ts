@@ -19,6 +19,7 @@ export const recordAttributionVisit = createServerFn({ method: "POST" })
   .inputValidator((input: { token: string }) => ({ token: String(input?.token ?? "").slice(0, 64) }))
   .handler(async ({ data }) => {
     try {
+      await (await import("@/lib/rate-limit.server")).enforceRateLimit("attribution-visit", (await import("@/lib/rate-limit.server")).LIMITS.attributionVisit);
       const { getRequest } = await import("@tanstack/react-start/server");
       const userAgent = getRequest().headers.get("user-agent");
       return await (await server()).recordVisit(await adminDb(), { token: data.token, userAgent });

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runAuthorizationEscalationSweep } from "@/lib/authorization.server";
 
 /**
@@ -9,13 +10,10 @@ import { runAuthorizationEscalationSweep } from "@/lib/authorization.server";
 export const Route = createFileRoute("/api/public/authorization-escalation")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        return Response.json(await runAuthorizationEscalationSweep());
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "authorization-escalation", async () => {
+          return await runAuthorizationEscalationSweep();
+        }),
     },
   },
 });

@@ -68,7 +68,7 @@ export const listSettlements = createServerFn({ method: "GET" })
         let url: string | null = null;
         if (list[0].pdf_url) {
           try {
-            const { data } = await db.storage.from("property-documents").createSignedUrl(list[0].pdf_url, 3600);
+            const { data } = await db.storage.from("property-documents").createSignedUrl(list[0].pdf_url, 600);
             url = data?.signedUrl ?? null;
           } catch {
             url = null;

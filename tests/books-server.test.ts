@@ -164,6 +164,6 @@ describe("the Manager's page", () => {
     db().rpcResults.createSignedUrl = null;
     await expect(books.receiptLink(db(), { userId: USERS.b1, propertyId: IDS.property, attachmentId: "x" })).rejects.toThrow("Only the Manager");
     expect(readFileSync("cron-sweeps.sql", "utf8")).toContain("'recurring-sweep'");
-    expect(readFileSync("src/routes/api.public.recurring-sweep.ts", "utf8")).toMatch(/ESCALATION_SWEEP_SECRET/);
+    expect(readFileSync("src/routes/api.public.recurring-sweep.ts", "utf8")).toContain("runSweep(");
   });
 });

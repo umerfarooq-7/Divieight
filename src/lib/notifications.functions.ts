@@ -60,7 +60,6 @@ export const sendNotificationEmail = createServerFn({ method: "POST" })
     if (!apiKey) {
       console.warn("[email] RESEND_API_KEY not set — skipping email send", {
         kind: data.kind,
-        recipient,
       });
       return { sent: false, reason: "no_api_key" as const };
     }
@@ -87,8 +86,8 @@ export const sendNotificationEmail = createServerFn({ method: "POST" })
       console.error("[email] Resend rejected the send", {
         status: res.status,
         kind: data.kind,
-        recipient,
-        response: text,
+        // The provider's reply can echo the address, so only its length is logged.
+        responseChars: text.length,
       });
       return { sent: false, reason: "provider_error" as const, status: res.status };
     }

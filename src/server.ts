@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { withSecurityHeaders } from "./lib/security-headers";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -44,18 +45,41 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+let readiness: Promise<Response | null> | undefined;
+
+/** In the declared production environment, a simulated adapter without ALLOW_SIMULATED_ADAPTERS=true means the app refuses to serve. Checked once per instance. */
+function productionGate(): Promise<Response | null> {
+  readiness ??= import("./lib/runtime-config")
+    .then((m) => {
+      try {
+        const sim = m.assertProductionReadiness();
+        if (sim.length > 0 && m.isProductionRuntime()) console.warn(`[startup] running production with simulated adapters by override: ${sim.map((a) => a.key).join(", ")}`);
+        return null;
+      } catch (e) {
+        console.error(`[startup] ${(e as Error).message}`);
+        return new Response("Service unavailable: this deployment is not configured for production.", { status: 503, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+      }
+    })
+    .catch(() => null);
+  return readiness;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const blocked = await productionGate();
+    if (blocked) return withSecurityHeaders(blocked);
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withSecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };

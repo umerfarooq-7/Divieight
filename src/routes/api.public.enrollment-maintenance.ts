@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runEnrollmentMaintenance } from "@/lib/enrollment-maintenance.functions";
 
 /**
@@ -11,14 +12,11 @@ import { runEnrollmentMaintenance } from "@/lib/enrollment-maintenance.functions
 export const Route = createFileRoute("/api/public/enrollment-maintenance")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const result = await runEnrollmentMaintenance();
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "enrollment-maintenance", async () => {
+          const result = await runEnrollmentMaintenance();
+          return result;
+        }),
     },
   },
 });

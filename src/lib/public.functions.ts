@@ -24,6 +24,7 @@ export interface FeaturedProperty {
  */
 export const getFeaturedProperties = createServerFn({ method: "GET" }).handler(
   async (): Promise<FeaturedProperty[]> => {
+    await (await import("@/lib/rate-limit.server")).enforceRateLimit("public-read", (await import("@/lib/rate-limit.server")).LIMITS.publicRead);
     const url = process.env.SUPABASE_URL!;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
 

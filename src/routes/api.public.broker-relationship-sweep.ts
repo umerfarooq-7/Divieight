@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runBrokerRelationshipSweep } from "@/lib/broker-relationship.functions";
 
 /**
@@ -10,14 +11,11 @@ import { runBrokerRelationshipSweep } from "@/lib/broker-relationship.functions"
 export const Route = createFileRoute("/api/public/broker-relationship-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const result = await runBrokerRelationshipSweep();
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "broker-relationship-sweep", async () => {
+          const result = await runBrokerRelationshipSweep();
+          return result;
+        }),
     },
   },
 });

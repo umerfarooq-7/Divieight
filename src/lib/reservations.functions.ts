@@ -553,7 +553,7 @@ export const getMyPodDetails = createServerFn({ method: "GET" })
     if (path) {
       const { data: signed } = await supabaseAdmin.storage
         .from("property-media")
-        .createSignedUrl(path, 60 * 60);
+        .createSignedUrl(path, 600);
       photoUrl = signed?.signedUrl ?? null;
     }
 

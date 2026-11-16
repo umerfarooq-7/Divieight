@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runArelloRetrySweep } from "@/lib/arello-retry.functions";
 
 /**
@@ -10,14 +11,11 @@ import { runArelloRetrySweep } from "@/lib/arello-retry.functions";
 export const Route = createFileRoute("/api/public/arello-retry")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const result = await runArelloRetrySweep();
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "arello-retry", async () => {
+          const result = await runArelloRetrySweep();
+          return result;
+        }),
     },
   },
 });

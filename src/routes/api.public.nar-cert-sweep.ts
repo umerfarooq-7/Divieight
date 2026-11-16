@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runNarCertSweep } from "@/lib/nar-cert.functions";
 
 /**
@@ -10,14 +11,11 @@ import { runNarCertSweep } from "@/lib/nar-cert.functions";
 export const Route = createFileRoute("/api/public/nar-cert-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const result = await runNarCertSweep();
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "nar-cert-sweep", async () => {
+          const result = await runNarCertSweep();
+          return result;
+        }),
     },
   },
 });

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runEoExpirySweep } from "@/lib/eo-expiry.functions";
 
 /**
@@ -11,14 +12,11 @@ import { runEoExpirySweep } from "@/lib/eo-expiry.functions";
 export const Route = createFileRoute("/api/public/eo-expiry-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const result = await runEoExpirySweep();
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "eo-expiry-sweep", async () => {
+          const result = await runEoExpirySweep();
+          return result;
+        }),
     },
   },
 });

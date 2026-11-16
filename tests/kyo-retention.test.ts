@@ -498,7 +498,7 @@ describe("the assumption is flagged, and the pieces are wired", () => {
   });
   it("the nightly route, the schedule, the screens and the SQL exist", () => {
     expect(src("src/routes/api.public.kyo-retention-sweep.ts")).toContain("runRetentionSweep");
-    expect(src("src/routes/api.public.kyo-retention-sweep.ts")).toContain("x-sweep-secret");
+    expect(src("src/routes/api.public.kyo-retention-sweep.ts")).toContain("runSweep(");
     expect(src("cron-sweeps.sql")).toContain("kyo-retention-sweep");
     expect(src("src/routes/admin.retention.tsx")).toContain("Retention review queue");
     expect(src("src/routes/admin.tsx")).toContain('"/admin/retention"');

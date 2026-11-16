@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runDesignationSweep } from "@/lib/designation.functions";
 import { runTetherResolutionSweep } from "@/lib/tether-resolution.functions";
 
@@ -13,17 +14,14 @@ import { runTetherResolutionSweep } from "@/lib/tether-resolution.functions";
 export const Route = createFileRoute("/api/public/designation-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const db = supabaseAdmin as unknown as { from: (t: string) => any };
-        const designation = await runDesignationSweep(db);
-        const alerts = await runTetherResolutionSweep(db);
-        return Response.json({ designation, alerts });
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "designation-sweep", async () => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+          const db = supabaseAdmin as unknown as { from: (t: string) => any };
+          const designation = await runDesignationSweep(db);
+          const alerts = await runTetherResolutionSweep(db);
+          return { designation, alerts };
+        }),
     },
   },
 });

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 
 /**
  * Hourly sweep: brings conversion_events up to date with signed PRAs and cleared
@@ -9,23 +10,13 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/conversion-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const secret = process.env["ESCALATION_SWEEP_SECRET"];
-        const provided =
-          request.headers.get("x-sweep-secret") ??
-          new URL(request.url).searchParams.get("secret");
-        if (!secret || provided !== secret) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const { runConversionSync } = await import("@/lib/conversions.server");
-        const result = await runConversionSync(supabaseAdmin as never);
-
-        return new Response(JSON.stringify(result), {
-          headers: { "content-type": "application/json", "cache-control": "no-store" },
-        });
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "conversion-sweep", async () => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+          const { runConversionSync } = await import("@/lib/conversions.server");
+          const result = await runConversionSync(supabaseAdmin as never);
+          return result;
+        }),
     },
   },
 });

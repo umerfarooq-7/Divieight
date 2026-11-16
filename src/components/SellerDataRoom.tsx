@@ -103,7 +103,7 @@ export function SellerDataRoom({
   async function openDoc(doc: DataRoomDocument) {
     const { data, error } = await supabase.storage
       .from("property-documents")
-      .createSignedUrl(doc.file_url, 60 * 60);
+      .createSignedUrl(doc.file_url, 600);
     if (error || !data?.signedUrl) {
       toast.error("Couldn't open that document.");
       return;

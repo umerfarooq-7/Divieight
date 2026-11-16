@@ -8,7 +8,10 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/standard-rules-check")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const { callerKey, checkRateLimit, LIMITS, tooMany } = await import("@/lib/rate-limit.server");
+        const limited = checkRateLimit("public-read", callerKey(request), LIMITS.publicRead);
+        if (!limited.ok) return tooMany(limited);
         const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
         const { checkStandardRules } = await import("@/lib/standard-rules-check.server");
         const check = await checkStandardRules(supabaseAdmin as never);

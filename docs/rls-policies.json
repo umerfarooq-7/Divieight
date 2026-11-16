@@ -1,0 +1,1765 @@
+{
+ "tables": [
+  "account_liquidity_links",
+  "account_members",
+  "accounting_period_events",
+  "accounting_periods",
+  "acknowledgment_posture_records",
+  "adverse_action_notices",
+  "allocation_overrides",
+  "audit_log",
+  "audit_vault_checkpoints",
+  "bank_transactions",
+  "buyer_accounts",
+  "buyer_enrollment_payments",
+  "cap_table_entries",
+  "cap_table_history",
+  "capital_call_allocations",
+  "capital_calls",
+  "categorization_rules",
+  "charge_dispositions",
+  "coa_accounts",
+  "coa_versions",
+  "contact_submissions",
+  "coowner_inquiries",
+  "coverage_requirements",
+  "cpa_designations",
+  "cpa_worksheet_flags",
+  "cpa_worksheet_items",
+  "declaration_untrue_findings",
+  "diligence_retriggers",
+  "distribution_events",
+  "distribution_payments",
+  "distribution_settings",
+  "document_review_acknowledgments",
+  "due_diligence_acknowledgments",
+  "due_diligence_inventory",
+  "eligibility_declarations",
+  "eligibility_page_acknowledgements",
+  "eligibility_results",
+  "enrollment_payments",
+  "entity_genesis",
+  "entry_corrections",
+  "executed_document_texts",
+  "expense_allocations",
+  "expenses",
+  "governance_rules",
+  "governance_settings",
+  "held_followups",
+  "insurance_alternative_proposals",
+  "insurance_policies",
+  "insurance_votes",
+  "job_failures",
+  "journal_entries",
+  "journal_lines",
+  "kyo_correction_requests",
+  "kyo_deletion_requests",
+  "kyo_retention",
+  "kyo_retention_items",
+  "launch_readiness_items",
+  "ledger_attachments",
+  "llc_plaid_consents",
+  "maintenance_requests",
+  "maintenance_updates",
+  "member_authority_scope_removals",
+  "member_block2_authorizations",
+  "member_liveness_checks",
+  "member_payout_methods",
+  "member_plaid_consents",
+  "member_sanctions_screenings",
+  "member_w9",
+  "member_w9_tin_secrets",
+  "notifications",
+  "operating_agreement_signatures",
+  "owner_activation_notices",
+  "owner_capital_accounts",
+  "owner_capital_contributions",
+  "owner_notices",
+  "owner_notification_preferences",
+  "owner_str_records",
+  "pod_reservations",
+  "properties",
+  "property_documents",
+  "property_media",
+  "property_records_vault",
+  "recurring_applications",
+  "recurring_rules",
+  "resale_interest_requests",
+  "resale_listings",
+  "resale_rofr_elections",
+  "resale_rofr_member_positions",
+  "resale_transactions",
+  "retention_exceptions",
+  "retention_reviews",
+  "saga_failures",
+  "saga_runs",
+  "saga_step_executions",
+  "saga_test_log",
+  "seller_eligibility_declarations",
+  "sellers",
+  "settlement_documents",
+  "signed_documents",
+  "standard_versions",
+  "support_tickets",
+  "suspicious_activity_alerts",
+  "tax_ready_records",
+  "tc_acceptances",
+  "tc_notice_deliveries",
+  "tc_versions",
+  "title_escrow_discrepancies",
+  "title_escrow_events",
+  "title_escrow_orders",
+  "use_calendar_priority",
+  "use_calendar_weeks",
+  "use_calendar_years",
+  "user_roles",
+  "vendor_1099_copies",
+  "vote_ballots",
+  "vote_member_positions",
+  "votes",
+  "wishlist",
+  "year_end_packets"
+ ],
+ "policies": [
+  {
+   "tablename": "account_members",
+   "policyname": "Admins can view all account members",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "account_members",
+   "policyname": "Buyers add their own account members",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = account_members.buyer_account_id) AND (b.auth_user_id = auth.uid()))))"
+  },
+  {
+   "tablename": "account_members",
+   "policyname": "Buyers update their own account members",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = account_members.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = account_members.buyer_account_id) AND (b.auth_user_id = auth.uid()))))"
+  },
+  {
+   "tablename": "account_members",
+   "policyname": "Buyers view their own account members",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = account_members.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "accounting_period_events",
+   "policyname": "the Manager reads the period history",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "accounting_periods",
+   "policyname": "manager and members read the periods",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "acknowledgment_posture_records",
+   "policyname": "the Manager reads posture records",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "adverse_action_notices",
+   "policyname": "buyers and admins read adverse action notices",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = adverse_action_notices.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "allocation_overrides",
+   "policyname": "the Manager reads allocation overrides",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "audit_log",
+   "policyname": "Authenticated can insert own audit rows",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(actor_id = auth.uid())"
+  },
+  {
+   "tablename": "audit_vault_checkpoints",
+   "policyname": "vault readers read checkpoints",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'compliance_officer'::app_role) OR has_role(auth.uid(), 'auditor'::app_role))",
+   "check_": ""
+  },
+  {
+   "tablename": "bank_transactions",
+   "policyname": "the Manager reads bank transactions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "buyer_accounts",
+   "policyname": "Admins can update buyer accounts",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "buyer_accounts",
+   "policyname": "Admins can view all buyer accounts",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "buyer_accounts",
+   "policyname": "Buyers create their own account",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = auth_user_id)"
+  },
+  {
+   "tablename": "buyer_accounts",
+   "policyname": "Buyers update their own account",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = auth_user_id)",
+   "check_": "(auth.uid() = auth_user_id)"
+  },
+  {
+   "tablename": "buyer_accounts",
+   "policyname": "Buyers view their own account",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = auth_user_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "buyer_enrollment_payments",
+   "policyname": "Admins can view buyer enrollment payments",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "buyer_enrollment_payments",
+   "policyname": "Buyers create own enrollment payments",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = auth_user_id)"
+  },
+  {
+   "tablename": "buyer_enrollment_payments",
+   "policyname": "Buyers view own enrollment payments",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = auth_user_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "cap_table_entries",
+   "policyname": "Admins and holders read cap table",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = cap_table_entries.buyer_account_id) AND (b.auth_user_id = auth.uid())))) OR (EXISTS ( SELECT 1 FROM sellers s WHERE ((s.id = cap_table_entries.seller_id) AND (s.id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "cap_table_history",
+   "policyname": "admins read cap table history",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "capital_call_allocations",
+   "policyname": "holders read their own capital call allocation",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_my_holder_key(holder_key))",
+   "check_": ""
+  },
+  {
+   "tablename": "capital_calls",
+   "policyname": "owners read their property's capital calls",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((status <> 'draft'::text) AND (is_property_owner(auth.uid(), property_id) OR (EXISTS ( SELECT 1 FROM capital_call_allocations a WHERE ((a.capital_call_id = a.id) AND is_my_holder_key(a.holder_key)))))))",
+   "check_": ""
+  },
+  {
+   "tablename": "categorization_rules",
+   "policyname": "the Manager reads the rules",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "charge_dispositions",
+   "policyname": "buyers and admins read charge_dispositions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = charge_dispositions.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "coa_accounts",
+   "policyname": "signed-in users read the chart",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "true",
+   "check_": ""
+  },
+  {
+   "tablename": "coa_versions",
+   "policyname": "signed-in users read the chart versions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "true",
+   "check_": ""
+  },
+  {
+   "tablename": "contact_submissions",
+   "policyname": "Admins can update contact submissions",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "contact_submissions",
+   "policyname": "Admins can view contact submissions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "contact_submissions",
+   "policyname": "Anyone can submit a contact message",
+   "cmd": "INSERT",
+   "roles": "{anon,authenticated}",
+   "using_": "",
+   "check_": "true"
+  },
+  {
+   "tablename": "coowner_inquiries",
+   "policyname": "the Manager and the asker read inquiries",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((raised_by_user_id = auth.uid()) AND is_property_owner(auth.uid(), property_id)))",
+   "check_": ""
+  },
+  {
+   "tablename": "coverage_requirements",
+   "policyname": "authenticated read coverage requirements",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "true",
+   "check_": ""
+  },
+  {
+   "tablename": "cpa_designations",
+   "policyname": "manager and the CPA read designations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((auth_user_id = auth.uid()) AND (status = 'active'::text)))",
+   "check_": ""
+  },
+  {
+   "tablename": "cpa_worksheet_flags",
+   "policyname": "admins read cpa worksheet flags",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "cpa_worksheet_items",
+   "policyname": "the Manager reads worksheet items",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "declaration_untrue_findings",
+   "policyname": "buyers and admins read declaration_untrue_findings",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = declaration_untrue_findings.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "diligence_retriggers",
+   "policyname": "the Manager reads re-triggers",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "distribution_events",
+   "policyname": "owners read their property's distributions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (is_property_owner(auth.uid(), property_id) AND (status <> 'draft'::text)))",
+   "check_": ""
+  },
+  {
+   "tablename": "distribution_payments",
+   "policyname": "managers and the payee read payments",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (is_property_owner(auth.uid(), property_id) AND ((holder_key = ('seller:'::text || (auth.uid())::text)) OR (holder_key IN ( SELECT (b.id)::text AS id FROM buyer_accounts b WHERE (b.auth_user_id = auth.uid()))))))",
+   "check_": ""
+  },
+  {
+   "tablename": "distribution_settings",
+   "policyname": "managers read the reserve",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "due_diligence_acknowledgments",
+   "policyname": "buyer reads own diligence acks",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = due_diligence_acknowledgments.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "due_diligence_inventory",
+   "policyname": "authenticated read diligence inventory",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "true",
+   "check_": ""
+  },
+  {
+   "tablename": "eligibility_declarations",
+   "policyname": "buyers and admins read eligibility declarations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = eligibility_declarations.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "eligibility_page_acknowledgements",
+   "policyname": "buyers and admins read eligibility acknowledgements",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = eligibility_page_acknowledgements.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "eligibility_results",
+   "policyname": "buyers and admins read eligibility_results",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = eligibility_results.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "enrollment_payments",
+   "policyname": "Admins can view seller enrollment payments",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "enrollment_payments",
+   "policyname": "Sellers create own enrollment payments",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "enrollment_payments",
+   "policyname": "Sellers view own enrollment payments",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "entity_genesis",
+   "policyname": "Admins read entity genesis",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "entry_corrections",
+   "policyname": "the Manager reads corrections",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "expense_allocations",
+   "policyname": "holders read their own expense allocation",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_my_holder_key(holder_key))",
+   "check_": ""
+  },
+  {
+   "tablename": "expenses",
+   "policyname": "owners read their property's expenses",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((status <> 'draft'::text) AND (is_property_owner(auth.uid(), property_id) OR (EXISTS ( SELECT 1 FROM expense_allocations a WHERE ((a.expense_id = a.id) AND is_my_holder_key(a.holder_key)))))))",
+   "check_": ""
+  },
+  {
+   "tablename": "governance_rules",
+   "policyname": "admins manage governance rules",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "governance_rules",
+   "policyname": "owners read governance rules",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((property_id IS NULL) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "insurance_policies",
+   "policyname": "admins read insurance policies",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "journal_entries",
+   "policyname": "manager and members read the journal",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "journal_lines",
+   "policyname": "manager and members read the lines",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM journal_entries e WHERE ((e.id = journal_lines.entry_id) AND (has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), e.property_id)))))",
+   "check_": ""
+  },
+  {
+   "tablename": "kyo_correction_requests",
+   "policyname": "buyers and admins read kyo correction requests",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = kyo_correction_requests.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "ledger_attachments",
+   "policyname": "the Manager reads receipts",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "llc_plaid_consents",
+   "policyname": "the Manager reads the LLC bank-feed consents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "maintenance_requests",
+   "policyname": "owners read their property's maintenance",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "maintenance_updates",
+   "policyname": "owners read their property's maintenance updates",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM maintenance_requests r WHERE ((r.id = maintenance_updates.request_id) AND is_property_owner(auth.uid(), r.property_id)))))",
+   "check_": ""
+  },
+  {
+   "tablename": "member_block2_authorizations",
+   "policyname": "buyers and admins read member_block2_authorizations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = member_block2_authorizations.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "member_liveness_checks",
+   "policyname": "buyers and admins read liveness checks",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = member_liveness_checks.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "member_plaid_consents",
+   "policyname": "buyers and admins read member_plaid_consents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = member_plaid_consents.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "member_sanctions_screenings",
+   "policyname": "buyers and admins read member_sanctions_screenings",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = member_sanctions_screenings.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "member_w9",
+   "policyname": "buyers and admins read member_w9",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = member_w9.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "notifications",
+   "policyname": "Sellers insert own notifications",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "notifications",
+   "policyname": "Sellers update own notifications",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "notifications",
+   "policyname": "Sellers view own notifications",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_activation_notices",
+   "policyname": "users read own activation notices",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(user_id = auth.uid())",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_capital_accounts",
+   "policyname": "owners read own capital account",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((user_id = auth.uid()) AND is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_capital_contributions",
+   "policyname": "owners read own contributions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((user_id = auth.uid()) AND is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_notices",
+   "policyname": "admins manage notices",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "owner_notices",
+   "policyname": "owners read notices",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "is_property_owner(auth.uid(), property_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_notification_preferences",
+   "policyname": "people read their own notification preferences",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(user_id = auth.uid())",
+   "check_": ""
+  },
+  {
+   "tablename": "owner_str_records",
+   "policyname": "an owner reads their own STR records",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(is_property_owner(auth.uid(), property_id) AND ((member_key = auth.uid()) OR (member_key IN ( SELECT b.id FROM buyer_accounts b WHERE (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "pod_reservations",
+   "policyname": "Anyone can view reservations on listed properties",
+   "cmd": "SELECT",
+   "roles": "{anon,authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = pod_reservations.property_id) AND (p.status = 'listed'::text))))",
+   "check_": ""
+  },
+  {
+   "tablename": "pod_reservations",
+   "policyname": "Buyers can create their own reservations",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = pod_reservations.buyer_account_id) AND (b.auth_user_id = auth.uid()))))"
+  },
+  {
+   "tablename": "pod_reservations",
+   "policyname": "Buyers can update their own reservations",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = pod_reservations.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = pod_reservations.buyer_account_id) AND (b.auth_user_id = auth.uid()))))"
+  },
+  {
+   "tablename": "pod_reservations",
+   "policyname": "Buyers can view their own reservations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = pod_reservations.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Admins can update properties",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Admins can view all properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Authenticated can view listed properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(status = 'listed'::text)",
+   "check_": ""
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Public can view listed properties",
+   "cmd": "SELECT",
+   "roles": "{anon}",
+   "using_": "(status = 'listed'::text)",
+   "check_": ""
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Sellers can delete their own properties",
+   "cmd": "DELETE",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Sellers can insert their own properties",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Sellers can update their own properties",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "properties",
+   "policyname": "Sellers can view their own properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "property_documents",
+   "policyname": "Admins read property documents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "property_documents",
+   "policyname": "Golden ticket buyers read property documents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.auth_user_id = auth.uid()) AND (b.golden_ticket_issued = true)))) AND (EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_documents.property_id) AND (p.status = 'listed'::text)))))",
+   "check_": ""
+  },
+  {
+   "tablename": "property_documents",
+   "policyname": "Sellers manage own property documents",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_documents.property_id) AND (p.seller_id = auth.uid()))))",
+   "check_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_documents.property_id) AND (p.seller_id = auth.uid()))))"
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Admins can view all property media",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Authenticated users can view media for listed properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.status = 'listed'::text))))",
+   "check_": ""
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Public can view media for listed properties",
+   "cmd": "SELECT",
+   "roles": "{anon}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.status = 'listed'::text))))",
+   "check_": ""
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Sellers can delete media for their properties",
+   "cmd": "DELETE",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.seller_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Sellers can insert media for their properties",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.seller_id = auth.uid()))))"
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Sellers can update media for their properties",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.seller_id = auth.uid()))))",
+   "check_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.seller_id = auth.uid()))))"
+  },
+  {
+   "tablename": "property_media",
+   "policyname": "Sellers can view media for their properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM properties p WHERE ((p.id = property_media.property_id) AND (p.seller_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "property_records_vault",
+   "policyname": "admins read records vault",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "recurring_applications",
+   "policyname": "the Manager reads recurring applications",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "recurring_rules",
+   "policyname": "the Manager reads recurring rules",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "resale_interest_requests",
+   "policyname": "buyers read own resale interest",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (user_id = auth.uid()))",
+   "check_": ""
+  },
+  {
+   "tablename": "resale_listings",
+   "policyname": "co-owners read resale listings",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (seller_user_id = auth.uid()) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "resale_rofr_elections",
+   "policyname": "holders read own elections",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_own_holder_key(auth.uid(), holder_key))",
+   "check_": ""
+  },
+  {
+   "tablename": "resale_rofr_member_positions",
+   "policyname": "holders read own rofr positions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_own_holder_key(auth.uid(), holder_key))",
+   "check_": ""
+  },
+  {
+   "tablename": "resale_transactions",
+   "policyname": "parties read resale transactions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (buyer_user_id = auth.uid()) OR (EXISTS ( SELECT 1 FROM resale_listings l WHERE ((l.id = resale_transactions.listing_id) AND (l.seller_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "retention_exceptions",
+   "policyname": "requester or admin reads retention exceptions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((requested_by_user_id = auth.uid()) AND is_property_owner(auth.uid(), property_id)))",
+   "check_": ""
+  },
+  {
+   "tablename": "seller_eligibility_declarations",
+   "policyname": "sellers and admins read seller declarations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (seller_id = auth.uid()))",
+   "check_": ""
+  },
+  {
+   "tablename": "sellers",
+   "policyname": "Admins can view all sellers",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "sellers",
+   "policyname": "Sellers can insert their own record",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(auth.uid() = id)"
+  },
+  {
+   "tablename": "sellers",
+   "policyname": "Sellers can update their own record",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = id)",
+   "check_": "(auth.uid() = id)"
+  },
+  {
+   "tablename": "sellers",
+   "policyname": "Sellers can view their own record",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = id)",
+   "check_": ""
+  },
+  {
+   "tablename": "settlement_documents",
+   "policyname": "admins read settlement documents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "signed_documents",
+   "policyname": "Admins can view all signed documents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "signed_documents",
+   "policyname": "Buyers can create their own signed documents",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "((buyer_account_id IS NOT NULL) AND (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = signed_documents.buyer_account_id) AND (b.auth_user_id = auth.uid())))))"
+  },
+  {
+   "tablename": "signed_documents",
+   "policyname": "Buyers can view their own signed documents",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((buyer_account_id IS NOT NULL) AND (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = signed_documents.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
+   "check_": ""
+  },
+  {
+   "tablename": "signed_documents",
+   "policyname": "Sellers can create their own signed documents",
+   "cmd": "INSERT",
+   "roles": "{public}",
+   "using_": "",
+   "check_": "(auth.uid() = seller_id)"
+  },
+  {
+   "tablename": "signed_documents",
+   "policyname": "Sellers can view their own signed documents",
+   "cmd": "SELECT",
+   "roles": "{public}",
+   "using_": "(auth.uid() = seller_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "standard_versions",
+   "policyname": "signed-in users read standard versions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "true",
+   "check_": ""
+  },
+  {
+   "tablename": "support_tickets",
+   "policyname": "Admins update tickets",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": "has_role(auth.uid(), 'admin'::app_role)"
+  },
+  {
+   "tablename": "support_tickets",
+   "policyname": "Anyone can submit a support ticket",
+   "cmd": "INSERT",
+   "roles": "{anon,authenticated}",
+   "using_": "",
+   "check_": "true"
+  },
+  {
+   "tablename": "support_tickets",
+   "policyname": "Users read own tickets, admins read all",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((submitter_auth_user_id = auth.uid()) OR has_role(auth.uid(), 'admin'::app_role))",
+   "check_": ""
+  },
+  {
+   "tablename": "suspicious_activity_alerts",
+   "policyname": "vault readers read alerts",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR has_role(auth.uid(), 'compliance_officer'::app_role) OR has_role(auth.uid(), 'auditor'::app_role))",
+   "check_": ""
+  },
+  {
+   "tablename": "tax_ready_records",
+   "policyname": "admins read tax ready records",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "title_escrow_discrepancies",
+   "policyname": "admins read title discrepancies",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "use_calendar_priority",
+   "policyname": "owners read calendar priority",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "use_calendar_weeks",
+   "policyname": "owners read calendar weeks",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR is_property_owner(auth.uid(), property_id))",
+   "check_": ""
+  },
+  {
+   "tablename": "use_calendar_years",
+   "policyname": "owners read calendar years",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((status <> 'draft'::text) AND is_property_owner(auth.uid(), property_id)))",
+   "check_": ""
+  },
+  {
+   "tablename": "user_roles",
+   "policyname": "Admins can view all roles",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "user_roles",
+   "policyname": "Users can view their own roles",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth.uid() = user_id)",
+   "check_": ""
+  },
+  {
+   "tablename": "vendor_1099_copies",
+   "policyname": "the Manager reads 1099 copies",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "vote_ballots",
+   "policyname": "holders read own ballot",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (is_own_holder_key(auth.uid(), holder_key) AND (EXISTS ( SELECT 1 FROM votes v WHERE ((v.id = vote_ballots.vote_id) AND is_property_owner(auth.uid(), v.property_id))))))",
+   "check_": ""
+  },
+  {
+   "tablename": "vote_member_positions",
+   "policyname": "holders read own positions",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (is_own_holder_key(auth.uid(), holder_key) AND (EXISTS ( SELECT 1 FROM votes v WHERE ((v.id = vote_member_positions.vote_id) AND is_property_owner(auth.uid(), v.property_id))))))",
+   "check_": ""
+  },
+  {
+   "tablename": "votes",
+   "policyname": "owners read votes",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(has_role(auth.uid(), 'admin'::app_role) OR ((status <> 'draft'::text) AND is_property_owner(auth.uid(), property_id)))",
+   "check_": ""
+  },
+  {
+   "tablename": "wishlist",
+   "policyname": "Admins can view all wishlist entries",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "wishlist",
+   "policyname": "Buyers can remove their saved properties",
+   "cmd": "DELETE",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = wishlist.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "wishlist",
+   "policyname": "Buyers can save properties",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "using_": "",
+   "check_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = wishlist.buyer_account_id) AND (b.auth_user_id = auth.uid()))))"
+  },
+  {
+   "tablename": "wishlist",
+   "policyname": "Buyers can view their own saved properties",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = wishlist.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "year_end_packets",
+   "policyname": "the Manager reads packets",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  }
+ ],
+ "grants": [
+  {
+   "table_name": "account_members",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "accounting_period_events",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "accounting_periods",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "acknowledgment_posture_records",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "adverse_action_notices",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "allocation_overrides",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "audit_log",
+   "grantee": "authenticated",
+   "privs": "INSERT"
+  },
+  {
+   "table_name": "audit_vault_checkpoints",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "bank_transactions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "buyer_accounts",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "buyer_enrollment_payments",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT"
+  },
+  {
+   "table_name": "cap_table_entries",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "cap_table_history",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "capital_call_allocations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "capital_calls",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "categorization_rules",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "charge_dispositions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "coa_accounts",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "coa_versions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "contact_submissions",
+   "grantee": "anon",
+   "privs": "INSERT"
+  },
+  {
+   "table_name": "contact_submissions",
+   "grantee": "authenticated",
+   "privs": "INSERT"
+  },
+  {
+   "table_name": "coowner_inquiries",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "coverage_requirements",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "cpa_designations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "cpa_worksheet_flags",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "cpa_worksheet_items",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "declaration_untrue_findings",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "diligence_retriggers",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "distribution_events",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "distribution_payments",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "distribution_settings",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "due_diligence_acknowledgments",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "due_diligence_inventory",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "eligibility_declarations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "eligibility_page_acknowledgements",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "eligibility_results",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "enrollment_payments",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT"
+  },
+  {
+   "table_name": "entity_genesis",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "entry_corrections",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "expense_allocations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "expenses",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "governance_rules",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "insurance_alternative_proposals",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "insurance_policies",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "insurance_votes",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "journal_entries",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "journal_entry_state",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "journal_lines",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "kyo_correction_requests",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "ledger_attachments",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "maintenance_requests",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "maintenance_updates",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "member_block2_authorizations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "member_liveness_checks",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "member_plaid_consents",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "member_sanctions_screenings",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "member_w9",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "notifications",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "operating_agreement_signatures",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "owner_activation_notices",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "owner_capital_accounts",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "owner_capital_contributions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "owner_notices",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "owner_notification_preferences",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "owner_str_records",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "pod_reservations",
+   "grantee": "anon",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "pod_reservations",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "properties",
+   "grantee": "anon",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "properties",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "property_documents",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "property_media",
+   "grantee": "anon",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "property_media",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "property_records_vault",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "recurring_applications",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "recurring_rules",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "resale_interest_requests",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "resale_listings",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "resale_rofr_elections",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "resale_rofr_member_positions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "resale_transactions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "retention_exceptions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "seller_eligibility_declarations",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "sellers",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "settlement_documents",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "signed_documents",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT"
+  },
+  {
+   "table_name": "standard_versions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "support_tickets",
+   "grantee": "anon",
+   "privs": "INSERT"
+  },
+  {
+   "table_name": "support_tickets",
+   "grantee": "authenticated",
+   "privs": "INSERT,SELECT,UPDATE"
+  },
+  {
+   "table_name": "suspicious_activity_alerts",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "tax_ready_records",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "title_escrow_discrepancies",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "title_escrow_events",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "title_escrow_orders",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "use_calendar_priority",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "use_calendar_years",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "user_roles",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "vendor_1099_copies",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "vote_ballots",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "vote_member_positions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "votes",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "wishlist",
+   "grantee": "authenticated",
+   "privs": "DELETE,INSERT,SELECT"
+  },
+  {
+   "table_name": "year_end_packets",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  }
+ ]
+}

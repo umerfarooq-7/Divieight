@@ -93,7 +93,7 @@ export function rememberToken(token: string) {
   const local = parseStoredTokens(readLocal());
   const merged = [...current, ...local.filter((l) => !current.some((c) => c.t === l.t))].sort((a, b) => a.at - b.at);
   const value = JSON.stringify(addStoredToken(merged, token));
-  document.cookie = `${ATTRIBUTION_STORAGE_KEY}=${encodeURIComponent(value)}; path=/; max-age=${ATTRIBUTION_DAYS * 86_400}; samesite=lax`;
+  document.cookie = `${ATTRIBUTION_STORAGE_KEY}=${encodeURIComponent(value)}; path=/; max-age=${ATTRIBUTION_DAYS * 86_400}; samesite=lax${typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : ""}`;
   try {
     window.localStorage.setItem(ATTRIBUTION_STORAGE_KEY, value);
   } catch {
@@ -103,7 +103,7 @@ export function rememberToken(token: string) {
 
 export function clearStoredTokens() {
   if (typeof document === "undefined") return;
-  document.cookie = `${ATTRIBUTION_STORAGE_KEY}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${ATTRIBUTION_STORAGE_KEY}=; path=/; max-age=0; samesite=lax${typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : ""}`;
   try {
     window.localStorage.removeItem(ATTRIBUTION_STORAGE_KEY);
   } catch {

@@ -21,7 +21,7 @@ import { holderFor, holderRecipients } from "@/lib/votes.server";
 type Db = { from: (t: string) => any };
 
 const BUCKET = "property-documents";
-const SIGNED_URL_SECONDS = 3600;
+const SIGNED_URL_SECONDS = 600;
 const MISSING_SCHEMA = "Database is missing maintenance requests — run maintenance.sql in Supabase.";
 
 export interface MaintenanceRow {

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runApprovalEscalationSweep } from "@/lib/approval-escalation.functions";
 
 /**
@@ -12,17 +13,14 @@ import { runApprovalEscalationSweep } from "@/lib/approval-escalation.functions"
 export const Route = createFileRoute("/api/public/listing-approval-escalation")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const result = await runApprovalEscalationSweep(
-          supabaseAdmin as unknown as { from: (t: string) => any },
-        );
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "listing-approval-escalation", async () => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+          const result = await runApprovalEscalationSweep(
+            supabaseAdmin as unknown as { from: (t: string) => any },
+          );
+          return result;
+        }),
     },
   },
 });

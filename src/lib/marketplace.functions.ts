@@ -31,6 +31,7 @@ export interface MarketplaceProperty {
  */
 export const getMarketplaceProperties = createServerFn({ method: "GET" }).handler(
   async (): Promise<MarketplaceProperty[]> => {
+    await (await import("@/lib/rate-limit.server")).enforceRateLimit("public-read", (await import("@/lib/rate-limit.server")).LIMITS.publicRead);
     const url = process.env.SUPABASE_URL!;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
 
@@ -131,6 +132,7 @@ export interface MarketplacePropertyDetail extends MarketplaceProperty {
 export const getMarketplaceProperty = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => ({ id: String(data.id) }))
   .handler(async ({ data }): Promise<MarketplacePropertyDetail | null> => {
+    await (await import("@/lib/rate-limit.server")).enforceRateLimit("public-read", (await import("@/lib/rate-limit.server")).LIMITS.publicRead);
     const url = process.env.SUPABASE_URL!;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
 

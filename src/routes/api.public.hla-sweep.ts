@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 import { runHlaAcceptanceSweep } from "@/lib/hla.functions";
 
 /**
@@ -10,17 +11,14 @@ import { runHlaAcceptanceSweep } from "@/lib/hla.functions";
 export const Route = createFileRoute("/api/public/hla-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const result = await runHlaAcceptanceSweep(
-          supabaseAdmin as unknown as { from: (t: string) => any },
-        );
-        return Response.json(result);
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "hla-sweep", async () => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+          const result = await runHlaAcceptanceSweep(
+            supabaseAdmin as unknown as { from: (t: string) => any },
+          );
+          return result;
+        }),
     },
   },
 });

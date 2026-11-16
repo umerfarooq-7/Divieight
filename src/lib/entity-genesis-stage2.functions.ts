@@ -90,7 +90,7 @@ export const getStage2 = createServerFn({ method: "GET" })
     const signed = new Map<string, string>();
     if (rows.length) {
       try {
-        const { data: urls } = await db.storage.from("property-documents").createSignedUrls(rows.map((r) => r.file_url), 3600);
+        const { data: urls } = await db.storage.from("property-documents").createSignedUrls(rows.map((r) => r.file_url), 600);
         for (const u of (urls ?? []) as Array<{ path: string; signedUrl: string }>) if (u.signedUrl) signed.set(u.path, u.signedUrl);
       } catch {
         // listed without links

@@ -399,7 +399,7 @@ export async function adminRetentionExceptions(db: Db): Promise<{ rows: AdminRet
     const { data: p } = await db.from("properties").select("address, city, state").eq("id", r.property_id).maybeSingle();
     const { data: buyer } = await db.from("buyer_accounts").select("email").eq("auth_user_id", r.requested_by_user_id).maybeSingle();
     const lock = await shareLock(db, r.property_id, r.share_number);
-    const signed = r.supporting_doc_url ? await bucket?.createSignedUrl(r.supporting_doc_url, 3600) : null;
+    const signed = r.supporting_doc_url ? await bucket?.createSignedUrl(r.supporting_doc_url, 600) : null;
     out.push({
       id: r.id,
       propertyId: r.property_id,

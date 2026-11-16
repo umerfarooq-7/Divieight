@@ -61,7 +61,7 @@ async function signUrls(files: string[]): Promise<Map<string, string>> {
     const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
     const { data } = await supabaseAdmin.storage
       .from("property-documents")
-      .createSignedUrls(files, 60 * 60);
+      .createSignedUrls(files, 600);
     (data ?? []).forEach((s: any) => {
       if (s.path && s.signedUrl) byPath.set(s.path, s.signedUrl);
     });

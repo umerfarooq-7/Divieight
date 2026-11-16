@@ -114,7 +114,7 @@ export async function getTaggedBuyerCounts(
 export function setReferralCookie(value: string) {
   if (typeof document === "undefined") return;
   const maxAge = 60 * 60 * 24 * 365; // one year, matching the tag duration
-  document.cookie = `${REFERRAL_COOKIE}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; samesite=lax`;
+  document.cookie = `${REFERRAL_COOKIE}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; samesite=lax${typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : ""}`;
 }
 
 export function readReferralCookie(): { token: string; agentId: string } | null {
@@ -129,7 +129,7 @@ export function readReferralCookie(): { token: string; agentId: string } | null 
 
 export function clearReferralCookie() {
   if (typeof document === "undefined") return;
-  document.cookie = `${REFERRAL_COOKIE}=; path=/; max-age=0; samesite=lax`;
+  document.cookie = `${REFERRAL_COOKIE}=; path=/; max-age=0; samesite=lax${typeof location !== "undefined" && location.protocol === "https:" ? "; secure" : ""}`;
 }
 
 /**

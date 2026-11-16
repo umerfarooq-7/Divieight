@@ -1315,7 +1315,7 @@ export const getListingAgentPropertyDetail = createServerFn({ method: "GET" })
     for (const d of (docs ?? []) as any[]) {
       const { data: signed } = await supabaseAdmin.storage
         .from("property-documents")
-        .createSignedUrl(d.file_url, 60 * 60);
+        .createSignedUrl(d.file_url, 600);
       documents.push({
         id: d.id,
         name: d.document_name,

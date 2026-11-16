@@ -57,7 +57,7 @@ async function sendEmail(recipient: string, subject: string, body: string) {
   const { resendFrom } = await import("@/lib/email-sender");
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn("[enrollment] RESEND_API_KEY not set — skipping email", { recipient, subject });
+    console.warn("[enrollment] RESEND_API_KEY not set — skipping email", { subject });
     return;
   }
   const res = await fetch("https://api.resend.com/emails", {

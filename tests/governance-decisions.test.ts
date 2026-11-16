@@ -627,7 +627,7 @@ describe("4a. open-market listings expire", () => {
   it("the nightly job calls it, and is scheduled", () => {
     const route = readFileSync("src/routes/api.public.resale-expiry-sweep.ts", "utf8");
     expect(route).toMatch(/expireOpenMarketListings/);
-    expect(route).toMatch(/x-sweep-secret/);
+    expect(route).toContain("runSweep(");
     expect(readFileSync("cron-sweeps.sql", "utf8")).toMatch(/divieight-resale-expiry.*resale-expiry-sweep.*'30 4 \* \* \*'/);
   });
 });

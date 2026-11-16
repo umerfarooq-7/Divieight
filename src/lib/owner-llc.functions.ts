@@ -92,7 +92,7 @@ async function executedAgreement(db: Db, propertyId: string): Promise<OwnerLlcPa
     const bucket = db.storage?.from("property-documents");
     const file = await bucket?.download?.(g.executed_oa_url);
     if (file?.data) text = await file.data.text(); // includes the signature page
-    const signed = await bucket?.createSignedUrl(g.executed_oa_url, 3600, { download: true });
+    const signed = await bucket?.createSignedUrl(g.executed_oa_url, 600, { download: true });
     downloadUrl = signed?.data?.signedUrl ?? null;
   } catch {
     // The agreement's text still shows if the file can't be reached.

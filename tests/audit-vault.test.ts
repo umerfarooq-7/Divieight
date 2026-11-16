@@ -249,7 +249,7 @@ describe("the nightly verification of the hash chain", () => {
     expect(r.chain.ok).toBe(true);
     expect(src("cron-sweeps.sql")).toContain("audit-vault-sweep");
     expect(src("src/routes/api.public.audit-vault-sweep.ts")).toContain("runAuditVaultSweep");
-    expect(src("src/routes/api.public.audit-vault-sweep.ts")).toContain("x-sweep-secret");
+    expect(src("src/routes/api.public.audit-vault-sweep.ts")).toContain("runSweep(");
   });
 });
 

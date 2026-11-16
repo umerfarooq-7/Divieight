@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { runSweep } from "@/lib/job-runner.server";
 
 /**
  * Scheduled nightly job: recomputes the Audit Vault hash chain and stores the result, looks for changes to commission, referral, ownership and cap table data
@@ -8,21 +9,13 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/audit-vault-sweep")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
-        const secret = process.env["ESCALATION_SWEEP_SECRET"];
-        const provided = request.headers.get("x-sweep-secret") ?? new URL(request.url).searchParams.get("secret");
-        if (!secret || provided !== secret) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-
-        const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
-        const { runAuditVaultSweep } = await import("@/lib/audit-vault.server");
-        const result = await runAuditVaultSweep(supabaseAdmin as never);
-
-        return new Response(JSON.stringify(result), {
-          headers: { "content-type": "application/json", "cache-control": "no-store" },
-        });
-      },
+      POST: async ({ request }) =>
+        runSweep(request, "audit-vault-sweep", async () => {
+          const { supabaseAdmin } = await import("@/integrations/supabase/admin.server");
+          const { runAuditVaultSweep } = await import("@/lib/audit-vault.server");
+          const result = await runAuditVaultSweep(supabaseAdmin as never);
+          return result;
+        }),
     },
   },
 });
