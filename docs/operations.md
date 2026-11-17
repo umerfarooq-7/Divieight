@@ -11,7 +11,7 @@
 | `ESCALATION_SWEEP_SECRET` | unset (jobs refuse to run) | its own, 24+ chars | its own, 24+ chars |
 | Vendors (liveness, sanctions, Plaid, Qualia, ACH) | simulated / sandbox | simulated / sandbox | real. **The app refuses to serve in production while any is simulated** |
 
-Production safety switch: `src/lib/runtime-config.ts`, enforced in `src/server.ts`. With `APP_ENV=production` (or `IS_PRODUCTION=true`) the server answers **503** to every request if
+Production safety switch: `src/lib/runtime-config.ts`, enforced in `src/server.ts`. With `APP_ENV=production` (only; the older `IS_PRODUCTION` flag just adds warnings and never blocks) the server answers **503** to every request if
 any of these is simulated or in test mode: liveness vendor, sanctions vendor, bank feed (no Plaid credentials, or `PLAID_ENV` not `production`), ACH disbursement, title and escrow (no `QUALIA_API_URL`/`QUALIA_API_TOKEN`), Stripe (key not `sk_live_`).
 `ALLOW_SIMULATED_ADAPTERS=true` overrides on purpose (it logs a warning naming each adapter). Without `APP_ENV=production` nothing is refused, so dev, staging and the current
 demo deployment are unaffected. It is deliberately *not* keyed on `VERCEL_ENV`: a Vercel "production" deployment can still be a demo.

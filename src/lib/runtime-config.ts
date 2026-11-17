@@ -1,7 +1,7 @@
 /**
  * Production safety: the app must not run for real people on simulated vendors by accident.
  *
- * The real environment is declared with APP_ENV=production (or IS_PRODUCTION=true). When it is declared, every simulated or test-mode adapter is listed, and the server
+ * The real environment is declared with APP_ENV=production only (IS_PRODUCTION is an older flag that only adds warnings on the Launch readiness page; it never blocks). When it is declared, every simulated or test-mode adapter is listed, and the server
  * refuses to serve (503) unless ALLOW_SIMULATED_ADAPTERS=true is set on purpose. Without that declaration (dev, staging, preview) nothing is refused: staging is
  * allowed to be simulated. Deliberately NOT keyed on VERCEL_ENV: a Vercel "production" deployment can still be the client's demo.
  */
@@ -16,7 +16,7 @@ export interface SimulatedAdapter {
 }
 
 export function isProductionRuntime(env: Env = process.env): boolean {
-  return env["APP_ENV"] === "production" || env["IS_PRODUCTION"] === "true";
+  return env["APP_ENV"] === "production";
 }
 
 export function simulatedOverrideOn(env: Env = process.env): boolean {

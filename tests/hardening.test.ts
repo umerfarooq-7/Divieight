@@ -27,7 +27,9 @@ describe("production refuses simulated adapters", () => {
   });
   it("the declared production environment throws, and says which adapters", () => {
     expect(() => assertProductionReadiness({ APP_ENV: "production" })).toThrow(ProductionReadinessError);
-    expect(() => assertProductionReadiness({ IS_PRODUCTION: "true" })).toThrow(/liveness/);
+    expect(() => assertProductionReadiness({ APP_ENV: "production" })).toThrow(/liveness/);
+    // The older IS_PRODUCTION flag only adds warnings; it must never take the site down.
+    expect(() => assertProductionReadiness({ IS_PRODUCTION: "true" })).not.toThrow();
   });
   it("ALLOW_SIMULATED_ADAPTERS=true overrides on purpose, and still reports what is simulated", () => {
     const sim = assertProductionReadiness({ APP_ENV: "production", ALLOW_SIMULATED_ADAPTERS: "true" });
