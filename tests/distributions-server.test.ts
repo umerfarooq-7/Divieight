@@ -416,6 +416,6 @@ describe("what does not block, and the wiring", () => {
     for (const label of ["Preview each owner's amount", "Sign and authorize", "Execute: pay the owners", "Check payments with the bank", "Retry", "Void and make a corrected one", "Save reserve", "No payout method: will be held"]) expect(admin, label).toContain(label);
     const owner = readFileSync("src/routes/owner.properties.$propertyId.distributions.tsx", "utf8");
     for (const label of ["Where you are paid", "Save payout method", "held for you"]) expect(owner, label).toContain(label);
-    expect(readFileSync("src/routes/owner.properties.$propertyId.index.tsx", "utf8")).toContain("/distributions");
+    expect(readFileSync("src/components/owner/OwnerSidebar.tsx", "utf8")).toContain("/distributions");
   });
 });

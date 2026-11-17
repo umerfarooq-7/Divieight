@@ -6,6 +6,7 @@ import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getOwnerProperty } from "@/lib/owner.functions";
+import { OwnerSidebar } from "@/components/owner/OwnerSidebar";
 
 /** Loads one owned property; anyone else is sent to /owner with a message. */
 export function useOwnerProperty(propertyId: string) {
@@ -34,7 +35,12 @@ export function useOwnerProperty(propertyId: string) {
 }
 
 export function OwnerPageShell({ children }: { children: ReactNode }) {
-  return <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">{children}</div>;
+  return (
+    <div className="mx-auto flex max-w-[95rem] flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:px-8">
+      <OwnerSidebar />
+      <main className="min-w-0 flex-1">{children}</main>
+    </div>
+  );
 }
 
 export function OwnerLoading() {

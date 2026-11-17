@@ -301,7 +301,7 @@ describe("the numbers on the page", () => {
     const books = readFileSync("src/routes/admin.books.$propertyId.tsx", "utf8");
     for (const l of ["Generate drafts / check for corrections", "Save notes", "Issue all", "needs-review queue", "StatementPreview"]) expect(books, l).toContain(l);
     expect(readFileSync("src/routes/owner.properties.$propertyId.statements.$statementId.tsx", "utf8")).toContain("Download the PDF");
-    expect(readFileSync("src/routes/owner.properties.$propertyId.index.tsx", "utf8")).toContain("/statements");
+    expect(readFileSync("src/components/owner/OwnerSidebar.tsx", "utf8")).toContain("/statements");
     expect(readFileSync("cron-sweeps.sql", "utf8")).toContain("statements-sweep");
     expect(readFileSync("src/routes/api.public.statements-sweep.ts", "utf8")).toContain("runStatementsSweep");
   });

@@ -127,7 +127,7 @@ describe("the Manager", () => {
   });
 
   it("the pages are wired in", () => {
-    expect(readFileSync("src/routes/owner.properties.$propertyId.index.tsx", "utf8")).toContain("Short-term rental records");
+    expect(readFileSync("src/components/owner/OwnerSidebar.tsx", "utf8")).toContain("Short-term rental");
     expect(readFileSync("src/routeTree.gen.ts", "utf8")).toContain("/owner/properties/$propertyId/str");
   });
 });

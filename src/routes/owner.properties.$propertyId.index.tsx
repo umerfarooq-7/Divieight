@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Building2, CalendarDays, Lock } from "lucide-react";
-import { getOwnerStr } from "@/lib/str.functions";
 import { formatDate } from "@/lib/format-date";
-import { OWNER_LLC_LINKS, OWNER_SECTIONS } from "@/lib/owner-sections";
 import type { OwnerPropertyDetail } from "@/lib/owner.functions";
 import { OverduePaymentNotice } from "@/components/owner/PaymentBits";
 import {
@@ -37,10 +33,7 @@ function OwnerPropertyPage() {
 
   return (
     <OwnerPageShell>
-      <Link to="/owner" className="text-sm text-muted-foreground hover:text-foreground">
-        ← My properties
-      </Link>
-      <div className="mt-4">
+      <div>
         <OverduePaymentNotice propertyId={propertyId} />
         {isLoading || !data || data.access === "none" ? (
           isError ? (
@@ -84,7 +77,14 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
         ) : null}
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="My shares" value={`${p.shareCount} of 8`} />
+        <Stat label="Net capital" value={p.capital ? money(p.capital.net) : "—"} />
+        <Stat label="Distributions" value={p.capital ? money(p.capital.distributions) : "—"} />
+        <Stat label="Next stay" value={p.upcomingStays[0] ? formatDate(p.upcomingStays[0].startDate) : "None yet"} />
+      </div>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
         <Card title="Property overview">
           {p.photo ? (
             <img src={p.photo} alt="" className="mb-3 h-40 w-full rounded-lg object-cover" />
@@ -170,100 +170,16 @@ function Dashboard({ property: p }: { property: OwnerPropertyDetail }) {
         </Card>
       </div>
 
-      <nav aria-label="Owner sections" className="mt-6 flex flex-wrap gap-2">
-        {OWNER_LLC_LINKS.map((l) => (
-          <Link
-            key={l.tab}
-            to="/owner/properties/$propertyId/llc"
-            params={{ propertyId: p.propertyId }}
-            search={{ tab: l.tab }}
-            className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-          >
-            {l.label}
-          </Link>
-        ))}
-        <Link
-          to="/owner/properties/$propertyId/votes"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Voting
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/resale"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Resale Shop
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/maintenance"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Maintenance
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/expenses"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Expenses
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/ledger"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Ledger
-        </Link>
-        <StrRecordsLink propertyId={p.propertyId} />
-        <Link
-          to="/owner/properties/$propertyId/capital"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Capital account
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/distributions"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Distributions
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/statements"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Statements
-        </Link>
-        <Link
-          to="/owner/properties/$propertyId/capital-calls"
-          params={{ propertyId: p.propertyId }}
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Capital calls
-        </Link>
-        <Link
-          to="/owner/notifications"
-          className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          Notification settings
-        </Link>
-        {OWNER_SECTIONS.map((s) => (
-          <Link
-            key={s.slug}
-            to="/owner/properties/$propertyId/$section"
-            params={{ propertyId: p.propertyId, section: s.slug }}
-            className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-          >
-            {s.label}
-          </Link>
-        ))}
-      </nav>
     </>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 font-display text-xl font-semibold text-foreground [overflow-wrap:anywhere]">{value}</p>
+    </div>
   );
 }
 
@@ -286,21 +202,5 @@ function Facts({ rows }: { rows: Array<[string, string]> }) {
         </div>
       ))}
     </dl>
-  );
-}
-
-// Only a home whose intent profile includes short-term rental offers the tracker; for any other home the link is not shown.
-function StrRecordsLink({ propertyId }: { propertyId: string }) {
-  const load = useServerFn(getOwnerStr);
-  const { data } = useQuery({ queryKey: ["owner-str", propertyId], retry: false, queryFn: () => load({ data: { propertyId } }) });
-  if (!data?.trackerEnabled) return null;
-  return (
-    <Link
-      to="/owner/properties/$propertyId/str"
-      params={{ propertyId }}
-      className="inline-flex min-h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-    >
-      Short-term rental records
-    </Link>
   );
 }
