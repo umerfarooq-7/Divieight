@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BadgeCheck, Banknote, Building2, FileText, UserPlus, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,9 @@ import {
   type PendingRequestWithAgent,
 } from "@/lib/broker-link-requests";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getBrokerTaxFormStatus } from "@/lib/tax-forms.functions";
 
 export const Route = createFileRoute("/broker/dashboard")({
   head: () => ({
@@ -50,6 +53,11 @@ function BrokerDashboard() {
   const [agents, setAgents] = useState<LinkedAgent[]>([]);
   const [requests, setRequests] = useState<PendingRequestWithAgent[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  // The real status, from the stored forms (the same check the settlement gate uses), not the cached column on the broker row.
+  const loadTax = useServerFn(getBrokerTaxFormStatus);
+  const taxQ = useQuery({ queryKey: ["broker-tax-form"], queryFn: () => loadTax(), retry: false });
+  const taxKnown = !!taxQ.data;
+  const taxOk = taxQ.data ? taxQ.data.allowed : !!broker?.tax_form_verified;
 
   useEffect(() => {
     if (!user) return;
@@ -113,7 +121,33 @@ function BrokerDashboard() {
 
   return (
     <div className="space-y-8">
-      {broker && !broker.tax_form_verified ? <TaxFormGateBanner /> : null}
+      {broker && !taxOk ? <TaxFormGateBanner /> : null}
+
+      {broker && (!taxOk || !broker.license_verified || !broker.bank_account_last4) ? (
+        <section className="rounded-xl border border-border bg-card p-5">
+          <h2 className="text-sm font-semibold text-foreground">Needs your attention</h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            {!taxOk ? (
+              <li>
+                Tax form {taxKnown && taxQ.data?.state === "expired" ? "expired" : taxKnown && taxQ.data?.state === "rejected" ? "rejected" : "missing"}: payouts are blocked.{" "}
+                <Link to="/broker/tax-form" className="font-medium text-primary underline">Complete tax form</Link>
+              </li>
+            ) : null}
+            {!broker.bank_account_last4 ? (
+              <li>
+                No payout account.{" "}
+                <Link to="/broker/onboarding/banking" className="font-medium text-primary underline">Add payout account</Link>
+              </li>
+            ) : null}
+            {!broker.license_verified ? (
+              <li>
+                License not verified.{" "}
+                <Link to="/broker/onboarding/license-check" className="font-medium text-primary underline">Complete license check</Link>
+              </li>
+            ) : null}
+          </ul>
+        </section>
+      ) : null}
 
       {lapsedAgents.map((a) => (
         <AgentBrokerLapsedBanner
@@ -141,6 +175,7 @@ function BrokerDashboard() {
           icon={BadgeCheck}
           label="License"
           value={broker?.license_verified ? "Verified" : "Pending"}
+          action={broker?.license_verified ? undefined : { to: "/broker/onboarding/license-check", label: "Complete license check" }}
         />
         <Card
           icon={Building2}
@@ -153,15 +188,17 @@ function BrokerDashboard() {
           value={
             broker?.bank_account_last4 ? `•••• ${broker.bank_account_last4}` : "Not provided"
           }
+          action={broker?.bank_account_last4 ? undefined : { to: "/broker/onboarding/banking", label: "Add payout account" }}
         />
         <Card
           icon={FileText}
           label="Tax form"
           value={
-            broker?.tax_form_verified
-              ? (broker?.w9_or_w8_type ?? "On file")
+            taxOk
+              ? (taxQ.data?.formType ?? broker?.w9_or_w8_type ?? "On file")
               : "Payout blocked"
           }
+          action={taxOk ? undefined : { to: "/broker/tax-form", label: "Complete tax form" }}
         />
       </div>
 
@@ -255,16 +292,23 @@ function Card({
   icon: Icon,
   label,
   value,
+  action,
 }: {
   icon: typeof Users;
   label: string;
   value: string;
+  action?: { to: "/broker/tax-form" | "/broker/onboarding/banking" | "/broker/onboarding/license-check"; label: string };
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <Icon className="h-5 w-5 text-accent" />
       <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-semibold text-foreground [overflow-wrap:anywhere]">{value}</p>
+      {action ? (
+        <Link to={action.to} className="mt-3 inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90">
+          {action.label}
+        </Link>
+      ) : null}
     </div>
   );
 }
