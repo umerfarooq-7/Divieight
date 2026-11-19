@@ -142,7 +142,8 @@ export async function runLivenessCheck(
   await recomputeEligibility(db, { memberId: member.id, actorId: params.userId, trigger: "liveness_checked" });
 
   const waitingOn = await stillToGo(db, account.id);
-  if (result.status === "passed" && waitingOn.length === 0) {
+  // The account holder carries on to the account steps as soon as they pass: the second member goes after them, one person at a time.
+  if (result.status === "passed" && (waitingOn.length === 0 || member.role === "primary")) {
     const { data: acct } = await db.from("buyer_accounts").select("onboarding_status").eq("id", account.id).maybeSingle();
     if ((acct as { onboarding_status?: string } | null)?.onboarding_status === "not_started") {
       await db.from("buyer_accounts").update({ onboarding_status: "lifestyle_survey_pending", last_activity_at: new Date().toISOString(), stall_warning_sent_at: null }).eq("id", account.id);

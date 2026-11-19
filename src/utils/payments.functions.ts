@@ -6,6 +6,9 @@ import {
   getStripeErrorMessage,
 } from "@/lib/stripe.server";
 
+import { enrollmentFeeCents } from "@/lib/buyer-fee";
+import { MAX_ACTIVE_MEMBERS } from "@/lib/account-members";
+
 const ENROLLMENT_PRICE_ID = "platform_enrollment_share";
 const PER_SHARE_CENTS = 257000;
 
@@ -152,7 +155,7 @@ export const confirmEnrollmentPayment = createServerFn({ method: "POST" })
  * Buyer Priority Reservation enrollment fee ($2,570, flat)            *
  * ------------------------------------------------------------------ */
 
-const BUYER_ENROLLMENT_CENTS = 257000;
+/** The fee is per member: $2,570 for one person, double for two (src/lib/buyer-fee.ts). */
 
 export const createBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -180,6 +183,15 @@ export const createBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
       return { error: "Your enrollment fee has already been paid." };
     }
 
+    // One fee per active member, counted here on the server (never taken from the browser).
+    const { count } = await supabase
+      .from("account_members")
+      .select("id", { count: "exact", head: true })
+      .eq("buyer_account_id", account.id)
+      .eq("status", "active");
+    const memberCount = Math.min(MAX_ACTIVE_MEMBERS, Math.max(1, count ?? 1));
+    const feeCents = enrollmentFeeCents(memberCount);
+
     try {
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [ENROLLMENT_PRICE_ID] });
@@ -192,24 +204,25 @@ export const createBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
       });
 
       const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: price.id, quantity: 1 }],
+        line_items: [{ price: price.id, quantity: memberCount }],
         mode: "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
         billing_address_collection: "required",
-        payment_intent_data: { description: "Buyer Platform Enrollment Fee" },
+        payment_intent_data: { description: `Buyer Platform Enrollment Fee (${memberCount} ${memberCount === 1 ? "member" : "members"})` },
         metadata: {
           userId,
           buyerAccountId: account.id,
           kind: "buyer_enrollment_fee",
+          members: String(memberCount),
         },
       });
 
       await supabase.from("buyer_enrollment_payments").insert({
         buyer_account_id: account.id,
         auth_user_id: userId,
-        amount_cents: BUYER_ENROLLMENT_CENTS,
+        amount_cents: feeCents,
         status: "pending",
         stripe_session_id: session.id,
         environment: data.environment,

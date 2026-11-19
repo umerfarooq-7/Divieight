@@ -70,7 +70,7 @@ interface DeclarationView {
 
 function VettingScreen() {
   return (
-    <ActingMemberGate step="Step 5 · Vetting">
+    <ActingMemberGate step="Step 5 · Vetting" journey>
       {({ member, switchPerson }) => <VettingForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -213,14 +213,14 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     const signedIds = new Set(((hhRows ?? []) as Array<{ account_member_id: string | null }>).map((r) => r.account_member_id));
     const declaredIds = new Set(((declRows ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id));
     const members = (everyone ?? []) as Array<{ id: string; full_name: string; role: string; vetting_status: string }>;
-    const waiting = members.filter((m) => !declaredIds.has(m.id) || !signedIds.has(m.id));
-    if (waiting.length > 0) {
-      toast.success(`Done for you. Next: ${waiting.map((m) => m.full_name || (m.role === "primary" ? "the account holder" : "the second member")).join(" and ")} completes vetting.`);
-      onSwitch();
+    // One person at a time: this member moves on as soon as their own declaration and hold harmless are in. The other member does theirs in their own turn.
+    const self = members.find((m) => m.id === actingMemberId);
+    if (!self || !declaredIds.has(self.id) || !signedIds.has(self.id)) {
+      toast.error("Complete your declaration and sign the acknowledgment first.");
       return;
     }
-    // A "No" to any statement is held for divieight's review; the account waits here until then.
-    if (members.some((m) => m.vetting_status !== "cleared")) {
+    // A "No" to any statement is held for divieight's review; this member waits here until then.
+    if (self.vetting_status !== "cleared") {
       setHeld(true);
       return;
     }

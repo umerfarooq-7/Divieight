@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { getMyAccountMembers } from "@/lib/account-members.functions";
+import { BUYER_ENROLLMENT_CENTS_PER_MEMBER, enrollmentFeeCents } from "@/lib/buyer-fee";
+import { formatUsd } from "@/lib/stripe";
 
 export const Route = createFileRoute("/buyer/onboarding/members")({
   head: () => ({
@@ -48,7 +50,10 @@ function MembersForm({ actingMemberId }: { actingMemberId: string }) {
     <div className="mt-8">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 1 · Members</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Are you buying with someone else?</h1>
-      <p className="mt-3 text-base text-muted-foreground">A Buyer Account can have one additional person at most. Each person completes their own identity and vetting steps.</p>
+      <p className="mt-3 text-base text-muted-foreground">A Buyer Account can have one additional person at most. Each person completes their own identity and vetting steps, one person at a time: you complete every step first, then the second member completes theirs.</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        The Platform Enrollment Fee is {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)} per member: {formatUsd(enrollmentFeeCents(2))} for two. Add the second member now, before you pay.
+      </p>
 
       {second ? null : (
         <div role="radiogroup" aria-label="Buying with someone else" className="mt-6 grid gap-3 sm:grid-cols-2">

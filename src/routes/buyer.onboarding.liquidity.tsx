@@ -20,6 +20,7 @@ import { logAudit } from "@/lib/audit";
 import { budgetBucketLabel } from "@/lib/budget-buckets";
 import { LIQUIDITY_MULTIPLIER, PLAID_SANDBOX } from "@/lib/liquidity";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
+import { JourneyHandoverCard } from "@/components/JourneyHandoverCard";
 import { block1ConsentText, block2AuthorizationText } from "@/constants/authorizationsCopy";
 import { acceptAuthorizationFn, getAuthorizationState, recordPlaidLinkFn } from "@/lib/member-steps.functions";
 
@@ -67,7 +68,7 @@ interface BuyerRow {
 /** Block 1 and Block 2 are given by each member (through the picker); the Plaid link is the account's. */
 function LiquidityGatePage() {
   return (
-    <ActingMemberGate step="Step 6 · Liquidity">
+    <ActingMemberGate step="Step 6 · Liquidity" journey>
       {({ member, switchPerson }) => <LiquidityForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -323,6 +324,9 @@ function LiquidityForMember({ actingMemberId, onSwitch }: { actingMemberId: stri
           display a calculated figure.
         </p>
       </div>
+
+      {/* Two members go one at a time: when this member has finished everything, hand over to the other. */}
+      <JourneyHandoverCard actingMemberId={actingMemberId} refreshKey={`${auth?.block1.acceptedAt ?? ""}|${auth?.block2.acceptedAt ?? ""}`} />
 
       {/* Block 1 — Plaid consent */}
       <section className="mt-8 rounded-xl border border-border bg-card p-6 shadow-sm">

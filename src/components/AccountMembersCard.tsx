@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Circle } from "lucide-react";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
 import { SecondMemberManager } from "@/components/SecondMemberManager";
+import { JourneyHandoverCard } from "@/components/JourneyHandoverCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ export function AccountMembersCard() {
           <p className="text-sm text-muted-foreground">Members couldn't be loaded.</p>
         ) : (
           <>
+            <JourneyHandoverCard />
             {data.members.map((m) => {
               const done = m.checklist.filter((c) => c.done).length;
               return (
@@ -84,7 +86,7 @@ export function AccountMembersCard() {
                   ) : null}
                   {m.role === "member" && !data.locked && m.eligibility !== "eligible" ? (
                     <div className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                      The account can continue without this member: the account holder removes them, and the account is evaluated on the account holder alone. The fee isn't affected.
+                      The account can continue without this member: the account holder removes them, and the account is evaluated on the account holder alone. The fee isn't affected once it has been paid: it is charged per member when the account pays, and a paid fee is not refunded automatically.
                       <button type="button" onClick={() => setManaging(true)} className="ml-2 font-medium text-accent hover:underline">
                         Continue without this member
                       </button>

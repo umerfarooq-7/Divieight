@@ -21,6 +21,7 @@ import {
   type AccountMemberView,
   type MemberEligibility,
 } from "@/lib/account-members";
+import { FEE_AFTER_PAYMENT_MESSAGE } from "@/lib/buyer-fee";
 import { accountRollup, loadMemberSteps, missingSteps, type AccountStatus } from "@/lib/account-rollup";
 
 type Db = { from: (t: string) => any };
@@ -51,10 +52,12 @@ interface AccountRow {
   id: string;
   email: string;
   golden_ticket_issued: boolean;
+  /** Stamped when the enrollment fee is paid. */
+  priority_rank_timestamp?: string | null;
 }
 
 async function accountFor(db: Db, userId: string): Promise<AccountRow> {
-  const { data } = await db.from("buyer_accounts").select("id, email, golden_ticket_issued").eq("auth_user_id", userId).maybeSingle();
+  const { data } = await db.from("buyer_accounts").select("id, email, golden_ticket_issued, priority_rank_timestamp").eq("auth_user_id", userId).maybeSingle();
   if (!data) throw new Error("No buyer account");
   return data as AccountRow;
 }
@@ -138,7 +141,7 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
     accountId: account.id,
     locked,
     accountStatus: accountRollup(steps).status,
-    canAdd: !locked && members.length < MAX_ACTIVE_MEMBERS,
+    canAdd: !locked && !account.priority_rank_timestamp && members.length < MAX_ACTIVE_MEMBERS,
     members: members.map((m) => ({
       id: m.id,
       role: m.role,
@@ -208,6 +211,8 @@ export async function addSecondMember(db: Db, params: { userId: string; actingMe
   if (await membersLocked(db, account)) return refuseLocked(db, { userId: params.userId, actingMemberId: acting.id, accountId: account.id, request: params.request, attempted: "add" });
   const members = await activeMembers(db, account.id);
   if (members.length >= MAX_ACTIVE_MEMBERS) throw new Error(LIMIT_MESSAGE);
+  // The fee is per member and worked out when it is paid: a member cannot be added to an account that has already paid.
+  if (account.priority_rank_timestamp) throw new Error(FEE_AFTER_PAYMENT_MESSAGE);
   const email = await checkEmail(db, account, members, params.email, null);
   const { data, error } = await db
     .from("account_members")

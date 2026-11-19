@@ -23,8 +23,8 @@ export const Route = createFileRoute("/buyer/onboarding/liveness")({
 
 function LivenessScreen() {
   return (
-    <ActingMemberGate step="Step 2 · Liveness">
-      {({ member, switchPerson }) => <LivenessForMember key={member.id} actingMemberId={member.id} memberName={member.fullName ?? ""} onSwitch={switchPerson} />}
+    <ActingMemberGate step="Step 2 · Liveness" journey>
+      {({ member, switchPerson }) => <LivenessForMember key={member.id} actingMemberId={member.id} memberName={member.fullName ?? ""} isPrimary={member.role === "primary"} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
 }
@@ -38,7 +38,7 @@ const TONE: Record<LivenessStatus, string> = {
   pending: "border-border bg-muted/40",
 };
 
-function LivenessForMember({ actingMemberId, memberName, onSwitch }: { actingMemberId: string; memberName: string; onSwitch: () => void }) {
+function LivenessForMember({ actingMemberId, memberName, isPrimary, onSwitch }: { actingMemberId: string; memberName: string; isPrimary: boolean; onSwitch: () => void }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [state, setState] = useState<State | null>(null);
@@ -80,11 +80,10 @@ function LivenessForMember({ actingMemberId, memberName, onSwitch }: { actingMem
         return;
       }
       if (result.status === "passed") {
-        if (result.advanced) {
-          navigate({ to: "/buyer/onboarding/lifestyle" });
-          return;
-        }
-        setNext(result.waitingOn);
+        // One person at a time: the account holder carries on to the account steps without waiting for the second member,
+        // and the second member goes straight to signing their own agreement (the account-level steps are already done).
+        navigate({ to: isPrimary ? "/buyer/onboarding/lifestyle" : "/buyer/onboarding/payment" });
+        return;
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "The liveness check didn't go through. Try again.");

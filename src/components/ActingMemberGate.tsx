@@ -7,13 +7,16 @@ import { toast } from "sonner";
 import { SecondaryVerification } from "@/components/SecondaryVerification";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { ACTING_MEMBER_IDLE_MS, memberDisplayName, type AccountMemberView } from "@/lib/account-members";
+import { ACTING_MEMBER_IDLE_MS, journeyMember, memberDisplayName, type AccountMemberView } from "@/lib/account-members";
 import { confirmActingMember, getMyAccountMembers } from "@/lib/account-members.functions";
 
 /**
  * "Who is completing this step?" for member-level steps. One login can hold two
  * people, so each step says which of them is at the keyboard. The choice lasts for
  * this browser tab and clears after 15 minutes without activity.
+ *
+ * On the onboarding screens (`journey`), a two-member account goes one person at a time: the account holder completes every step
+ * first, then a message hands over to the second member, who completes theirs. Nobody is asked to switch between steps.
  */
 
 interface ActingContext {
@@ -56,18 +59,21 @@ export function actingAuditMeta(memberId: string, ip: string | null = null) {
 export function ActingMemberGate({
   step,
   only,
+  journey,
   children,
 }: {
   step: string;
   /** Limit who may act on this step, e.g. only the account holder. */
   only?: "primary";
+  /** Onboarding screens: one member at a time, in order, with a hand-over message between them. */
+  journey?: boolean;
   children: (ctx: ActingContext) => ReactNode;
 }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const load = useServerFn(getMyAccountMembers);
   const confirm = useServerFn(confirmActingMember);
-  const { data, isLoading, error } = useQuery({ queryKey: ["my-account-members", user?.id], enabled: !!user, retry: false, queryFn: () => load() });
+  const { data, isLoading, error, isFetchedAfterMount } = useQuery({ queryKey: ["my-account-members", user?.id], enabled: !!user, retry: false, queryFn: () => load(), refetchOnMount: "always" });
   const [memberId, setMemberId] = useState<string | null>(null);
   const [picked, setPicked] = useState<string>("");
   const [verified, setVerified] = useState(false);
@@ -78,7 +84,9 @@ export function ActingMemberGate({
     if (!loading && !user) navigate({ to: "/buyer/login", replace: true });
   }, [loading, user, navigate]);
 
-  const allowed = useMemo(() => (data?.members ?? []).filter((m) => !only || m.role === only), [data, only]);
+  // Whose turn it is on a two-member account. Null on a one-member account, outside the onboarding screens, or once everyone is done.
+  const turn = useMemo(() => (journey && data ? journeyMember(data.members) : null), [journey, data]);
+  const allowed = useMemo(() => (data?.members ?? []).filter((m) => (!only || m.role === only) && (!turn || m.id === turn.id)), [data, only, turn]);
   const single = data?.members.length === 1;
 
   // A single-member account is always that member; otherwise remember the tab's choice.
@@ -123,7 +131,8 @@ export function ActingMemberGate({
     setVerified(false);
   }, [data]);
 
-  if (loading || isLoading || !user) return <p className="py-16 text-center text-sm text-muted-foreground">Loading your buyer account…</p>;
+  // On the onboarding screens the turn is read fresh each time a screen opens, so a finished member is never shown again.
+  if (loading || isLoading || !user || (journey && !isFetchedAfterMount)) return <p className="py-16 text-center text-sm text-muted-foreground">Loading your buyer account…</p>;
   if (error) return <p className="py-16 text-center text-sm text-destructive">{(error as Error).message}</p>;
   if (!data) return null;
 
@@ -136,7 +145,9 @@ export function ActingMemberGate({
             <UserRound className="h-4 w-4 text-accent" aria-hidden />
             Acting as <span className="font-semibold">{memberDisplayName(member)}</span>
           </span>
-          {!single ? (
+          {turn ? (
+            <span className="text-xs text-muted-foreground">Member {data.members.findIndex((m) => m.id === turn.id) + 1} of {data.members.length}: one person at a time</span>
+          ) : !single ? (
             <button type="button" onClick={switchPerson} className="text-sm font-medium text-primary hover:underline">
               Switch person
             </button>
@@ -168,7 +179,14 @@ export function ActingMemberGate({
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{step}</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-foreground">Who is completing this step?</h1>
+        <h1 className="mt-2 font-display text-2xl font-semibold text-foreground">{turn?.role === "member" ? `Now it is ${name}’s turn` : "Who is completing this step?"}</h1>
+        {turn ? (
+          <p className="mt-2 rounded-lg border border-accent/40 bg-accent/10 p-3 text-sm text-foreground">
+            {turn.role === "member"
+              ? `${memberDisplayName(data.members.find((m) => m.role === "primary") ?? turn)} has finished all of their steps. ${name} now completes their own, from the start. Confirm it is you below.`
+              : `With two members, ${name} completes every step first. ${memberDisplayName(data.members.find((m) => m.role === "member") ?? turn)} then completes theirs.`}
+          </p>
+        ) : null}
         {allowed.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">Only the account holder can complete this step.</p>
         ) : (

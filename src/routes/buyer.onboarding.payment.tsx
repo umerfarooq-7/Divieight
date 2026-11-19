@@ -7,6 +7,7 @@ import { BuyerOnboardingStepper } from "@/components/BuyerOnboardingStepper";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
+import { BUYER_ENROLLMENT_CENTS_PER_MEMBER, enrollmentFeeCents } from "@/lib/buyer-fee";
 import { confirmBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { logAudit } from "@/lib/audit";
 import { buildPRA, hashDocument, PRA_VERSION } from "@/lib/legal-documents";
@@ -46,8 +47,6 @@ export const Route = createFileRoute("/buyer/onboarding/payment")({
   component: PaymentScreen,
 });
 
-const BUYER_ENROLLMENT_CENTS = 257000;
-
 type BuyerRow = {
   id: string;
   onboarding_status: string;
@@ -60,7 +59,7 @@ type BuyerRow = {
 /** Every active member signs their own PRA (through the picker). The fee is the account's, paid once. */
 function PaymentScreen() {
   return (
-    <ActingMemberGate step="Step 4 · Agreement">
+    <ActingMemberGate step="Step 4 · Agreement" journey>
       {({ member, switchPerson }) => <PaymentForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -84,6 +83,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
 
   const [paid, setPaid] = useState(false);
   const [rankStamp, setRankStamp] = useState<string | null>(null);
+  // What was actually charged, once paid. The fee is per member and fixed when the account pays.
+  const [paidCents, setPaidCents] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -118,6 +119,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       if (account.priority_rank_timestamp) {
         setPaid(true);
         setRankStamp(account.priority_rank_timestamp);
+        const { data: paidRows } = await supabase.from("buyer_enrollment_payments").select("amount_cents").eq("buyer_account_id", account.id).eq("status", "paid").limit(1);
+        if (!cancelled) setPaidCents((paidRows?.[0] as { amount_cents?: number } | undefined)?.amount_cents ?? null);
       }
 
       const [{ data: roster }, { data: block5 }] = await Promise.all([
@@ -201,6 +204,10 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     };
   }, [sessionId, user]);
 
+  // One fee per member on the account, worked out from the members on it now.
+  const memberCount = Math.max(1, members.length);
+  const feeCents = enrollmentFeeCents(memberCount);
+
   const pra = useMemo(() => buildPRA(memberName, buyer), [memberName, buyer]);
   const documentHash = useMemo(() => hashDocument(pra), [pra]);
 
@@ -229,11 +236,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     void keepExecutedText({ data: { documentType: "PRA", documentVersion: PRA_VERSION, text: pra } }).catch(() => undefined);
     setSubmitting(false);
     setModalOpen(false);
-    if (waitingOn.length) {
-      toast.success(`Signed. Next: ${waitingOn.join(" and ")} signs their own PRA.`);
-      return;
-    }
-    toast.success("Priority Reservation Agreement executed by every member.");
+    // One person at a time: each member carries on to their own vetting after signing. The second member signs theirs in their own turn.
+    toast.success(waitingOn.length ? "Signed. You carry on to vetting; the other member signs their own PRA in their turn." : "Priority Reservation Agreement executed by every member.");
     navigate({ to: "/buyer/onboarding/vetting" });
   }
 
@@ -253,8 +257,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
             Priority Reservation Agreement
           </h1>
           <p className="mt-3 text-base text-muted-foreground">
-            Review the full agreement, pay the one-time {formatUsd(BUYER_ENROLLMENT_CENTS)}{" "}
-            Platform Enrollment Fee, then sign to lock in your priority rank.
+            Review the full agreement, pay the one-time Platform Enrollment Fee ({formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)} per member), then sign to lock in your priority rank.
           </p>
         </div>
 
@@ -286,7 +289,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
             {paid ? (
               <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
                 <p className="text-sm font-medium text-foreground">
-                  Enrollment fee paid — {formatUsd(BUYER_ENROLLMENT_CENTS)}
+                  Enrollment fee paid — {formatUsd(paidCents ?? feeCents)}
                 </p>
                 {rankStamp ? (
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -301,9 +304,9 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
                       : "Every member has signed the Priority Reservation Agreement."
                     : "Final step: execute the Priority Reservation Agreement with your own legal signature. Each member signs their own."}
                 </p>
-                {praSigned && praWaitingOn.length ? (
-                  <button type="button" onClick={onSwitch} className="mt-3 mr-3 inline-flex h-11 items-center justify-center rounded-md border border-border px-6 text-sm font-medium">
-                    Switch person
+                {praSigned ? (
+                  <button type="button" onClick={() => navigate({ to: "/buyer/onboarding/vetting" })} className="mt-3 mr-3 inline-flex h-11 items-center justify-center rounded-md border border-border px-6 text-sm font-medium">
+                    Continue to vetting
                   </button>
                 ) : null}
                 <button
@@ -333,15 +336,17 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
               <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
                 <dl className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">Platform Enrollment Fee</dt>
+                    <dt className="text-muted-foreground">
+                      Platform Enrollment Fee ({formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)} × {memberCount} {memberCount === 1 ? "member" : "members"})
+                    </dt>
                     <dd className="font-medium text-foreground">
-                      {formatUsd(BUYER_ENROLLMENT_CENTS)}
+                      {formatUsd(feeCents)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-border pt-3">
                     <dt className="font-semibold text-foreground">Total due today</dt>
                     <dd className="font-display text-xl font-semibold text-accent">
-                      {formatUsd(BUYER_ENROLLMENT_CENTS)}
+                      {formatUsd(feeCents)}
                     </dd>
                   </div>
                 </dl>
@@ -381,7 +386,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
                   onClick={() => setShowCheckout(true)}
                   className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
-                  Pay {formatUsd(BUYER_ENROLLMENT_CENTS)} now
+                  Pay {formatUsd(feeCents)} now
                 </button>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Your priority rank timestamp is recorded only after payment clears.

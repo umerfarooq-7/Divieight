@@ -23,7 +23,7 @@ export const Route = createFileRoute("/buyer/onboarding/pra-review")({
 
 function PraReviewScreen() {
   return (
-    <ActingMemberGate step="Step 4 · Pre-Payment Review">
+    <ActingMemberGate step="Step 4 · Pre-Payment Review" journey>
       {({ member, switchPerson }) => <ReviewForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );

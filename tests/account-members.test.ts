@@ -39,6 +39,16 @@ describe("adding the second member", () => {
     expect(db().audits("buyer.member_added")[0]!.metadata).toMatchObject({ acted_by_member_id: B3M, ip_address: "203.0.113.7" });
   });
 
+  it("refuses a second member once the fee is paid: the fee is per member and is worked out at payment", async () => {
+    seed();
+    const acct = db().table("buyer_accounts").find((a) => a.id === B3)!;
+    acct.priority_rank_timestamp = new Date().toISOString();
+    await expect(add()).rejects.toThrow("charged per member");
+    expect(active(B3)).toHaveLength(1);
+    as(USERS.b3);
+    expect((await getMyAccountMembers()).canAdd).toBe(false);
+  });
+
   it("refuses a third active member", async () => {
     seed();
     await add();

@@ -72,7 +72,7 @@ const INTENTS = [
 
 function BuyerIdentityScreen() {
   return (
-    <ActingMemberGate step="Step 2 · Identity">
+    <ActingMemberGate step="Step 2 · Identity" journey>
       {({ member }) => <IdentityForMember key={member.id} actingMemberId={member.id} isPrimary={member.role === "primary"} />}
     </ActingMemberGate>
   );

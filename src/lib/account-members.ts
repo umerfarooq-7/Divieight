@@ -71,6 +71,40 @@ export interface AccountMemberView {
   checklist: ChecklistItem[];
 }
 
+/**
+ * One member at a time. With two members, the account holder completes every onboarding step first (identity, liveness,
+ * agreement, vetting, consents); only then does the second member start their own, from the top. These are the member-level
+ * steps the onboarding screens cover. Reading the Standard and the W-9 have their own pages and are not part of this order.
+ */
+export const JOURNEY_KEYS = ["identity", "liveness", "pra", "hold_harmless", "declaration", "block1", "block2"] as const;
+
+export const journeyDone = (m: Pick<AccountMemberView, "checklist">): boolean =>
+  JOURNEY_KEYS.every((k) => m.checklist.some((c) => c.key === k && c.done));
+
+/** The route that holds a checklist item, so a member can be sent to their first step that is still open. */
+const JOURNEY_PATHS: Record<(typeof JOURNEY_KEYS)[number], "/buyer/onboarding/identity" | "/buyer/onboarding/liveness" | "/buyer/onboarding/payment" | "/buyer/onboarding/vetting" | "/buyer/onboarding/liquidity"> = {
+  identity: "/buyer/onboarding/identity",
+  liveness: "/buyer/onboarding/liveness",
+  pra: "/buyer/onboarding/payment",
+  hold_harmless: "/buyer/onboarding/vetting",
+  declaration: "/buyer/onboarding/vetting",
+  block1: "/buyer/onboarding/liquidity",
+  block2: "/buyer/onboarding/liquidity",
+};
+
+/** The member whose turn it is: the first (account holder first) whose steps are not all done. Null with one member, or when everyone is done. */
+export function journeyMember<T extends Pick<AccountMemberView, "role" | "checklist">>(members: T[]): T | null {
+  if (members.length < 2) return null;
+  const ordered = [...members].sort((a, b) => Number(b.role === "primary") - Number(a.role === "primary"));
+  return ordered.find((m) => !journeyDone(m)) ?? null;
+}
+
+/** Where a member's first open step lives (identity for a member who has not started). Null when they are done. */
+export function nextJourneyPath(m: Pick<AccountMemberView, "checklist">): (typeof JOURNEY_PATHS)[keyof typeof JOURNEY_PATHS] | null {
+  const open = JOURNEY_KEYS.find((k) => !m.checklist.some((c) => c.key === k && c.done));
+  return open ? JOURNEY_PATHS[open] : null;
+}
+
 /** Who to show in the picker: the name, or what they are if no name is on file yet. */
 export const memberDisplayName = (m: { fullName: string; role: string }) =>
   m.fullName.trim() || (m.role === "primary" ? "Account holder" : "Second member");

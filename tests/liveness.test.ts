@@ -42,10 +42,12 @@ describe("each member gets their own liveness record", () => {
   it("passes by default, one row per member, with the ID document it was checked against", async () => {
     seed();
     const a = await selfie(IDS.b1m1);
-    expect(a).toMatchObject({ status: "passed", reason_code: null, advanced: false });
+    // One person at a time: the account holder carries on as soon as they pass; the second member follows in their own turn.
+    expect(a).toMatchObject({ status: "passed", reason_code: null, advanced: true });
     expect(a.waitingOn).toEqual([{ memberId: IDS.b1m2, name: "Bob One", step: "liveness" }]);
+    expect(account(IDS.b1).onboarding_status).toBe("lifestyle_survey_pending");
     const b = await selfie(IDS.b1m2);
-    expect(b).toMatchObject({ status: "passed", waitingOn: [], advanced: true });
+    expect(b).toMatchObject({ status: "passed", waitingOn: [], advanced: false });
     expect(account(IDS.b1).onboarding_status).toBe("lifestyle_survey_pending");
     expect(checks()).toHaveLength(2);
     for (const id of [IDS.b1m1, IDS.b1m2]) {
