@@ -27,6 +27,9 @@ export async function buyerConnectedToProperty(
   if (opts.activeOnly) q = q.eq("status", "reserved");
   const { data: res } = await q.limit(1);
   if (((res ?? []) as unknown[]).length > 0) return true;
+  // The second holder of a share held together is connected to the property too (only while the joint hold is live).
+  const { data: joint } = await db.from("joint_reservations").select("id").eq("partner_account_id", buyerAccountId).eq("property_id", propertyId).eq("status", "active").limit(1);
+  if (((joint ?? []) as unknown[]).length > 0) return true;
   if (opts.activeOnly) return false;
   const { data: cap } = await db
     .from("cap_table_entries")
@@ -34,5 +37,8 @@ export async function buyerConnectedToProperty(
     .eq("buyer_account_id", buyerAccountId)
     .eq("property_id", propertyId)
     .limit(1);
-  return ((cap ?? []) as unknown[]).length > 0;
+  if (((cap ?? []) as unknown[]).length > 0) return true;
+  // A co-holder named on the cap-table row.
+  const { data: coCap } = await db.from("cap_table_entries").select("id").eq("co_holder_account_id", buyerAccountId).eq("property_id", propertyId).limit(1);
+  return ((coCap ?? []) as unknown[]).length > 0;
 }

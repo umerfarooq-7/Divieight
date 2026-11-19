@@ -18,6 +18,7 @@
   "capital_calls",
   "categorization_rules",
   "charge_dispositions",
+  "co_buyer_links",
   "coa_accounts",
   "coa_versions",
   "contact_submissions",
@@ -50,6 +51,8 @@
   "insurance_policies",
   "insurance_votes",
   "job_failures",
+  "joint_reservation_requests",
+  "joint_reservations",
   "journal_entries",
   "journal_lines",
   "kyo_correction_requests",
@@ -330,6 +333,22 @@
    "check_": ""
   },
   {
+   "tablename": "co_buyer_links",
+   "policyname": "Admins read co-buyer links",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "co_buyer_links",
+   "policyname": "Buyers read their own co-buyer links",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((inviter_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (invitee_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
    "tablename": "coa_accounts",
    "policyname": "signed-in users read the chart",
    "cmd": "SELECT",
@@ -567,6 +586,38 @@
    "cmd": "SELECT",
    "roles": "{authenticated}",
    "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "joint_reservation_requests",
+   "policyname": "Admins read joint requests",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "joint_reservation_requests",
+   "policyname": "Buyers read their own joint requests",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((initiator_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (partner_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "joint_reservations",
+   "policyname": "Admins read joint reservations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "joint_reservations",
+   "policyname": "Buyers read their own joint reservations",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((primary_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (partner_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
    "check_": ""
   },
   {
@@ -1337,6 +1388,11 @@
    "privs": "SELECT"
   },
   {
+   "table_name": "co_buyer_links",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
    "table_name": "coa_accounts",
    "grantee": "authenticated",
    "privs": "SELECT"
@@ -1473,6 +1529,16 @@
   },
   {
    "table_name": "insurance_votes",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "joint_reservation_requests",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "joint_reservations",
    "grantee": "authenticated",
    "privs": "SELECT"
   },

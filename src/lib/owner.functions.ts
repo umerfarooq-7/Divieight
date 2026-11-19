@@ -65,11 +65,13 @@ async function myCapRows(db: Db, userId: string, propertyId?: string): Promise<{
     if (propertyId) q = q.eq("property_id", propertyId);
     return q;
   };
-  const [asBuyer, asSeller] = await Promise.all([
+  const [asBuyer, asSeller, asCoHolder] = await Promise.all([
     buyerAccountId ? query("buyer_account_id", buyerAccountId, "buyer_account") : Promise.resolve({ data: [] }),
     query("seller_id", userId, "retained_seller"),
+    // A share held together with a co-buyer: the co-holder is an owner of it too. (Empty before joint-holders.sql is run.)
+    buyerAccountId ? query("co_holder_account_id", buyerAccountId, "buyer_account") : Promise.resolve({ data: [] }),
   ]);
-  return { rows: [...((asBuyer.data ?? []) as CapRow[]), ...((asSeller.data ?? []) as CapRow[])], buyerAccountId };
+  return { rows: [...((asBuyer.data ?? []) as CapRow[]), ...((asSeller.data ?? []) as CapRow[]), ...((asCoHolder.data ?? []) as CapRow[])], buyerAccountId };
 }
 
 /** Executed Operating Agreement + this user's active Digital Key on the property. */
@@ -268,7 +270,8 @@ export async function loadOwnerProperty(db: Db, userId: string, propertyId: stri
       upcomingStays: await (await import("@/lib/use-calendar.server")).nextStays(
         db,
         propertyId,
-        rows[0]!.holder_type === "retained_seller" ? `seller:${userId}` : (buyerAccountId as string),
+        // The holder of the row: the buyer who reserved the share, which for a co-holder is not their own account.
+        rows[0]!.holder_type === "retained_seller" ? `seller:${userId}` : (rows[0]!.buyer_account_id as string),
       ),
     },
   };

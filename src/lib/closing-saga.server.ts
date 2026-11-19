@@ -148,13 +148,21 @@ function steps(db: Db, propertyId: string): SagaStep[] {
         .update({ governance_status: "active", governance_activated_at: now })
         .eq("property_id", propertyId)
         .eq("governance_status", "inactive");
-      const { data: cap } = await db.from("cap_table_entries").select("holder_type, buyer_account_id, seller_id").eq("property_id", propertyId);
+      const { data: cap } = await db.from("cap_table_entries").select("*").eq("property_id", propertyId);
       const holders = new Map<string, { holder_type: string; buyer_account_id: string | null; seller_id: string | null; shares: number }>();
-      for (const c of (cap ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null }>) {
+      for (const c of (cap ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null; co_holder_account_id?: string | null }>) {
+        const base = { holder_type: c.holder_type, buyer_account_id: c.buyer_account_id, seller_id: c.seller_id };
         const k = `${c.holder_type}:${c.buyer_account_id ?? c.seller_id}`;
-        const h = holders.get(k) ?? { ...c, shares: 0 };
+        const h = holders.get(k) ?? { ...base, shares: 0 };
         h.shares += 1;
         holders.set(k, h);
+        // A share held together: the co-holder gets their own Digital Key for it, so they are a co-owner from their own account.
+        if (c.co_holder_account_id) {
+          const ck = `buyer_account:${c.co_holder_account_id}`;
+          const ch = holders.get(ck) ?? { holder_type: "buyer_account", buyer_account_id: c.co_holder_account_id, seller_id: null, shares: 0 };
+          ch.shares += 1;
+          holders.set(ck, ch);
+        }
       }
       const { data: existing } = await db.from("co_owner_digital_keys").select("holder_type, buyer_account_id, seller_id").eq("property_id", propertyId);
       const have = new Set(((existing ?? []) as Array<{ holder_type: string; buyer_account_id: string | null; seller_id: string | null }>).map((e) => `${e.holder_type}:${e.buyer_account_id ?? e.seller_id}`));

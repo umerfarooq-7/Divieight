@@ -117,19 +117,24 @@ export function AccountMembersCard() {
                 Delegate authority to the other member
               </Link>
             ) : null}
-            {data.locked ? (
-              <p className="text-xs text-muted-foreground">Members can't be changed after the Golden Ticket is issued. Contact divieight support for any change.</p>
-            ) : managing ? (
-              <div className="rounded-xl border border-border bg-card p-4">
-                <ActingMemberGate step="Account Members" only="primary">
-                  {({ member, members }) => <SecondMemberManager actingMemberId={member.id} members={members} locked={data.locked} onDone={() => setManaging(false)} />}
-                </ActingMemberGate>
-              </div>
-            ) : (
-              <Button variant="outline" onClick={() => setManaging(true)}>
-                {data.members.some((m) => m.role === "member") ? "Edit or remove the second member" : data.canAdd ? "Add a second member" : "Manage members"}
-              </Button>
-            )}
+            {/* New buyers add a co-buyer (a separate account) from the Co-buyer card above. Managing a second member on this account is only for accounts that already have one. */}
+            {data.members.some((m) => m.role === "member") ? (
+              <>
+              {data.locked ? (
+                <p className="text-xs text-muted-foreground">Members can't be changed after the Golden Ticket is issued. Contact divieight support for any change.</p>
+              ) : managing ? (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <ActingMemberGate step="Account Members" only="primary">
+                    {({ member, members }) => <SecondMemberManager actingMemberId={member.id} members={members} locked={data.locked} onDone={() => setManaging(false)} />}
+                  </ActingMemberGate>
+                </div>
+              ) : (
+                <Button variant="outline" onClick={() => setManaging(true)}>
+                  {data.members.some((m) => m.role === "member") ? "Edit or remove the second member" : data.canAdd ? "Add a second member" : "Manage members"}
+                </Button>
+              )}
+              </>
+            ) : null}
           </>
         )}
       </div>

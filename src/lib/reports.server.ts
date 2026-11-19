@@ -230,7 +230,8 @@ export async function deliverReport(db: Db, actorId: string, input: DeliverRepor
     .select("buyer_account_id")
     .eq("property_id", input.propertyId)
     .eq("status", "reserved");
-  const buyerIds = [...new Set(((reservations ?? []) as Array<{ buyer_account_id: string }>).map((r) => r.buyer_account_id))];
+  const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
+  const buyerIds = [...new Set([...((reservations ?? []) as Array<{ buyer_account_id: string }>).map((r) => r.buyer_account_id), ...(await jointPartnerAccountIds(db, input.propertyId))])];
 
   const { data: buyerRows } = buyerIds.length
     ? await db

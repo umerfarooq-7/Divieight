@@ -109,8 +109,28 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
     }
   }
 
+  // A share held together: the second holder is named on the same row, so the share count, the pod and the LLC do not change.
+  const coHolderOf = new Map<string, string>();
+  const { data: joints } = await db.from("joint_reservations").select("reservation_id, partner_account_id").eq("property_id", propertyId).eq("status", "active");
+  const jointRows = (joints ?? []) as Array<{ reservation_id: string; partner_account_id: string }>;
+  const partnerNames = new Map<string, string[]>();
+  if (jointRows.length > 0) {
+    const { data: partnerMembers } = await db
+      .from("account_members")
+      .select("buyer_account_id, full_name")
+      .in("buyer_account_id", jointRows.map((j) => j.partner_account_id))
+      .eq("status", "active");
+    for (const m of (partnerMembers ?? []) as any[]) {
+      const list = partnerNames.get(m.buyer_account_id) ?? [];
+      if (m.full_name) list.push(m.full_name);
+      partnerNames.set(m.buyer_account_id, list);
+    }
+    for (const j of jointRows) coHolderOf.set(j.reservation_id, j.partner_account_id);
+  }
+
   for (const r of (reservations ?? []) as any[]) {
     const count = Math.max(1, r.shares_reserved ?? 1);
+    const coHolder = coHolderOf.get(r.id) ?? null;
     for (let i = 0; i < count && rows.length < 8; i++) {
       const acquired = r.reserved_at ?? new Date().toISOString();
       rows.push({
@@ -118,7 +138,8 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
         holderType: "buyer_account",
         buyerAccountId: r.buyer_account_id,
         sellerId: null,
-        memberNames: namesByBuyer.get(r.buyer_account_id) ?? [],
+        coHolderAccountId: coHolder,
+        memberNames: [...(namesByBuyer.get(r.buyer_account_id) ?? []), ...(coHolder ? (partnerNames.get(coHolder) ?? []) : [])],
         acquisitionDate: acquired,
         // After closing, the 12-month Retention Lock runs from recordation.
         retentionLockExpiresAt: retentionLockExpiry(property.deed_recorded_at ?? acquired),
@@ -136,6 +157,7 @@ function fingerprint(rows: CapTableRow[]) {
         r.shareNumber,
         r.holderType,
         r.buyerAccountId ?? r.sellerId ?? "",
+        r.coHolderAccountId ?? "",
         // Normalize: Postgres returns "+00:00" offsets, toISOString() returns "Z".
         new Date(r.acquisitionDate).toISOString(),
       ].join(":"),
@@ -160,7 +182,7 @@ export async function syncCapTable(
 
   const { data: existingRaw } = await db
     .from("cap_table_entries")
-    .select("share_number, holder_type, buyer_account_id, seller_id, acquisition_date")
+    .select("*")
     .eq("property_id", params.propertyId)
     .order("share_number", { ascending: true });
 
@@ -169,6 +191,7 @@ export async function syncCapTable(
     holderType: r.holder_type,
     buyerAccountId: r.buyer_account_id,
     sellerId: r.seller_id,
+    coHolderAccountId: r.co_holder_account_id ?? null,
     memberNames: [],
     acquisitionDate: new Date(r.acquisition_date).toISOString(),
     retentionLockExpiresAt: "",
@@ -178,18 +201,22 @@ export async function syncCapTable(
 
   await db.from("cap_table_entries").delete().eq("property_id", params.propertyId);
   if (desired.length > 0) {
-    const { error: insertError } = await db.from("cap_table_entries").insert(
-      desired.map((r) => ({
-        property_id: params.propertyId,
-        share_number: r.shareNumber,
-        holder_type: r.holderType,
-        buyer_account_id: r.buyerAccountId,
-        seller_id: r.sellerId,
-        account_member_names: r.memberNames,
-        acquisition_date: r.acquisitionDate,
-        retention_lock_expires_at: r.retentionLockExpiresAt,
-      })),
-    );
+    const toRow = (r: CapTableRow, withCoHolder: boolean) => ({
+      property_id: params.propertyId,
+      share_number: r.shareNumber,
+      holder_type: r.holderType,
+      buyer_account_id: r.buyerAccountId,
+      seller_id: r.sellerId,
+      account_member_names: r.memberNames,
+      acquisition_date: r.acquisitionDate,
+      retention_lock_expires_at: r.retentionLockExpiresAt,
+      // Only written when there is a co-holder, so an older database without the column keeps working until joint-holders.sql is run.
+      ...(withCoHolder && r.coHolderAccountId ? { co_holder_account_id: r.coHolderAccountId } : {}),
+    });
+    let { error: insertError } = await db.from("cap_table_entries").insert(desired.map((r) => toRow(r, true)));
+    if (insertError && /co_holder_account_id/.test(insertError.message ?? "")) {
+      ({ error: insertError } = await db.from("cap_table_entries").insert(desired.map((r) => toRow(r, false))));
+    }
     if (insertError) console.error("[entity-genesis] cap table write failed:", insertError.message);
   }
 

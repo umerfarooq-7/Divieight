@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -44,7 +44,11 @@ function MembersForm({ actingMemberId }: { actingMemberId: string }) {
   const second = data?.members.find((m) => m.role === "member");
   const [withSomeone, setWithSomeone] = useState<boolean | null>(null);
   const answer = withSomeone ?? (second ? true : null);
-  if (!data) return null;
+  // Buyers no longer add a second person to their own account: a co-buyer is a separate account, invited from the dashboard. Only an account that already has a second member sees this step.
+  useEffect(() => {
+    if (data && !second) navigate({ to: "/buyer/onboarding/identity", replace: true });
+  }, [data, second, navigate]);
+  if (!data || !second) return null;
 
   return (
     <div className="mt-8">

@@ -77,6 +77,9 @@ export async function accountsOnProperty(db: Db, propertyId: string): Promise<st
   for (const c of (cap ?? []) as Array<{ buyer_account_id: string | null }>) if (c.buyer_account_id) ids.add(c.buyer_account_id);
   const { data: res } = await db.from("pod_reservations").select("buyer_account_id").eq("property_id", propertyId).eq("status", "reserved");
   for (const r of (res ?? []) as Array<{ buyer_account_id: string }>) if (r.buyer_account_id) ids.add(r.buyer_account_id);
+  // A share held together: the second holder owes their own acknowledgments, from their own account.
+  const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
+  for (const id of await jointPartnerAccountIds(db, propertyId)) ids.add(id);
   return [...ids].sort();
 }
 

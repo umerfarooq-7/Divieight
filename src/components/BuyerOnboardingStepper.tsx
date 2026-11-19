@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Members", "Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
+const STEPS = ["Account", "Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
 
-/** 0 is Members; the others keep their old numbers, so each page still passes the same value. */
+/** 0 is the account (the old Members step, already done once you are signed in); the others keep their old numbers, so each page still passes the same value. */
 export type BuyerOnboardingStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingStep }) {

@@ -439,6 +439,8 @@ export async function savePayoutMethod(
 ): Promise<{ released: number }> {
   const holder = await holderFor(db as never, p.userId, p.propertyId);
   if (!holder) throw new Error("You don't have ownership in that property.");
+  // A share held together is paid to the buyer who reserved it: only they manage where it goes.
+  if (holder.viaCoHolder) throw new Error("Distributions for this share go to the buyer who reserved it. Only they can change the payout account.");
   const routing = p.routing.replace(/\s/g, "");
   const account = p.account.replace(/\s/g, "");
   const problem = bankDetailsProblem(routing, account);
@@ -452,6 +454,7 @@ export async function savePayoutMethod(
 export async function removePayoutMethod(db: Db, p: { userId: string; propertyId: string; request?: RequestContext }) {
   const holder = await holderFor(db as never, p.userId, p.propertyId);
   if (!holder) throw new Error("You don't have ownership in that property.");
+  if (holder.viaCoHolder) throw new Error("Distributions for this share go to the buyer who reserved it. Only they can change the payout account.");
   await call(db, "remove_payout_method", { _holder_key: holder.holderKey, _actor: p.userId, _meta: meta(p.request) });
 }
 

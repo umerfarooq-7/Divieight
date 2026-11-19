@@ -114,7 +114,8 @@ export async function markClosingReady(db: Db, actorId: string, propertyId: stri
 
   // The lock fixes membership: every active member of every buyer account must be named on it.
   const { data: res } = await db.from("pod_reservations").select("buyer_account_id").eq("property_id", propertyId).eq("status", "reserved");
-  const accountIds = [...new Set(((res ?? []) as Array<{ buyer_account_id: string | null }>).map((r) => r.buyer_account_id).filter(Boolean))] as string[];
+  const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
+  const accountIds = [...new Set([...((res ?? []) as Array<{ buyer_account_id: string | null }>).map((r) => r.buyer_account_id).filter(Boolean), ...(await jointPartnerAccountIds(db, propertyId))])] as string[];
   if (accountIds.length) {
     const { data: unnamed } = await db.from("account_members").select("id, buyer_account_id, full_name").in("buyer_account_id", accountIds).eq("status", "active");
     const gaps = ((unnamed ?? []) as Array<{ full_name: string | null }>).filter((m) => !(m.full_name ?? "").trim());
@@ -308,7 +309,7 @@ export async function recordTinMatch(db: Db, actorId: string, propertyId: string
 async function lockedCapTable(db: Db, propertyId: string): Promise<CapTableRow[]> {
   const { data } = await db
     .from("cap_table_entries")
-    .select("share_number, holder_type, buyer_account_id, seller_id, account_member_names, acquisition_date, retention_lock_expires_at")
+    .select("*")
     .eq("property_id", propertyId)
     .order("share_number", { ascending: true });
   return ((data ?? []) as any[]).map((r) => ({
@@ -316,6 +317,7 @@ async function lockedCapTable(db: Db, propertyId: string): Promise<CapTableRow[]
     holderType: r.holder_type,
     buyerAccountId: r.buyer_account_id,
     sellerId: r.seller_id,
+    coHolderAccountId: r.co_holder_account_id ?? null,
     memberNames: r.account_member_names ?? [],
     acquisitionDate: new Date(r.acquisition_date).toISOString(),
     retentionLockExpiresAt: new Date(r.retention_lock_expires_at).toISOString(),
@@ -336,7 +338,8 @@ export async function filingRoster(db: Db, propertyId: string): Promise<Array<{ 
 /** Every Account Member of every Buyer Account on the locked cap table. */
 export async function oaSigners(db: Db, propertyId: string): Promise<Stage2Signer[]> {
   const cap = await lockedCapTable(db, propertyId);
-  const accounts = [...new Set(cap.map((c) => c.buyerAccountId).filter(Boolean))] as string[];
+  // Every holder signs from their own account: the buyer who reserved a share, and the co-holder of a share held together.
+  const accounts = [...new Set(cap.flatMap((c) => [c.buyerAccountId, c.coHolderAccountId ?? null]).filter(Boolean))] as string[];
   if (accounts.length === 0) return [];
   const { data } = await db
     .from("account_members")

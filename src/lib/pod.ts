@@ -1,3 +1,5 @@
+import type { CoBuyerOption, JointInfo } from "@/lib/joint-reservation";
+
 export interface PodComposition {
   propertyId: string;
   totalShares: number;
@@ -27,6 +29,8 @@ export interface ReservationEligibility {
   composition: PodComposition | null;
   /** Present with reason "awaiting_platform_assignment". */
   platformAssignment?: { requestId: string; status: string; agentName: string | null } | null;
+  /** When the buyer has an active co-buyer: whether this share can be taken together. Null otherwise. */
+  coBuyer?: CoBuyerOption | null;
 }
 
 export interface ReservationResult {
@@ -51,6 +55,10 @@ export interface ReservationResult {
   message?: string | null;
   /** Present when the reservation finalized with a per-property agent. */
   agentChange?: { newAgentId: string; newAgentName: string | null; referralPreserved: boolean } | null;
+  /** Present when the share was reserved together with a co-buyer: they have been asked. */
+  joint?: { requestId: string; partnerName: string } | null;
+  /** The share is reserved, but asking the co-buyer failed. Said in plain words. */
+  jointError?: string | null;
 }
 
 export interface MyReservation {
@@ -65,6 +73,8 @@ export interface MyReservation {
   zip: string;
   listing_price: number | null;
   listing_status: string;
+  /** Set when the share is held (or being offered) together with a co-buyer. */
+  joint?: JointInfo | null;
 }
 
 export const RESERVATION_BLOCK_COPY: Record<
