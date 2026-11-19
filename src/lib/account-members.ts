@@ -74,17 +74,18 @@ export interface AccountMemberView {
 /**
  * One member at a time. With two members, the account holder completes every onboarding step first (identity, liveness,
  * agreement, vetting, consents); only then does the second member start their own, from the top. These are the member-level
- * steps the onboarding screens cover. Reading the Standard and the W-9 have their own pages and are not part of this order.
+ * steps the onboarding screens cover. The W-9 has its own page and is not part of this order.
  */
-export const JOURNEY_KEYS = ["identity", "liveness", "pra", "hold_harmless", "declaration", "block1", "block2"] as const;
+export const JOURNEY_KEYS = ["identity", "liveness", "standard", "pra", "hold_harmless", "declaration", "block1", "block2"] as const;
 
 export const journeyDone = (m: Pick<AccountMemberView, "checklist">): boolean =>
   JOURNEY_KEYS.every((k) => m.checklist.some((c) => c.key === k && c.done));
 
 /** The route that holds a checklist item, so a member can be sent to their first step that is still open. */
-const JOURNEY_PATHS: Record<(typeof JOURNEY_KEYS)[number], "/buyer/onboarding/identity" | "/buyer/onboarding/liveness" | "/buyer/onboarding/payment" | "/buyer/onboarding/vetting" | "/buyer/onboarding/liquidity"> = {
+const JOURNEY_PATHS: Record<(typeof JOURNEY_KEYS)[number], "/buyer/onboarding/identity" | "/buyer/onboarding/liveness" | "/buyer/onboarding/eligibility" | "/buyer/onboarding/payment" | "/buyer/onboarding/vetting" | "/buyer/onboarding/liquidity"> = {
   identity: "/buyer/onboarding/identity",
   liveness: "/buyer/onboarding/liveness",
+  standard: "/buyer/onboarding/eligibility",
   pra: "/buyer/onboarding/payment",
   hold_harmless: "/buyer/onboarding/vetting",
   declaration: "/buyer/onboarding/vetting",

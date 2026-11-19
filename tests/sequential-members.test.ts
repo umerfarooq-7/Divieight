@@ -28,9 +28,10 @@ describe("two members go one at a time", () => {
   it("sends a member to their first open step", () => {
     expect(nextJourneyPath(member("member", []))).toBe("/buyer/onboarding/identity");
     expect(nextJourneyPath(member("member", ["identity"]))).toBe("/buyer/onboarding/liveness");
-    expect(nextJourneyPath(member("member", ["identity", "liveness"]))).toBe("/buyer/onboarding/payment");
-    expect(nextJourneyPath(member("member", ["identity", "liveness", "pra"]))).toBe("/buyer/onboarding/vetting");
-    expect(nextJourneyPath(member("member", ["identity", "liveness", "pra", "hold_harmless", "declaration"]))).toBe("/buyer/onboarding/liquidity");
+    expect(nextJourneyPath(member("member", ["identity", "liveness"]))).toBe("/buyer/onboarding/eligibility");
+    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard"]))).toBe("/buyer/onboarding/payment");
+    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra"]))).toBe("/buyer/onboarding/vetting");
+    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra", "hold_harmless", "declaration"]))).toBe("/buyer/onboarding/liquidity");
     expect(nextJourneyPath(member("member", ALL))).toBeNull();
   });
 });
@@ -63,14 +64,15 @@ describe("the enrollment fee is per member", () => {
 
 describe("the onboarding screens follow the order", () => {
   it("every onboarding screen uses the one-person-at-a-time gate", () => {
+    expect(readFileSync("src/components/EligibilityStandardPage.tsx", "utf8")).toContain("journey={next !== ");
     for (const f of ["identity", "liveness", "pra-review", "payment", "vetting", "liquidity"]) {
       expect(readFileSync(`src/routes/buyer.onboarding.${f}.tsx`, "utf8"), f).toMatch(/<ActingMemberGate[^>]* journey>/);
     }
   });
 
-  it("the account holder goes on to the account steps after liveness; the second member goes to their agreement", () => {
+  it("the account holder goes on to the account steps after liveness; the second member goes to the Eligibility Standard", () => {
     const src = readFileSync("src/routes/buyer.onboarding.liveness.tsx", "utf8");
-    expect(src).toContain('isPrimary ? "/buyer/onboarding/lifestyle" : "/buyer/onboarding/payment"');
+    expect(src).toContain('isPrimary ? "/buyer/onboarding/lifestyle" : "/buyer/onboarding/eligibility"');
   });
 
   it("the last screen hands over to the other member", () => {

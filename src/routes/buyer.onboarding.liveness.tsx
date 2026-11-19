@@ -81,8 +81,8 @@ function LivenessForMember({ actingMemberId, memberName, isPrimary, onSwitch }: 
       }
       if (result.status === "passed") {
         // One person at a time: the account holder carries on to the account steps without waiting for the second member,
-        // and the second member goes straight to signing their own agreement (the account-level steps are already done).
-        navigate({ to: isPrimary ? "/buyer/onboarding/lifestyle" : "/buyer/onboarding/payment" });
+        // and the second member goes straight to reading the Eligibility Standard (the account-level survey is already done).
+        navigate({ to: isPrimary ? "/buyer/onboarding/lifestyle" : "/buyer/onboarding/eligibility" });
         return;
       }
     } catch (e) {

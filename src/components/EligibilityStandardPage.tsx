@@ -8,12 +8,11 @@ import { acknowledgeEligibilityStandard } from "@/lib/eligibility-standard.funct
 import { getLiveStandardFn } from "@/lib/standard-version.functions";
 
 /**
- * Shown once per Account Member through the "Who is acting?" switcher. When the other
- * member still has to read it, Continue hands over to them; once everyone has, it moves on.
+ * Shown once per Account Member. Each member reads it in their own turn and carries on; nobody is asked to switch here.
  */
 export function EligibilityStandardPage({ next }: { next: "/buyer/onboarding/pra-review" | "/buyer/onboarding/payment" | "/buyer/dashboard" }) {
   return (
-    <ActingMemberGate step="Participant Eligibility Standard">
+    <ActingMemberGate step="Participant Eligibility Standard" journey={next !== "/buyer/dashboard"}>
       {({ member, switchPerson }) => <ForMember key={member.id} actingMemberId={member.id} next={next} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -31,9 +30,9 @@ function ForMember({ actingMemberId, next, onSwitch }: { actingMemberId: string;
   const onContinue = async () => {
     setBusy(true);
     try {
-      const { remaining } = await acknowledge({ data: { actingMemberId } });
-      if (remaining > 0) onSwitch();
-      else navigate({ to: next as never });
+      await acknowledge({ data: { actingMemberId } });
+      // One person at a time: each member carries on after reading. The other member reads it in their own turn.
+      navigate({ to: next as never });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
