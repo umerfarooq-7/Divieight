@@ -249,7 +249,11 @@ describe("the co-buyer does not hold the account's own steps", () => {
   it("the holder's member list leaves the co-buyer out; the co-buyer sees only themselves", async () => {
     const { myAccountMembers } = await import("@/lib/account-members.server");
     await joinedWithShare();
-    expect((await myAccountMembers(db as never, HOLDER)).members.map((m) => m.fullName)).toEqual(["Holly Holder"]);
+    const holderView = await myAccountMembers(db as never, HOLDER);
+    expect(holderView.members.map((m) => m.fullName)).toEqual(["Holly Holder"]);
+    // ...but shows them read-only, with their own fee as the last step.
+    expect(holderView.coBuyer?.fullName).toBe("Casey Co");
+    expect(holderView.coBuyer?.checklist.at(-1)).toMatchObject({ key: "fee", done: false });
     const mine = await myAccountMembers(db as never, COBUYER);
     expect(mine.members.map((m) => m.fullName)).toEqual(["Casey Co"]);
     expect(mine.members[0].coBuyer).toBe(true);

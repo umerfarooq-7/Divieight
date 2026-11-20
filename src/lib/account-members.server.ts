@@ -127,7 +127,7 @@ export async function recordActingMember(db: Db, params: { userId: string; membe
 // The account's members, with each one's checklist
 // ---------------------------------------------------------------------------
 
-export async function myAccountMembers(db: Db, userId: string): Promise<{ accountId: string; locked: boolean; canAdd: boolean; members: AccountMemberView[]; accountStatus: AccountStatus }> {
+export async function myAccountMembers(db: Db, userId: string): Promise<{ accountId: string; locked: boolean; canAdd: boolean; members: AccountMemberView[]; accountStatus: AccountStatus; coBuyer: AccountMemberView | null }> {
   const account = await accountFor(db, userId);
   const allMembers = await activeMembers(db, account.id);
   // A co-buyer sees only themselves.
@@ -156,12 +156,7 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
   // Every member-level step, from the same roll-up the Golden Ticket uses.
   const steps = await loadMemberSteps(db, account.id);
   const stepsOf = (id: string) => steps.find((s) => s.memberId === id);
-  return {
-    accountId: account.id,
-    locked,
-    accountStatus: accountRollup(steps).status,
-    canAdd: !locked && !account.priority_rank_timestamp && members.length < MAX_ACTIVE_MEMBERS,
-    members: members.map((m) => ({
+  const view = (m: MemberRow): AccountMemberView => ({
       id: m.id,
       role: m.role,
       fullName: m.full_name ?? "",
@@ -182,7 +177,18 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
         { key: "w9", label: "W-9", done: Boolean(stepsOf(m.id)?.w9) },
         { key: "independent_advice", label: "Independent advice notice", done: signedBy("block_5_independent_advice", m) },
       ],
-    })),
+  });
+  // The account holder also sees their co-buyer, read-only: how far they are, plus their own enrollment fee.
+  const coRow = account.viaMemberId ? null : allMembers.find((m) => isCoBuyer(m)) ?? null;
+  const coView = coRow ? view(coRow) : null;
+  if (coView && coRow) coView.checklist.push({ key: "fee", label: "Platform enrollment fee", done: Boolean((coRow as { enrollment_paid_at?: string | null }).enrollment_paid_at) });
+  return {
+    accountId: account.id,
+    locked,
+    accountStatus: accountRollup(steps).status,
+    canAdd: !locked && !account.priority_rank_timestamp && members.length < MAX_ACTIVE_MEMBERS,
+    members: members.map(view),
+    coBuyer: coView,
   };
 }
 

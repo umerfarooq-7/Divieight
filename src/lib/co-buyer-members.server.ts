@@ -173,9 +173,10 @@ export async function myCoBuyer(db: Db, params: { userId: string }): Promise<CoB
   if (account.viaMemberId) return null;
   const member = await coBuyerOf(db, account.id);
   if (!member) return null;
-  const { loadMemberSteps, REQUIRED_STEPS, missingSteps } = await import("@/lib/account-rollup");
-  const steps = (await loadMemberSteps(db, account.id)).find((s) => s.memberId === member.id);
-  const total = REQUIRED_STEPS.length;
+  const { myAccountMembers } = await import("@/lib/account-members.server");
+  const cv = (await myAccountMembers(db, params.userId)).coBuyer;
+  const total = cv?.checklist.length ?? 0;
+  const doneSteps = cv?.checklist.filter((c) => c.done).length ?? 0;
   const { data: links } = await db.from("reservation_co_members").select("reservation_id, property_id").eq("account_member_id", member.id);
   const shares: CoBuyerView["shares"] = [];
   for (const l of (links ?? []) as Array<{ reservation_id: string; property_id: string }>) {
@@ -190,7 +191,7 @@ export async function myCoBuyer(db: Db, params: { userId: string }): Promise<CoB
     state: member.auth_user_id ? "joined" : "invited",
     invitedAt: member.invited_at,
     joinedAt: member.joined_at,
-    progress: { done: steps ? total - missingSteps(steps).length : 0, total },
+    progress: { done: doneSteps, total },
     shares,
   };
 }
