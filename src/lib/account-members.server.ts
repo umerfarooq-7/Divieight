@@ -131,7 +131,8 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
   const account = await accountFor(db, userId);
   const allMembers = await activeMembers(db, account.id);
   // A co-buyer sees only themselves.
-  const members = account.viaMemberId ? allMembers.filter((m) => m.id === account.viaMemberId) : allMembers;
+  // The account holder's list leaves the co-buyer out: they have their own portal, and the "Co-buyer" card on the dashboard.
+  const members = account.viaMemberId ? allMembers.filter((m) => m.id === account.viaMemberId) : allMembers.filter((m) => !isCoBuyer(m));
   const { data: docs } = await db.from("signed_documents").select("document_type, account_member_id, signed_name").eq("buyer_account_id", account.id);
   const signed = (docs ?? []) as Array<{ document_type: string; account_member_id: string | null; signed_name: string | null }>;
   // Block 4: each member's own Eligibility Declaration (complete). Missing table → nothing declared yet.

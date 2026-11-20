@@ -11,6 +11,7 @@ import { logAudit } from "@/lib/audit";
 import { useServerFn } from "@tanstack/react-start";
 import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate";
 import { saveMemberIdentityFn } from "@/lib/account-members.functions";
+import { loadAccountForPage } from "@/lib/buyer";
 
 export const Route = createFileRoute("/buyer/onboarding/identity")({
   head: () => ({
@@ -86,6 +87,8 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [accountId, setAccountId] = useState<string | null>(null);
+  // A co-buyer's login: the account is the holder's, so nothing on it is changed from here.
+  const [coBuyerLogin, setCoBuyerLogin] = useState(false);
   const [memberId, setMemberId] = useState<string | null>(null);
   const [bootstrapping, setBootstrapping] = useState(true);
 
@@ -116,22 +119,26 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
     }
     let cancelled = false;
     (async () => {
-      const { data: account } = await supabase
+      const { data: own } = await supabase
         .from("buyer_accounts")
         .select("id, intent, target_budget, target_budget_bucket")
         .eq("auth_user_id", user.id)
         .maybeSingle();
+      const account = own ?? (await loadAccountForPage(user.id));
       if (cancelled) return;
       if (!account) {
         navigate({ to: "/buyer/register" });
         return;
       }
       setAccountId(account.id);
-      if (account.intent) setIntent(account.intent);
-      // Legacy rows hold an exact amount — show it as its nearest bucket.
-      const row = account as unknown as { target_budget: number | null; target_budget_bucket: string | null };
-      const existing = bucketById(row.target_budget_bucket) ?? bucketForAmount(row.target_budget);
-      if (existing) setBudgetBucket(existing.id);
+      if (!own) setCoBuyerLogin(true);
+      if (own) {
+        if (own.intent) setIntent(own.intent);
+        // Legacy rows hold an exact amount — show it as its nearest bucket.
+        const row = own as unknown as { target_budget: number | null; target_budget_bucket: string | null };
+        const existing = bucketById(row.target_budget_bucket) ?? bucketForAmount(row.target_budget);
+        if (existing) setBudgetBucket(existing.id);
+      }
 
       const { data: member } = await supabase
         .from("account_members")
@@ -241,7 +248,9 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
 
     // The account moves on to the persona survey once every member has their identity in and has passed
     // the liveness check (the liveness step moves it). Next for this member: their selfie.
-    const { error } = await supabase
+    const { error } = coBuyerLogin
+      ? { error: null }
+      : await supabase
       .from("buyer_accounts")
       .update({
         ...(isPrimary

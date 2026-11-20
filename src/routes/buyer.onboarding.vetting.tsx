@@ -21,7 +21,8 @@ import { ActingMemberGate, actingAuditMeta } from "@/components/ActingMemberGate
 import { EligibilityDeclaration, type DeclarationSubmit, type DeclarationSummary } from "@/components/EligibilityDeclaration";
 import { getDeclarationState, submitEligibilityDeclaration } from "@/lib/eligibility-declaration.functions";
 import { HELD_BUYER_TEXT, RESULT_LABELS, RESULT_TONES } from "@/lib/eligibility-engine";
-import { signMemberDocumentFn } from "@/lib/member-steps.functions";
+import { getSignatureState, signMemberDocumentFn } from "@/lib/member-steps.functions";
+import { loadAccountForPage } from "@/lib/buyer";
 import { eligibilityCheckScreen } from "@/constants/eligibilityCheckCopy";
 import { HOLD_HARMLESS_VERSION, holdHarmlessDocumentText } from "@/lib/hold-harmless";
 
@@ -81,6 +82,8 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const { user, loading } = useAuth();
 
   const [buyer, setBuyer] = useState<BuyerRow | null>(null);
+  // A co-buyer's login: the account is the holder's, so its progress is never touched from here.
+  const [coBuyerLogin, setCoBuyerLogin] = useState(false);
   const [member, setMember] = useState<MemberRow | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -111,18 +114,15 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     }
     let cancelled = false;
     (async () => {
-      const { data: b } = await supabase
-        .from("buyer_accounts")
-        .select("id, onboarding_status, priority_rank_timestamp")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
+      const b = await loadAccountForPage(user.id);
       if (cancelled) return;
       if (!b) {
         navigate({ to: "/buyer/onboarding/identity", replace: true });
         return;
       }
-      // Route guard: vetting only unlocks once the enrollment payment cleared.
-      if (!b.priority_rank_timestamp) {
+      setCoBuyerLogin(b.coBuyer);
+      // Route guard: vetting only unlocks once the enrollment payment cleared (a co-buyer pays from their portal).
+      if (!b.coBuyer && !b.priority_rank_timestamp) {
         navigate({ to: "/buyer/onboarding/payment", replace: true });
         return;
       }
@@ -134,9 +134,8 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
         .eq("status", "active")
         .maybeSingle();
       // This member's own hold harmless, if already signed.
-      const { data: hh } = m
-        ? await supabase.from("signed_documents").select("id").eq("buyer_account_id", b.id).eq("document_type", "HOLD_HARMLESS").eq("account_member_id", m.id).limit(1)
-        : { data: [] };
+      // This member's own record, read by the server.
+      const hh = m ? (await getSignatureState({ data: { actingMemberId: m.id, documentType: "HOLD_HARMLESS" } }).catch(() => ({ signed: false }))).signed ? [1] : [] : [];
       const state = m ? await loadDeclaration(m.id) : null;
       if (cancelled) return;
       setBuyer(b as BuyerRow);
@@ -165,7 +164,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     if (!member) return;
     const result = await submitEligibilityDeclaration({ data: { actingMemberId: member.id, ...input } });
     if (result.status === "complete") toast.success("Declaration recorded.");
-    if (buyer) {
+    if (buyer && !coBuyerLogin) {
       await supabase
         .from("buyer_accounts")
         .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null })
@@ -200,36 +199,29 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
 
   async function continueFromDeclaration() {
     if (!buyer) return;
-    // Every active member makes their own declaration and signs their own hold harmless before the account moves on.
-    const { data: everyone } = await supabase
-      .from("account_members")
-      .select("id, full_name, role, vetting_status")
-      .eq("buyer_account_id", buyer.id)
-      .eq("status", "active");
-    const [{ data: hhRows }, { data: declRows }] = await Promise.all([
-      supabase.from("signed_documents").select("account_member_id").eq("buyer_account_id", buyer.id).eq("document_type", "HOLD_HARMLESS"),
-      supabase.from("eligibility_declarations").select("account_member_id").eq("buyer_account_id", buyer.id).eq("status", "complete"),
+    // One person at a time: this member moves on as soon as their own declaration and hold harmless are in (read by the server, for this member only).
+    // The other member, or the co-buyer, does theirs in their own turn.
+    const [decl, hh] = await Promise.all([
+      loadDeclaration(actingMemberId),
+      getSignatureState({ data: { actingMemberId, documentType: "HOLD_HARMLESS" } }).catch(() => ({ signed: false })),
     ]);
-    const signedIds = new Set(((hhRows ?? []) as Array<{ account_member_id: string | null }>).map((r) => r.account_member_id));
-    const declaredIds = new Set(((declRows ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id));
-    const members = (everyone ?? []) as Array<{ id: string; full_name: string; role: string; vetting_status: string }>;
-    // One person at a time: this member moves on as soon as their own declaration and hold harmless are in. The other member does theirs in their own turn.
-    const self = members.find((m) => m.id === actingMemberId);
-    if (!self || !declaredIds.has(self.id) || !signedIds.has(self.id)) {
+    if (decl?.current?.status !== "complete" || !hh.signed) {
       toast.error("Complete your declaration and sign the acknowledgment first.");
       return;
     }
     // A "No" to any statement is held for divieight's review; this member waits here until then.
-    if (self.vetting_status !== "cleared") {
+    const status = decl.vettingStatus ?? member?.vetting_status;
+    if (status !== "cleared") {
       setHeld(true);
       return;
     }
-    // Cleared buyers now pass through the Plaid liquidity gate before the
-    // Golden Ticket can be issued.
-    await supabase
-      .from("buyer_accounts")
-      .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "liquidity_pending" })
-      .eq("id", buyer.id);
+    // Cleared buyers now pass through the Plaid liquidity gate before the Golden Ticket can be issued. A co-buyer leaves the account alone.
+    if (!coBuyerLogin) {
+      await supabase
+        .from("buyer_accounts")
+        .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "liquidity_pending" })
+        .eq("id", buyer.id);
+    }
     // The W-9 is the next step; the liquidity check comes after it.
     navigate({ to: "/buyer/onboarding/w9" });
   }

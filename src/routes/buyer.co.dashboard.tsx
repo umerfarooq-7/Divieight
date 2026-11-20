@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -10,7 +10,10 @@ import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
 import { BUYER_ENROLLMENT_CENTS_PER_MEMBER } from "@/lib/buyer-fee";
 import { confirmCoBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { getCoBuyerSelf } from "@/lib/co-buyer-members.functions";
-import { saveMemberIdentityFn } from "@/lib/account-members.functions";
+import { getMyAccountMembers } from "@/lib/account-members.functions";
+import { acceptAuthorizationFn, getAuthorizationState } from "@/lib/member-steps.functions";
+import { block1ConsentText, block2AuthorizationText } from "@/constants/authorizationsCopy";
+import { COBUYER_STEPS } from "@/lib/co-buyer-members";
 
 export const Route = createFileRoute("/buyer/co/dashboard")({
   validateSearch: (search: Record<string, unknown>): { session_id?: string } => ({
@@ -27,7 +30,6 @@ export const Route = createFileRoute("/buyer/co/dashboard")({
 
 const CARD = "rounded-xl border border-border bg-card p-6 shadow-sm";
 const BTN = "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground disabled:opacity-60";
-const INPUT = "mt-1 flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm font-normal";
 const EYEBROW = "text-xs font-semibold uppercase tracking-[0.18em] text-accent";
 
 function CoBuyerPortal() {
@@ -35,24 +37,25 @@ function CoBuyerPortal() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { session_id: sessionId } = Route.useSearch();
-  const q = useQuery({ queryKey: ["co-buyer-self", user?.id], enabled: !!user, retry: false, queryFn: () => getCoBuyerSelf() });
+  const self = useQuery({ queryKey: ["co-buyer-self", user?.id], enabled: !!user, retry: false, queryFn: () => getCoBuyerSelf() });
+  const mine = useQuery({ queryKey: ["co-buyer-members", user?.id], enabled: !!user, retry: false, queryFn: () => getMyAccountMembers(), refetchOnMount: "always" });
+  const d = self.data;
+  const me = mine.data?.members[0];
+  const memberId = d?.memberId;
+  const auth = useQuery({
+    queryKey: ["co-buyer-auth", memberId],
+    enabled: !!memberId,
+    retry: false,
+    queryFn: () => getAuthorizationState({ data: { actingMemberId: memberId! } }),
+  });
   const [showCheckout, setShowCheckout] = useState(false);
   const [agree, setAgree] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [form, setForm] = useState({ fullName: "", address: "", dateOfBirth: "", idNumber: "" });
-  const [saving, setSaving] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/buyer/login" });
   }, [loading, user, navigate]);
-
-  useEffect(() => {
-    if (q.data) setForm((f) => ({ ...f, fullName: f.fullName || q.data!.name }));
-  }, [q.data]);
 
   // Back from Stripe: confirmed on the server before anything is marked paid.
   useEffect(() => {
@@ -77,39 +80,27 @@ function CoBuyerPortal() {
     };
   }, [sessionId, user, navigate, qc]);
 
-  // Reads the details off the photo (a stand-in until the identity provider is connected). Review and correct everything.
-  async function scan() {
-    setScanning(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setForm((f) => ({ ...f, address: f.address || "123 Market Street, Apt 4B, San Francisco, CA 94103", dateOfBirth: f.dateOfBirth || "1988-06-14" }));
-    setScanning(false);
-    toast.success("Details extracted. Please review and correct as needed.");
-  }
-
-  async function saveIdentity() {
-    if (!q.data || !user) return;
-    if (!file) return void toast.error("Upload a photo of your driver's license.");
-    setSaving(true);
+  async function accept(block: "block1" | "block2") {
+    if (!memberId) return;
+    setBusy(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/buyer-license-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("identity-documents").upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) throw new Error(upErr.message);
-      await saveMemberIdentityFn({
-        data: { actingMemberId: q.data.memberId, fullName: form.fullName, address: form.address, dateOfBirth: form.dateOfBirth, idDocumentNumber: form.idNumber, idDocumentPath: path },
-      });
-      toast.success("Identity saved.");
-      await qc.invalidateQueries({ queryKey: ["co-buyer-self"] });
+      await acceptAuthorizationFn({ data: { actingMemberId: memberId, block } });
+      toast.success("Recorded.");
+      await Promise.all([qc.invalidateQueries({ queryKey: ["co-buyer-auth"] }), qc.invalidateQueries({ queryKey: ["co-buyer-members"] })]);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't save your identity.");
+      toast.error(e instanceof Error ? e.message : "Couldn't record that.");
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
-  const d = q.data;
-  const flags = d ? [d.identityDone, d.w9Done, d.feePaid] : [false, false, false];
-  const current = flags.findIndex((x) => !x);
+  // Every step in order, with where each one is done. The consents and the fee are done right here.
+  const doneOf = (key: string) => Boolean(me?.checklist.find((c) => c.key === key)?.done);
+  const rows = COBUYER_STEPS.map((s) => ({ ...s, done: s.key === "fee" ? Boolean(d?.feePaid) : doneOf(s.key) }));
+  const current = rows.findIndex((r) => !r.done);
+  const doneCount = rows.filter((r) => r.done).length;
+  const ready = Boolean(d && me);
+  const next = current >= 0 ? rows[current] : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 text-foreground sm:px-6">
@@ -119,7 +110,7 @@ function CoBuyerPortal() {
           <p className={EYEBROW}>Co-buyer</p>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Welcome{d?.name ? `, ${d.name.split(" ")[0]}` : ""}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {d ? `You are buying together with ${d.holderName}. You complete your own steps and sign for the shares bought with you.` : "Your own steps and signatures."}
+            {d ? `You are buying together with ${d.holderName}. You complete your own steps once, and sign for the shares bought with you.` : "Your own steps and signatures."}
           </p>
         </div>
         <button
@@ -134,108 +125,101 @@ function CoBuyerPortal() {
         </button>
       </header>
 
-      {q.isLoading || loading ? <div className="mt-8 h-48 animate-pulse rounded-xl border border-border bg-muted/40" /> : null}
-      {q.isError ? <p className="mt-6 text-destructive">{(q.error as Error).message}</p> : null}
-      {q.data === null ? <p className={`mt-6 ${CARD}`}>This login isn't linked to a buyer account as a co-buyer. If you were invited, open the invitation link from your email again.</p> : null}
+      {self.isLoading || mine.isLoading || loading ? <div className="mt-8 h-48 animate-pulse rounded-xl border border-border bg-muted/40" /> : null}
+      {self.isError ? <p className="mt-6 text-destructive">{(self.error as Error).message}</p> : null}
+      {self.data === null ? <p className={`mt-6 ${CARD}`}>This login isn't linked to a buyer account as a co-buyer. If you were invited, open the invitation link from your email again.</p> : null}
 
-      {d ? (
+      {ready && d ? (
         <>
-          {current === -1 ? null : <Stepper labels={["Identity", "W-9", "Payment"]} flags={flags} current={current} />}
+          {next ? (
+            <>
+              <div className="mt-8">
+                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span>Your progress</span>
+                  <span>
+                    {doneCount} of {rows.length} steps
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(doneCount / rows.length) * 100}%` }} />
+                </div>
+              </div>
 
-          {current === -1 ? (
+              <div className={`mt-6 ${CARD}`}>
+                <p className={EYEBROW}>
+                  Step {current + 1} of {rows.length}
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-semibold">{next.label}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{next.blurb}</p>
+
+                {next.path ? (
+                  <Link to={next.path} className={`${BTN} mt-5`}>
+                    {doneCount === 0 ? "Start" : "Continue"}
+                  </Link>
+                ) : null}
+
+                {next.key === "block1" ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-foreground">{block1ConsentText}</p>
+                    <button type="button" className={`${BTN} mt-4`} disabled={busy || auth.isLoading} onClick={() => void accept("block1")}>
+                      I consent
+                    </button>
+                  </div>
+                ) : null}
+
+                {next.key === "block2" ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-foreground">{block2AuthorizationText}</p>
+                    <button type="button" className={`${BTN} mt-4`} disabled={busy || auth.isLoading} onClick={() => void accept("block2")}>
+                      I authorize
+                    </button>
+                  </div>
+                ) : null}
+
+                {next.key === "fee" ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground">
+                      Your own one-time fee of {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)}. It does not change {d.holderName}'s account.
+                    </p>
+                    {confirming ? (
+                      <p className="mt-4 text-sm text-muted-foreground">Confirming your payment…</p>
+                    ) : showCheckout ? (
+                      <BuyerEnrollmentCheckout coBuyer actingMemberId={d.memberId} returnUrl={`${window.location.origin}/buyer/co/dashboard?session_id={CHECKOUT_SESSION_ID}`} />
+                    ) : (
+                      <>
+                        <label className="mt-4 flex items-start gap-3 text-sm">
+                          <input type="checkbox" className="mt-0.5 h-4 w-4" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+                          <span>I understand this fee is fully earned upon payment, is non-refundable, and applies regardless of transaction outcome.</span>
+                        </label>
+                        <button type="button" className={`${BTN} mt-4`} disabled={!agree} onClick={() => setShowCheckout(true)}>
+                          Pay {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)} now
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
+              <ol className="mt-6 divide-y divide-border rounded-xl border border-border bg-card text-sm shadow-sm">
+                {rows.map((r, i) => (
+                  <li key={r.key} className="flex items-center gap-3 px-4 py-3">
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold ${r.done ? "border-primary bg-primary text-primary-foreground" : i === current ? "border-accent bg-accent text-accent-foreground" : "border-border text-muted-foreground"}`}
+                      aria-hidden
+                    >
+                      {r.done ? "✓" : i + 1}
+                    </span>
+                    <span className={r.done ? "text-muted-foreground" : i === current ? "font-medium text-foreground" : "text-muted-foreground"}>{r.label}</span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
             <div className="mt-8 rounded-xl border border-emerald-600/40 bg-emerald-50 p-6 text-center dark:bg-emerald-950/20">
               <p className="font-display text-xl font-semibold">You're all set</p>
               <p className="mt-1 text-sm text-muted-foreground">Your steps are complete. When {d.holderName} buys a share together with you, it shows up below with what you need to sign.</p>
             </div>
-          ) : null}
-
-          {current === 0 ? (
-            <div className={`mt-8 ${CARD}`}>
-              <p className={EYEBROW}>Step 1 · Identity</p>
-              <h2 className="mt-1 font-display text-2xl font-semibold">Verify your identity</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Upload a clear photo of your driver's license and confirm your details.</p>
-
-              <div className={`mt-5 flex flex-col items-center rounded-lg border-2 border-dashed p-6 text-center ${preview ? "border-accent/50 bg-accent/5" : "border-border"}`}>
-                {preview ? <img src={preview} alt="License preview" className="max-h-48 rounded-md border border-border object-contain" /> : <p className="text-sm text-muted-foreground">JPG or PNG, up to 10MB.</p>}
-                <button type="button" onClick={() => fileRef.current?.click()} className="mt-4 inline-flex h-10 items-center rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted">
-                  {preview ? "Replace photo" : "Choose photo"}
-                </button>
-                {scanning ? <p className="mt-3 text-xs text-muted-foreground">Scanning document…</p> : null}
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = "";
-                    if (!f) return;
-                    if (!f.type.startsWith("image/")) return void toast.error("Please upload an image file.");
-                    if (f.size > 10 * 1024 * 1024) return void toast.error("File must be 10MB or smaller.");
-                    setFile(f);
-                    setPreview(URL.createObjectURL(f));
-                    void scan();
-                  }}
-                />
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">
-                  Full legal name
-                  <input className={INPUT} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
-                </label>
-                <label className="text-sm font-medium">
-                  Date of birth
-                  <input className={INPUT} type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
-                </label>
-                <label className="text-sm font-medium sm:col-span-2">
-                  Address
-                  <input className={INPUT} placeholder="Street, city, state, ZIP" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-                </label>
-                <label className="text-sm font-medium sm:col-span-2">
-                  ID document number
-                  <input className={INPUT} autoComplete="off" value={form.idNumber} onChange={(e) => setForm({ ...form, idNumber: e.target.value })} />
-                </label>
-              </div>
-              <button type="button" className={`${BTN} mt-6 w-full sm:w-auto`} disabled={saving} onClick={saveIdentity}>
-                {saving ? "Saving…" : "Save and continue"}
-              </button>
-            </div>
-          ) : null}
-
-          {current === 1 ? (
-            <div className={`mt-8 text-center ${CARD}`}>
-              <p className={EYEBROW}>Step 2 · W-9</p>
-              <h2 className="mt-1 font-display text-2xl font-semibold">Tax form</h2>
-              <p className="mt-1 text-sm text-muted-foreground">A short W-9 with your tax details, needed for any distributions you receive. You come back here when it is done.</p>
-              <Link to="/buyer/onboarding/w9" className={`${BTN} mt-6`}>
-                Open the W-9
-              </Link>
-            </div>
-          ) : null}
-
-          {current === 2 ? (
-            <div className={`mt-8 ${CARD}`}>
-              <p className={EYEBROW}>Step 3 · Payment</p>
-              <h2 className="mt-1 font-display text-2xl font-semibold">Platform enrollment fee</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Your own one-time fee of {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)}. It does not change {d.holderName}'s account.</p>
-              {confirming ? (
-                <p className="mt-4 text-sm text-muted-foreground">Confirming your payment…</p>
-              ) : showCheckout ? (
-                <BuyerEnrollmentCheckout coBuyer actingMemberId={d.memberId} returnUrl={`${window.location.origin}/buyer/co/dashboard?session_id={CHECKOUT_SESSION_ID}`} />
-              ) : (
-                <>
-                  <label className="mt-4 flex items-start gap-3 text-sm">
-                    <input type="checkbox" className="mt-0.5 h-4 w-4" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
-                    <span>I understand this fee is fully earned upon payment, is non-refundable, and applies regardless of transaction outcome.</span>
-                  </label>
-                  <button type="button" className={`${BTN} mt-4`} disabled={!agree} onClick={() => setShowCheckout(true)}>
-                    Pay {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)} now
-                  </button>
-                </>
-              )}
-            </div>
-          ) : null}
+          )}
 
           <section className={`mt-8 ${CARD}`}>
             <h2 className="font-display text-lg font-semibold">Shares bought with you</h2>
@@ -265,27 +249,5 @@ function CoBuyerPortal() {
         </>
       ) : null}
     </main>
-  );
-}
-
-function Stepper({ labels, flags, current }: { labels: string[]; flags: boolean[]; current: number }) {
-  return (
-    <ol className="mt-8 flex w-full items-center gap-2">
-      {labels.map((label, i) => {
-        const done = flags[i];
-        const active = i === current;
-        return (
-          <li key={label} className="flex flex-1 items-center gap-2">
-            <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${active ? "border-accent bg-accent text-accent-foreground" : done ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground"}`}
-            >
-              {done ? "✓" : i + 1}
-            </span>
-            <span className={`hidden text-xs font-medium uppercase tracking-wider sm:inline ${active ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
-            {i < labels.length - 1 ? <span className={`h-px flex-1 ${done ? "bg-primary" : "bg-border"}`} /> : null}
-          </li>
-        );
-      })}
-    </ol>
   );
 }

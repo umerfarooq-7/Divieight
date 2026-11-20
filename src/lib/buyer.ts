@@ -75,3 +75,14 @@ export function buyerRedirect(onboardingStatus: string): string {
       return "/buyer/dashboard";
   }
 }
+
+/**
+ * The account the signed-in login belongs to, for the onboarding screens: the holder's own account, or (for a co-buyer) the few fields of the
+ * account they are a limited member of. `coBuyer` tells the screen to leave account-level state alone.
+ */
+export async function loadAccountForPage(userId: string): Promise<{ id: string; onboarding_status: string; priority_rank_timestamp: string | null; intent: string | null; primary_target_market: string | null; coBuyer: boolean } | null> {
+  const { data } = await supabase.from("buyer_accounts").select("id, onboarding_status, priority_rank_timestamp, intent, primary_target_market").eq("auth_user_id", userId).maybeSingle();
+  if (data) return { ...(data as { id: string; onboarding_status: string; priority_rank_timestamp: string | null; intent: string | null; primary_target_market: string | null }), coBuyer: false };
+  const { getMyAccountRowFn } = await import("@/lib/co-buyer-members.functions");
+  return (await getMyAccountRowFn().catch(() => null)) ?? null;
+}

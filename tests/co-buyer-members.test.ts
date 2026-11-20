@@ -238,3 +238,48 @@ describe("whose signature a login may give", () => {
     await expect(assertMayActAs(db as never, HOLDER, coId)).rejects.toThrow("only sign for yourself");
   });
 });
+
+describe("the co-buyer does not hold the account's own steps", () => {
+  async function joinedWithShare() {
+    const token = await inviteAndToken();
+    await claimCoBuyerInvite(db as never, { userId: COBUYER, email: "casey@example.com", token });
+    return db.table("account_members").find((m) => m.email === "casey@example.com")!.id as string;
+  }
+
+  it("the holder's member list leaves the co-buyer out; the co-buyer sees only themselves", async () => {
+    const { myAccountMembers } = await import("@/lib/account-members.server");
+    await joinedWithShare();
+    expect((await myAccountMembers(db as never, HOLDER)).members.map((m) => m.fullName)).toEqual(["Holly Holder"]);
+    const mine = await myAccountMembers(db as never, COBUYER);
+    expect(mine.members.map((m) => m.fullName)).toEqual(["Casey Co"]);
+    expect(mine.members[0].coBuyer).toBe(true);
+    // Their own checklist is the full one, for them.
+    expect(mine.members[0].checklist.map((c) => c.key)).toContain("hold_harmless");
+  });
+
+  it("nobody waits on the co-buyer for the agreement or the consents; Block 2 waits for them only once they are on a share", async () => {
+    const { waitingOnSignature, waitingOnBlock, block2MissingFor } = await import("@/lib/member-steps.server");
+    await joinedWithShare();
+    expect(await waitingOnSignature(db as never, accountId, "PRA")).toEqual(["Holly Holder"]);
+    expect(await waitingOnBlock(db as never, accountId, "block1")).toEqual(["Holly Holder"]);
+    expect(await block2MissingFor(db as never, [accountId])).toEqual(["Holly Holder"]);
+    db.table("reservation_co_members").push({ reservation_id: "r1", property_id: "p1", buyer_account_id: accountId, account_member_id: db.table("account_members").find((m) => m.email === "casey@example.com")!.id });
+    expect((await block2MissingFor(db as never, [accountId])).sort()).toEqual(["Casey Co", "Holly Holder"]);
+  });
+
+  it("the independent-advice notice is recorded for the co-buyer alone, and read back by the server", async () => {
+    const memberId = await joinedWithShare();
+    const { acceptAdviceNotice, adviceNoticeState, accountRowForLogin } = await import("@/lib/co-buyer-members.server");
+    expect((await adviceNoticeState(db as never, { userId: COBUYER, actingMemberId: memberId })).accepted).toBe(false);
+    await acceptAdviceNotice(db as never, { userId: COBUYER, actingMemberId: memberId, documentHash: "h", documentVersion: "v1", ip: null });
+    await acceptAdviceNotice(db as never, { userId: COBUYER, actingMemberId: memberId, documentHash: "h", documentVersion: "v1", ip: null });
+    expect(db.table("signed_documents").filter((d) => d.document_type === "block_5_independent_advice")).toHaveLength(1);
+    expect((await adviceNoticeState(db as never, { userId: COBUYER, actingMemberId: memberId })).accepted).toBe(true);
+    // The holder's login can't record it for the co-buyer.
+    await expect(acceptAdviceNotice(db as never, { userId: HOLDER, actingMemberId: memberId, documentHash: "h", documentVersion: "v1", ip: null })).rejects.toThrow();
+    const row = await accountRowForLogin(db as never, { userId: COBUYER });
+    expect(row?.coBuyer).toBe(true);
+    expect(row?.id).toBe(accountId);
+    expect((await accountRowForLogin(db as never, { userId: HOLDER }))?.coBuyer).toBe(false);
+  });
+});

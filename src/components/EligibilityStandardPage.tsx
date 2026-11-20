@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIsCoBuyer } from "@/hooks/use-co-buyer";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ export function EligibilityStandardPage({ next }: { next: "/buyer/onboarding/pra
 
 function ForMember({ actingMemberId, next, onSwitch }: { actingMemberId: string; next: string; onSwitch: () => void }) {
   const navigate = useNavigate();
+  // A co-buyer has no pre-payment review: they pay from their portal, so it is on to the agreement.
+  const isCoBuyer = useIsCoBuyer();
   const acknowledge = useServerFn(acknowledgeEligibilityStandard);
   const [busy, setBusy] = useState(false);
   // The version shown is the live one: the same source the declaration is recorded under.
@@ -32,7 +35,7 @@ function ForMember({ actingMemberId, next, onSwitch }: { actingMemberId: string;
     try {
       await acknowledge({ data: { actingMemberId } });
       // One person at a time: each member carries on after reading. The other member reads it in their own turn.
-      navigate({ to: next as never });
+      navigate({ to: (isCoBuyer && next === "/buyer/onboarding/pra-review" ? "/buyer/onboarding/payment" : next) as never });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

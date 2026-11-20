@@ -8,6 +8,8 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
 import { isCoBuyer } from "@/lib/account-members";
+import { loadAccountForPage } from "@/lib/buyer";
+import { getAdviceNoticeStateFn } from "@/lib/co-buyer-members.functions";
 import { BUYER_ENROLLMENT_CENTS_PER_MEMBER, enrollmentFeeCents } from "@/lib/buyer-fee";
 import { confirmBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { logAudit } from "@/lib/audit";
@@ -74,6 +76,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   const { session_id: sessionId } = Route.useSearch();
 
   const [buyer, setBuyer] = useState<BuyerRow | null>(null);
+  // A co-buyer signs the agreement here but pays their own fee from their portal, so none of the fee is shown.
+  const [coBuyerLogin, setCoBuyerLogin] = useState(false);
   const [memberName, setMemberName] = useState("");
   const [checking, setChecking] = useState(true);
 
@@ -106,18 +110,17 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
     }
     let cancelled = false;
     (async () => {
-      const { data: account } = await supabase
-        .from("buyer_accounts")
-        .select("id, onboarding_status, priority_rank_timestamp, intent, primary_target_market")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
+      const account = await loadAccountForPage(user.id);
       if (cancelled) return;
       if (!account) {
         navigate({ to: "/buyer/register" });
         return;
       }
       setBuyer(account as BuyerRow);
-      if (account.priority_rank_timestamp) {
+      setCoBuyerLogin(account.coBuyer);
+      if (account.coBuyer) {
+        setPaid(true);
+      } else if (account.priority_rank_timestamp) {
         setPaid(true);
         setRankStamp(account.priority_rank_timestamp);
         const { data: paidRows } = await supabase.from("buyer_enrollment_payments").select("amount_cents").eq("buyer_account_id", account.id).eq("status", "paid").limit(1);
@@ -140,10 +143,17 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       ]);
       if (cancelled) return;
       // A co-buyer pays their own fee and is not counted in this account's.
-      const list = ((roster as Array<Block5Member & { auth_user_id?: string | null; invite_token_hash?: string | null }>) ?? []).filter((m) => !isCoBuyer(m));
+      const list = ((roster as Array<Block5Member & { auth_user_id?: string | null; invite_token_hash?: string | null }>) ?? []).filter((m) => account.coBuyer || !isCoBuyer(m));
       const me = list.find((m) => m.id === actingMemberId) ?? list[0];
       setMembers(list);
-      setAdviceAccepted((block5?.length ?? 0) > 0);
+      if (account.coBuyer) {
+        // A co-buyer's own record is read by the server (they can't read the account's documents).
+        const adv = await getAdviceNoticeStateFn({ data: { actingMemberId } }).catch(() => ({ accepted: false }));
+        if (cancelled) return;
+        setAdviceAccepted(adv.accepted);
+      } else {
+        setAdviceAccepted((block5?.length ?? 0) > 0);
+      }
       setMemberName(me?.full_name ?? "");
       setSignedName("");
       try {
@@ -155,7 +165,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
         if (cancelled) return;
         setReviewed(rv.acknowledged);
         // Not yet through the Pre-Payment Review (and not back from Stripe): that screen comes first.
-        if (!rv.acknowledged && !account.priority_rank_timestamp && !sessionId) {
+        if (!rv.acknowledged && !account.priority_rank_timestamp && !sessionId && !account.coBuyer) {
           navigate({ to: "/buyer/onboarding/pra-review", replace: true });
           return;
         }
@@ -271,6 +281,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
             actorId={user.id}
             members={members}
             onAccepted={() => setAdviceAccepted(true)}
+            viaServerFor={coBuyerLogin ? actingMemberId : undefined}
           />
         ) : (
           <>
@@ -291,9 +302,9 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
             {paid ? (
               <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
                 <p className="text-sm font-medium text-foreground">
-                  Enrollment fee paid — {formatUsd(paidCents ?? feeCents)}
+                  {coBuyerLogin ? "Priority Reservation Agreement" : `Enrollment fee paid — ${formatUsd(paidCents ?? feeCents)}`}
                 </p>
-                {rankStamp ? (
+                {rankStamp && !coBuyerLogin ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Priority rank timestamp:{" "}
                     <span className="font-mono">{rankStamp}</span>

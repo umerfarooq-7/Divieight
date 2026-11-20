@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
+import { loadAccountForPage } from "@/lib/buyer";
 import { BuyerOnboardingStepper } from "@/components/BuyerOnboardingStepper";
 import { DocumentReader } from "@/components/DocumentReader";
 import { acknowledgePraReview, getPraReviewState } from "@/lib/document-access.functions";
@@ -48,7 +49,7 @@ function ReviewForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: 
     }
     let cancelled = false;
     (async () => {
-      const { data: account } = await supabase.from("buyer_accounts").select("id, intent, primary_target_market").eq("auth_user_id", user.id).maybeSingle();
+      const account = await loadAccountForPage(user.id);
       if (cancelled) return;
       if (!account) {
         navigate({ to: "/buyer/register" });

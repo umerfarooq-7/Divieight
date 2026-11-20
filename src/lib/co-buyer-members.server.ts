@@ -296,3 +296,38 @@ export async function coBuyerSelf(db: Db, params: { userId: string }): Promise<i
     shares,
   };
 }
+
+/** The few account fields the shared onboarding screens need for a co-buyer's login (never the rest of the holder's account). */
+export async function accountRowForLogin(db: Db, params: { userId: string }): Promise<{ id: string; onboarding_status: string; priority_rank_timestamp: string | null; intent: string | null; primary_target_market: string | null; coBuyer: boolean } | null> {
+  const account = await accountFor(db, params.userId);
+  const { data } = await db.from("buyer_accounts").select("id, onboarding_status, priority_rank_timestamp, intent, primary_target_market").eq("id", account.id).maybeSingle();
+  if (!data) return null;
+  return { ...(data as { id: string; onboarding_status: string; priority_rank_timestamp: string | null; intent: string | null; primary_target_market: string | null }), coBuyer: Boolean(account.viaMemberId) };
+}
+
+/** The co-buyer's own Independent Professional Advice acknowledgment (Block 5), recorded on the server for them alone. */
+export async function acceptAdviceNotice(db: Db, params: { userId: string; actingMemberId: string; documentHash: string; documentVersion: string; ip: string | null }): Promise<void> {
+  const { requireActingMember } = await import("@/lib/account-members.server");
+  const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
+  const { data: existing } = await db.from("signed_documents").select("id").eq("buyer_account_id", account.id).eq("account_member_id", member.id).eq("document_type", "block_5_independent_advice").limit(1);
+  if (((existing ?? []) as unknown[]).length > 0) return;
+  const { error } = await db.from("signed_documents").insert({
+    buyer_account_id: account.id,
+    account_member_id: member.id,
+    document_type: "block_5_independent_advice",
+    document_version: params.documentVersion,
+    signed_name: (member.full_name ?? "Account Member").trim(),
+    document_hash: params.documentHash,
+    ip_address: params.ip,
+  });
+  if (error) throw new Error(error.message);
+  await audit(db, params.userId, account.id, "buyer.pra_signed", { block: "block_5_independent_advice", document_hash: params.documentHash, account_member_id: member.id, ip_address: params.ip });
+}
+
+/** Whether this member has acknowledged the Independent Professional Advice notice (the member's own record). */
+export async function adviceNoticeState(db: Db, params: { userId: string; actingMemberId: string }): Promise<{ accepted: boolean }> {
+  const { requireActingMember } = await import("@/lib/account-members.server");
+  const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
+  const { data } = await db.from("signed_documents").select("id").eq("buyer_account_id", account.id).eq("account_member_id", member.id).eq("document_type", "block_5_independent_advice").limit(1);
+  return { accepted: ((data ?? []) as unknown[]).length > 0 };
+}

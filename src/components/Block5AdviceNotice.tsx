@@ -31,11 +31,14 @@ export function Block5AdviceNotice({
   actorId,
   members,
   onAccepted,
+  viaServerFor,
 }: {
   buyerAccountId: string;
   actorId: string;
   members: Block5Member[];
   onAccepted: () => void;
+  /** A co-buyer: their own acknowledgment is recorded by the server for this member only. */
+  viaServerFor?: string;
 }) {
   const roster = members.length ? members : [];
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -54,6 +57,21 @@ export function Block5AdviceNotice({
       if (res.ok) ip = (await res.json()).ip ?? null;
     } catch {
       ip = null;
+    }
+
+    if (viaServerFor) {
+      try {
+        const { acceptAdviceNoticeFn } = await import("@/lib/co-buyer-members.functions");
+        await acceptAdviceNoticeFn({ data: { actingMemberId: viaServerFor, documentHash: BLOCK_5_HASH, documentVersion: BLOCK_5_VERSION, ip } });
+      } catch (e) {
+        setSaving(false);
+        toast.error(e instanceof Error ? e.message : "The acknowledgment wasn't recorded.");
+        return;
+      }
+      setSaving(false);
+      toast.success("Acknowledgment recorded.");
+      onAccepted();
+      return;
     }
 
     const rows = roster.map((m) => ({

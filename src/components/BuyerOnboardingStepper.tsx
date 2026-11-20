@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useIsCoBuyer } from "@/hooks/use-co-buyer";
 
 const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "W-9", "Liquidity"] as const;
 
@@ -7,6 +8,14 @@ const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "W-9", "Liquidity"
 export type BuyerOnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingStep }) {
+  const isCoBuyer = useIsCoBuyer();
+  if (isCoBuyer) {
+    return (
+      <Link to="/buyer/co/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+        ← Back to your portal
+      </Link>
+    );
+  }
   return (
     <>
     <ol className="mx-auto flex w-full max-w-3xl items-center gap-1.5 sm:gap-2">

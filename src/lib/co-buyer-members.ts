@@ -84,3 +84,26 @@ export interface CoBuyerSelf {
   feePaid: boolean;
   shares: Array<{ reservationId: string; propertyId: string; address: string }>;
 }
+
+/**
+ * A co-buyer's own steps, once, in the order they are done. Each opens the screen where it is done (the same screens the account holder used);
+ * the consents and the fee are done in the portal itself.
+ */
+export const COBUYER_STEPS: Array<{
+  key: string;
+  label: string;
+  blurb: string;
+  path?: "/buyer/onboarding/identity" | "/buyer/onboarding/liveness" | "/buyer/onboarding/eligibility" | "/buyer/onboarding/payment" | "/buyer/onboarding/vetting" | "/buyer/onboarding/w9";
+}> = [
+  { key: "identity", label: "Identity", blurb: "Upload your driver's license and confirm your details.", path: "/buyer/onboarding/identity" },
+  { key: "liveness", label: "Liveness check", blurb: "A quick selfie to confirm it is really you.", path: "/buyer/onboarding/liveness" },
+  { key: "standard", label: "Read the Eligibility Standard", blurb: "Read the Participant Eligibility Standard.", path: "/buyer/onboarding/eligibility" },
+  { key: "independent_advice", label: "Independent advice notice", blurb: "Acknowledge the recommendation to take independent professional advice.", path: "/buyer/onboarding/payment" },
+  { key: "pra", label: "Priority Reservation Agreement", blurb: "Read and sign the agreement with your own legal name.", path: "/buyer/onboarding/payment" },
+  { key: "declaration", label: "Eligibility declaration", blurb: "Answer the eligibility statements yourself.", path: "/buyer/onboarding/vetting" },
+  { key: "hold_harmless", label: "Hold harmless", blurb: "Read and sign the hold harmless acknowledgment.", path: "/buyer/onboarding/vetting" },
+  { key: "w9", label: "W-9 tax form", blurb: "Your tax details, needed for any distributions you receive.", path: "/buyer/onboarding/w9" },
+  { key: "block1", label: "Account linking consent", blurb: "Your consent to link accounts for the liquidity check." },
+  { key: "block2", label: "Entity formation authorization", blurb: "Your authorization to form the entity that holds the home." },
+  { key: "fee", label: "Platform enrollment fee", blurb: "Your own one-time enrollment fee." },
+];

@@ -29,6 +29,35 @@ export const getCoBuyerSelf = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => (await server()).coBuyerSelf(await adminDb(), { userId: context.userId }));
 
+/** The account row the shared onboarding screens need (a co-buyer's login has no buyer account of its own). */
+export const getMyAccountRowFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    try {
+      return await (await server()).accountRowForLogin(await adminDb(), { userId: context.userId });
+    } catch {
+      return null;
+    }
+  });
+
+export const getAdviceNoticeStateFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { actingMemberId: string }) => ({ actingMemberId: text(input?.actingMemberId, "who is acting", 64) }))
+  .handler(async ({ data, context }) => (await server()).adviceNoticeState(await adminDb(), { userId: context.userId, ...data }));
+
+export const acceptAdviceNoticeFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { actingMemberId: string; documentHash: string; documentVersion: string; ip?: string | null }) => ({
+    actingMemberId: text(input?.actingMemberId, "who is acting", 64),
+    documentHash: text(input?.documentHash, "the document", 200),
+    documentVersion: text(input?.documentVersion, "the version", 64),
+    ip: input?.ip ? String(input.ip).slice(0, 64) : null,
+  }))
+  .handler(async ({ data, context }) => {
+    await (await server()).acceptAdviceNotice(await adminDb(), { userId: context.userId, ...data });
+    return { ok: true };
+  });
+
 export const inviteCoBuyerFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { name: string; email: string }) => ({ name: text(input?.name, "their full name", 100), email: text(input?.email, "their email", 254) }))

@@ -6,6 +6,7 @@
  */
 import { BLOCK1_VERSION, BLOCK2_VERSION, block1ConsentText, block2AuthorizationText } from "@/constants/authorizationsCopy";
 import { requireActingMember, type RequestContext } from "@/lib/account-members.server";
+import { isCoBuyer } from "@/lib/account-members";
 import { legalNamesMatch } from "@/lib/eligibility-declaration";
 import { sha256 } from "@/lib/entity-genesis-stage2.server";
 import { recordAuthorityUse, resolveAuthority } from "@/lib/member-authority.server";
@@ -19,9 +20,10 @@ export const SIGNATURE_MISMATCH = "The signature must be this member's full lega
 
 const nameOf = (m: { full_name: string | null; role: string }) => m.full_name?.trim() || (m.role === "primary" ? "the account holder" : "the second member");
 
-async function activeMembers(db: Db, accountId: string) {
-  const { data } = await db.from("account_members").select("id, full_name, role").eq("buyer_account_id", accountId).eq("status", "active");
-  return (data ?? []) as Array<{ id: string; full_name: string | null; role: string }>;
+/** Active members the account itself waits on: everyone but a co-buyer (who does their own steps). */
+async function activeMembers(db: Db, accountId: string, extraIds: string[] = []) {
+  const { data } = await db.from("account_members").select("*").eq("buyer_account_id", accountId).eq("status", "active");
+  return ((data ?? []) as Array<{ id: string; full_name: string | null; role: string; auth_user_id?: string | null; invite_token_hash?: string | null }>).filter((m) => !isCoBuyer(m) || extraIds.includes(m.id));
 }
 
 async function audit(db: Db, userId: string, action: string, accountId: string, metadata: Record<string, unknown>) {
@@ -65,9 +67,9 @@ export async function acceptAuthorization(db: Db, params: { userId: string; acti
 }
 
 /** Names of active members who haven't accepted this block yet. */
-export async function waitingOnBlock(db: Db, accountId: string, block: AuthorizationBlock): Promise<string[]> {
+export async function waitingOnBlock(db: Db, accountId: string, block: AuthorizationBlock, extraIds: string[] = []): Promise<string[]> {
   const spec = BLOCKS[block];
-  const members = await activeMembers(db, accountId);
+  const members = await activeMembers(db, accountId, extraIds);
   const { data } = await db.from(spec.table).select("account_member_id").eq("buyer_account_id", accountId).eq("text_version", spec.version);
   const done = new Set(((data ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id));
   return members.filter((m) => !done.has(m.id)).map(nameOf);
@@ -86,7 +88,12 @@ export async function authorizationState(db: Db, params: { userId: string; actin
 /** Entity Genesis Stage 2 gate: every active member of every buyer account given has accepted Block 2. */
 export async function block2MissingFor(db: Db, accountIds: string[]): Promise<string[]> {
   const missing: string[] = [];
-  for (const id of accountIds) missing.push(...(await waitingOnBlock(db, id, "block2")));
+  for (const id of accountIds) {
+    // A co-buyer counts here once they are on a share of this account.
+    const { data: onShares } = await db.from("reservation_co_members").select("account_member_id").eq("buyer_account_id", id);
+    const extra = ((onShares ?? []) as Array<{ account_member_id: string }>).map((r) => r.account_member_id);
+    missing.push(...(await waitingOnBlock(db, id, "block2", extra)));
+  }
   return missing;
 }
 
