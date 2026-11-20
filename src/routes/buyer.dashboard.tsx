@@ -35,6 +35,8 @@ import { AccountMembersCard } from "@/components/AccountMembersCard";
 import { CoBuyerCard } from "@/components/CoBuyerCard";
 import { JointRequestsCard } from "@/components/JointRequestsCard";
 import { cancelJointRequestFn } from "@/lib/joint-reservation.functions";
+import { nextOnboardingStep, memberDisplayName } from "@/lib/account-members";
+import { getMyAccountMembers } from "@/lib/account-members.functions";
 import { verificationRequestCopy } from "@/constants/eligibilityCheckCopy";
 import { loadMemberSteps } from "@/lib/account-rollup";
 import { accountVettingDisplay } from "@/lib/eligibility-engine";
@@ -184,6 +186,15 @@ function BuyerDashboardPage() {
     }
   }
 
+  // What is still open in the onboarding, per person on the account: said at the top of the dashboard.
+  const fetchAccountMembers = useServerFn(getMyAccountMembers);
+  const accountMembersQuery = useQuery({
+    queryKey: ["my-account-members", authUserId],
+    enabled: !!authUserId,
+    retry: false,
+    queryFn: () => fetchAccountMembers(),
+  });
+
   async function handleWithdraw(reservationId: string) {
     setConfirmingWithdrawId(null);
     setWithdrawingId(reservationId);
@@ -275,9 +286,36 @@ function BuyerDashboardPage() {
   const endDate = enrollmentEndDate(account.priority_rank_timestamp);
   const resumeTo = buyerRedirect(account.onboarding_status);
   const ownedCount = ownership?.properties?.length ?? 0;
+  // The first thing still to do, once the account has its Golden Ticket nothing is open. A button goes straight to that page.
+  const todo = account.golden_ticket_issued
+    ? null
+    : ((accountMembersQuery.data?.members ?? [])
+        .map((m) => ({ member: m, step: nextOnboardingStep(m) }))
+        .find((x) => x.step) ?? null);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-12 sm:px-6 lg:px-8">
+      {todo?.step ? (
+        <div role="alert" className="grid gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <p className="flex items-center gap-2 font-display text-base font-semibold text-destructive">
+              <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden />
+              Your onboarding is incomplete
+            </p>
+            <p className="mt-1 text-sm text-foreground">
+              {(accountMembersQuery.data?.members.length ?? 1) > 1 ? `${memberDisplayName(todo.member)}: ` : ""}
+              <strong>{todo.step.label}</strong> is still to do. Your Golden Ticket unlocks once every step is complete.
+            </p>
+          </div>
+          <Link
+            to={todo.step.path}
+            className="justify-self-start rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:opacity-90 sm:justify-self-end"
+          >
+            Complete {todo.step.label}
+          </Link>
+        </div>
+      ) : null}
+
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
@@ -364,7 +402,7 @@ function BuyerDashboardPage() {
         </div>
       ) : null}
 
-      {!onboardingComplete ? (
+      {!onboardingComplete && !todo?.step ? (
         <div className="grid gap-3 rounded-xl border border-accent/50 bg-accent/10 p-5 sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
             <p className="font-display text-base font-semibold text-foreground">

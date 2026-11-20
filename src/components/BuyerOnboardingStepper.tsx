@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
+const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "W-9", "Liquidity"] as const;
 
 /** 1 is Identity, the first step; each page passes its own number. */
-export type BuyerOnboardingStep = 1 | 2 | 3 | 4 | 5;
+export type BuyerOnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingStep }) {
   return (

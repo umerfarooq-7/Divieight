@@ -1,0 +1,27 @@
+import { it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { buildFreshDb } from "./helpers/fresh-db";
+it("reset script runs on the fresh schema and keeps only admin + config", async () => {
+  const { pg } = await buildFreshDb();
+  await pg.exec("SET session_replication_role = replica");
+  const U = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  for (const id of [U(1), U(2), U(3)]) await pg.query("INSERT INTO auth.users (id, email) VALUES ($1, $2)", [id, `${id.slice(-2)}@t.invalid`]);
+  await pg.query("INSERT INTO public.user_roles (user_id, role) VALUES ($1, 'admin')", [U(1)]);
+  await pg.query("INSERT INTO public.user_roles (user_id, role) VALUES ($1, 'founder')", [U(1)]).catch(() => undefined);
+  await pg.query("INSERT INTO public.sellers (id, email, full_name) VALUES ($1, 's@t.invalid', 'S')", [U(2)]);
+  await pg.query("INSERT INTO public.buyer_accounts (id, auth_user_id, email) VALUES ($1, $2, 'b@t.invalid')", [U(11), U(3)]);
+  await pg.query("INSERT INTO public.properties (id, seller_id, address, city, state, zip, status) VALUES ($1, $2, 'a', 'b', 'WY', '1', 'pending')", [U(21), U(2)]);
+  await pg.query("INSERT INTO public.audit_log (action_type, entity_type) VALUES ('x', 'y')").catch(() => undefined);
+  await pg.exec("RESET session_replication_role");
+  const before = (await pg.query("SELECT count(*)::int n FROM public.tc_versions")).rows[0]!.n;
+  const sql = readFileSync("reset-test-data.sql", "utf8").replace(/SELECT 'storage_objects[^\n]*\n/, "SELECT 'x', 0::bigint\n").replace("ORDER BY u.created_at", "ORDER BY u.email");
+  await pg.exec(sql);
+  const n = async (t: string) => (await pg.query(`SELECT count(*)::int n FROM ${t}`)).rows[0]!.n;
+  expect(await n("auth.users")).toBe(1);
+  expect(await n("public.sellers")).toBe(0);
+  expect(await n("public.buyer_accounts")).toBe(0);
+  expect(await n("public.properties")).toBe(0);
+  expect(await n("public.audit_log")).toBe(0);
+  expect(await n("public.user_roles")).toBeGreaterThanOrEqual(1);
+  expect(await n("public.tc_versions")).toBe(before);
+}, 600000);

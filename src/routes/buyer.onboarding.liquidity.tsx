@@ -68,7 +68,7 @@ interface BuyerRow {
 /** Block 1 and Block 2 are given by each member (through the picker); the Plaid link is the account's. */
 function LiquidityGatePage() {
   return (
-    <ActingMemberGate step="Step 5 · Liquidity" journey>
+    <ActingMemberGate step="Step 6 · Liquidity" journey>
       {({ member, switchPerson }) => <LiquidityForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -308,7 +308,7 @@ function LiquidityForMember({ actingMemberId, onSwitch }: { actingMemberId: stri
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <BuyerOnboardingStepper current={5} />
+      <BuyerOnboardingStepper current={6} />
 
       <div className="mt-10">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">

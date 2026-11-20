@@ -24,12 +24,12 @@ export const Route = createFileRoute("/buyer/onboarding/pra-review")({
 function PraReviewScreen() {
   return (
     <ActingMemberGate step="Step 3 · Pre-Payment Review" journey>
-      {({ member, switchPerson }) => <ReviewForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+      {({ member, members, switchPerson }) => <ReviewForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} multi={members.length > 1} />}
     </ActingMemberGate>
   );
 }
 
-function ReviewForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
+function ReviewForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: string; onSwitch: () => void; multi: boolean }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [buyer, setBuyer] = useState<PraBuyer | null>(null);
@@ -136,9 +136,11 @@ function ReviewForMember({ actingMemberId, onSwitch }: { actingMemberId: string;
             )}
             {!reachedEnd && !acknowledgedAt ? <p className="mt-2 text-sm text-muted-foreground">Scroll to the bottom of the agreement to enable the acknowledgment.</p> : null}
             <div className="mt-4 flex flex-wrap gap-3">
-              <button type="button" onClick={onSwitch} className="inline-flex h-11 items-center justify-center rounded-md border border-border px-5 text-sm font-medium text-foreground hover:bg-muted">
-                Switch person
-              </button>
+              {multi ? (
+                <button type="button" onClick={onSwitch} className="inline-flex h-11 items-center justify-center rounded-md border border-border px-5 text-sm font-medium text-foreground hover:bg-muted">
+                  Switch person
+                </button>
+              ) : null}
               {acknowledgedAt ? (
                 <button type="button" onClick={() => navigate({ to: "/buyer/onboarding/payment" })} className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90">
                   Continue to payment

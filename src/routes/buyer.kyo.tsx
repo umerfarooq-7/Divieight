@@ -18,14 +18,14 @@ export const Route = createFileRoute("/buyer/kyo")({
 function KyoScreen() {
   return (
     <ActingMemberGate step="My data">
-      {({ member, switchPerson }) => <KyoForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+      {({ member, members, switchPerson }) => <KyoForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} multi={members.length > 1} />}
     </ActingMemberGate>
   );
 }
 
 type View = Awaited<ReturnType<typeof getMyKyo>>;
 
-function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
+function KyoForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: string; onSwitch: () => void; multi: boolean }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const load = useServerFn(getMyKyo);
@@ -188,9 +188,11 @@ function KyoForMember({ actingMemberId, onSwitch }: { actingMemberId: string; on
       )}
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <Button variant="outline" onClick={onSwitch}>
-          Switch person
-        </Button>
+        {multi ? (
+          <Button variant="outline" onClick={onSwitch}>
+            Switch person
+          </Button>
+        ) : null}
         <Button asChild variant="outline">
           <Link to="/buyer/dashboard">Back to dashboard</Link>
         </Button>

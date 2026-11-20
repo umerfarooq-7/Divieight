@@ -230,7 +230,8 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       .from("buyer_accounts")
       .update({ last_activity_at: new Date().toISOString(), stall_warning_sent_at: null, onboarding_status: "liquidity_pending" })
       .eq("id", buyer.id);
-    navigate({ to: "/buyer/onboarding/liquidity" });
+    // The W-9 is the next step; the liquidity check comes after it.
+    navigate({ to: "/buyer/onboarding/w9" });
   }
 
   if (loading || !ready) {

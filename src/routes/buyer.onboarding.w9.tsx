@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ActingMemberGate } from "@/components/ActingMemberGate";
+import { BuyerOnboardingStepper } from "@/components/BuyerOnboardingStepper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +19,13 @@ export const Route = createFileRoute("/buyer/onboarding/w9")({
 
 function W9Screen() {
   return (
-    <ActingMemberGate step="W-9">
-      {({ member, switchPerson }) => <W9ForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
+    <ActingMemberGate step="Step 5 · W-9" journey>
+      {({ member, members, switchPerson }) => <W9ForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} multi={members.length > 1} />}
     </ActingMemberGate>
   );
 }
 
-function W9ForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onSwitch: () => void }) {
+function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: string; onSwitch: () => void; multi: boolean }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const load = useServerFn(getMyW9);
@@ -62,6 +63,8 @@ function W9ForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onS
       setTin("");
       setState((s) => (s ? { ...s, w9: r.w9 } : s));
       toast.success("W-9 saved.");
+      // Saved: on to the last step, the liquidity check.
+      navigate({ to: "/buyer/onboarding/liquidity" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "The W-9 couldn't be saved.");
     } finally {
@@ -71,7 +74,8 @@ function W9ForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onS
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">W-9</p>
+      <BuyerOnboardingStepper current={5} />
+      <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 5 · W-9</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">Request for Taxpayer Identification Number</h1>
       <p className="mt-3 text-sm text-muted-foreground">Each Account Member completes their own W-9. Your TIN is encrypted; after you enter it, only its last four digits are ever shown.</p>
 
@@ -90,10 +94,15 @@ function W9ForMember({ actingMemberId, onSwitch }: { actingMemberId: string; onS
             </div>
           </dl>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button variant="outline" onClick={onSwitch}>
-              Switch person
-            </Button>
+            {multi ? (
+              <Button variant="outline" onClick={onSwitch}>
+                Switch person
+              </Button>
+            ) : null}
             <Button asChild>
+              <Link to="/buyer/onboarding/liquidity">Continue to the liquidity check</Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link to="/buyer/dashboard">Back to dashboard</Link>
             </Button>
           </div>

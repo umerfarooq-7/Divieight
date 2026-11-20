@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { JOURNEY_KEYS, journeyDone, journeyMember, nextJourneyPath, type ChecklistItem } from "@/lib/account-members";
+import { JOURNEY_KEYS, journeyDone, journeyMember, nextJourneyPath, nextOnboardingStep, type ChecklistItem } from "@/lib/account-members";
 import { BUYER_ENROLLMENT_CENTS_PER_MEMBER, enrollmentFeeCents } from "@/lib/buyer-fee";
 
 const checklist = (doneKeys: readonly string[]): ChecklistItem[] =>
@@ -31,7 +31,8 @@ describe("two members go one at a time", () => {
     expect(nextJourneyPath(member("member", ["identity", "liveness"]))).toBe("/buyer/onboarding/eligibility");
     expect(nextJourneyPath(member("member", ["identity", "liveness", "standard"]))).toBe("/buyer/onboarding/payment");
     expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra"]))).toBe("/buyer/onboarding/vetting");
-    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra", "hold_harmless", "declaration"]))).toBe("/buyer/onboarding/liquidity");
+    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra", "hold_harmless", "declaration"]))).toBe("/buyer/onboarding/w9");
+    expect(nextJourneyPath(member("member", ["identity", "liveness", "standard", "pra", "hold_harmless", "declaration", "w9"]))).toBe("/buyer/onboarding/liquidity");
     expect(nextJourneyPath(member("member", ALL))).toBeNull();
   });
 });
@@ -78,5 +79,50 @@ describe("the onboarding screens follow the order", () => {
   it("the last screen hands over to the other member", () => {
     expect(readFileSync("src/routes/buyer.onboarding.liquidity.tsx", "utf8")).toContain("<JourneyHandoverCard");
     expect(readFileSync("src/components/AccountMembersCard.tsx", "utf8")).toContain("<JourneyHandoverCard");
+  });
+});
+
+describe("what the dashboard says is still to do", () => {
+  const ALL_KEYS = ["identity", "liveness", "standard", "independent_advice", "pra", "declaration", "hold_harmless", "w9", "block1", "block2"];
+  const done = (...keys: string[]) => ({ checklist: ALL_KEYS.map((key) => ({ key, label: key, done: keys.includes(key) })) });
+
+  it("is the W-9 for a buyer who has done everything else, and its button goes to the W-9 page", () => {
+    const step = nextOnboardingStep(done(...ALL_KEYS.filter((k) => k !== "w9")));
+    expect(step).toMatchObject({ key: "w9", label: "W-9", path: "/buyer/onboarding/w9" });
+  });
+
+  it("names the first open step, in the order the onboarding goes", () => {
+    expect(nextOnboardingStep(done())).toMatchObject({ key: "identity", path: "/buyer/onboarding/identity" });
+    expect(nextOnboardingStep(done("identity"))).toMatchObject({ key: "liveness", path: "/buyer/onboarding/liveness" });
+    expect(nextOnboardingStep(done("identity", "liveness"))).toMatchObject({ key: "standard", path: "/buyer/onboarding/eligibility" });
+    expect(nextOnboardingStep(done("identity", "liveness", "standard", "independent_advice"))).toMatchObject({ key: "pra", path: "/buyer/onboarding/payment" });
+    expect(nextOnboardingStep(done("identity", "liveness", "standard", "independent_advice", "pra"))).toMatchObject({ key: "declaration", path: "/buyer/onboarding/vetting" });
+    expect(nextOnboardingStep(done("identity", "liveness", "standard", "independent_advice", "pra", "declaration", "hold_harmless", "w9"))).toMatchObject({ key: "block1", path: "/buyer/onboarding/liquidity" });
+  });
+
+  it("is nothing once every step is done", () => {
+    expect(nextOnboardingStep(done(...ALL_KEYS))).toBeNull();
+  });
+});
+
+describe("the onboarding screens", () => {
+  it("W-9 is a numbered step between Vetting and Liquidity, and vetting leads to it", () => {
+    expect(readFileSync("src/components/BuyerOnboardingStepper.tsx", "utf8")).toContain('["Identity", "Lifestyle", "Payment", "Vetting", "W-9", "Liquidity"]');
+    expect(readFileSync("src/routes/buyer.onboarding.vetting.tsx", "utf8")).toContain('navigate({ to: "/buyer/onboarding/w9" })');
+    const w9 = readFileSync("src/routes/buyer.onboarding.w9.tsx", "utf8");
+    expect(w9).toContain("<BuyerOnboardingStepper current={5} />");
+    expect(w9).toContain('navigate({ to: "/buyer/onboarding/liquidity" })');
+  });
+
+  it("nobody on their own account sees Switch person", () => {
+    for (const f of ["src/routes/buyer.onboarding.pra-review.tsx", "src/routes/buyer.onboarding.w9.tsx", "src/routes/buyer.kyo.tsx"]) {
+      expect(readFileSync(f, "utf8"), f).toMatch(/\{multi \? \(/);
+    }
+  });
+
+  it("the dashboard says the onboarding is incomplete at the top, with a button to the page", () => {
+    const src = readFileSync("src/routes/buyer.dashboard.tsx", "utf8");
+    expect(src).toContain("Your onboarding is incomplete");
+    expect(src).toContain("to={todo.step.path}");
   });
 });
