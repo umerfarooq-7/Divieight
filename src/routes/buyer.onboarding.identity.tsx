@@ -72,7 +72,7 @@ const INTENTS = [
 
 function BuyerIdentityScreen() {
   return (
-    <ActingMemberGate step="Step 2 · Identity" journey>
+    <ActingMemberGate step="Step 1 · Identity" journey>
       {({ member }) => <IdentityForMember key={member.id} actingMemberId={member.id} isPrimary={member.role === "primary"} />}
     </ActingMemberGate>
   );
@@ -292,7 +292,7 @@ function IdentityForMember({ actingMemberId, isPrimary }: { actingMemberId: stri
 
       <div className="mt-10 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 2 · Identity
+          Step 1 · Identity
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Verify your identity

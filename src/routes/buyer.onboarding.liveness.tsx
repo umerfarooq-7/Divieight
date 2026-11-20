@@ -23,7 +23,7 @@ export const Route = createFileRoute("/buyer/onboarding/liveness")({
 
 function LivenessScreen() {
   return (
-    <ActingMemberGate step="Step 2 · Liveness" journey>
+    <ActingMemberGate step="Step 1 · Liveness" journey>
       {({ member, switchPerson }) => <LivenessForMember key={member.id} actingMemberId={member.id} memberName={member.fullName ?? ""} isPrimary={member.role === "primary"} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -99,7 +99,7 @@ function LivenessForMember({ actingMemberId, memberName, isPrimary, onSwitch }: 
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <BuyerOnboardingStepper current={1} />
       <div className="mt-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 2 · Liveness</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 1 · Liveness</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Confirm it's really you</h1>
         <p className="mt-3 text-base text-muted-foreground">
           {memberName ? `${memberName}, take` : "Take"} a selfie. We compare it with the ID you uploaded to confirm that a real person is present and that the document is yours.

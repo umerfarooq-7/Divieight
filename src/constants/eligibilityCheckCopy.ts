@@ -2,7 +2,7 @@
 // (eligibilityCopy.ts is the client's locked document and is not edited; this file holds the screen text.)
 
 export const eligibilityCheckScreen = {
-  eyebrow: "Step 5 · The Eligibility Check",
+  eyebrow: "Step 4 · The Eligibility Check",
   heading: "The Eligibility Check",
   body:
     "The platform confirms identity and liveness for each Account Member individually, screens each Account Member against United States government sanctions, politically-exposed-person and law-enforcement watchlists, and records each Account Member's declaration made under penalty of perjury that they meet the Participant Eligibility Standard. The platform does not obtain a consumer report and does not conduct a criminal history search. The platform returns one of three results: eligible, held, or not eligible. No person at divieight exercises discretion, and identical declarations always receive the same result.",

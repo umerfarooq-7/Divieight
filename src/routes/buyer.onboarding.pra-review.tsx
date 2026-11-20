@@ -23,7 +23,7 @@ export const Route = createFileRoute("/buyer/onboarding/pra-review")({
 
 function PraReviewScreen() {
   return (
-    <ActingMemberGate step="Step 4 · Pre-Payment Review" journey>
+    <ActingMemberGate step="Step 3 · Pre-Payment Review" journey>
       {({ member, switchPerson }) => <ReviewForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -91,7 +91,7 @@ function ReviewForMember({ actingMemberId, onSwitch }: { actingMemberId: string;
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <BuyerOnboardingStepper current={3} />
       <div className="mt-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 4 · Pre-Payment Review</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 3 · Pre-Payment Review</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-foreground">Read the Priority Reservation Agreement</h1>
         <p className="mt-2 text-base text-muted-foreground">
           Before you pay the enrollment fee, read the agreement you will sign afterward. You can search it, jump to any section, enlarge the text and download it. Payment opens once you have read it to the

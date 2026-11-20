@@ -140,19 +140,22 @@ export function ActingMemberGate({
   if (member) {
     return (
       <Ctx.Provider value={{ accountId: data.accountId, member, members: data.members, switchPerson }}>
-        <div className="mx-auto mt-4 flex max-w-4xl flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-4 py-2 text-sm">
-          <span className="inline-flex items-center gap-2 text-foreground">
-            <UserRound className="h-4 w-4 text-accent" aria-hidden />
-            Acting as <span className="font-semibold">{memberDisplayName(member)}</span>
-          </span>
-          {turn ? (
-            <span className="text-xs text-muted-foreground">Member {data.members.findIndex((m) => m.id === turn.id) + 1} of {data.members.length}: one person at a time</span>
-          ) : !single ? (
-            <button type="button" onClick={switchPerson} className="text-sm font-medium text-primary hover:underline">
-              Switch person
-            </button>
-          ) : null}
-        </div>
+        {/* Only an account with two people says who is acting. A buyer on their own account just goes through the steps. */}
+        {single ? null : (
+          <div className="mx-auto mt-4 flex max-w-4xl flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-4 py-2 text-sm">
+            <span className="inline-flex items-center gap-2 text-foreground">
+              <UserRound className="h-4 w-4 text-accent" aria-hidden />
+              Acting as <span className="font-semibold">{memberDisplayName(member)}</span>
+            </span>
+            {turn ? (
+              <span className="text-xs text-muted-foreground">Member {data.members.findIndex((m) => m.id === turn.id) + 1} of {data.members.length}: one person at a time</span>
+            ) : (
+              <button type="button" onClick={switchPerson} className="text-sm font-medium text-primary hover:underline">
+                Switch person
+              </button>
+            )}
+          </div>
+        )}
         {children({ accountId: data.accountId, member, members: data.members, switchPerson })}
       </Ctx.Provider>
     );

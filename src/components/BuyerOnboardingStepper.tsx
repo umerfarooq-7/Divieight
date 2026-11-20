@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Account", "Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
+const STEPS = ["Identity", "Lifestyle", "Payment", "Vetting", "Liquidity"] as const;
 
-/** 0 is the account (the old Members step, already done once you are signed in); the others keep their old numbers, so each page still passes the same value. */
-export type BuyerOnboardingStep = 0 | 1 | 2 | 3 | 4 | 5;
+/** 1 is Identity, the first step; each page passes its own number. */
+export type BuyerOnboardingStep = 1 | 2 | 3 | 4 | 5;
 
 export function BuyerOnboardingStepper({ current }: { current: BuyerOnboardingStep }) {
   return (
     <>
     <ol className="mx-auto flex w-full max-w-3xl items-center gap-1.5 sm:gap-2">
       {STEPS.map((label, i) => {
-        const step = i as BuyerOnboardingStep;
+        const step = (i + 1) as BuyerOnboardingStep;
         const isActive = step === current;
         const isDone = step < current;
         return (

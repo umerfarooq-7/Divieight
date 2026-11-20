@@ -59,7 +59,7 @@ type BuyerRow = {
 /** Every active member signs their own PRA (through the picker). The fee is the account's, paid once. */
 function PaymentScreen() {
   return (
-    <ActingMemberGate step="Step 4 · Agreement" journey>
+    <ActingMemberGate step="Step 3 · Agreement" journey>
       {({ member, switchPerson }) => <PaymentForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
@@ -251,7 +251,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
 
         <div className="mt-10 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-            Step 4 · Agreement & payment
+            Step 3 · Agreement & payment
           </p>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Priority Reservation Agreement

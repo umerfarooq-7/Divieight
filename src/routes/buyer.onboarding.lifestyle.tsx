@@ -165,7 +165,7 @@ function LifestyleScreen() {
 
       <div className="mt-10 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-          Step 3 · Lifestyle
+          Step 2 · Lifestyle
         </p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Lifestyle survey

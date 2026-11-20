@@ -70,7 +70,7 @@ interface DeclarationView {
 
 function VettingScreen() {
   return (
-    <ActingMemberGate step="Step 5 · Vetting" journey>
+    <ActingMemberGate step="Step 4 · Vetting" journey>
       {({ member, switchPerson }) => <VettingForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} />}
     </ActingMemberGate>
   );
