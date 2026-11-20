@@ -9,6 +9,7 @@
 | Encryption keys (`W9_TIN_ENCRYPTION_KEY*`) | any throwaway | its own | its own, generated once, stored only in Vercel |
 | `APP_ENV` | unset | `staging` | `production` |
 | `ESCALATION_SWEEP_SECRET` | unset (jobs refuse to run) | its own, 24+ chars | its own, 24+ chars |
+| Email (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, optional `SMTP_FROM` and `SMTP_SECURE`) | unset (nothing is sent) | a test mailbox | the domain's mailbox, e.g. `mail.<domain>`, port 465. If SMTP is not set, `RESEND_API_KEY` is used; if neither, no email goes out. The password lives only in Vercel's environment variables |
 | Vendors (liveness, sanctions, Plaid, Qualia, ACH) | simulated / sandbox | simulated / sandbox | real. **The app refuses to serve in production while any is simulated** |
 
 Production safety switch: `src/lib/runtime-config.ts`, enforced in `src/server.ts`. With `APP_ENV=production` (only; the older `IS_PRODUCTION` flag just adds warnings and never blocks) the server answers **503** to every request if

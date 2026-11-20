@@ -1,4 +1,4 @@
-import { resendFrom } from "@/lib/email-sender";
+import { sendMail } from "@/lib/mailer.server";
 import { isMandatoryNotification, isOwnerNotificationType } from "@/lib/owner-notifications";
 
 /**
@@ -41,19 +41,9 @@ function html(subject: string, rawBody: string, link: string | null, linkLabel: 
   </td></tr></table></body></html>`;
 }
 
+/** Goes by SMTP when it is set up, otherwise by Resend (src/lib/mailer.server.ts). False when nothing is configured or the server refused it. */
 export async function sendEmail(to: string, subject: string, body: string, link: string | null, linkLabel: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return false;
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ from: resendFrom(), to: [to], subject, html: html(subject, body, link, linkLabel) }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+  return sendMail({ to, subject, html: html(subject, body, link, linkLabel) });
 }
 
 /** An owner who switched this type's email off. Required notices ignore the setting. */

@@ -77,9 +77,9 @@ async function agentFor(db: Db, userId: string) {
 }
 
 async function sendInviteEmail(to: string, name: string | null, origin: string) {
-  const key = process.env['RESEND_API_KEY'];
-  if (!key) return;
-  const { resendFrom, supportFooter } = await import("@/lib/email-sender");
+  const { mailTransport, sendMail } = await import("@/lib/mailer.server");
+  if (mailTransport() === "none") return;
+  const { supportFooter } = await import("@/lib/email-sender");
   const body = `${name ? `Hi ${name},` : "Hello,"}
 
 A vetted buyer on divieight has designated you as their agent.
@@ -91,16 +91,7 @@ You have ${DESIGNATION_WINDOW_DAYS} calendar days to accept before the buyer may
 
 Compensation for representing this buyer is the buyer-side commission paid at closing by the title/escrow company from sale proceeds, through your Broker of Record. divieight does not pay agents directly.${supportFooter(origin)}`;
   try {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: resendFrom(),
-        to,
-        subject: "A divieight buyer has designated you as their agent",
-        text: body,
-      }),
-    });
+    await sendMail({ to, subject: "A divieight buyer has designated you as their agent", text: body });
   } catch (e) {
     console.error("[designation] invite email failed", e);
   }
@@ -630,21 +621,14 @@ const EXPIRY_NOTICE =
  */
 async function sendExpiryNotice(to: string | null): Promise<boolean> {
   if (!to) return false;
-  const key = process.env['RESEND_API_KEY'];
-  if (!key) return false;
-  const { resendFrom } = await import("@/lib/email-sender");
+  const { mailTransport, sendMail } = await import("@/lib/mailer.server");
+  if (mailTransport() === "none") return false;
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: resendFrom(),
-        to,
-        subject: "Action needed: your designated agent has not responded",
-        text: `${EXPIRY_NOTICE}\n\nSign in to divieight to choose how to continue.`,
-      }),
+    return await sendMail({
+      to,
+      subject: "Action needed: your designated agent has not responded",
+      text: `${EXPIRY_NOTICE}\n\nSign in to divieight to choose how to continue.`,
     });
-    return res.ok;
   } catch (e) {
     console.error("[designation] expiry notice failed", e);
     return false;

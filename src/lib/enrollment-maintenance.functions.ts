@@ -54,30 +54,13 @@ async function reminderAddresses(a: { auth_user_id: string; email: string }): Pr
 }
 
 async function sendEmail(recipient: string, subject: string, body: string) {
-  const { resendFrom } = await import("@/lib/email-sender");
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("[enrollment] RESEND_API_KEY not set — skipping email", { subject });
+  const { mailTransport, sendMail } = await import("@/lib/mailer.server");
+  if (mailTransport() === "none") {
+    console.warn("[enrollment] no mail transport is set up — skipping email", { subject });
     return;
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      from: resendFrom(),
-      to: [recipient],
-      subject,
-      html: warningEmail(subject, body, recipient),
-    }),
-  });
-  if (!res.ok) {
-    console.error("[enrollment] Resend rejected the send", {
-      status: res.status,
-      recipient,
-      subject,
-      response: await res.text(),
-    });
-  }
+  const accepted = await sendMail({ to: recipient, subject, html: warningEmail(subject, body, recipient) });
+  if (!accepted) console.error("[enrollment] the mail server refused the send", { subject });
 }
 
 /**

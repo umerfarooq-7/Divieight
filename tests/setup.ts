@@ -15,6 +15,7 @@ beforeEach(() => {
   harness.db = new FakeDb();
   harness.userId = "";
   delete process.env.RESEND_API_KEY; // never send real email from tests
+  for (const k of ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM", "SMTP_SECURE"]) delete process.env[k];
 });
 
 vi.mock("@tanstack/react-start", () => {

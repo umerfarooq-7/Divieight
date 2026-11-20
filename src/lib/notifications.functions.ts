@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { resendFrom } from "@/lib/email-sender";
+import { mailTransport, sendMail } from "@/lib/mailer.server";
 
 type EmailKind = "identity_submitted" | "listing_live" | "enrollment_fee_paid";
 
@@ -56,9 +56,8 @@ export const sendNotificationEmail = createServerFn({ method: "POST" })
     const recipient = context.claims?.email as string | undefined;
     if (!recipient) return { sent: false, reason: "no_email" as const };
 
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.warn("[email] RESEND_API_KEY not set — skipping email send", {
+    if (mailTransport() === "none") {
+      console.warn("[email] no mail transport is set up (SMTP_HOST/SMTP_USER/SMTP_PASS or RESEND_API_KEY) — skipping email send", {
         kind: data.kind,
       });
       return { sent: false, reason: "no_api_key" as const };
@@ -67,29 +66,10 @@ export const sendNotificationEmail = createServerFn({ method: "POST" })
     const subject = SUBJECTS[data.kind];
     const html = renderHtml(subject, BODIES[data.kind], recipient);
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        from: resendFrom(),
-        to: [recipient],
-        subject,
-        html,
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("[email] Resend rejected the send", {
-        status: res.status,
-        kind: data.kind,
-        // The provider's reply can echo the address, so only its length is logged.
-        responseChars: text.length,
-      });
-      return { sent: false, reason: "provider_error" as const, status: res.status };
+    const accepted = await sendMail({ to: recipient, subject, html });
+    if (!accepted) {
+      console.error("[email] the mail server refused the send", { kind: data.kind });
+      return { sent: false, reason: "provider_error" as const, status: 502 };
     }
     return { sent: true as const };
   });
