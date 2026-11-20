@@ -140,7 +140,7 @@ function CoBuyerPortal() {
 
       {d ? (
         <>
-          <Stepper labels={["Identity", "W-9", "Payment"]} flags={flags} current={current} />
+          {current === -1 ? null : <Stepper labels={["Identity", "W-9", "Payment"]} flags={flags} current={current} />}
 
           {current === -1 ? (
             <div className="mt-8 rounded-xl border border-emerald-600/40 bg-emerald-50 p-6 text-center dark:bg-emerald-950/20">
