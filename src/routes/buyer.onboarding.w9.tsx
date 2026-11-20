@@ -22,12 +22,12 @@ export const Route = createFileRoute("/buyer/onboarding/w9")({
 function W9Screen() {
   return (
     <ActingMemberGate step="Step 5 · W-9" journey>
-      {({ member, members, switchPerson }) => <W9ForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} multi={members.length > 1} />}
+      {({ member, members, switchPerson }) => <W9ForMember key={member.id} actingMemberId={member.id} onSwitch={switchPerson} multi={members.length > 1} coBuyer={Boolean(member.coBuyer)} />}
     </ActingMemberGate>
   );
 }
 
-function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: string; onSwitch: () => void; multi: boolean }) {
+function W9ForMember({ actingMemberId, onSwitch, multi, coBuyer }: { actingMemberId: string; onSwitch: () => void; multi: boolean; coBuyer: boolean }) {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const load = useServerFn(getMyW9);
@@ -94,8 +94,14 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <BuyerOnboardingStepper current={5} />
-      <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-accent">Step 5 · W-9</p>
+      {coBuyer ? (
+        <Link to="/buyer/co/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+          ← Back to your portal
+        </Link>
+      ) : (
+        <BuyerOnboardingStepper current={5} />
+      )}
+      <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-accent">{coBuyer ? "Step 2 · W-9" : "Step 5 · W-9"}</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-foreground">Request for Taxpayer Identification Number</h1>
       <p className="mt-3 text-sm text-muted-foreground">Each Account Member completes their own W-9. Your TIN is encrypted; after you enter it, only its last four digits are ever shown.</p>
 
@@ -121,7 +127,7 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
             ) : null}
             <Button onClick={() => void goNext()}>Continue</Button>
             <Button asChild variant="outline">
-              <Link to="/buyer/dashboard">Back to dashboard</Link>
+              <Link to={coBuyer ? "/buyer/co/dashboard" : "/buyer/dashboard"}>{coBuyer ? "Back to your portal" : "Back to dashboard"}</Link>
             </Button>
           </div>
         </section>

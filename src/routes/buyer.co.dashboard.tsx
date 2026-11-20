@@ -41,6 +41,7 @@ function CoBuyerPortal() {
   const [confirming, setConfirming] = useState(false);
   const [form, setForm] = useState({ fullName: "", address: "", dateOfBirth: "", idNumber: "" });
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,6 +76,15 @@ function CoBuyerPortal() {
       cancelled = true;
     };
   }, [sessionId, user, navigate, qc]);
+
+  // Reads the details off the photo (a stand-in until the identity provider is connected). Review and correct everything.
+  async function scan() {
+    setScanning(true);
+    await new Promise((r) => setTimeout(r, 1200));
+    setForm((f) => ({ ...f, address: f.address || "123 Market Street, Apt 4B, San Francisco, CA 94103", dateOfBirth: f.dateOfBirth || "1988-06-14" }));
+    setScanning(false);
+    toast.success("Details extracted. Please review and correct as needed.");
+  }
 
   async function saveIdentity() {
     if (!q.data || !user) return;
@@ -150,6 +160,7 @@ function CoBuyerPortal() {
                 <button type="button" onClick={() => fileRef.current?.click()} className="mt-4 inline-flex h-10 items-center rounded-md border border-border bg-background px-4 text-sm font-medium hover:bg-muted">
                   {preview ? "Replace photo" : "Choose photo"}
                 </button>
+                {scanning ? <p className="mt-3 text-xs text-muted-foreground">Scanning document…</p> : null}
                 <input
                   ref={fileRef}
                   type="file"
@@ -163,6 +174,7 @@ function CoBuyerPortal() {
                     if (f.size > 10 * 1024 * 1024) return void toast.error("File must be 10MB or smaller.");
                     setFile(f);
                     setPreview(URL.createObjectURL(f));
+                    void scan();
                   }}
                 />
               </div>

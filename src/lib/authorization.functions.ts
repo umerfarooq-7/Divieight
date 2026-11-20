@@ -553,6 +553,7 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
     const members = await loadMembers(db, buyer.id, row.property_id);
     const acting = members.find((m) => m.id === data.accountMemberId);
     if (!acting) throw new Error("Unknown Account Member");
+    await (await import("@/lib/property-members.server")).assertMayActAs(db, userId, acting.id);
 
     // The signature is verified here, on the server, against the acting member's own name.
     const { assertTypedSignature } = await import("@/lib/signature-check");
@@ -1280,6 +1281,7 @@ export const respondToCommissionItem = createServerFn({ method: "POST" })
     const members = await loadMembers(db, buyer.id, row.property_id);
     if (!members.some((m) => m.id === data.accountMemberId))
       throw new Error("Unknown Account Member");
+    await (await import("@/lib/property-members.server")).assertMayActAs(db, userId, data.accountMemberId);
 
     const presented = commissionStatement(item);
 

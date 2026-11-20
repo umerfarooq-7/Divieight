@@ -35,3 +35,21 @@ export async function buyerAccountByLogin<T = Record<string, any>>(db: Db, userI
   const { data: acct } = await db.from("buyer_accounts").select(cols).eq("id", accountId).maybeSingle();
   return (acct as T | null) ?? null;
 }
+
+/**
+ * Whose signature a login may give. A co-buyer signs only as themselves; the account holder's login signs for the holder and for any second member
+ * who has no login of their own, never for a co-buyer. Checked on the server wherever a document is signed or acknowledged.
+ */
+export async function assertMayActAs(db: Db, userId: string, accountMemberId: string, accountId?: string): Promise<void> {
+  const { data: m } = await db.from("account_members").select("id, buyer_account_id, auth_user_id").eq("id", accountMemberId).maybeSingle();
+  const member = m as { buyer_account_id: string; auth_user_id?: string | null } | null;
+  if (!member) throw new Error("Unknown Account Member");
+  // A member of another account is the caller's own existing checks to refuse, with their own message.
+  if (accountId && member.buyer_account_id !== accountId) return;
+  if (member.auth_user_id) {
+    if (member.auth_user_id !== userId) throw new Error("You can only sign for yourself.");
+    return;
+  }
+  const { data: a } = await db.from("buyer_accounts").select("auth_user_id").eq("id", member.buyer_account_id).maybeSingle();
+  if ((a as { auth_user_id?: string } | null)?.auth_user_id !== userId) throw new Error("You can only sign for yourself.");
+}

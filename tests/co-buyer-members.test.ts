@@ -198,3 +198,43 @@ describe("the fee is per person and the main account does not pay for the co-buy
     expect(roster.filter((m) => !isCoBuyer(m))).toHaveLength(1);
   });
 });
+
+describe("the co-buyer's own steps, end to end", () => {
+  it("saves identity with a photo and a W-9 even after the main account's Golden Ticket, and the portal shows both done", async () => {
+    process.env.W9_TIN_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
+    const { saveMemberIdentity } = await import("@/lib/account-members.server");
+    const { submitW9 } = await import("@/lib/w9.server");
+    db.table("buyer_accounts")[0].golden_ticket_issued = true;
+    const token = await inviteAndToken();
+    await claimCoBuyerInvite(db as never, { userId: COBUYER, email: "casey@example.com", token });
+    const memberId = db.table("account_members").find((m) => m.email === "casey@example.com")!.id;
+    const request = { ip: "1.1.1.1", userAgent: "test" } as never;
+
+    let self = await coBuyerSelf(db as never, { userId: COBUYER });
+    expect(self?.identityDone).toBe(false);
+
+    await saveMemberIdentity(db as never, { userId: COBUYER, actingMemberId: memberId, fullName: "Casey Co", address: "9 Oak St", dateOfBirth: "1990-02-03", idDocumentNumber: "D1234567", idDocumentPath: `${COBUYER}/buyer-license-1.jpg`, request } as never);
+    self = await coBuyerSelf(db as never, { userId: COBUYER });
+    expect(self?.identityDone).toBe(true);
+    expect(self?.w9Done).toBe(false);
+
+    await submitW9(db as never, { userId: COBUYER, actingMemberId: memberId, legalName: "Casey Co", taxClassification: "individual", address: "9 Oak St", tinKind: "ssn", tin: "123-45-6789", signedName: "Casey Co", request } as never);
+    self = await coBuyerSelf(db as never, { userId: COBUYER });
+    expect(self?.w9Done).toBe(true);
+    // Their steps never change the main account's own members.
+    expect((await membersForProperty(db as never, accountId, null)).map((m) => m.role)).toEqual(["primary"]);
+  });
+});
+
+describe("whose signature a login may give", () => {
+  it("a co-buyer signs only as themselves, and the holder never signs as the co-buyer", async () => {
+    const { assertMayActAs } = await import("@/lib/property-members.server");
+    const token = await inviteAndToken();
+    await claimCoBuyerInvite(db as never, { userId: COBUYER, email: "casey@example.com", token });
+    const coId = db.table("account_members").find((m) => m.email === "casey@example.com")!.id;
+    await expect(assertMayActAs(db as never, HOLDER, primaryId)).resolves.toBeUndefined();
+    await expect(assertMayActAs(db as never, COBUYER, coId)).resolves.toBeUndefined();
+    await expect(assertMayActAs(db as never, COBUYER, primaryId)).rejects.toThrow("only sign for yourself");
+    await expect(assertMayActAs(db as never, HOLDER, coId)).rejects.toThrow("only sign for yourself");
+  });
+});

@@ -289,6 +289,11 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
       .eq("status", "active")
       .maybeSingle();
     if (!member) return { ok: false, error: "Account Member not found on this account." };
+    try {
+      await (await import("@/lib/property-members.server")).assertMayActAs(db, context.userId, member.id);
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
 
     // The signature is verified here, on the server, against the acting member's own name.
     const { assertTypedSignature } = await import("@/lib/signature-check");

@@ -188,8 +188,8 @@ export interface BuyerOaView {
 }
 
 async function buyerFor(db: Db, userId: string) {
-  const { data } = await db.from("buyer_accounts").select("id").eq("auth_user_id", userId).maybeSingle();
-  return (data as { id: string } | null) ?? null;
+  const { buyerAccountByLogin } = await import("@/lib/property-members.server");
+  return buyerAccountByLogin<{ id: string }>(db, userId, "id");
 }
 
 export const listMyOperatingAgreements = createServerFn({ method: "GET" })
@@ -245,6 +245,7 @@ export const signMyOperatingAgreement = createServerFn({ method: "POST" })
     const db = await adminDb();
     const buyer = await buyerFor(db, userId);
     if (!buyer) throw new Error("No buyer account");
+    await (await import("@/lib/property-members.server")).assertMayActAs(db, userId, data.accountMemberId, buyer.id);
     let serverIp: string | null = null;
     let serverUa: string | null = null;
     try {
