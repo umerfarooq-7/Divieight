@@ -27,11 +27,7 @@ export const Route = createFileRoute("/buyer/co/dashboard")({
 
 const CARD = "rounded-xl border border-border bg-card p-5 shadow-sm";
 const BTN = "inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-60";
-const INPUT = "mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm";
-
-function Done({ ok }: { ok: boolean }) {
-  return <span className={ok ? "text-emerald-600" : "text-muted-foreground"}>{ok ? "Done" : "To do"}</span>;
-}
+const INPUT = "mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal";
 
 function CoBuyerPortal() {
   const { user, loading } = useAuth();
@@ -93,14 +89,19 @@ function CoBuyerPortal() {
   }
 
   const d = q.data;
+  const doneFlags = d ? [d.identityDone, d.w9Done, d.feePaid] : [false, false, false];
+  const current = doneFlags.findIndex((x) => !x);
+  const doneCount = doneFlags.filter(Boolean).length;
+
   return (
-    <main className="mx-auto max-w-3xl space-y-5 px-4 py-8 text-foreground">
+    <main className="mx-auto max-w-3xl px-4 py-10 text-foreground sm:px-6">
       <PaymentTestModeBanner />
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold sm:text-3xl">Co-buyer portal</h1>
-          <p className="text-sm text-muted-foreground">
-            {d ? `You are a co-buyer with ${d.holderName}. You see only your own steps and the shares bought with you.` : "Your own steps and signatures."}
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Co-buyer</p>
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Welcome{d?.name ? `, ${d.name.split(" ")[0]}` : ""}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {d ? `You are buying together with ${d.holderName}. You complete your own steps and sign for the shares bought with you.` : "Your own steps and signatures."}
           </p>
         </div>
         <button
@@ -115,72 +116,58 @@ function CoBuyerPortal() {
         </button>
       </header>
 
-      {q.isLoading || loading ? <p className="text-muted-foreground">Loading…</p> : null}
-      {q.isError ? <p className="text-destructive">{(q.error as Error).message}</p> : null}
+      {q.isLoading || loading ? <div className="mt-8 h-48 animate-pulse rounded-xl border border-border bg-muted/40" /> : null}
+      {q.isError ? <p className="mt-6 text-destructive">{(q.error as Error).message}</p> : null}
       {q.data === null ? (
-        <p className={CARD}>This login isn't linked to a buyer account as a co-buyer. If you were invited, open the invitation link from your email again.</p>
+        <p className={`mt-6 ${CARD}`}>This login isn't linked to a buyer account as a co-buyer. If you were invited, open the invitation link from your email again.</p>
       ) : null}
 
       {d ? (
         <>
-          <section className={CARD}>
-            <h2 className="font-display text-lg font-semibold">Your steps</h2>
-            <ol className="mt-3 divide-y divide-border text-sm">
-              <li className="flex items-center justify-between py-2">
-                <span>1. Identity</span>
-                <Done ok={d.identityDone} />
-              </li>
-              <li className="flex items-center justify-between py-2">
-                <span>2. W-9 (tax form)</span>
-                <span className="flex items-center gap-3">
-                  <Done ok={d.w9Done} />
-                  {!d.w9Done ? (
-                    <Link to="/buyer/onboarding/w9" className="font-medium text-primary underline">
-                      Open
-                    </Link>
-                  ) : null}
-                </span>
-              </li>
-              <li className="flex items-center justify-between py-2">
-                <span>3. Platform enrollment fee ({formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)})</span>
-                <Done ok={d.feePaid} />
-              </li>
-            </ol>
-          </section>
+          <div className="mt-8">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <span>Your progress</span>
+              <span>{doneCount} of 3 steps</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(doneCount / 3) * 100}%` }} />
+            </div>
+          </div>
 
-          {!d.identityDone ? (
-            <section className={CARD}>
-              <h2 className="font-display text-lg font-semibold">Your identity</h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="text-sm">
+          <ol className="mt-6 space-y-4">
+            <StepCard n={1} title="Your identity" done={d.identityDone} active={current === 0} summary="Name, date of birth, address and ID number.">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm font-medium">
                   Full legal name
                   <input className={INPUT} value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
                 </label>
-                <label className="text-sm">
+                <label className="text-sm font-medium">
                   Date of birth
                   <input className={INPUT} type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
                 </label>
-                <label className="text-sm sm:col-span-2">
+                <label className="text-sm font-medium sm:col-span-2">
                   Home address
                   <input className={INPUT} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </label>
-                <label className="text-sm sm:col-span-2">
+                <label className="text-sm font-medium sm:col-span-2">
                   ID document number
                   <input className={INPUT} value={form.idNumber} onChange={(e) => setForm({ ...form, idNumber: e.target.value })} />
                 </label>
               </div>
               <button type="button" className={`${BTN} mt-4`} disabled={saving} onClick={saveIdentity}>
-                {saving ? "Saving…" : "Save identity"}
+                {saving ? "Saving…" : "Save and continue"}
               </button>
-            </section>
-          ) : null}
+            </StepCard>
 
-          {!d.feePaid ? (
-            <section className={CARD}>
-              <h2 className="font-display text-lg font-semibold">Your enrollment fee</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                You pay your own one-time Platform Enrollment Fee of {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)}. It does not change {d.holderName}'s account.
-              </p>
+            <StepCard n={2} title="W-9 tax form" done={d.w9Done} active={current === 1} summary="Needed for any distributions you receive.">
+              <p className="text-sm text-muted-foreground">A short form with your tax details. You will come back here when it is done.</p>
+              <Link to="/buyer/onboarding/w9" className={`${BTN} mt-4`}>
+                Open the W-9
+              </Link>
+            </StepCard>
+
+            <StepCard n={3} title={`Platform enrollment fee (${formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)})`} done={d.feePaid} active={current === 2} summary="Your own one-time fee. It does not change the account holder's.">
+              <p className="text-sm text-muted-foreground">You pay your own one-time Platform Enrollment Fee of {formatUsd(BUYER_ENROLLMENT_CENTS_PER_MEMBER)}.</p>
               {confirming ? (
                 <p className="mt-3 text-sm text-muted-foreground">Confirming your payment…</p>
               ) : showCheckout ? (
@@ -196,10 +183,10 @@ function CoBuyerPortal() {
                   </button>
                 </>
               )}
-            </section>
-          ) : null}
+            </StepCard>
+          </ol>
 
-          <section className={CARD}>
+          <section className={`mt-8 ${CARD}`}>
             <h2 className="font-display text-lg font-semibold">Shares bought with you</h2>
             {d.shares.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">
@@ -207,17 +194,17 @@ function CoBuyerPortal() {
               </p>
             ) : (
               <ul className="mt-3 divide-y divide-border text-sm">
-                {d.shares.map((s) => (
-                  <li key={s.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                    <span className="font-medium">{s.address || "Property"}</span>
+                {d.shares.map((sh) => (
+                  <li key={sh.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                    <span className="font-medium">{sh.address || "Property"}</span>
                     <span className="flex gap-3">
-                      <Link to="/buyer/due-diligence/$id" params={{ id: s.propertyId }} className="text-primary underline">
+                      <Link to="/buyer/due-diligence/$id" params={{ id: sh.propertyId }} className="text-primary underline">
                         Due diligence
                       </Link>
-                      <Link to="/buyer/authorizations" search={{ property: s.propertyId }} className="text-primary underline">
+                      <Link to="/buyer/authorizations" search={{ property: sh.propertyId }} className="text-primary underline">
                         Authorizations
                       </Link>
-                      <Link to="/buyer/operating-agreement" search={{ property: s.propertyId }} className="text-primary underline">
+                      <Link to="/buyer/operating-agreement" search={{ property: sh.propertyId }} className="text-primary underline">
                         Operating Agreement
                       </Link>
                     </span>
@@ -225,12 +212,32 @@ function CoBuyerPortal() {
                 ))}
               </ul>
             )}
-            {!d.feePaid || !d.identityDone || !d.w9Done ? (
-              <p className="mt-3 text-xs text-muted-foreground">Finish your steps above so nothing holds up a closing.</p>
-            ) : null}
           </section>
         </>
       ) : null}
     </main>
+  );
+}
+
+function StepCard({ n, title, summary, done, active, children }: { n: number; title: string; summary: string; done: boolean; active: boolean; children: React.ReactNode }) {
+  return (
+    <li className={`rounded-xl border bg-card p-5 shadow-sm ${active ? "border-accent/60" : "border-border"}`}>
+      <div className="flex items-start gap-4">
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${done ? "bg-emerald-600 text-white" : active ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}
+          aria-hidden
+        >
+          {done ? "✓" : n}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-lg font-semibold">{title}</h2>
+            <span className={`text-xs font-medium ${done ? "text-emerald-600" : "text-muted-foreground"}`}>{done ? "Done" : active ? "Up next" : "Waiting"}</span>
+          </div>
+          <p className="text-sm text-muted-foreground">{summary}</p>
+          {active && !done ? <div className="mt-4">{children}</div> : null}
+        </div>
+      </div>
+    </li>
   );
 }

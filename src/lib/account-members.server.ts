@@ -324,7 +324,7 @@ export async function saveMemberIdentity(
   params: { userId: string; actingMemberId: string; fullName: string; address: string; dateOfBirth: string; idDocumentNumber: string; idDocumentPath: string | null; request: RequestContext },
 ): Promise<{ pending: string[] }> {
   const { account, member } = await requireActingMember(db, params.userId, params.actingMemberId);
-  if (member.role === "member" && (await membersLocked(db, account))) throw new Error(LOCKED_MESSAGE);
+  if (member.role === "member" && !isCoBuyer(member) && (await membersLocked(db, account))) throw new Error(LOCKED_MESSAGE);
   const members = await activeMembers(db, account.id);
   const next = { full_name: params.fullName, date_of_birth: params.dateOfBirth, id_document_number: params.idDocumentNumber };
   if (members.some((m) => m.id !== member.id && samePerson(next, m))) throw new Error(SAME_PERSON_MESSAGE);
