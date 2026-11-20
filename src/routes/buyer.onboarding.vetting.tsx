@@ -176,7 +176,7 @@ function VettingForMember({ actingMemberId, onSwitch }: { actingMemberId: string
   async function handleSign() {
     if (!user || !buyer || !member) return;
     const typed = signedName.trim();
-    if (typed.length < 3) {
+    if (typed.length < 2) {
       toast.error("Please type your full legal name.");
       return;
     }

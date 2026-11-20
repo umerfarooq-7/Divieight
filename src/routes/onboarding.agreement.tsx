@@ -101,7 +101,7 @@ function AgreementScreen() {
       return;
     }
     const typed = signedName.trim();
-    if (typed.length < 3) {
+    if (typed.length < 2) {
       toast.error("Please type your full legal name.");
       return;
     }
@@ -279,7 +279,7 @@ function AgreementScreen() {
               <button
                 type="button"
                 onClick={handleConfirmSign}
-                disabled={submitting || signedName.trim().length < 3}
+                disabled={submitting || signedName.trim().length < 2}
                 className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-60"
               >
                 {submitting ? "Signing…" : "Confirm & Sign"}
