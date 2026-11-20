@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyW9, submitW9Fn } from "@/lib/member-steps.functions";
+import { nextOnboardingStep } from "@/lib/account-members";
+import { getMyAccountMembers } from "@/lib/account-members.functions";
 import { TAX_CLASSIFICATIONS, maskedTin, type TinKind } from "@/lib/w9";
 import type { W9View } from "@/lib/w9.server";
 
@@ -30,6 +32,19 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
   const { user, loading } = useAuth();
   const load = useServerFn(getMyW9);
   const submit = useServerFn(submitW9Fn);
+  const loadMembers = useServerFn(getMyAccountMembers);
+
+  /** On to whatever is still open for this person, wherever it is; the dashboard when nothing is. The W-9 may have been done out of order. */
+  async function goNext() {
+    try {
+      const { members } = await loadMembers();
+      const me = members.find((m) => m.id === actingMemberId);
+      const next = me ? nextOnboardingStep(me) : null;
+      navigate({ to: next?.path ?? "/buyer/dashboard" });
+    } catch {
+      navigate({ to: "/buyer/dashboard" });
+    }
+  }
   const [state, setState] = useState<{ w9: W9View | null; memberName: string } | null>(null);
   const [legalName, setLegalName] = useState("");
   const [classification, setClassification] = useState("individual");
@@ -63,8 +78,8 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
       setTin("");
       setState((s) => (s ? { ...s, w9: r.w9 } : s));
       toast.success("W-9 saved.");
-      // Saved: on to the last step, the liquidity check.
-      navigate({ to: "/buyer/onboarding/liquidity" });
+      // Saved: on to the next step that is still open (not always the liquidity check: this may have been done from the dashboard).
+      await goNext();
     } catch (e) {
       setError(e instanceof Error ? e.message : "The W-9 couldn't be saved.");
     } finally {
@@ -99,9 +114,7 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
                 Switch person
               </Button>
             ) : null}
-            <Button asChild>
-              <Link to="/buyer/onboarding/liquidity">Continue to the liquidity check</Link>
-            </Button>
+            <Button onClick={() => void goNext()}>Continue</Button>
             <Button asChild variant="outline">
               <Link to="/buyer/dashboard">Back to dashboard</Link>
             </Button>

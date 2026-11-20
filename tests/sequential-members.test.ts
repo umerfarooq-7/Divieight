@@ -111,7 +111,9 @@ describe("the onboarding screens", () => {
     expect(readFileSync("src/routes/buyer.onboarding.vetting.tsx", "utf8")).toContain('navigate({ to: "/buyer/onboarding/w9" })');
     const w9 = readFileSync("src/routes/buyer.onboarding.w9.tsx", "utf8");
     expect(w9).toContain("<BuyerOnboardingStepper current={5} />");
-    expect(w9).toContain('navigate({ to: "/buyer/onboarding/liquidity" })');
+    // After saving it goes to whatever is still open for this person, or the dashboard: it may have been done from the dashboard, out of order.
+    expect(w9).toContain('navigate({ to: next?.path ?? "/buyer/dashboard" })');
+    expect(w9).not.toContain('navigate({ to: "/buyer/onboarding/liquidity" })');
   });
 
   it("nobody on their own account sees Switch person", () => {
