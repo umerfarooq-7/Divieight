@@ -2,8 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Lock, ShieldAlert, ShieldCheck, User, UsersRound } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle2, Lock, ShieldAlert, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EightSlicesTracker } from "@/components/EightSlicesTracker";
 import { PodCompositionPanel } from "@/components/PodCompositionPanel";
@@ -59,10 +58,7 @@ function ReservePage() {
   const cancelAssignment = useServerFn(cancelAgentAssignment);
 
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<{ systemLocked: boolean; agentChange: ReservationResult["agentChange"]; joint: ReservationResult["joint"]; jointError: string | null } | null>(null);
-  // With a linked co-buyer the buyer chooses: take the share alone, or together. The choice is kept if an agent has to be picked first.
-  const [chooseOpen, setChooseOpen] = useState(false);
-  const [together, setTogether] = useState(false);
+  const [done, setDone] = useState<{ systemLocked: boolean; agentChange: ReservationResult["agentChange"] } | null>(null);
   // Set when the buyer's agent holds this listing: nothing is reserved until
   // they pick a different agent for this property (or let divieight choose).
   const [conflict, setConflict] = useState<ReservationResult["conflict"]>(null);
@@ -110,10 +106,9 @@ function ReservePage() {
       ? (eligibility.reason as keyof typeof RESERVATION_BLOCK_COPY)
       : null;
 
-  async function confirm(agent?: { replacementAgentId?: string; autoAssignAgent?: boolean }, choice?: { together: boolean }) {
+  async function confirm(agent?: { replacementAgentId?: string; autoAssignAgent?: boolean }) {
     setSubmitting(true);
-    const withCoBuyer = choice?.together ?? together;
-    const result = await reserve({ data: { propertyId: id, ...agent, withCoBuyer } });
+    const result = await reserve({ data: { propertyId: id, ...agent } });
     setSubmitting(false);
     if (!result.ok && result.reason === "dual_agency_conflict") {
       setConflict(result.conflict ?? null);
@@ -136,7 +131,7 @@ function ReservePage() {
       return;
     }
     setConflict(null);
-    setDone({ systemLocked: result.systemLocked, agentChange: result.agentChange ?? null, joint: result.joint ?? null, jointError: result.jointError ?? null });
+    setDone({ systemLocked: result.systemLocked, agentChange: result.agentChange ?? null });
     void refetch();
     // Keep the Eight-Slices Tracker honest on the listing page and marketplace.
     void queryClient.invalidateQueries({ queryKey: ["pod-composition", id] });
@@ -284,10 +279,6 @@ function ReservePage() {
               ? ` For this property your agent is ${done.agentChange.newAgentName ?? "your new agent"}; your other properties keep your usual agent.`
               : "",
             done.agentChange?.referralPreserved ? " Your original agent keeps their referral share." : "",
-            done.joint
-              ? ` We've asked ${done.joint.partnerName} to hold this share with you. It is reserved in your name meanwhile; if they accept you hold it together, and if they decline or don't answer it stays yours alone.`
-              : "",
-            done.jointError ? ` The share is reserved, but we couldn't ask your co-buyer: ${done.jointError}` : "",
           ].join("")}
           action={
             <Link
@@ -337,7 +328,7 @@ function ReservePage() {
             <button
               type="button"
               disabled={submitting}
-              onClick={() => (eligibility?.coBuyer ? setChooseOpen(true) : void confirm())}
+              onClick={() => void confirm()}
               className="mt-5 w-full rounded-md bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? "Reserving…" : "Confirm and secure my priority rank"}
@@ -353,52 +344,6 @@ function ReservePage() {
       {composition && composition.reservedShares + composition.retainedShares > 0 ? (
         <PodCompositionPanel composition={composition} className="mt-6" />
       ) : null}
-
-      {/* With a linked co-buyer: alone, or together? */}
-      <Dialog open={chooseOpen} onOpenChange={(open) => !submitting && setChooseOpen(open)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you taking this share alone, or with {eligibility?.coBuyer?.partnerName ?? "your co-buyer"}?</DialogTitle>
-            <DialogDescription>
-              Either way the share is reserved in your name right now. If you take it together, {eligibility?.coBuyer?.partnerName ?? "your co-buyer"} is asked to accept. You each complete your own due diligence and authorizations from your own account. You pay for the share, and you settle between yourselves.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => {
-                setTogether(false);
-                setChooseOpen(false);
-                void confirm(undefined, { together: false });
-              }}
-              className="flex flex-col items-start gap-1 rounded-lg border border-border bg-card p-4 text-left text-sm hover:bg-secondary disabled:opacity-60"
-            >
-              <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                <User className="h-4 w-4 text-accent" aria-hidden /> Alone
-              </span>
-              <span className="text-xs text-muted-foreground">The share is only yours.</span>
-            </button>
-            <button
-              type="button"
-              disabled={submitting || !eligibility?.coBuyer?.available}
-              onClick={() => {
-                setTogether(true);
-                setChooseOpen(false);
-                void confirm(undefined, { together: true });
-              }}
-              className="flex flex-col items-start gap-1 rounded-lg border border-accent/50 bg-accent/5 p-4 text-left text-sm hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                <UsersRound className="h-4 w-4 text-accent" aria-hidden /> With {eligibility?.coBuyer?.partnerName ?? "my co-buyer"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {eligibility?.coBuyer?.available ? "They are asked to accept." : (eligibility?.coBuyer?.unavailableReason ?? "Not available right now.")}
-              </span>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

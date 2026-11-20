@@ -97,16 +97,9 @@ export async function agentPropertyPairs(
   const overrideFor = new Map(overrides.map((o) => [`${o.buyer_account_id}:${o.property_id}`, o.resident_agent_id]));
   const tetheredSet = new Set(tetheredIds);
 
-  // A share held together: the second holder is the agent's buyer on that home too.
-  const { data: joint } = await db.from("joint_reservations").select("partner_account_id, property_id").in("partner_account_id", buyerIds).eq("status", "active");
-  const reservedOrJoint = [
-    ...((res ?? []) as Array<{ buyer_account_id: string; property_id: string }>),
-    ...((joint ?? []) as Array<{ partner_account_id: string; property_id: string }>).map((j) => ({ buyer_account_id: j.partner_account_id, property_id: j.property_id })),
-  ];
-
   const seen = new Set<string>();
   const out: Array<{ buyerAccountId: string; propertyId: string }> = [];
-  for (const r of reservedOrJoint) {
+  for (const r of (res ?? []) as Array<{ buyer_account_id: string; property_id: string }>) {
     const key = `${r.buyer_account_id}:${r.property_id}`;
     if (seen.has(key)) continue;
     const override = overrideFor.get(key);

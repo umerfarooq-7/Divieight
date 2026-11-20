@@ -58,13 +58,8 @@ export async function runDiligenceEscalationSweep(): Promise<DiligenceEscalation
       .eq("property_id", doc.property_id)
       .eq("status", "reserved");
 
-    const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
     const buyerIds = [
-      ...new Set([
-        ...((reservations ?? []) as any[]).map((r) => r.buyer_account_id as string),
-        // The second holder of a share held together has their own acknowledgments to make.
-        ...(await jointPartnerAccountIds(db, doc.property_id)),
-      ]),
+      ...new Set(((reservations ?? []) as any[]).map((r) => r.buyer_account_id as string)),
     ];
 
     for (const buyerAccountId of buyerIds) {

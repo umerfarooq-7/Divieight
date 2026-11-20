@@ -1,8 +1,6 @@
 import { TermsNotice } from "@/components/TermsNotice";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useState, type FormEvent } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,13 +12,8 @@ import { logAudit } from "@/lib/audit";
 import { mapSignupError, isExistingUserSignup } from "@/lib/signup-errors";
 import { AuthCard, GoogleButton, Divider } from "@/components/AuthCard";
 import { Field } from "@/components/Field";
-import { previewCoBuyerInviteFn } from "@/lib/co-buyer.functions";
-import { rememberInviteToken } from "@/lib/co-buyer";
 
 export const Route = createFileRoute("/buyer/register")({
-  validateSearch: (search: Record<string, unknown>): { co_buyer?: string } => ({
-    co_buyer: typeof search.co_buyer === "string" && search.co_buyer ? search.co_buyer : undefined,
-  }),
   head: () => ({
     meta: [
       { title: "Create a buyer account — divieight" },
@@ -61,16 +54,6 @@ function BuyerRegisterPage() {
   const [values, setValues] = useState({ fullName: "", email: "", phone: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-
-  // An invitation from a co-buyer: the email it was sent to is filled in, and the invitation is accepted when this account is created.
-  const { co_buyer: inviteToken } = Route.useSearch();
-  const preview = useServerFn(previewCoBuyerInviteFn);
-  const { data: invite } = useQuery({ queryKey: ["co-buyer-preview", inviteToken], enabled: !!inviteToken, retry: false, queryFn: () => preview({ data: { token: inviteToken as string } }) });
-  useEffect(() => {
-    if (!inviteToken || !invite) return;
-    rememberInviteToken(inviteToken);
-    setValues((v) => ({ ...v, email: invite.inviteeEmail, fullName: v.fullName || invite.inviteeName }));
-  }, [inviteToken, invite]);
 
   const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setValues((v) => ({ ...v, [k]: e.target.value }));
@@ -179,11 +162,6 @@ function BuyerRegisterPage() {
         </>
       }
     >
-      {invite ? (
-        <p role="status" className="mb-4 rounded-lg border border-accent/40 bg-accent/10 p-3 text-sm text-foreground">
-          {invite.inviterName} invited you to buy together. Create your own account with <strong>{invite.inviteeEmail}</strong>, complete your own onboarding and payment, and you will be linked as co-buyers.
-        </p>
-      ) : null}
       <GoogleButton onClick={onGoogle} disabled={submitting} label="Sign up with Google" />
       <Divider />
 
@@ -196,7 +174,7 @@ function BuyerRegisterPage() {
           value={values.fullName}
           onChange={set("fullName")}
           error={errors.fullName}
-          hint="This is the name on your own Buyer Account."
+          hint="This becomes the primary member on your Buyer Account."
           required
         />
         <Field
@@ -208,7 +186,6 @@ function BuyerRegisterPage() {
           value={values.email}
           onChange={set("email")}
           error={errors.email}
-          readOnly={!!invite}
           required
         />
         {errors.email?.includes("already exists") ? (
@@ -250,7 +227,8 @@ function BuyerRegisterPage() {
         </button>
 
         <p className="text-center text-xs text-muted-foreground">
-          Buying with someone? Finish your own onboarding, then invite them as your co-buyer from your dashboard. Each of you has your own account.
+          A Buyer Account supports up to two people. You can add a second member during
+          onboarding.
         </p>
         <TermsNotice />
       </form>

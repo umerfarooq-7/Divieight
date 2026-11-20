@@ -95,20 +95,6 @@ describe("happy path — triggered by the funded_and_recorded webhook", () => {
     expect(db().audits("closing_saga.saga_completed")).toHaveLength(1);
   });
 
-  it("gives the second holder of a share held together their own Digital Key for it", async () => {
-    await readyToClose();
-    // The buyer with one share (B2... the one whose single share is row 1) holds it together with another buyer's account.
-    const single = db().table("cap_table_entries").filter((c) => c.holder_type === "buyer_account").find((c) => db().table("cap_table_entries").filter((x) => x.buyer_account_id === c.buyer_account_id).length === 1)!;
-    single.co_holder_account_id = IDS.b3;
-    const r = await titleFunds();
-    expect(r).toMatchObject({ status: "processed", closingSaga: "completed" });
-    const keys = db().table("co_owner_digital_keys");
-    expect(keys.find((k) => k.buyer_account_id === IDS.b3)).toMatchObject({ holder_type: "buyer_account", shares: 1, status: "active" });
-    // Nothing else changes: the holder of the row keeps theirs, and the retained seller too.
-    expect(keys.find((k) => k.buyer_account_id === single.buyer_account_id)).toMatchObject({ shares: 1 });
-    expect(keys).toHaveLength(4);
-  });
-
   it("a redelivered/duplicate trigger changes nothing", async () => {
     await readyToClose();
     await titleFunds();

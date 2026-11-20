@@ -7,8 +7,6 @@ import { brokerRedirect, createBrokerProfile, getBrokerProfile } from "@/lib/bro
 import { applyReferralTag } from "@/lib/attribution";
 import { stampStoredAttribution } from "@/lib/agent-qr";
 import { parseMarkets } from "@/lib/markets";
-import { takeInviteToken } from "@/lib/co-buyer";
-import { acceptCoBuyerInviteFn } from "@/lib/co-buyer.functions";
 
 export type AccountRole = "buyer" | "seller" | "agent" | "broker";
 
@@ -151,9 +149,6 @@ export async function resolveSignIn(
     if (account) await applyReferralTag(account.id, user.id);
     // QR / deep-link stamp: a suggestion for the admin, kept apart from the tag above.
     if (account) await stampStoredAttribution();
-    // A co-buyer invitation opened from the email: accepted now that this address has an account. Quietly ignored if it no longer applies.
-    const inviteToken = account ? takeInviteToken() : null;
-    if (inviteToken) await acceptCoBuyerInviteFn({ data: { token: inviteToken } }).catch(() => undefined);
     return { to: account ? buyerRedirect(account.onboarding_status) : "/buyer/onboarding" };
   }
 

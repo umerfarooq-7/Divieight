@@ -81,9 +81,7 @@ export async function buyerActionItems(db: Db, buyerAccountId: string): Promise<
     .select("property_id")
     .eq("buyer_account_id", buyerAccountId)
     .eq("status", "reserved");
-  // Shares held together with a co-buyer count too: this buyer owes their own due diligence and authorizations on them.
-  const { jointPropertyIdsOfPartner } = await import("@/lib/joint-reservation.server");
-  const propertyIds = [...new Set([...((res ?? []) as Array<{ property_id: string }>).map((r) => r.property_id), ...(await jointPropertyIdsOfPartner(db, buyerAccountId))])];
+  const propertyIds = [...new Set(((res ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))];
   if (propertyIds.length === 0) return { actions: [], progress: {} };
 
   const { data: props } = await db

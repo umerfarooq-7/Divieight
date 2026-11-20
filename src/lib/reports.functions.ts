@@ -179,9 +179,8 @@ export const listBuyerReports = createServerFn({ method: "GET" })
       .select("property_id")
       .eq("buyer_account_id", buyer.id)
       .eq("status", "reserved");
-    const { jointPropertyIdsOfPartner } = await import("@/lib/joint-reservation.server");
     const propertyIds = scopeIds(
-      [...new Set([...((reservations ?? []) as Array<{ property_id: string }>).map((r) => r.property_id), ...(await jointPropertyIdsOfPartner(db, buyer.id))])],
+      [...new Set(((reservations ?? []) as Array<{ property_id: string }>).map((r) => r.property_id))],
       scope.propertyId,
     );
     const reports = await loadReports(db, propertyIds);
@@ -313,9 +312,7 @@ export const annotateReport = createServerFn({ method: "POST" })
       .eq("property_id", report.property_id)
       .eq("status", "reserved")
       .limit(1);
-    const { jointPropertyIdsOfPartner: jointHomes } = await import("@/lib/joint-reservation.server");
-    const holdsJointly = (await jointHomes(db, buyer.id)).includes(report.property_id);
-    if (!((reservation ?? []) as unknown[]).length && !holdsJointly)
+    if (!((reservation ?? []) as unknown[]).length)
       throw new Error("This buyer does not hold a reservation on this property");
 
     const { data: created, error } = await db

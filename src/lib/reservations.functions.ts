@@ -57,12 +57,6 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
       .eq("status", "reserved");
 
     info.existingShares = (mine ?? []).reduce((s, r) => s + (r.shares_reserved ?? 0), 0);
-    // A share held jointly (a co-buyer started it) is already yours.
-    {
-      const { supabaseAdmin: jointDb } = await import("@/integrations/supabase/admin.server");
-      const { data: jointMine } = await (jointDb as any).from("joint_reservations").select("id").eq("property_id", data.propertyId).eq("partner_account_id", buyer.id).eq("status", "active").limit(1);
-      if ((jointMine ?? []).length > 0) info.existingShares += 1;
-    }
 
     if (!buyer.liquidity_verified) return { ok: false, reason: "not_liquidity_verified", ...info };
     // Browsing stays open in Pending Tether; only commitment waits on the tether.
@@ -85,11 +79,7 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
     if (info.existingShares > 0) return { ok: false, reason: "already_reserved", ...info };
     if (composition.availableShares < 1) return { ok: false, reason: "sold_out", ...info };
 
-    // With an active co-buyer the reserve screen asks: alone, or together?
-    const { coBuyerOption } = await import("@/lib/joint-reservation.server");
-    const coBuyer = await coBuyerOption(assignmentDb as never, { accountId: buyer.id, propertyId: data.propertyId }).catch(() => null);
-
-    return { ok: true, reason: "ok", ...info, coBuyer };
+    return { ok: true, reason: "ok", ...info };
   });
 
 /**
@@ -100,10 +90,8 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
 export const createReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { propertyId: string; replacementAgentId?: string | null; autoAssignAgent?: boolean; withCoBuyer?: boolean }) => ({
+    (data: { propertyId: string; replacementAgentId?: string | null; autoAssignAgent?: boolean }) => ({
       propertyId: String(data.propertyId),
-      // Take the share together with the linked co-buyer: they are asked once it is reserved.
-      withCoBuyer: data.withCoBuyer === true,
       // Only used to resolve a dual-agency conflict on this property.
       replacementAgentId: data.replacementAgentId ? String(data.replacementAgentId) : null,
       // "Let divieight choose": queues a request; nothing is reserved until assigned.
@@ -147,21 +135,6 @@ export const createReservation = createServerFn({ method: "POST" })
       .eq("status", "reserved")
       .limit(1);
     if ((mine?.length ?? 0) > 0) return fail("already_reserved");
-
-    // A share already held jointly (a co-buyer started it) counts as yours, and a share can only be taken together if the co-buyer can.
-    const { supabaseAdmin: jointAdmin } = await import("@/integrations/supabase/admin.server");
-    {
-      const { data: jointMine } = await (jointAdmin as any).from("joint_reservations").select("id").eq("property_id", data.propertyId).eq("partner_account_id", buyer.id).eq("status", "active").limit(1);
-      if ((jointMine ?? []).length > 0) return fail("already_reserved");
-    }
-    if (data.withCoBuyer) {
-      try {
-        const { assertCanShare } = await import("@/lib/joint-reservation.server");
-        await assertCanShare(jointAdmin as never, { accountId: buyer.id, propertyId: data.propertyId });
-      } catch (e) {
-        return { ...fail("error"), message: e instanceof Error ? e.message : null };
-      }
-    }
 
     // Dual-agency checkpoint 4: the buyer's agent may not hold THIS listing.
     // Nothing is reserved until the buyer has a different agent for this
@@ -329,18 +302,6 @@ export const createReservation = createServerFn({ method: "POST" })
       // reservation stands even if the lock write fails; maintenance can retry
     }
 
-    // Together: the co-buyer is asked now. The share is already reserved in this buyer's name, so a no, or no answer, loses nothing.
-    let joint: ReservationResult["joint"] = null;
-    let jointError: string | null = null;
-    if (data.withCoBuyer) {
-      try {
-        const { createJointRequest } = await import("@/lib/joint-reservation.server");
-        const asked = await createJointRequest(jointAdmin as never, { userId, accountId: buyer.id, reservationId: inserted.id, propertyId: data.propertyId });
-        joint = { requestId: asked.id, partnerName: asked.partnerName };
-      } catch (e) {
-        jointError = e instanceof Error ? e.message : "Your co-buyer couldn't be asked.";
-      }
-    }
 
     await supabase.from("audit_log").insert({
       actor_id: userId,
@@ -353,7 +314,6 @@ export const createReservation = createServerFn({ method: "POST" })
         shares_reserved: 1,
         hard_lock_applied: !before.hardLocked,
         system_lock: systemLocked,
-        joint_requested: Boolean(joint),
       } as never,
     });
 
@@ -364,8 +324,6 @@ export const createReservation = createServerFn({ method: "POST" })
       composition: after,
       systemLocked,
       agentChange,
-      joint,
-      jointError,
     };
   });
 
@@ -390,11 +348,7 @@ export const getMyReservations = createServerFn({ method: "GET" })
       .eq("buyer_account_id", buyer.id)
       .order("reserved_at", { ascending: false });
 
-    // Shares started with a co-buyer: where each request stands, and the shares a co-buyer started that you now hold with them.
-    const { supabaseAdmin: jointAdmin } = await import("@/integrations/supabase/admin.server");
-    const jointModule = await import("@/lib/joint-reservation.server");
-    const infos = await jointModule.jointInfoForInitiator(jointAdmin as never, { accountId: buyer.id, reservationIds: (rows ?? []).map((r) => r.id) }).catch(() => new Map());
-    const mine: MyReservation[] = (rows ?? []).map((r) => {
+    return (rows ?? []).map((r) => {
       const p = (r as unknown as { properties: Record<string, unknown> | null }).properties;
       return {
         id: r.id,
@@ -408,32 +362,8 @@ export const getMyReservations = createServerFn({ method: "GET" })
         zip: (p?.zip as string) ?? "",
         listing_price: (p?.listing_price as number | null) ?? null,
         listing_status: (p?.listing_status as string) ?? "forming",
-        joint: infos.get(r.id) ?? null,
       };
     });
-
-    const shared = await jointModule.partnerReservations(jointAdmin as never, { accountId: buyer.id }).catch(() => []);
-    if (shared.length === 0) return mine;
-    const { data: props } = await (jointAdmin as any).from("properties").select("id, address, city, state, zip, listing_price, listing_status").in("id", shared.map((x) => x.propertyId));
-    const byId = new Map<string, Record<string, unknown>>(((props ?? []) as Array<Record<string, unknown>>).map((p) => [String(p.id), p]));
-    const together: MyReservation[] = shared.map((x) => {
-      const p = byId.get(x.propertyId);
-      return {
-        id: x.reservationId,
-        property_id: x.propertyId,
-        shares_reserved: x.sharesReserved,
-        status: x.status,
-        reserved_at: x.reservedAt,
-        address: (p?.address as string) ?? "Property",
-        city: (p?.city as string) ?? "",
-        state: (p?.state as string) ?? "",
-        zip: (p?.zip as string) ?? "",
-        listing_price: (p?.listing_price as number | null) ?? null,
-        listing_status: (p?.listing_status as string) ?? "forming",
-        joint: { role: "partner", partnerName: x.initiatorName, status: "active", requestId: null },
-      };
-    });
-    return [...mine, ...together];
   });
 
 /**
@@ -481,15 +411,6 @@ export const withdrawReservation = createServerFn({ method: "POST" })
       .eq("id", reservation.id)
       .eq("buyer_account_id", buyer.id);
     if (error) return { ok: false, reason: "error" };
-
-    // A share held with a co-buyer ends with the withdrawal, and they are told.
-    try {
-      const { supabaseAdmin: jointAdmin } = await import("@/integrations/supabase/admin.server");
-      const { endJointForReservation } = await import("@/lib/joint-reservation.server");
-      await endJointForReservation(jointAdmin as never, { reservationId: reservation.id, actorUserId: userId, reason: "withdrawn" });
-    } catch {
-      // the withdrawal stands
-    }
 
     // Releasing System Lock needs to bypass seller-scoped RLS on properties.
     let candidateCount = 0;

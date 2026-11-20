@@ -46,9 +46,7 @@ export async function closingReadiness(db: Db, propertyId: string): Promise<Read
     .eq("property_id", propertyId)
     .eq("status", "reserved");
   const reservations = (res ?? []) as Array<{ buyer_account_id: string; shares_reserved: number }>;
-  // Includes the second holder of a share held together: they owe their own acknowledgments, and their agent is checked too.
-  const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
-  const buyerIds = [...new Set([...reservations.map((r) => r.buyer_account_id), ...(await jointPartnerAccountIds(db, propertyId))])];
+  const buyerIds = [...new Set(reservations.map((r) => r.buyer_account_id))];
   const { data: buyerRows } = buyerIds.length
     ? await db.from("buyer_accounts").select("id, email, tethered_resident_agent_id").in("id", buyerIds)
     : { data: [] };

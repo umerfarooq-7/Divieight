@@ -42,20 +42,16 @@ interface Holder {
   type: "buyer" | "seller";
   buyerAccountId: string | null;
   shareNumbers: number[];
-  /** The share is held together by two co-buyers: either may cast it, and the first ballot cast stands. */
-  joint?: boolean;
-  /** The user is the second holder, acting through the buyer who reserved the share. Money stays with that buyer. */
-  viaCoHolder?: boolean;
 }
 
-type CapRow = { share_number: number; holder_type: string; buyer_account_id: string | null; seller_id: string | null; co_holder_account_id?: string | null };
+type CapRow = { share_number: number; holder_type: string; buyer_account_id: string | null; seller_id: string | null };
 
 const holderKeyOf = (c: CapRow) => (c.holder_type === "retained_seller" ? `seller:${c.seller_id}` : String(c.buyer_account_id));
 
 async function capRows(db: Db, propertyId: string): Promise<CapRow[]> {
   const { data } = await db
     .from("cap_table_entries")
-    .select("*")
+    .select("share_number, holder_type, buyer_account_id, seller_id")
     .eq("property_id", propertyId);
   return (data ?? []) as CapRow[];
 }
@@ -66,19 +62,8 @@ export async function holderFor(db: Db, userId: string, propertyId: string): Pro
   const buyerId = (buyer?.id as string | undefined) ?? null;
   const rows = await capRows(db, propertyId);
   const asBuyer = buyerId ? rows.filter((r) => r.holder_type === "buyer_account" && r.buyer_account_id === buyerId) : [];
-  if (asBuyer.length > 0) {
-    const { coHolderAccountOf } = await import("@/lib/joint-reservation.server");
-    const joint = Boolean(await coHolderAccountOf(db, buyerId!, propertyId));
-    return { holderKey: buyerId!, type: "buyer", buyerAccountId: buyerId, shareNumbers: asBuyer.map((r) => r.share_number).sort((a, b) => a - b), joint };
-  }
-  // The second holder of a share held together votes it through the buyer who reserved it: one share, one ballot.
-  if (buyerId) {
-    const { primaryAccountForPartner } = await import("@/lib/joint-reservation.server");
-    const primary = await primaryAccountForPartner(db, buyerId, propertyId);
-    const shared = primary ? rows.filter((r) => r.holder_type === "buyer_account" && r.buyer_account_id === primary) : [];
-    if (primary && shared.length > 0)
-      return { holderKey: primary, type: "buyer", buyerAccountId: primary, shareNumbers: shared.map((r) => r.share_number).sort((a, b) => a - b), joint: true, viaCoHolder: true };
-  }
+  if (asBuyer.length > 0)
+    return { holderKey: buyerId!, type: "buyer", buyerAccountId: buyerId, shareNumbers: asBuyer.map((r) => r.share_number).sort((a, b) => a - b) };
   const asSeller = rows.filter((r) => r.holder_type === "retained_seller" && r.seller_id === userId);
   if (asSeller.length > 0)
     return { holderKey: `seller:${userId}`, type: "seller", buyerAccountId: null, shareNumbers: asSeller.map((r) => r.share_number).sort((a, b) => a - b) };
@@ -88,8 +73,7 @@ export async function holderFor(db: Db, userId: string, propertyId: string): Pro
 /** Every holder on this property once, whatever kind of holder they are. */
 export async function holderRecipients(db: Db, propertyId: string): Promise<Array<{ authUserId: string; email: string | null }>> {
   const rows = await capRows(db, propertyId);
-  // Includes the second holder of a share held together: they are told about every vote too.
-  const buyerIds = [...new Set(rows.flatMap((r) => [r.buyer_account_id, r.co_holder_account_id ?? null]).filter(Boolean))] as string[];
+  const buyerIds = [...new Set(rows.map((r) => r.buyer_account_id).filter(Boolean))] as string[];
   const sellerIds = [...new Set(rows.map((r) => (r.holder_type === "retained_seller" ? r.seller_id : null)).filter(Boolean))] as string[];
   const { data: buyers } = buyerIds.length ? await db.from("buyer_accounts").select("auth_user_id, email").in("id", buyerIds) : { data: [] };
   return [
@@ -356,13 +340,10 @@ export async function castBallot(
 
   const { data: existing } = await db
     .from("vote_ballots")
-    .select("id, choice, cast_by_user_id")
+    .select("id, choice")
     .eq("vote_id", vote.id)
     .eq("holder_key", holder.holderKey)
     .maybeSingle();
-  // A share held together has one ballot. Whoever of the two casts first casts it; the other can't overwrite it.
-  if (holder.joint && existing && existing.cast_by_user_id && existing.cast_by_user_id !== params.userId)
-    return { error: "Your co-holder has already cast the ballot for this share." };
   const row = { share_numbers: holder.shareNumbers, cast_by_user_id: params.userId, choice: params.choice, cast_at: new Date().toISOString() };
   const { error } = existing
     ? await db.from("vote_ballots").update(row).eq("id", existing.id)

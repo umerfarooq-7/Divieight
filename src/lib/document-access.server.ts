@@ -201,9 +201,7 @@ async function buyerRows(db: Db, userId: string): Promise<ExecutedDoc[]> {
   }
   // Operating Agreements: one per property whose LLC's agreement is executed, signed by this account's members.
   const { data: cap } = await db.from("cap_table_entries").select("property_id").eq("buyer_account_id", accountId);
-  // The second holder of a share held together signed too, and keeps their own copy.
-  const { data: coCap } = await db.from("cap_table_entries").select("property_id").eq("co_holder_account_id", accountId);
-  for (const pid of [...new Set([...((cap ?? []) as Array<{ property_id: string }>), ...((coCap ?? []) as Array<{ property_id: string }>)].map((c) => c.property_id))]) {
+  for (const pid of [...new Set(((cap ?? []) as Array<{ property_id: string }>).map((c) => c.property_id))]) {
     const { data: g } = await db.from("entity_genesis").select("*").eq("property_id", pid).maybeSingle();
     if (!g || g.final_oa_status !== "executed" || !g.final_oa_hash) continue;
     const { data: sigs } = await db.from("operating_agreement_signatures").select("account_member_id, signed_name, signed_at, on_behalf_of_member_id").eq("entity_genesis_id", g.id).eq("document_hash", g.final_oa_hash);

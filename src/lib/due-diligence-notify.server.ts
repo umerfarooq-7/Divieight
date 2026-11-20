@@ -58,12 +58,8 @@ export async function notifyNewRequiredDocument(
     .eq("property_id", doc.property_id)
     .eq("status", "reserved");
 
-  const { jointPartnerAccountIds } = await import("@/lib/joint-reservation.server");
   const buyerIds = [
-    ...new Set([
-      ...((reservations ?? []) as any[]).map((r) => r.buyer_account_id as string),
-      ...(await jointPartnerAccountIds(db, doc.property_id)),
-    ]),
+    ...new Set(((reservations ?? []) as any[]).map((r) => r.buyer_account_id as string)),
   ];
   if (buyerIds.length === 0) return;
 

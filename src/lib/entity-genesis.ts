@@ -14,8 +14,6 @@ export interface CapTableRow {
   buyerAccountId: string | null;
   sellerId: string | null;
   memberNames: string[];
-  /** The second holder of a share two co-buyers hold together: they are named on the row beside the buyer who reserved it. */
-  coHolderAccountId?: string | null;
   acquisitionDate: string;
   retentionLockExpiresAt: string;
 }

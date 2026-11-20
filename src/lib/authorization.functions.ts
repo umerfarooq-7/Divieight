@@ -984,13 +984,7 @@ export const listAuthorizationTargets = createServerFn({ method: "GET" })
       propertyLabel: string;
       gateClear: boolean;
     }> = [];
-    // A share held together: the second holder is asked for their own authorization too.
-    const { data: jointRows } = await db.from("joint_reservations").select("partner_account_id, property_id").eq("status", "active");
-    const everyone = [
-      ...((data ?? []) as Array<{ buyer_account_id: string; property_id: string }>),
-      ...((jointRows ?? []) as Array<{ partner_account_id: string; property_id: string }>).map((j) => ({ buyer_account_id: j.partner_account_id, property_id: j.property_id })),
-    ];
-    for (const r of everyone) {
+    for (const r of (data ?? []) as Array<{ buyer_account_id: string; property_id: string }>) {
       const key = `${r.buyer_account_id}:${r.property_id}`;
       if (seen.has(key)) continue;
       seen.add(key);
