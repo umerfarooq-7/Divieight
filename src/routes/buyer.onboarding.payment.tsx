@@ -7,6 +7,7 @@ import { BuyerOnboardingStepper } from "@/components/BuyerOnboardingStepper";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
+import { isCoBuyer } from "@/lib/account-members";
 import { BUYER_ENROLLMENT_CENTS_PER_MEMBER, enrollmentFeeCents } from "@/lib/buyer-fee";
 import { confirmBuyerEnrollmentPayment } from "@/utils/payments.functions";
 import { logAudit } from "@/lib/audit";
@@ -126,7 +127,7 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
       const [{ data: roster }, { data: block5 }] = await Promise.all([
         supabase
           .from("account_members")
-          .select("id, full_name, role")
+          .select("*")
           .eq("buyer_account_id", account.id)
           .eq("status", "active")
           .order("created_at", { ascending: true }),
@@ -138,7 +139,8 @@ function PaymentForMember({ actingMemberId, onSwitch }: { actingMemberId: string
           .limit(1),
       ]);
       if (cancelled) return;
-      const list = (roster as Block5Member[]) ?? [];
+      // A co-buyer pays their own fee and is not counted in this account's.
+      const list = ((roster as Array<Block5Member & { auth_user_id?: string | null; invite_token_hash?: string | null }>) ?? []).filter((m) => !isCoBuyer(m));
       const me = list.find((m) => m.id === actingMemberId) ?? list[0];
       setMembers(list);
       setAdviceAccepted((block5?.length ?? 0) > 0);

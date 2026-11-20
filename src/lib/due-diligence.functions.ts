@@ -141,13 +141,10 @@ export async function currentAgentAcks<
   return acks.filter((a) => a.actor_role !== "resident_agent" || a.agent_id === agentOn(a.property_id));
 }
 
-async function loadMembers(db: Db, buyerAccountId: string): Promise<DdMember[]> {
-  const { data } = await db
-    .from("account_members")
-    .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId)
-    .eq("status", "active");
-  return (data ?? []) as DdMember[];
+/** The people who acknowledge for this account on this property: the holder, and a co-buyer only on a share bought with them. */
+async function loadMembers(db: Db, buyerAccountId: string, propertyId?: string | null): Promise<DdMember[]> {
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  return (await membersForProperty<DdMember>(db, buyerAccountId, propertyId)).map((m) => ({ id: m.id, full_name: m.full_name, role: m.role }) as DdMember);
 }
 
 export interface BuyerDiligencePayload {
@@ -182,11 +179,8 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       agentAckText: AGENT_ACK_TEXT,
     };
 
-    const { data: buyer } = await db
-      .from("buyer_accounts")
-      .select("id, tethered_resident_agent_id")
-      .eq("auth_user_id", context.userId)
-      .maybeSingle();
+    const { buyerAccountByLogin } = await import("@/lib/property-members.server");
+    const buyer = await buyerAccountByLogin<{ id: string; tethered_resident_agent_id: string | null }>(db, context.userId, "id, tethered_resident_agent_id");
     if (!buyer) return { allowed: false, reason: "no_buyer_account", ...empty };
 
     const { data: property } = await db
@@ -200,7 +194,7 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       return { allowed: false, reason: "not_connected", ...empty };
 
     const documents = await loadDocuments(db, data.propertyId);
-    const members = await loadMembers(db, buyer.id);
+    const members = await loadMembers(db, buyer.id, data.propertyId);
     const acks = await loadAcks(db, buyer.id, documents.map((d) => d.id));
     const states = buildGateState(documents, acks, members);
 
@@ -270,11 +264,8 @@ export const acknowledgeAsMember = createServerFn({ method: "POST" })
   .inputValidator(parseAck)
   .handler(async ({ data, context }): Promise<{ ok: boolean; error?: string }> => {
     const db = await adminDb();
-    const { data: buyer } = await db
-      .from("buyer_accounts")
-      .select("id, tethered_resident_agent_id")
-      .eq("auth_user_id", context.userId)
-      .maybeSingle();
+    const { buyerAccountByLogin } = await import("@/lib/property-members.server");
+    const buyer = await buyerAccountByLogin<{ id: string; tethered_resident_agent_id: string | null }>(db, context.userId, "id, tethered_resident_agent_id");
     if (!buyer) return { ok: false, error: "No buyer account on file." };
 
     const { data: doc } = await db
@@ -387,7 +378,7 @@ async function maybeLogGateCleared(
   actorId: string,
 ) {
   const documents = await loadDocuments(db, propertyId);
-  const members = await loadMembers(db, buyerAccountId);
+  const members = await loadMembers(db, buyerAccountId, propertyId);
   const acks = await loadAcks(db, buyerAccountId, documents.map((d) => d.id));
   const states = buildGateState(documents, acks, members);
   if (!gateClear(states)) return;
@@ -470,7 +461,7 @@ export const getAgentDiligenceTasks = createServerFn({ method: "GET" })
       for (const { buyerAccountId, propertyId: pid } of pairs.filter(
         (p) => p.propertyId === propertyId,
       )) {
-        const members = await loadMembers(db, buyerAccountId);
+        const members = await loadMembers(db, buyerAccountId, pid);
         const acks = await loadAcks(db, buyerAccountId, documents.map((d) => d.id));
         const states = buildGateState(documents, acks, members);
         for (const s of states) {
@@ -599,7 +590,7 @@ export async function evaluateGate(
 ): Promise<GateStatus> {
   const db = await adminDb();
   const documents = await loadDocuments(db, propertyId);
-  const members = await loadMembers(db, buyerAccountId);
+  const members = await loadMembers(db, buyerAccountId, propertyId);
   const acks = await loadAcks(db, buyerAccountId, documents.map((d) => d.id));
   const states = gatingDocuments(buildGateState(documents, acks, members));
 
@@ -633,11 +624,8 @@ export const getAuthorizationGateStatus = createServerFn({ method: "GET" })
       if (!isAdmin) buyerAccountId = undefined; // only an admin may ask about another account
     }
     if (!buyerAccountId) {
-      const { data: buyer } = await db
-        .from("buyer_accounts")
-        .select("id")
-        .eq("auth_user_id", context.userId)
-        .maybeSingle();
+      const { buyerAccountByLogin } = await import("@/lib/property-members.server");
+      const buyer = await buyerAccountByLogin<{ id: string }>(db, context.userId, "id");
       buyerAccountId = buyer?.id;
     }
     if (!buyerAccountId) return { clear: false, pending: [] };

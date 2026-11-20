@@ -1,3 +1,5 @@
+import type { CoBuyerChoice } from "@/lib/co-buyer-members";
+
 export interface PodComposition {
   propertyId: string;
   totalShares: number;
@@ -27,6 +29,8 @@ export interface ReservationEligibility {
   composition: PodComposition | null;
   /** Present with reason "awaiting_platform_assignment". */
   platformAssignment?: { requestId: string; status: string; agentName: string | null } | null;
+  /** When the account has a co-buyer: whether this share can be bought with them. Null otherwise. */
+  coBuyer?: CoBuyerChoice | null;
 }
 
 export interface ReservationResult {
@@ -51,6 +55,10 @@ export interface ReservationResult {
   message?: string | null;
   /** Present when the reservation finalized with a per-property agent. */
   agentChange?: { newAgentId: string; newAgentName: string | null; referralPreserved: boolean } | null;
+  /** The share was bought together with the co-buyer, who now sees it in their own portal. */
+  withCoBuyer?: { name: string } | null;
+  /** The share is reserved, but adding the co-buyer failed. Said in plain words. */
+  coBuyerError?: string | null;
 }
 
 export interface MyReservation {
@@ -65,6 +73,8 @@ export interface MyReservation {
   zip: string;
   listing_price: number | null;
   listing_status: string;
+  /** The co-buyer this share is bought with, when there is one. */
+  coBuyerName?: string | null;
 }
 
 export const RESERVATION_BLOCK_COPY: Record<

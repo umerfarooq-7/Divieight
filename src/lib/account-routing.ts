@@ -7,6 +7,7 @@ import { brokerRedirect, createBrokerProfile, getBrokerProfile } from "@/lib/bro
 import { applyReferralTag } from "@/lib/attribution";
 import { stampStoredAttribution } from "@/lib/agent-qr";
 import { parseMarkets } from "@/lib/markets";
+import { takeInviteToken } from "@/lib/co-buyer-members";
 
 export type AccountRole = "buyer" | "seller" | "agent" | "broker";
 
@@ -56,6 +57,26 @@ export async function resolveSignIn(
   const metaRole = user.user_metadata?.account_type;
   // A designated CPA signs in from the invitation: their portal is read-only and has no marketplace profile.
   if (metaRole === "cpa") return { to: "/cpa" };
+
+  // A co-buyer is a limited member of someone else's buyer account: they sign in here, claim the invitation once, and never get a buyer account of their own.
+  {
+    const { data: asMember } = await (supabase as any).from("account_members").select("id").eq("auth_user_id", user.id).eq("status", "active").maybeSingle();
+    if (asMember || metaRole === "co_buyer") {
+      if (!asMember) {
+        const token = takeInviteToken();
+        if (token) {
+          try {
+            const { claimCoBuyerInviteFn } = await import("@/lib/co-buyer-members.functions");
+            await claimCoBuyerInviteFn({ data: { token } });
+          } catch (e) {
+            await supabase.auth.signOut();
+            return { error: e instanceof Error ? e.message : "The invitation couldn't be accepted." };
+          }
+        }
+      }
+      return { to: "/buyer/co/dashboard" };
+    }
+  }
   const effectiveRole: AccountRole | null =
     role ??
     (metaRole === "buyer" ||

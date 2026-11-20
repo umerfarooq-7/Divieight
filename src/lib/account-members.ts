@@ -61,9 +61,21 @@ export interface ChecklistItem {
   done: boolean;
 }
 
+/**
+ * A co-buyer: an Account Member (never the account holder) who has been invited to sign in with a login of their own, or already does.
+ * They are a limited sub-account: they do their own steps and sign for the shares bought with them, and are not part of the account's own
+ * Golden Ticket, status or agent. A second member without a login of their own is the older kind, who is acted for by the account holder.
+ */
+export const isCoBuyer = (m: { role?: string | null; auth_user_id?: string | null; invite_token_hash?: string | null }): boolean =>
+  m.role === "member" && Boolean(m.auth_user_id || m.invite_token_hash);
+
 export interface AccountMemberView {
   id: string;
   role: "primary" | "member";
+  /** A co-buyer (a sub-account with a login of their own, or invited to have one). */
+  coBuyer?: boolean;
+  /** They have signed in at least once with their own login. */
+  hasLogin?: boolean;
   fullName: string;
   email: string | null;
   phone: string | null;

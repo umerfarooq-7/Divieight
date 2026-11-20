@@ -81,8 +81,6 @@ COMMIT;
 -- 5) Check: sab counts 0 hone chahiye, sirf admin bacha hona chahiye ---------------------------------------------------------------------------
 SELECT 'buyer_accounts' AS table_name, count(*) FROM public.buyer_accounts
 UNION ALL SELECT 'account_members', count(*) FROM public.account_members
-UNION ALL SELECT 'co_buyer_links', count(*) FROM public.co_buyer_links
-UNION ALL SELECT 'joint_reservations', count(*) FROM public.joint_reservations
 UNION ALL SELECT 'sellers', count(*) FROM public.sellers
 UNION ALL SELECT 'properties', count(*) FROM public.properties
 UNION ALL SELECT 'pod_reservations', count(*) FROM public.pod_reservations

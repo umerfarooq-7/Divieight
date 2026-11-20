@@ -79,7 +79,11 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
     if (info.existingShares > 0) return { ok: false, reason: "already_reserved", ...info };
     if (composition.availableShares < 1) return { ok: false, reason: "sold_out", ...info };
 
-    return { ok: true, reason: "ok", ...info };
+    // With a co-buyer on the account the reserve screen asks: alone, or with them?
+    const { coBuyerChoice } = await import("@/lib/co-buyer-members.server");
+    const coBuyer = await coBuyerChoice(assignmentDb as never, { accountId: buyer.id }).catch(() => null);
+
+    return { ok: true, reason: "ok", ...info, coBuyer };
   });
 
 /**
@@ -90,8 +94,10 @@ export const checkReservationEligibility = createServerFn({ method: "GET" })
 export const createReservation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (data: { propertyId: string; replacementAgentId?: string | null; autoAssignAgent?: boolean }) => ({
+    (data: { propertyId: string; replacementAgentId?: string | null; autoAssignAgent?: boolean; withCoBuyer?: boolean }) => ({
       propertyId: String(data.propertyId),
+      // Buy this share together with the account's co-buyer: it then shows up in their portal and they sign for it.
+      withCoBuyer: data.withCoBuyer === true,
       // Only used to resolve a dual-agency conflict on this property.
       replacementAgentId: data.replacementAgentId ? String(data.replacementAgentId) : null,
       // "Let divieight choose": queues a request; nothing is reserved until assigned.
@@ -135,6 +141,14 @@ export const createReservation = createServerFn({ method: "POST" })
       .eq("status", "reserved")
       .limit(1);
     if ((mine?.length ?? 0) > 0) return fail("already_reserved");
+
+    if (data.withCoBuyer) {
+      const { supabaseAdmin: choiceAdmin } = await import("@/integrations/supabase/admin.server");
+      const { coBuyerChoice } = await import("@/lib/co-buyer-members.server");
+      const choice = await coBuyerChoice(choiceAdmin as never, { accountId: buyer.id });
+      if (!choice) return { ...fail("error"), message: "You don't have a co-buyer." };
+      if (!choice.available) return { ...fail("error"), message: choice.unavailableReason };
+    }
 
     // Dual-agency checkpoint 4: the buyer's agent may not hold THIS listing.
     // Nothing is reserved until the buyer has a different agent for this
@@ -303,6 +317,20 @@ export const createReservation = createServerFn({ method: "POST" })
     }
 
 
+    // Together: the co-buyer is added to this share. The reservation is the main buyer's either way.
+    let withCoBuyer: ReservationResult["withCoBuyer"] = null;
+    let coBuyerError: string | null = null;
+    if (data.withCoBuyer) {
+      try {
+        const { supabaseAdmin: coAdmin } = await import("@/integrations/supabase/admin.server");
+        const { attachCoBuyerToReservation } = await import("@/lib/co-buyer-members.server");
+        const added = await attachCoBuyerToReservation(coAdmin as never, { userId, reservationId: inserted.id });
+        withCoBuyer = { name: added.name };
+      } catch (e) {
+        coBuyerError = e instanceof Error ? e.message : "Your co-buyer couldn't be added.";
+      }
+    }
+
     await supabase.from("audit_log").insert({
       actor_id: userId,
       actor_type: "buyer",
@@ -324,6 +352,8 @@ export const createReservation = createServerFn({ method: "POST" })
       composition: after,
       systemLocked,
       agentChange,
+      withCoBuyer,
+      coBuyerError,
     };
   });
 
@@ -348,9 +378,19 @@ export const getMyReservations = createServerFn({ method: "GET" })
       .eq("buyer_account_id", buyer.id)
       .order("reserved_at", { ascending: false });
 
+    // The co-buyer on each share, when there is one.
+    const { supabaseAdmin: namesAdmin } = await import("@/integrations/supabase/admin.server");
+    const { data: coLinks } = await (namesAdmin as any).from("reservation_co_members").select("reservation_id, account_member_id").eq("buyer_account_id", buyer.id);
+    const coNames = new Map<string, string>();
+    for (const l of (coLinks ?? []) as Array<{ reservation_id: string; account_member_id: string }>) {
+      const { data: m } = await (namesAdmin as any).from("account_members").select("full_name").eq("id", l.account_member_id).maybeSingle();
+      coNames.set(l.reservation_id, ((m as { full_name?: string } | null)?.full_name ?? "").trim() || "Your co-buyer");
+    }
+
     return (rows ?? []).map((r) => {
       const p = (r as unknown as { properties: Record<string, unknown> | null }).properties;
       return {
+        coBuyerName: coNames.get(r.id) ?? null,
         id: r.id,
         property_id: r.property_id,
         shares_reserved: r.shares_reserved,

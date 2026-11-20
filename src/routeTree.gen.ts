@@ -194,6 +194,8 @@ import { Route as BrokerOnboardingInsuranceRouteImport } from './routes/broker.o
 import { Route as BrokerOnboardingLicenseCheckRouteImport } from './routes/broker.onboarding.license-check'
 import { Route as BuyerAuthorizationsIndexRouteImport } from './routes/buyer.authorizations.index'
 import { Route as BuyerAuthorizationsIdRouteImport } from './routes/buyer.authorizations.$id'
+import { Route as BuyerCoBuyerJoinRouteImport } from './routes/buyer.co-buyer.join'
+import { Route as BuyerCoDashboardRouteImport } from './routes/buyer.co.dashboard'
 import { Route as BuyerCommissionReviewIdRouteImport } from './routes/buyer.commission-review.$id'
 import { Route as BuyerDueDiligenceIdRouteImport } from './routes/buyer.due-diligence.$id'
 import { Route as BuyerOnboardingIndexRouteImport } from './routes/buyer.onboarding.index'
@@ -1205,6 +1207,16 @@ const BuyerAuthorizationsIdRoute = BuyerAuthorizationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => BuyerAuthorizationsRoute,
 } as any)
+const BuyerCoBuyerJoinRoute = BuyerCoBuyerJoinRouteImport.update({
+  id: '/buyer/co-buyer/join',
+  path: '/buyer/co-buyer/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuyerCoDashboardRoute = BuyerCoDashboardRouteImport.update({
+  id: '/buyer/co/dashboard',
+  path: '/buyer/co/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuyerCommissionReviewIdRoute = BuyerCommissionReviewIdRouteImport.update({
   id: '/buyer/commission-review/$id',
   path: '/buyer/commission-review/$id',
@@ -1662,6 +1674,8 @@ export interface FileRoutesByFullPath {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/co-buyer/join': typeof BuyerCoBuyerJoinRoute
+  '/buyer/co/dashboard': typeof BuyerCoDashboardRoute
   '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
@@ -1891,6 +1905,8 @@ export interface FileRoutesByTo {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/co-buyer/join': typeof BuyerCoBuyerJoinRoute
+  '/buyer/co/dashboard': typeof BuyerCoDashboardRoute
   '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
@@ -2128,6 +2144,8 @@ export interface FileRoutesById {
   '/broker/onboarding/insurance': typeof BrokerOnboardingInsuranceRoute
   '/broker/onboarding/license-check': typeof BrokerOnboardingLicenseCheckRoute
   '/buyer/authorizations/$id': typeof BuyerAuthorizationsIdRoute
+  '/buyer/co-buyer/join': typeof BuyerCoBuyerJoinRoute
+  '/buyer/co/dashboard': typeof BuyerCoDashboardRoute
   '/buyer/commission-review/$id': typeof BuyerCommissionReviewIdRoute
   '/buyer/due-diligence/$id': typeof BuyerDueDiligenceIdRoute
   '/buyer/onboarding/eligibility': typeof BuyerOnboardingEligibilityRoute
@@ -2366,6 +2384,8 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/co-buyer/join'
+    | '/buyer/co/dashboard'
     | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
@@ -2595,6 +2615,8 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/co-buyer/join'
+    | '/buyer/co/dashboard'
     | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
@@ -2831,6 +2853,8 @@ export interface FileRouteTypes {
     | '/broker/onboarding/insurance'
     | '/broker/onboarding/license-check'
     | '/buyer/authorizations/$id'
+    | '/buyer/co-buyer/join'
+    | '/buyer/co/dashboard'
     | '/buyer/commission-review/$id'
     | '/buyer/due-diligence/$id'
     | '/buyer/onboarding/eligibility'
@@ -2984,6 +3008,8 @@ export interface RootRouteChildren {
   ApiPublicTaxFormSweepRoute: typeof ApiPublicTaxFormSweepRoute
   ApiPublicUseCalendarSweepRoute: typeof ApiPublicUseCalendarSweepRoute
   ApiPublicYearEndPacketSweepRoute: typeof ApiPublicYearEndPacketSweepRoute
+  BuyerCoBuyerJoinRoute: typeof BuyerCoBuyerJoinRoute
+  BuyerCoDashboardRoute: typeof BuyerCoDashboardRoute
   BuyerCommissionReviewIdRoute: typeof BuyerCommissionReviewIdRoute
   BuyerDueDiligenceIdRoute: typeof BuyerDueDiligenceIdRoute
   BuyerOnboardingEligibilityRoute: typeof BuyerOnboardingEligibilityRoute
@@ -4317,6 +4343,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuyerAuthorizationsIdRouteImport
       parentRoute: typeof BuyerAuthorizationsRoute
     }
+    '/buyer/co-buyer/join': {
+      id: '/buyer/co-buyer/join'
+      path: '/buyer/co-buyer/join'
+      fullPath: '/buyer/co-buyer/join'
+      preLoaderRoute: typeof BuyerCoBuyerJoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyer/co/dashboard': {
+      id: '/buyer/co/dashboard'
+      path: '/buyer/co/dashboard'
+      fullPath: '/buyer/co/dashboard'
+      preLoaderRoute: typeof BuyerCoDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/buyer/commission-review/$id': {
       id: '/buyer/commission-review/$id'
       path: '/buyer/commission-review/$id'
@@ -5043,6 +5083,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTaxFormSweepRoute: ApiPublicTaxFormSweepRoute,
   ApiPublicUseCalendarSweepRoute: ApiPublicUseCalendarSweepRoute,
   ApiPublicYearEndPacketSweepRoute: ApiPublicYearEndPacketSweepRoute,
+  BuyerCoBuyerJoinRoute: BuyerCoBuyerJoinRoute,
+  BuyerCoDashboardRoute: BuyerCoDashboardRoute,
   BuyerCommissionReviewIdRoute: BuyerCommissionReviewIdRoute,
   BuyerDueDiligenceIdRoute: BuyerDueDiligenceIdRoute,
   BuyerOnboardingEligibilityRoute: BuyerOnboardingEligibilityRoute,

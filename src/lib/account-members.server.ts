@@ -22,6 +22,7 @@ import {
   type MemberEligibility,
 } from "@/lib/account-members";
 import { FEE_AFTER_PAYMENT_MESSAGE } from "@/lib/buyer-fee";
+import { isCoBuyer } from "@/lib/account-members";
 import { accountRollup, loadMemberSteps, missingSteps, type AccountStatus } from "@/lib/account-rollup";
 
 type Db = { from: (t: string) => any };
@@ -43,6 +44,8 @@ interface MemberRow {
   date_of_birth: string | null;
   id_document_number: string | null;
   id_document_url?: string | null;
+  auth_user_id?: string | null;
+  invite_token_hash?: string | null;
   vetting_status: string | null;
   fcra_consent_at: string | null;
   background_check_result: string | null;
@@ -54,12 +57,22 @@ interface AccountRow {
   golden_ticket_issued: boolean;
   /** Stamped when the enrollment fee is paid. */
   priority_rank_timestamp?: string | null;
+  /** Set when this login is a co-buyer's own: the account is the main buyer's and the only member they can act as is this one. */
+  viaMemberId?: string | null;
 }
 
-async function accountFor(db: Db, userId: string): Promise<AccountRow> {
+/**
+ * The account a login belongs to: the main buyer's own, or, for a co-buyer's own login, the main buyer's account with the one member they are.
+ * Everything member-level goes through this, so a co-buyer can only ever reach their own steps on their own account.
+ */
+export async function accountFor(db: Db, userId: string): Promise<AccountRow> {
   const { data } = await db.from("buyer_accounts").select("id, email, golden_ticket_issued, priority_rank_timestamp").eq("auth_user_id", userId).maybeSingle();
-  if (!data) throw new Error("No buyer account");
-  return data as AccountRow;
+  if (data) return data as AccountRow;
+  const { data: member } = await db.from("account_members").select("id, buyer_account_id").eq("auth_user_id", userId).eq("status", "active").maybeSingle();
+  if (!member) throw new Error("No buyer account");
+  const { data: account } = await db.from("buyer_accounts").select("id, email, golden_ticket_issued, priority_rank_timestamp").eq("id", (member as { buyer_account_id: string }).buyer_account_id).maybeSingle();
+  if (!account) throw new Error("No buyer account");
+  return { ...(account as AccountRow), viaMemberId: (member as { id: string }).id };
 }
 
 async function activeMembers(db: Db, accountId: string): Promise<MemberRow[]> {
@@ -86,6 +99,9 @@ export async function requireActingMember(db: Db, userId: string, memberId: stri
   const { data } = await db.from("account_members").select("*").eq("id", memberId).maybeSingle();
   const member = data as MemberRow | null;
   if (!member || member.buyer_account_id !== account.id || member.status !== "active") throw new Error("That member isn't on your account.");
+  // A co-buyer acts only as themselves. The account holder can't act as a co-buyer who has their own login: that person signs in and does it.
+  if (account.viaMemberId && member.id !== account.viaMemberId) throw new Error("That member isn't on your account.");
+  if (!account.viaMemberId && member.auth_user_id) throw new Error("That person signs in with their own login.");
   if (opts.primary && member.role !== "primary") throw new Error("Only the account holder can change who is on the account.");
   return { account, member };
 }
@@ -113,7 +129,9 @@ export async function recordActingMember(db: Db, params: { userId: string; membe
 
 export async function myAccountMembers(db: Db, userId: string): Promise<{ accountId: string; locked: boolean; canAdd: boolean; members: AccountMemberView[]; accountStatus: AccountStatus }> {
   const account = await accountFor(db, userId);
-  const members = await activeMembers(db, account.id);
+  const allMembers = await activeMembers(db, account.id);
+  // A co-buyer sees only themselves.
+  const members = account.viaMemberId ? allMembers.filter((m) => m.id === account.viaMemberId) : allMembers;
   const { data: docs } = await db.from("signed_documents").select("document_type, account_member_id, signed_name").eq("buyer_account_id", account.id);
   const signed = (docs ?? []) as Array<{ document_type: string; account_member_id: string | null; signed_name: string | null }>;
   // Block 4: each member's own Eligibility Declaration (complete). Missing table → nothing declared yet.
@@ -148,6 +166,8 @@ export async function myAccountMembers(db: Db, userId: string): Promise<{ accoun
       fullName: m.full_name ?? "",
       email: m.email,
       phone: m.phone,
+      coBuyer: isCoBuyer(m),
+      hasLogin: Boolean(m.auth_user_id),
       eligibility: statusOf(m),
       checklist: [
         { key: "identity", label: "Identity", done: identityComplete(m) },

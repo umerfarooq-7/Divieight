@@ -96,12 +96,8 @@ export async function diligenceGateStatus(
       "document_id",
       documents.map((d) => d.id),
     );
-  const { data: members } = await db
-    .from("account_members")
-    .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId)
-    .eq("status", "active");
-  const memberRows = (members ?? []) as Array<{ id: string }>;
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  const memberRows = await membersForProperty<{ id: string }>(db, buyerAccountId, propertyId);
   const { currentAgentAcks } = await import("@/lib/due-diligence.functions");
   const liveAcks = await currentAgentAcks(db, buyerAccountId, (acks ?? []) as any[]);
   const states = buildGateState(documents as any, liveAcks as any, memberRows as any);
@@ -127,11 +123,8 @@ export async function diligenceGateClear(
 }
 
 async function buyerFor(db: Db, authUserId: string) {
-  const { data } = await db
-    .from("buyer_accounts")
-    .select("id, auth_user_id, email, tethered_resident_agent_id")
-    .eq("auth_user_id", authUserId)
-    .maybeSingle();
+  const { buyerAccountByLogin } = await import("@/lib/property-members.server");
+  const data = await buyerAccountByLogin(db, authUserId, "id, auth_user_id, email, tethered_resident_agent_id");
   return data as
     | { id: string; auth_user_id: string; email: string; tethered_resident_agent_id: string | null }
     | null;
@@ -176,13 +169,10 @@ async function loadResponses(db: Db, requestId: string): Promise<AuthorizationRe
   return (data ?? []) as AuthorizationResponseRow[];
 }
 
-async function loadMembers(db: Db, buyerAccountId: string): Promise<AuthorizationMember[]> {
-  const { data } = await db
-    .from("account_members")
-    .select("id, full_name, role")
-    .eq("buyer_account_id", buyerAccountId)
-    .eq("status", "active");
-  return (data ?? []) as AuthorizationMember[];
+/** The people who authorize for this account on this property: the holder, and a co-buyer only on a share bought with them. */
+async function loadMembers(db: Db, buyerAccountId: string, propertyId?: string | null): Promise<AuthorizationMember[]> {
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  return (await membersForProperty<AuthorizationMember>(db, buyerAccountId, propertyId)).map((m) => ({ id: m.id, full_name: m.full_name, role: m.role }) as AuthorizationMember);
 }
 
 // ---------------------------------------------------------------------------
@@ -454,7 +444,7 @@ export const getBuyerAuthorization = createServerFn({ method: "GET" })
       buyerAccountId: buyer.id,
       request: row as AuthorizationRequestRow,
       responses: await loadResponses(db, row.id),
-      members: await loadMembers(db, buyer.id),
+      members: await loadMembers(db, buyer.id, row.property_id),
       property: await propertyFor(db, row.property_id),
       agentName,
       commissionItem,
@@ -494,10 +484,9 @@ export const listBuyerAuthorizations = createServerFn({ method: "GET" })
       labels.set(id, propertyLabel(await propertyFor(db, id)));
       gates.set(id, await diligenceGateStatus(db, id, buyer.id));
     }
-    const members = await loadMembers(db, buyer.id);
     const stages = new Map<string, PendingStage>();
     for (const r of rows.filter((x) => x.status === "pending")) {
-      stages.set(r.id, await pendingStage(db, r, members));
+      stages.set(r.id, await pendingStage(db, r, await loadMembers(db, buyer.id, r.property_id)));
     }
     return {
       rows: rows.map((r) => ({
@@ -561,7 +550,7 @@ export const respondToAuthorization = createServerFn({ method: "POST" })
     if (!(await diligenceGateClear(db, row.property_id, buyer.id)))
       throw new Error("Outstanding due-diligence acknowledgments must be completed first");
 
-    const members = await loadMembers(db, buyer.id);
+    const members = await loadMembers(db, buyer.id, row.property_id);
     const acting = members.find((m) => m.id === data.accountMemberId);
     if (!acting) throw new Error("Unknown Account Member");
 
@@ -781,7 +770,7 @@ export const listAgentAuthorizations = createServerFn({ method: "GET" })
 
       const commissionItem = await loadCommissionItem(db, row.id);
       const responses = commissionItem ? await loadCommissionResponses(db, commissionItem.id) : [];
-      const members = await loadMembers(db, row.buyer_account_id);
+      const members = await loadMembers(db, row.buyer_account_id, row.property_id);
       const state = commissionItemState(
         responses,
         members.map((m) => m.id),
@@ -914,7 +903,7 @@ export const listAdminAuthorizations = createServerFn({ method: "GET" })
         .eq("id", r.buyer_account_id)
         .maybeSingle();
       const responses = await loadResponses(db, r.id);
-      const members = await loadMembers(db, r.buyer_account_id);
+      const members = await loadMembers(db, r.buyer_account_id, r.property_id);
       const state = authorizationState(r, responses, members);
       const nameOf = (id: string) =>
         members.find((m) => m.id === id)?.full_name ?? "Account Member";
@@ -1059,10 +1048,9 @@ export async function authorizationsAwaitingBuyer(
     .eq("status", "pending");
   const rows = (data ?? []) as AuthorizationRequestRow[];
   if (rows.length === 0) return [];
-  const members = await loadMembers(db, buyerAccountId);
   const out: Array<AuthorizationRequestRow & { stage: PendingStage }> = [];
   for (const r of rows) {
-    const stage = await pendingStage(db, r, members);
+    const stage = await pendingStage(db, r, await loadMembers(db, buyerAccountId, r.property_id));
     if (stage !== "hla_proposal") out.push({ ...r, stage });
   }
   return out;
@@ -1289,7 +1277,7 @@ export const respondToCommissionItem = createServerFn({ method: "POST" })
     const item = await loadCommissionItem(db, row.id);
     if (!item) throw new Error("No commission provision is attached to this request");
 
-    const members = await loadMembers(db, buyer.id);
+    const members = await loadMembers(db, buyer.id, row.property_id);
     if (!members.some((m) => m.id === data.accountMemberId))
       throw new Error("Unknown Account Member");
 

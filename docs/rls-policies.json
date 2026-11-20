@@ -18,7 +18,6 @@
   "capital_calls",
   "categorization_rules",
   "charge_dispositions",
-  "co_buyer_links",
   "coa_accounts",
   "coa_versions",
   "contact_submissions",
@@ -51,8 +50,6 @@
   "insurance_policies",
   "insurance_votes",
   "job_failures",
-  "joint_reservation_requests",
-  "joint_reservations",
   "journal_entries",
   "journal_lines",
   "kyo_correction_requests",
@@ -92,6 +89,7 @@
   "resale_rofr_elections",
   "resale_rofr_member_positions",
   "resale_transactions",
+  "reservation_co_members",
   "retention_exceptions",
   "retention_reviews",
   "saga_failures",
@@ -154,6 +152,14 @@
    "cmd": "SELECT",
    "roles": "{authenticated}",
    "using_": "(EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = account_members.buyer_account_id) AND (b.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
+   "tablename": "account_members",
+   "policyname": "Co-buyers read their own member row",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "(auth_user_id = auth.uid())",
    "check_": ""
   },
   {
@@ -330,22 +336,6 @@
    "cmd": "SELECT",
    "roles": "{authenticated}",
    "using_": "(has_role(auth.uid(), 'admin'::app_role) OR (EXISTS ( SELECT 1 FROM buyer_accounts b WHERE ((b.id = charge_dispositions.buyer_account_id) AND (b.auth_user_id = auth.uid())))))",
-   "check_": ""
-  },
-  {
-   "tablename": "co_buyer_links",
-   "policyname": "Admins read co-buyer links",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "has_role(auth.uid(), 'admin'::app_role)",
-   "check_": ""
-  },
-  {
-   "tablename": "co_buyer_links",
-   "policyname": "Buyers read their own co-buyer links",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "((inviter_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (invitee_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
    "check_": ""
   },
   {
@@ -586,38 +576,6 @@
    "cmd": "SELECT",
    "roles": "{authenticated}",
    "using_": "has_role(auth.uid(), 'admin'::app_role)",
-   "check_": ""
-  },
-  {
-   "tablename": "joint_reservation_requests",
-   "policyname": "Admins read joint requests",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "has_role(auth.uid(), 'admin'::app_role)",
-   "check_": ""
-  },
-  {
-   "tablename": "joint_reservation_requests",
-   "policyname": "Buyers read their own joint requests",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "((initiator_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (partner_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
-   "check_": ""
-  },
-  {
-   "tablename": "joint_reservations",
-   "policyname": "Admins read joint reservations",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "has_role(auth.uid(), 'admin'::app_role)",
-   "check_": ""
-  },
-  {
-   "tablename": "joint_reservations",
-   "policyname": "Buyers read their own joint reservations",
-   "cmd": "SELECT",
-   "roles": "{authenticated}",
-   "using_": "((primary_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (partner_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))))",
    "check_": ""
   },
   {
@@ -1037,6 +995,22 @@
    "check_": ""
   },
   {
+   "tablename": "reservation_co_members",
+   "policyname": "Admins read co-buyer shares",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "has_role(auth.uid(), 'admin'::app_role)",
+   "check_": ""
+  },
+  {
+   "tablename": "reservation_co_members",
+   "policyname": "Buyers read the shares they bought with a co-buyer",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "using_": "((buyer_account_id IN ( SELECT buyer_accounts.id FROM buyer_accounts WHERE (buyer_accounts.auth_user_id = auth.uid()))) OR (account_member_id IN ( SELECT account_members.id FROM account_members WHERE (account_members.auth_user_id = auth.uid()))))",
+   "check_": ""
+  },
+  {
    "tablename": "retention_exceptions",
    "policyname": "requester or admin reads retention exceptions",
    "cmd": "SELECT",
@@ -1388,11 +1362,6 @@
    "privs": "SELECT"
   },
   {
-   "table_name": "co_buyer_links",
-   "grantee": "authenticated",
-   "privs": "SELECT"
-  },
-  {
    "table_name": "coa_accounts",
    "grantee": "authenticated",
    "privs": "SELECT"
@@ -1529,16 +1498,6 @@
   },
   {
    "table_name": "insurance_votes",
-   "grantee": "authenticated",
-   "privs": "SELECT"
-  },
-  {
-   "table_name": "joint_reservation_requests",
-   "grantee": "authenticated",
-   "privs": "SELECT"
-  },
-  {
-   "table_name": "joint_reservations",
    "grantee": "authenticated",
    "privs": "SELECT"
   },
@@ -1714,6 +1673,11 @@
   },
   {
    "table_name": "resale_transactions",
+   "grantee": "authenticated",
+   "privs": "SELECT"
+  },
+  {
+   "table_name": "reservation_co_members",
    "grantee": "authenticated",
    "privs": "SELECT"
   },

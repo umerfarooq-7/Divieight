@@ -12,7 +12,6 @@ import {
   KeyRound,
   RefreshCw,
   Ticket,
-  UsersRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DesignateAgentCard } from "@/components/DesignateAgentCard";
@@ -33,8 +32,6 @@ import { formatDate } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { AccountMembersCard } from "@/components/AccountMembersCard";
 import { CoBuyerCard } from "@/components/CoBuyerCard";
-import { JointRequestsCard } from "@/components/JointRequestsCard";
-import { cancelJointRequestFn } from "@/lib/joint-reservation.functions";
 import { nextOnboardingStep, memberDisplayName } from "@/lib/account-members";
 import { getMyAccountMembers } from "@/lib/account-members.functions";
 import { verificationRequestCopy } from "@/constants/eligibilityCheckCopy";
@@ -173,19 +170,6 @@ function BuyerDashboardPage() {
     queryFn: () => fetchActions(),
   });
 
-  // The buyer asked a co-buyer to hold a share together, then decides to keep it alone. The reservation itself is untouched.
-  const cancelJoint = useServerFn(cancelJointRequestFn);
-  async function takeAlone(requestId: string) {
-    try {
-      await cancelJoint({ data: { requestId } });
-      toast.success("You are keeping this share alone.");
-      await refetchReservations();
-      void queryClient.invalidateQueries({ queryKey: ["my-co-buyer"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't change that. Please try again.");
-    }
-  }
-
   // What is still open in the onboarding, per person on the account: said at the top of the dashboard.
   const fetchAccountMembers = useServerFn(getMyAccountMembers);
   const accountMembersQuery = useQuery({
@@ -265,7 +249,7 @@ function BuyerDashboardPage() {
       if (cancelled) return;
       setMembers((mem as Member[]) ?? []);
       try {
-        setVetting(accountVettingDisplay((await loadMemberSteps(supabase, acct.id)).map((s) => s.result)));
+        setVetting(accountVettingDisplay((await loadMemberSteps(supabase, acct.id)).filter((s) => !s.coBuyer).map((s) => s.result)));
       } catch {
         setVetting(null);
       }
@@ -443,8 +427,6 @@ function BuyerDashboardPage() {
         </div>
       ) : null}
 
-      <JointRequestsCard />
-
       <section>
         <h2 className="font-display text-lg font-semibold text-foreground">
           {isCoOwner ? "My homes & reservations" : "My reservations"}
@@ -489,8 +471,6 @@ function BuyerDashboardPage() {
             {reservations.map((r) => {
               const owned = ownedSince.has(r.property_id);
               const steps = actionsQuery.data?.progress[r.property_id];
-              // A share held with a co-buyer. The partner did not reserve it: it is in the initiator's name, who pays for it.
-              const partnerSide = r.joint?.role === "partner";
               return (
                 <li key={r.id} className="rounded-xl border border-border bg-card p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -509,6 +489,11 @@ function BuyerDashboardPage() {
                         <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
                           {r.shares_reserved} of 8 shares {owned ? "owned" : "reserved"}
                         </span>
+                        {r.coBuyerName ? (
+                          <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
+                            Bought together with {r.coBuyerName}
+                          </span>
+                        ) : null}
                         {owned ? (
                           <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
                             Co-owner since {formatDate(ownedSince.get(r.property_id)!)}
@@ -519,31 +504,6 @@ function BuyerDashboardPage() {
                           </span>
                         )}
                       </div>
-                      {r.joint ? (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <UsersRound className="h-3.5 w-3.5 text-accent" aria-hidden />
-                          {r.joint.status === "active"
-                            ? partnerSide
-                              ? `Held together with ${r.joint.partnerName}. They reserved it and pay for it.`
-                              : `Held together with ${r.joint.partnerName}.`
-                            : r.joint.status === "pending"
-                              ? `Waiting for ${r.joint.partnerName} to accept. The share is yours meanwhile.`
-                              : r.joint.status === "declined"
-                                ? `${r.joint.partnerName} declined. The share is yours alone.`
-                                : r.joint.status === "expired"
-                                  ? `${r.joint.partnerName} didn't answer in time. The share is yours alone.`
-                                  : "You are keeping this share alone."}
-                          {r.joint.status === "pending" && r.joint.requestId ? (
-                            <button
-                              type="button"
-                              onClick={() => void takeAlone(r.joint!.requestId!)}
-                              className="font-medium text-accent hover:underline"
-                            >
-                              Take it alone instead
-                            </button>
-                          ) : null}
-                        </div>
-                      ) : null}
                     </div>
                     <Link
                       to={owned ? "/buyer/documents" : "/buyer/pods/$id"}
@@ -557,12 +517,6 @@ function BuyerDashboardPage() {
 
                   {steps ? <ProgressTracker steps={steps} /> : null}
 
-                  {partnerSide ? (
-                    <p className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground">
-                      You hold this share together with {r.joint?.partnerName}. {r.joint?.partnerName} reserved it, so earnest money and closing funds are theirs to pay. You complete your own due diligence and authorizations, and sign your own documents, from this account.
-                    </p>
-                  ) : null}
-
                   <nav aria-label={`Pages for ${r.address}`} className="mt-4 border-t border-border pt-4">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {owned ? (
@@ -575,12 +529,8 @@ function BuyerDashboardPage() {
                             Due diligence
                           </PageLink>
                           <PageLink to="/buyer/authorizations" search={{ property: r.property_id }}>Authorizations</PageLink>
-                          {partnerSide ? null : (
-                            <>
-                              <PageLink to="/buyer/earnest-money" search={{ property: r.property_id }}>Earnest money</PageLink>
-                              <PageLink to="/buyer/closing-funds" search={{ property: r.property_id }}>Closing funds</PageLink>
-                            </>
-                          )}
+                          <PageLink to="/buyer/earnest-money" search={{ property: r.property_id }}>Earnest money</PageLink>
+                          <PageLink to="/buyer/closing-funds" search={{ property: r.property_id }}>Closing funds</PageLink>
                         </>
                       )}
                       <PageLink to="/buyer/operating-agreement" search={{ property: r.property_id }}>Operating Agreement</PageLink>
@@ -592,7 +542,7 @@ function BuyerDashboardPage() {
                     </div>
                   </nav>
 
-                  {partnerSide ? null : r.status === "reserved" && r.listing_status === "forming" ? (
+                  {r.status === "reserved" && r.listing_status === "forming" ? (
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                       {confirmingWithdrawId === r.id ? (
                         <>
@@ -713,7 +663,6 @@ function BuyerDashboardPage() {
       </section>
 
       <CoBuyerCard />
-
       <AccountMembersCard />
     </div>
   );

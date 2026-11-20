@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
 import { notifyBuyer } from "@/lib/notify";
 import { tetherResidentAgent } from "@/lib/tethering.functions";
-import { loadMemberSteps, type MemberSteps, type RequiredStep } from "@/lib/account-rollup";
+import { accountOwn, loadMemberSteps, type MemberSteps, type RequiredStep } from "@/lib/account-rollup";
 
 /** Enrollment period covered by the Digital Key. */
 export const ENROLLMENT_DAYS = 365;
@@ -41,9 +41,11 @@ const PER_MEMBER: Array<{ step: RequiredStep; message: string }> = [
  */
 export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketStatus {
   const missing: string[] = [];
-  const results = input.members.map((m) => m.result);
+  // A co-buyer's own steps are theirs: the account's Golden Ticket is about the account holder (and a second member who is acted for by them).
+  const own = accountOwn(input.members);
+  const results = own.map((m) => m.result);
 
-  if (input.members.length === 0) {
+  if (own.length === 0) {
     missing.push("Add at least one Account Member");
   } else if (results.some((r) => r === "held")) {
     // A held member keeps the whole account from the Golden Ticket until the charge is resolved.
@@ -51,7 +53,7 @@ export function evaluateGoldenTicket(input: GoldenTicketInputs): GoldenTicketSta
   } else if (results.some((r) => r !== "eligible")) {
     missing.push("All Account Members must be eligible under the Participant Eligibility Standard");
   }
-  for (const c of PER_MEMBER) if (input.members.some((m) => !m[c.step])) missing.push(c.message);
+  for (const c of PER_MEMBER) if (own.some((m) => !m[c.step])) missing.push(c.message);
 
   const liquidityOk =
     input.liquidityVerified || input.liquidityStatus === "manually_approved";

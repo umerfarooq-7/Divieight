@@ -36,8 +36,10 @@ export async function acknowledgmentGate(db: Db, propertyId: string, buyerAccoun
   const { data: docRows } = await db.from("due_diligence_inventory").select("*").eq("property_id", propertyId);
   const docs = ((docRows ?? []) as GateDoc[]).sort((a, b) => a.placed_at.localeCompare(b.placed_at));
   const current = docs.filter((d) => d.required && !d.superseded_by);
-  const { data: memberRows } = await db.from("account_members").select("id, full_name, status").eq("buyer_account_id", buyerAccountId).eq("status", "active");
-  const members = ((memberRows ?? []) as Array<{ id: string; full_name: string | null }>).map((m) => ({ id: m.id, name: (m.full_name ?? "").trim() || `Member ${m.id.slice(0, 8)}` })).sort((a, b) => a.id.localeCompare(b.id));
+  // The account holder, and a co-buyer only on a share bought with them (property-members.server.ts).
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  const memberRows = await membersForProperty<{ id: string; full_name: string | null }>(db, buyerAccountId, propertyId);
+  const members = memberRows.map((m) => ({ id: m.id, name: (m.full_name ?? "").trim() || `Member ${m.id.slice(0, 8)}` })).sort((a, b) => a.id.localeCompare(b.id));
   const { data: ackRows } = docs.length ? await db.from("due_diligence_acknowledgments").select("*").eq("buyer_account_id", buyerAccountId).in("document_id", docs.map((d) => d.id)) : { data: [] };
   const acks = (ackRows ?? []) as Array<Record<string, any>>;
   const agentId = await effectiveAgentId(db, buyerAccountId, propertyId);

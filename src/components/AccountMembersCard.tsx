@@ -125,11 +125,11 @@ export function AccountMembersCard() {
                   {({ member, members }) => <SecondMemberManager actingMemberId={member.id} members={members} locked={data.locked} onDone={() => setManaging(false)} />}
                 </ActingMemberGate>
               </div>
-            ) : (
+            ) : data.members.some((m) => m.role === "member" && !m.coBuyer) ? (
               <Button variant="outline" onClick={() => setManaging(true)}>
-                {data.members.some((m) => m.role === "member") ? "Edit or remove the second member" : data.canAdd ? "Add a second member" : "Manage members"}
+                Edit or remove the second member
               </Button>
-            )}
+            ) : null}
           </>
         )}
       </div>

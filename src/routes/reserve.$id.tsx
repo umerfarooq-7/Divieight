@@ -58,6 +58,8 @@ function ReservePage() {
   const cancelAssignment = useServerFn(cancelAgentAssignment);
 
   const [submitting, setSubmitting] = useState(false);
+  // With a co-buyer on the account: buy this share alone (default) or together with them.
+  const [together, setTogether] = useState(false);
   const [done, setDone] = useState<{ systemLocked: boolean; agentChange: ReservationResult["agentChange"] } | null>(null);
   // Set when the buyer's agent holds this listing: nothing is reserved until
   // they pick a different agent for this property (or let divieight choose).
@@ -108,7 +110,7 @@ function ReservePage() {
 
   async function confirm(agent?: { replacementAgentId?: string; autoAssignAgent?: boolean }) {
     setSubmitting(true);
-    const result = await reserve({ data: { propertyId: id, ...agent } });
+    const result = await reserve({ data: { propertyId: id, ...agent, withCoBuyer: together } });
     setSubmitting(false);
     if (!result.ok && result.reason === "dual_agency_conflict") {
       setConflict(result.conflict ?? null);
@@ -139,8 +141,11 @@ function ReservePage() {
     void queryClient.invalidateQueries({ queryKey: ["marketplace-properties"] });
     void queryClient.invalidateQueries({ queryKey: ["my-reservations"] });
     toast.success("Priority rank secured", {
-      description: "Your 1/8th share is now reserved on this home.",
+      description: result.withCoBuyer
+        ? `Your 1/8th share is reserved together with ${result.withCoBuyer.name}. It now shows in their portal.`
+        : "Your 1/8th share is now reserved on this home.",
     });
+    if (result.coBuyerError) toast.error("Your co-buyer wasn't added", { description: result.coBuyerError });
   }
 
   return (
@@ -319,6 +324,26 @@ function ReservePage() {
           </div>
 
           {/* 3. Confirm */}
+          {eligibility?.coBuyer ? (
+            <fieldset className="mt-6 rounded-xl border border-border bg-card p-5">
+              <legend className="px-1 text-sm font-semibold text-foreground">Who is buying this share?</legend>
+              <label className="mt-2 flex cursor-pointer items-start gap-3 text-sm">
+                <input type="radio" name="who" className="mt-0.5" checked={!together} onChange={() => setTogether(false)} />
+                <span>Just me</span>
+              </label>
+              <label className={`mt-2 flex items-start gap-3 text-sm ${eligibility.coBuyer.available ? "cursor-pointer" : "opacity-60"}`}>
+                <input type="radio" name="who" className="mt-0.5" disabled={!eligibility.coBuyer.available} checked={together} onChange={() => setTogether(true)} />
+                <span>
+                  Me with {eligibility.coBuyer.name}
+                  <span className="block text-xs text-muted-foreground">
+                    {eligibility.coBuyer.available
+                      ? "They see this share in their own portal and sign what is needed for it. The reservation, the money and your agent stay with you."
+                      : eligibility.coBuyer.unavailableReason}
+                  </span>
+                </span>
+              </label>
+            </fieldset>
+          ) : null}
           <div className="mt-6 rounded-xl border border-accent/40 bg-accent/5 p-6">
             <p className="inline-flex items-start gap-2 text-sm text-foreground">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-accent" />

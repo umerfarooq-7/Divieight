@@ -39,6 +39,11 @@ function W9ForMember({ actingMemberId, onSwitch, multi }: { actingMemberId: stri
     try {
       const { members } = await loadMembers();
       const me = members.find((m) => m.id === actingMemberId);
+      // A co-buyer has their own, shorter list: it lives in their portal.
+      if (me?.coBuyer) {
+        navigate({ to: "/buyer/co/dashboard" });
+        return;
+      }
       const next = me ? nextOnboardingStep(me) : null;
       navigate({ to: next?.path ?? "/buyer/dashboard" });
     } catch {

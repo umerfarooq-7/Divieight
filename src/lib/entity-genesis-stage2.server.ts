@@ -116,8 +116,10 @@ export async function markClosingReady(db: Db, actorId: string, propertyId: stri
   const { data: res } = await db.from("pod_reservations").select("buyer_account_id").eq("property_id", propertyId).eq("status", "reserved");
   const accountIds = [...new Set(((res ?? []) as Array<{ buyer_account_id: string | null }>).map((r) => r.buyer_account_id).filter(Boolean))] as string[];
   if (accountIds.length) {
-    const { data: unnamed } = await db.from("account_members").select("id, buyer_account_id, full_name").in("buyer_account_id", accountIds).eq("status", "active");
-    const gaps = ((unnamed ?? []) as Array<{ full_name: string | null }>).filter((m) => !(m.full_name ?? "").trim());
+    const { membersForProperty } = await import("@/lib/property-members.server");
+    const unnamed: Array<{ full_name: string | null }> = [];
+    for (const id of accountIds) unnamed.push(...(await membersForProperty<{ full_name: string | null }>(db, id, propertyId)));
+    const gaps = unnamed.filter((m) => !(m.full_name ?? "").trim());
     if (gaps.length) throw new Error(`Not Closing-Ready: ${gaps.length} Account Member${gaps.length === 1 ? " has" : "s have"} no legal name on file, so they can't be named on the cap table.`);
   }
 
@@ -338,12 +340,11 @@ export async function oaSigners(db: Db, propertyId: string): Promise<Stage2Signe
   const cap = await lockedCapTable(db, propertyId);
   const accounts = [...new Set(cap.map((c) => c.buyerAccountId).filter(Boolean))] as string[];
   if (accounts.length === 0) return [];
-  const { data } = await db
-    .from("account_members")
-    .select("id, buyer_account_id, full_name")
-    .in("buyer_account_id", accounts)
-    .eq("status", "active");
-  return ((data ?? []) as Array<{ id: string; buyer_account_id: string; full_name: string | null }>)
+  // The account holder signs for every share; a co-buyer signs only for the shares bought with them.
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  const people: Array<{ id: string; buyer_account_id: string; full_name: string | null }> = [];
+  for (const id of accounts) people.push(...(await membersForProperty<{ id: string; buyer_account_id: string; full_name: string | null }>(db, id, propertyId)));
+  return people
     .map((m) => ({ buyerAccountId: m.buyer_account_id, accountMemberId: m.id, name: (m.full_name ?? "").trim() || "Account Member" }))
     .sort((a, b) => accounts.indexOf(a.buyerAccountId) - accounts.indexOf(b.buyerAccountId));
 }

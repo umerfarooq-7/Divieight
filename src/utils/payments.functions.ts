@@ -7,7 +7,7 @@ import {
 } from "@/lib/stripe.server";
 
 import { enrollmentFeeCents } from "@/lib/buyer-fee";
-import { MAX_ACTIVE_MEMBERS } from "@/lib/account-members";
+import { isCoBuyer, MAX_ACTIVE_MEMBERS } from "@/lib/account-members";
 
 const ENROLLMENT_PRICE_ID = "platform_enrollment_share";
 const PER_SHARE_CENTS = 257000;
@@ -184,12 +184,10 @@ export const createBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
     }
 
     // One fee per active member, counted here on the server (never taken from the browser).
-    const { count } = await supabase
-      .from("account_members")
-      .select("id", { count: "exact", head: true })
-      .eq("buyer_account_id", account.id)
-      .eq("status", "active");
-    const memberCount = Math.min(MAX_ACTIVE_MEMBERS, Math.max(1, count ?? 1));
+    // A co-buyer pays their own fee from their own login, so they are not counted here.
+    const { data: roster } = await supabase.from("account_members").select("*").eq("buyer_account_id", account.id).eq("status", "active");
+    const counted = ((roster ?? []) as Array<{ role: string; auth_user_id?: string | null; invite_token_hash?: string | null }>).filter((m) => !isCoBuyer(m)).length;
+    const memberCount = Math.min(MAX_ACTIVE_MEMBERS, Math.max(1, counted));
     const feeCents = enrollmentFeeCents(memberCount);
 
     try {
@@ -296,6 +294,89 @@ export const confirmBuyerEnrollmentPayment = createServerFn({ method: "POST" })
       }
 
       return { paid: true, priorityRankTimestamp: stamp ?? undefined };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
+
+/* ------------------------------------------------------------------ *
+ * A co-buyer pays their own enrollment fee ($2,570), from their login. *
+ * It never touches the main account's priority rank.                   *
+ * ------------------------------------------------------------------ */
+
+export const createCoBuyerEnrollmentCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { returnUrl: string; environment: StripeEnv }) => data)
+  .handler(async ({ data, context }): Promise<CheckoutResult> => {
+    const { userId } = context;
+    const { supabaseAdmin: typedAdmin } = await import("@/integrations/supabase/admin.server");
+    const supabaseAdmin = typedAdmin as any; // co-buyer-members.sql columns are not in the generated types yet
+    const { data: member } = await supabaseAdmin.from("account_members").select("*").eq("auth_user_id", userId).eq("status", "active").maybeSingle();
+    const m = member as { id: string; buyer_account_id: string; email: string | null; enrollment_paid_at?: string | null } | null;
+    if (!m) return { error: "No co-buyer account found for this login." };
+    if (m.enrollment_paid_at) return { error: "Your enrollment fee has already been paid." };
+
+    try {
+      const stripe = createStripeClient(data.environment);
+      const prices = await stripe.prices.list({ lookup_keys: [ENROLLMENT_PRICE_ID] });
+      if (!prices.data.length) return { error: "Enrollment fee price not found." };
+      const customerId = await resolveCustomer(stripe, { userId, email: m.email ?? undefined });
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: prices.data[0].id, quantity: 1 }],
+        mode: "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        billing_address_collection: "required",
+        payment_intent_data: { description: "Co-buyer Platform Enrollment Fee (1 member)" },
+        metadata: { userId, buyerAccountId: m.buyer_account_id, accountMemberId: m.id, kind: "co_buyer_enrollment_fee", members: "1" },
+      });
+      await supabaseAdmin.from("buyer_enrollment_payments").insert({
+        buyer_account_id: m.buyer_account_id,
+        auth_user_id: userId,
+        account_member_id: m.id,
+        amount_cents: PER_SHARE_CENTS,
+        status: "pending",
+        stripe_session_id: session.id,
+        environment: data.environment,
+      });
+      return { clientSecret: session.client_secret ?? "" };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
+
+export const confirmCoBuyerEnrollmentPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { sessionId: string; environment: StripeEnv }) => {
+    if (!/^[a-zA-Z0-9_-]+$/.test(data.sessionId)) throw new Error("Invalid sessionId");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<ConfirmResult> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+      const session = await stripe.checkout.sessions.retrieve(data.sessionId);
+      if (session.metadata?.userId !== context.userId || session.metadata?.kind !== "co_buyer_enrollment_fee") {
+        return { error: "This payment does not belong to your account." };
+      }
+      if (session.payment_status !== "paid") return { paid: false };
+
+      const { supabaseAdmin: typedAdmin } = await import("@/integrations/supabase/admin.server");
+    const supabaseAdmin = typedAdmin as any; // co-buyer-members.sql columns are not in the generated types yet
+      await supabaseAdmin.from("buyer_enrollment_payments").update({ status: "paid" }).eq("stripe_session_id", session.id).eq("auth_user_id", context.userId);
+      const memberId = session.metadata?.accountMemberId;
+      if (memberId) {
+        await supabaseAdmin.from("account_members").update({ enrollment_paid_at: new Date().toISOString() }).eq("id", memberId).eq("auth_user_id", context.userId).is("enrollment_paid_at", null);
+      }
+      await supabaseAdmin.from("audit_log").insert({
+        actor_id: context.userId,
+        actor_type: "buyer",
+        action_type: "payment.enrollment_fee_confirmed",
+        entity_type: "payment",
+        entity_id: session.id,
+        metadata: { kind: "co_buyer_enrollment_fee", stripe_session_id: session.id, environment: data.environment, amount_total: session.amount_total ?? null, currency: session.currency ?? null },
+      });
+      return { paid: true };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }

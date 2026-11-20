@@ -164,7 +164,7 @@ describe("the vetting display is fed from eligibility results", () => {
 
   it("the dashboard shows it from loadMemberSteps (the results), and the old status-string helpers are gone", () => {
     const page = readFileSync("src/routes/buyer.dashboard.tsx", "utf8");
-    expect(page).toContain("accountVettingDisplay((await loadMemberSteps(supabase, acct.id)).map((s) => s.result))");
+    expect(page).toContain("accountVettingDisplay((await loadMemberSteps(supabase, acct.id)).filter((s) => !s.coBuyer).map((s) => s.result))");
     expect(page).not.toMatch(/function vettingLabel|function vettingTone|"Cleared"/);
   });
 });

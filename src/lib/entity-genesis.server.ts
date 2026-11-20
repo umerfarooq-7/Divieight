@@ -96,17 +96,13 @@ async function buildCapTable(db: Db, propertyId: string): Promise<CapTableRow[]>
     new Set(((reservations ?? []) as any[]).map((r) => r.buyer_account_id).filter(Boolean)),
   );
   const namesByBuyer = new Map<string, string[]>();
-  if (buyerIds.length > 0) {
-    const { data: members } = await db
-      .from("account_members")
-      .select("buyer_account_id, full_name")
-      .in("buyer_account_id", buyerIds)
-      .eq("status", "active");
-    for (const m of (members ?? []) as any[]) {
-      const list = namesByBuyer.get(m.buyer_account_id) ?? [];
-      if (m.full_name) list.push(m.full_name);
-      namesByBuyer.set(m.buyer_account_id, list);
-    }
+  // Per reservation, because a co-buyer is named only on the shares bought with them.
+  const { membersForProperty } = await import("@/lib/property-members.server");
+  for (const buyerId of buyerIds as string[]) {
+    const members = await membersForProperty<{ id: string; buyer_account_id: string; full_name: string | null; role: string }>(db, buyerId, propertyId);
+    const list: string[] = [];
+    for (const m of members.sort((a, b) => Number(b.role === "primary") - Number(a.role === "primary"))) if (m.full_name) list.push(m.full_name);
+    namesByBuyer.set(buyerId, list);
   }
 
   for (const r of (reservations ?? []) as any[]) {

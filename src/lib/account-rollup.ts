@@ -12,7 +12,7 @@
  */
 import { DECISION_PAGE_SPEC_VERSION, STANDARD_VERSION as BUNDLED_STANDARD_VERSION } from "@/constants/eligibilityCopy";
 import { BLOCK1_VERSION, BLOCK2_VERSION } from "@/constants/authorizationsCopy";
-import { identityComplete } from "@/lib/account-members";
+import { identityComplete, isCoBuyer } from "@/lib/account-members";
 import { currentResultOf, type EligibilityResult } from "@/lib/eligibility-engine";
 import { latestLiveness } from "@/lib/liveness";
 
@@ -22,6 +22,8 @@ export interface MemberSteps {
   memberId: string;
   name: string;
   role: string;
+  /** A co-buyer (a limited sub-account with a login of their own). Their progress is theirs: it is not part of the account's own status or Golden Ticket. */
+  coBuyer: boolean;
   idScan: boolean;
   liveness: boolean;
   /** E1: read the Participant Eligibility Standard (current versions). */
@@ -57,7 +59,11 @@ export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = { ready: "El
 
 export const missingSteps = (m: MemberSteps) => REQUIRED_STEPS.filter((s) => !m[s.key]);
 
-export function accountRollup(members: MemberSteps[]): { status: AccountStatus; blocked: boolean } {
+/** The people the account's own status and Golden Ticket are about: everyone but a co-buyer. */
+export const accountOwn = (members: MemberSteps[]) => members.filter((m) => !m.coBuyer);
+
+export function accountRollup(all: MemberSteps[]): { status: AccountStatus; blocked: boolean } {
+  const members = accountOwn(all);
   if (members.some((m) => m.result === "held")) return { status: "held", blocked: true };
   const blocked = members.some((m) => m.result === "not_eligible");
   const ready = members.length > 0 && members.every((m) => m.result === "eligible" && missingSteps(m).length === 0);
@@ -72,7 +78,8 @@ export async function loadMemberSteps(db: Db, accountId: string): Promise<Member
     const { data, error } = await q;
     return error ? [] : ((data ?? []) as any[]);
   };
-  const members = await rows("account_members", "id, full_name, role, address, date_of_birth, id_document_url, created_at", (q) => q.eq("status", "active"));
+  // Every column, so this also works before co-buyer-members.sql has added the login columns.
+  const members = await rows("account_members", "*", (q) => q.eq("status", "active"));
   const [live, acks, decls, results, b1, b2, docs, w9] = await Promise.all([
     rows("member_liveness_checks", "account_member_id, status, created_at"),
     rows("eligibility_page_acknowledgements", "account_member_id, standard_version, page_spec_version"),
@@ -97,6 +104,7 @@ export async function loadMemberSteps(db: Db, accountId: string): Promise<Member
         memberId: m.id,
         name: m.full_name?.trim() || (m.role === "primary" ? "The account holder" : "The second member"),
         role: m.role,
+        coBuyer: isCoBuyer(m),
         idScan: identityComplete(m) && Boolean(m.id_document_url),
         liveness: latestLiveness(live, m.id)?.status === "passed",
         // Read against the version they are measured under: their declaration's, or the live one before they declare.
