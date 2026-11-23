@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -28,6 +28,7 @@ const STATE_TEXT: Record<string, string> = {
 };
 
 function BrokerTaxFormPage() {
+  const navigate = useNavigate();
   const load = useServerFn(getBrokerTaxFormStatus);
   const submit = useServerFn(submitBrokerTaxFormFn);
   const q = useQuery({ queryKey: ["broker-tax-form"], queryFn: () => load(), retry: false });
@@ -50,6 +51,8 @@ function BrokerTaxFormPage() {
       setTin("");
       toast.success(`${r.formType} saved${r.expiry ? ` (valid until ${r.expiry})` : ""}.`);
       void q.refetch();
+      // Done here: on to the dashboard, where the Broker of Record sees what is left.
+      navigate({ to: "/broker/dashboard" });
     },
     onError: (e: Error) => toast.error(e.message),
   });
