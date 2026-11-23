@@ -107,25 +107,17 @@ function CoBuyerPortal() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 text-foreground sm:px-6">
-      <PaymentTestModeBanner />
-      <header className="flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-8 overflow-hidden rounded-lg">
+        <PaymentTestModeBanner />
+      </div>
+      <header>
         <div>
-          <p className={EYEBROW}>Co-buyer</p>
+          <p className={EYEBROW}>Co-buyer portal</p>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Welcome{d?.name ? `, ${d.name.split(" ")[0]}` : ""}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {d ? `You are buying together with ${d.holderName}. You complete your own steps once, and sign for the shares bought with you.` : "Your own steps and signatures."}
           </p>
         </div>
-        <button
-          type="button"
-          className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate({ to: "/buyer/login" });
-          }}
-        >
-          Sign out
-        </button>
       </header>
 
       {self.isLoading || mine.isLoading || loading ? <div className="mt-8 h-48 animate-pulse rounded-xl border border-border bg-muted/40" /> : null}
@@ -218,32 +210,39 @@ function CoBuyerPortal() {
               </ol>
             </>
           ) : (
-            <div className="mt-8 rounded-xl border border-emerald-600/40 bg-emerald-50 p-6 text-center dark:bg-emerald-950/20">
-              <p className="font-display text-xl font-semibold">You're all set</p>
-              <p className="mt-1 text-sm text-muted-foreground">Your steps are complete. When {d.holderName} buys a share together with you, it shows up below with what you need to sign.</p>
+            <div className="mt-8 flex items-start gap-4 rounded-xl border border-emerald-600/40 bg-emerald-50 p-5 dark:bg-emerald-950/20">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white" aria-hidden>
+                ✓
+              </span>
+              <div>
+                <p className="font-display text-lg font-semibold">You're all set</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">All {rows.length} of your steps are complete. You have nothing more to do until {d.holderName} buys a share together with you.</p>
+              </div>
             </div>
           )}
 
-          <section className={`mt-8 ${CARD}`}>
-            <h2 className="font-display text-lg font-semibold">Shares bought with you</h2>
+          <section className="mt-10">
+            <h2 className="font-display text-xl font-semibold">Shares bought with you</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Each share {d.holderName} buys together with you appears here, with the documents you sign for it.</p>
             {d.shares.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">None yet. When {d.holderName} buys a share together with you, it appears here with what you need to sign.</p>
+              <p className="mt-4 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">No shares yet.</p>
             ) : (
-              <ul className="mt-3 divide-y divide-border text-sm">
+              <ul className="mt-4 space-y-3">
                 {d.shares.map((sh) => (
-                  <li key={sh.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                    <span className="font-medium">{sh.address || "Property"}</span>
-                    <span className="flex gap-3">
-                      <Link to="/buyer/due-diligence/$id" params={{ id: sh.propertyId }} className="text-primary underline">
+                  <li key={sh.reservationId} className="rounded-xl border border-border bg-card p-5 shadow-sm">
+                    <p className="font-display text-base font-semibold">{sh.address || "Property"}</p>
+                    <p className="text-xs text-muted-foreground">1/8th share · bought together with {d.holderName}</p>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <Link to="/buyer/due-diligence/$id" params={{ id: sh.propertyId }} className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-secondary">
                         Due diligence
                       </Link>
-                      <Link to="/buyer/authorizations" search={{ property: sh.propertyId }} className="text-primary underline">
+                      <Link to="/buyer/authorizations" search={{ property: sh.propertyId }} className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-secondary">
                         Authorizations
                       </Link>
-                      <Link to="/buyer/operating-agreement" search={{ property: sh.propertyId }} className="text-primary underline">
+                      <Link to="/buyer/operating-agreement" search={{ property: sh.propertyId }} className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-secondary">
                         Operating Agreement
                       </Link>
-                    </span>
+                    </div>
                   </li>
                 ))}
               </ul>
