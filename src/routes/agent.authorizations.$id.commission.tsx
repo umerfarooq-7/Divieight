@@ -30,7 +30,7 @@ function ProposeCommission() {
 
   const [row, setRow] = useState<AgentAuthorizationRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [rate, setRate] = useState("");
+  const [rate, setRate] = useState("3");
   const [funding, setFunding] = useState<CommissionFundingSource>("proceeds_at_closing");
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);

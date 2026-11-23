@@ -17,7 +17,7 @@ export function NavBar() {
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [portal, setPortal] = useState<"buyer" | "seller" | "agent" | null>(null);
+  const [portal, setPortal] = useState<"buyer" | "seller" | "agent" | "cobuyer" | null>(null);
   const [isCoOwner, setIsCoOwner] = useState(false);
   const loadOwnership = useServerFn(getMyOwnership);
   const [isOwner, setIsOwner] = useState(false);
@@ -63,22 +63,33 @@ export function NavBar() {
       setPortal("agent");
       return;
     }
+    if (metadataRole === "co_buyer") {
+      setPortal("cobuyer");
+      return;
+    }
     if (metadataRole === "buyer") {
       setPortal("buyer");
       return;
     }
 
-    Promise.all([getBuyerAccount(user.id), getAgentProfile(user.id)]).then(
-      ([buyer, agent]) => {
+    Promise.all([
+      getBuyerAccount(user.id),
+      getAgentProfile(user.id),
+      // A co-buyer has no buyer account of their own: they are a limited member of someone else's.
+      (supabase as any).from("account_members").select("id").eq("auth_user_id", user.id).eq("status", "active").maybeSingle(),
+    ]).then(
+      ([buyer, agent, asMember]) => {
         if (cancelled) return;
         setPortal(
           agent
             ? "agent"
             : buyer
               ? "buyer"
-              : metadataRole === "seller"
-                ? "seller"
-                : null,
+              : asMember?.data
+                ? "cobuyer"
+                : metadataRole === "seller"
+                  ? "seller"
+                  : null,
         );
       },
     );
@@ -186,16 +197,20 @@ export function NavBar() {
                     to={
                       portal === "agent"
                         ? "/agent/dashboard"
-                        : portal === "buyer"
-                          ? "/buyer/dashboard"
-                          : "/dashboard"
+                        : portal === "cobuyer"
+                          ? "/buyer/co/dashboard"
+                          : portal === "buyer"
+                            ? "/buyer/dashboard"
+                            : "/dashboard"
                     }
                     className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     {portal === "agent"
                       ? "Professional Portal"
-                      : portal === "buyer"
+                      : portal === "cobuyer"
+                        ? "Co-buyer dashboard"
+                        : portal === "buyer"
                         ? isCoOwner
                           ? "Co-owner dashboard"
                           : "Buyer dashboard"
