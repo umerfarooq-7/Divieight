@@ -96,6 +96,10 @@ describe("who can open an owner property", () => {
     as(USERS.b1);
     const { properties } = await listOwnerProperties();
     expect(properties.map((p) => [p.propertyId, p.shareCount]).sort()).toEqual([[A, 1], [B, 2]].sort());
+    // reserved shares are not ownership yet: no Owner button until the Operating Agreement is executed and the key is active
+    expect(await getOwnerNavState()).toEqual({ isOwner: false });
+    genesis(A);
+    close(A, { buyer: IDS.b1 });
     expect(await getOwnerNavState()).toEqual({ isOwner: true });
   });
 

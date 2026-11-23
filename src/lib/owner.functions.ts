@@ -190,8 +190,14 @@ export const claimCoOwnerBanners = createServerFn({ method: "POST" })
 export const getOwnerNavState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ isOwner: boolean }> => {
-    const { rows } = await myCapRows(await adminDb(), context.userId);
-    return { isOwner: rows.length > 0 };
+    // A reserved share is not ownership yet: the Owner button appears only once the Operating Agreement
+    // is executed and this person's Digital Key is active on a property (i.e. after closing).
+    const db = await adminDb();
+    const { rows, buyerAccountId } = await myCapRows(db, context.userId);
+    for (const propertyId of new Set(rows.map((r) => r.property_id))) {
+      if (await ownerFeaturesActive(db, propertyId, context.userId, buyerAccountId)) return { isOwner: true };
+    }
+    return { isOwner: false };
   });
 
 /** /owner — one card per property the user holds shares in. */
