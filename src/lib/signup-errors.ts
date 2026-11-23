@@ -44,6 +44,15 @@ export function mapSignupError(error: AuthError | { message: string; code?: stri
     return { field: "form", message: "Too many attempts. Please wait a moment and try again." };
   }
 
+  // The auth server failed without saying why (an empty `{}` body). The usual cause is an address that already has an account, so say that.
+  const status = ("status" in error && typeof error.status === "number" ? error.status : 0) || 0;
+  const empty = !error.message || error.message.trim() === "{}" || /^\{\s*\}$/.test(error.message.trim());
+  if (status >= 500 || empty) {
+    return {
+      field: "email",
+      message: "We couldn't create this account. If this email is already registered, sign in instead; otherwise try again or use a different email.",
+    };
+  }
   return { field: "form", message: error.message || "Registration failed. Please try again." };
 }
 

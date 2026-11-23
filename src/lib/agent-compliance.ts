@@ -73,15 +73,19 @@ export async function submitInsuranceAndCertification(
     // E&O expiry is captured here, whether proof was uploaded or the broker
     // affirmed coverage. The 60/30/7-day reminders run off this date.
     eo_expires_at: input.eoExpiresAt || defaultEoExpiry(now),
-    eo_lapsed: false,
-    eo_reminder_60_sent_at: null,
-    eo_reminder_30_sent_at: null,
-    eo_reminder_7_sent_at: null,
     nar_cert_signed_at: now,
     nar_cert_expires_at: narCertExpiry(now),
     nar_cert_lapsed: false,
     onboarding_status: ENTITY_CONFIG[input.entityType ?? "agent"].next.afterInsurance,
   };
+
+  // Lapse tracking and reminders are kept on agents only; a broker's row holds just the expiry date.
+  if ((input.entityType ?? "agent") === "agent") {
+    patch.eo_lapsed = false;
+    patch.eo_reminder_60_sent_at = null;
+    patch.eo_reminder_30_sent_at = null;
+    patch.eo_reminder_7_sent_at = null;
+  }
 
   if (input.brokerAffirmed) {
     patch.eo_broker_affirmed = true;

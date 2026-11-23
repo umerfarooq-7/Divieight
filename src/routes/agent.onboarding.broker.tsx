@@ -111,6 +111,18 @@ function BrokerLinkPage() {
       return;
     }
     setInviting(true);
+    // One email is one role: an address that already has an account can't accept an invitation, so say so now.
+    try {
+      const { checkInviteEmailFn, EXISTING_ACCOUNT_MESSAGE } = await import("@/lib/account-check.functions");
+      const existing = await checkInviteEmailFn({ data: { email: invite.email } });
+      if (existing.kind) {
+        setInviting(false);
+        toast.error(EXISTING_ACCOUNT_MESSAGE(existing.kind));
+        return;
+      }
+    } catch {
+      /* the invitation can still be created; sign-up reports a taken address */
+    }
     const res = await createBrokerInvitation({
       agentId: agent.id,
       email: invite.email,
