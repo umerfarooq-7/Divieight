@@ -25,7 +25,7 @@ export const getMyCoBuyer = createServerFn({ method: "GET" })
   .handler(async ({ context }) => (await server()).myCoBuyer(await adminDb(), { userId: context.userId }));
 
 /** The co-buyer's own portal. */
-export const getCoBuyerSelf = createServerFn({ method: "GET" })
+export const getCoBuyerSelf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => (await server()).coBuyerSelf(await adminDb(), { userId: context.userId }));
 

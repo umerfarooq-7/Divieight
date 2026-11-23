@@ -71,14 +71,17 @@ function CoBuyerPortal() {
       else {
         toast.success("Payment received.");
         setShowCheckout(false);
+        // Shown at once, then confirmed against the server: the step turns done without a refresh.
+        qc.setQueryData(["co-buyer-self", user.id], (old: typeof self.data) => (old ? { ...old, feePaid: true } : old));
         await qc.invalidateQueries({ queryKey: ["co-buyer-self"] });
+        await qc.invalidateQueries({ queryKey: ["co-buyer-members"] });
       }
       navigate({ to: "/buyer/co/dashboard", search: {}, replace: true });
     })();
     return () => {
       cancelled = true;
     };
-  }, [sessionId, user, navigate, qc]);
+  }, [sessionId, user?.id, navigate, qc]);
 
   async function accept(block: "block1" | "block2") {
     if (!memberId) return;
