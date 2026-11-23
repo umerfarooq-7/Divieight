@@ -53,3 +53,17 @@ export async function assertMayActAs(db: Db, userId: string, accountMemberId: st
   const { data: a } = await db.from("buyer_accounts").select("auth_user_id").eq("id", member.buyer_account_id).maybeSingle();
   if ((a as { auth_user_id?: string } | null)?.auth_user_id !== userId) throw new Error("You can only sign for yourself.");
 }
+
+/** The co-buyers on this property of the account this login holds: their own logins and addresses, so they are told what concerns their shares. */
+export async function coBuyerRecipients(db: Db, holderAuthUserId: string | null | undefined, propertyId: string | null | undefined): Promise<Array<{ memberId: string; authUserId: string; email: string | null }>> {
+  if (!holderAuthUserId || !propertyId) return [];
+  const { data: acct } = await db.from("buyer_accounts").select("id").eq("auth_user_id", holderAuthUserId).maybeSingle();
+  const accountId = (acct as { id: string } | null)?.id;
+  if (!accountId) return [];
+  const on = await coBuyerIdsOnProperty(db, accountId, propertyId);
+  if (on.size === 0) return [];
+  const { data } = await db.from("account_members").select("*").eq("buyer_account_id", accountId).eq("status", "active");
+  return ((data ?? []) as Array<{ id: string; email: string | null; auth_user_id?: string | null }>)
+    .filter((m) => on.has(m.id) && m.auth_user_id)
+    .map((m) => ({ memberId: m.id, authUserId: m.auth_user_id as string, email: m.email }));
+}

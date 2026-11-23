@@ -4,7 +4,8 @@ import { isCoBuyer } from "@/lib/account-members";
 import { accountOwn, accountRollup, type MemberSteps } from "@/lib/account-rollup";
 import { checkInviteInput, CO_BUYER_MESSAGES } from "@/lib/co-buyer-members";
 
-vi.mock("@/lib/authorization.notify.server", () => ({ sendEmail: vi.fn(async () => true) }));
+vi.mock("@/lib/authorization.notify.server", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/authorization.notify.server")>()), sendEmail: vi.fn(async () => true) }));
+vi.mock("@/lib/mailer.server", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/mailer.server")>()), sendMail: vi.fn(async () => true) }));
 
 const { inviteCoBuyer, claimCoBuyerInvite, removeCoBuyer, coBuyerChoice, attachCoBuyerToReservation, coBuyerSelf, sharesOfCoBuyer } = await import("@/lib/co-buyer-members.server");
 const { accountFor } = await import("@/lib/account-members.server");
@@ -285,5 +286,56 @@ describe("the co-buyer does not hold the account's own steps", () => {
     expect(row?.coBuyer).toBe(true);
     expect(row?.id).toBe(accountId);
     expect((await accountRowForLogin(db as never, { userId: HOLDER }))?.coBuyer).toBe(false);
+  });
+});
+
+describe("what concerns the co-buyer's shares reaches them", () => {
+  const PROPERTY = "prop-1";
+  async function joinedOnShare() {
+    const token = await inviteAndToken();
+    await claimCoBuyerInvite(db as never, { userId: COBUYER, email: "casey@example.com", token });
+    db.table("pod_reservations").push({ id: "res-1", property_id: PROPERTY, buyer_account_id: accountId, status: "reserved" });
+    db.table("properties").push({ id: PROPERTY, address: "1 Main St", city: "Austin", state: "TX" });
+    await attachCoBuyerToReservation(db as never, { userId: HOLDER, reservationId: "res-1" });
+    return db.table("account_members").find((m) => m.email === "casey@example.com")!.id as string;
+  }
+
+  it("a holder's notice about their property is copied to the co-buyer on it, in their own bell and at their own address", async () => {
+    const { deliver, memberEmailsFor } = await import("@/lib/authorization.notify.server");
+    const { sendMail } = await import("@/lib/mailer.server");
+    const coId = await joinedOnShare();
+    (sendMail as any).mockClear();
+    await deliver(db as never, { authUserId: HOLDER, email: "holder@example.com" }, { subject: "New Document Alert", message: "A new document", link: "/buyer/due-diligence", type: "diligence", propertyId: PROPERTY, dedupeKey: "k1" });
+    const bell = db.table("notifications").filter((n) => n.message === "A new document");
+    expect(bell.map((n) => n.seller_id).sort()).toEqual([COBUYER, HOLDER].sort());
+    expect((sendMail as any).mock.calls.map((c: any[]) => c[0].to).sort()).toEqual(["casey@example.com", "holder@example.com"]);
+    // Sent again: nobody is told twice.
+    await deliver(db as never, { authUserId: HOLDER, email: "holder@example.com" }, { subject: "New Document Alert", message: "A new document", link: "/x", type: "diligence", propertyId: PROPERTY, dedupeKey: "k1" });
+    expect(db.table("notifications").filter((n) => n.message === "A new document")).toHaveLength(2);
+    // The account's general addresses never include the co-buyer (they are told only about their shares).
+    expect(await memberEmailsFor(db as never, HOLDER)).toEqual(["holder@example.com"]);
+    expect(coId).toBeTruthy();
+  });
+
+  it("a notice about a property the co-buyer is not on does not reach them", async () => {
+    const { deliver } = await import("@/lib/authorization.notify.server");
+    await joinedOnShare();
+    await deliver(db as never, { authUserId: HOLDER, email: null }, { subject: "Other", message: "Other home notice", link: null, type: "diligence", propertyId: "prop-other", dedupeKey: "k2" });
+    expect(db.table("notifications").filter((n) => n.message === "Other home notice").map((n) => n.seller_id)).toEqual([HOLDER]);
+  });
+
+  it("the portal lists the documents and the Operating Agreement waiting on the co-buyer, by share", async () => {
+    const { coBuyerActions } = await import("@/lib/co-buyer-members.server");
+    const coId = await joinedOnShare();
+    db.table("due_diligence_inventory").push({ id: "doc-1", property_id: PROPERTY, document_title: "Title commitment", required: true, superseded_by: null, content_hash: "h1", placed_at: new Date().toISOString() });
+    let list = await coBuyerActions(db as never, { userId: COBUYER });
+    expect(list.map((a) => a.kind)).toEqual(["due_diligence"]);
+    expect(list[0].propertyLabel).toBe("1 Main St, Austin");
+    // Once they have acknowledged, it is no longer theirs to do.
+    db.table("due_diligence_acknowledgments").push({ id: "a1", document_id: "doc-1", property_id: PROPERTY, buyer_account_id: accountId, actor_role: "account_member", account_member_id: coId, content_hash: "h1" });
+    db.table("entity_genesis").push({ id: "eg1", property_id: PROPERTY, final_oa_status: "awaiting_signatures", final_oa_hash: "oa1" });
+    list = await coBuyerActions(db as never, { userId: COBUYER });
+    expect(list.map((a) => a.kind)).toEqual(["operating_agreement"]);
+    expect(await coBuyerActions(db as never, { userId: HOLDER })).toEqual([]);
   });
 });

@@ -332,3 +332,66 @@ export async function adviceNoticeState(db: Db, params: { userId: string; acting
   const { data } = await db.from("signed_documents").select("id").eq("buyer_account_id", account.id).eq("account_member_id", member.id).eq("document_type", "block_5_independent_advice").limit(1);
   return { accepted: ((data ?? []) as unknown[]).length > 0 };
 }
+
+export interface CoBuyerAction {
+  kind: "due_diligence" | "authorization" | "operating_agreement";
+  propertyId: string;
+  propertyLabel: string;
+  title: string;
+  detail: string | null;
+  requestId: string | null;
+}
+
+/** What is waiting on this co-buyer personally, per share: documents to acknowledge, authorizations to answer, the Operating Agreement to sign. */
+export async function coBuyerActions(db: Db, params: { userId: string }): Promise<CoBuyerAction[]> {
+  const { data: m } = await db.from("account_members").select("*").eq("auth_user_id", params.userId).eq("status", "active").maybeSingle();
+  const me = m as MemberRow | null;
+  if (!me) return [];
+  const shares = await sharesOfCoBuyer(db, me.id);
+  const propertyIds = [...new Set(shares.map((s) => s.propertyId))];
+  if (propertyIds.length === 0) return [];
+  const { acknowledgmentGate } = await import("@/lib/ack-gate.server");
+  const { authorizationsAwaitingBuyer } = await import("@/lib/authorization.functions");
+  const { AUTHORIZATION_ACTION_LABELS } = await import("@/lib/authorization");
+  const accountId = me.buyer_account_id;
+  const awaiting = await authorizationsAwaitingBuyer(db as never, accountId).catch(() => []);
+  const out: CoBuyerAction[] = [];
+  for (const pid of propertyIds) {
+    const { data: p } = await db.from("properties").select("address, city").eq("id", pid).maybeSingle();
+    const prop = p as { address?: string; city?: string } | null;
+    const label = [prop?.address, prop?.city].filter(Boolean).join(", ") || "Your home";
+
+    // Documents this person still has to acknowledge.
+    const gate = await acknowledgmentGate(db, pid, accountId);
+    const docs = new Set(gate.missing.filter((x) => x.who === "member" && (x as { memberId?: string }).memberId === me.id).map((x) => x.documentId));
+    if (docs.size > 0) {
+      out.push({ kind: "due_diligence", propertyId: pid, propertyLabel: label, title: `Review and acknowledge ${docs.size} due-diligence document${docs.size === 1 ? "" : "s"}`, detail: "Required before authorization requests can go ahead.", requestId: null });
+    } else {
+      // Authorizations this person hasn't answered yet.
+      for (const a of (awaiting as Array<{ id: string; property_id: string; action_type: string; stage: string }>).filter((x) => x.property_id === pid)) {
+        const table = a.stage === "commission_members" ? "authorization_commission_responses" : "authorization_responses";
+        let answered = false;
+        if (table === "authorization_responses") {
+          const { data: r } = await db.from(table).select("id").eq("request_id", a.id).eq("account_member_id", me.id).limit(1);
+          answered = ((r ?? []) as unknown[]).length > 0;
+        } else {
+          const { data: item } = await db.from("authorization_commission_items").select("id").eq("request_id", a.id).maybeSingle();
+          if (item) {
+            const { data: r } = await db.from(table).select("id").eq("item_id", (item as { id: string }).id).eq("account_member_id", me.id).limit(1);
+            answered = ((r ?? []) as unknown[]).length > 0;
+          }
+        }
+        if (!answered) out.push({ kind: "authorization", propertyId: pid, propertyLabel: label, title: a.stage === "commission_members" ? "Authorize the commission provision" : `Authorize: ${(AUTHORIZATION_ACTION_LABELS as Record<string, string>)[a.action_type] ?? a.action_type}`, detail: null, requestId: a.id });
+      }
+    }
+
+    // The final Operating Agreement, once it is open for signature.
+    const { data: g } = await db.from("entity_genesis").select("id, final_oa_status, final_oa_hash").eq("property_id", pid).maybeSingle();
+    const gg = g as { id: string; final_oa_status: string | null; final_oa_hash: string | null } | null;
+    if (gg?.final_oa_status === "awaiting_signatures" && gg.final_oa_hash) {
+      const { data: sigs } = await db.from("operating_agreement_signatures").select("id").eq("entity_genesis_id", gg.id).eq("document_hash", gg.final_oa_hash).eq("account_member_id", me.id).limit(1);
+      if (((sigs ?? []) as unknown[]).length === 0) out.push({ kind: "operating_agreement", propertyId: pid, propertyLabel: label, title: "Sign the final Operating Agreement", detail: null, requestId: null });
+    }
+  }
+  return out;
+}

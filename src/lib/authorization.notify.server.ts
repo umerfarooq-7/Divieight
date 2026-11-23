@@ -62,8 +62,12 @@ export async function memberEmailsFor(db: Db, authUserId: string | null | undefi
   if (!authUserId) return [];
   const { data: acct } = await db.from("buyer_accounts").select("id").eq("auth_user_id", authUserId).maybeSingle();
   if (!acct) return [];
-  const { data } = await db.from("account_members").select("email").eq("buyer_account_id", (acct as { id: string }).id).eq("status", "active");
-  return ((data ?? []) as Array<{ email: string | null }>).map((m) => (m.email ?? "").trim()).filter(Boolean);
+  const { data } = await db.from("account_members").select("*").eq("buyer_account_id", (acct as { id: string }).id).eq("status", "active");
+  // A co-buyer has a login of their own and is told only what concerns the shares they are on (see deliver), never everything the account gets.
+  return ((data ?? []) as Array<{ email: string | null; role: string; auth_user_id?: string | null; invite_token_hash?: string | null }>)
+    .filter((m) => !(m.role === "member" && (m.auth_user_id || m.invite_token_hash)))
+    .map((m) => (m.email ?? "").trim())
+    .filter(Boolean);
 }
 
 /** The addresses to write to, once each (case and spacing aside). */
@@ -126,6 +130,25 @@ export async function deliver(
       const ok = await sendEmail(to, args.subject, args.message, args.link ?? null, args.type === "tc_update" ? "See what changed" : args.type === "suspicious_activity" ? "Open the Audit Vault" : args.type && (isOwnerNotificationType(args.type) || args.type === "former_seller_weeks" || args.type === "held_reminder") ? "Open in divieight" : "Open the authorization request");
       emailed = emailed || ok;
     }
+  }
+
+  // The co-buyers on this property are told the same thing, in their own bell and at their own address.
+  try {
+    let propertyId = args.propertyId ?? null;
+    if (!propertyId && args.requestId) {
+      const { data: req } = await db.from("authorization_requests").select("property_id").eq("id", args.requestId).maybeSingle();
+      propertyId = (req as { property_id?: string } | null)?.property_id ?? null;
+    }
+    const { coBuyerRecipients } = await import("@/lib/property-members.server");
+    for (const c of await coBuyerRecipients(db, recipient.authUserId, propertyId)) {
+      const row = { seller_id: c.authUserId, message: args.message, type: args.type ?? "authorization", ...(propertyId ? { property_id: propertyId } : {}), ...(args.dedupeKey ? { dedupe_key: `${args.dedupeKey}:co:${c.memberId}` } : {}) };
+      let { error } = await db.from("notifications").insert(row);
+      if (error?.code === "23505") continue;
+      if (error && /property_id|dedupe_key/.test(error.message ?? "")) ({ error } = await db.from("notifications").insert({ seller_id: c.authUserId, message: args.message, type: args.type ?? "authorization" }));
+      if (c.email && !(await emailSwitchedOff(db, c.authUserId, args.type))) await sendEmail(c.email, args.subject, args.message, args.link ?? "/buyer/co/dashboard", "Open your portal");
+    }
+  } catch {
+    // a failed copy to the co-buyer never undoes the notice to the account
   }
 
   if (!portal && !emailed) {

@@ -159,6 +159,8 @@ export interface BuyerDiligencePayload {
   noticeText: string;
   memberAckText: string;
   agentAckText: string;
+  /** The members this login may acknowledge for: a co-buyer only themselves; the account holder never a co-buyer. */
+  actableMemberIds: string[];
 }
 
 /** Buyer-side Document Acknowledgment screen payload. */
@@ -177,6 +179,7 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       noticeText: INDEPENDENT_REVIEW_NOTICE,
       memberAckText: MEMBER_ACK_TEXT,
       agentAckText: AGENT_ACK_TEXT,
+      actableMemberIds: [] as string[],
     };
 
     const { buyerAccountByLogin } = await import("@/lib/property-members.server");
@@ -209,6 +212,13 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       if (a) agent = { id: a.id, name: a.full_name ?? null };
     }
 
+    // Who this login may acknowledge for: a co-buyer only themselves, the account holder everyone without a login of their own.
+    const { data: loginRows } = await db.from("account_members").select("id, auth_user_id").eq("buyer_account_id", buyer.id).eq("status", "active");
+    const logins = (loginRows ?? []) as Array<{ id: string; auth_user_id?: string | null }>;
+    const mine = logins.find((m) => m.auth_user_id === context.userId);
+    const withLogin = new Set(logins.filter((m) => m.auth_user_id).map((m) => m.id));
+    const actableMemberIds = mine ? [mine.id] : members.filter((m) => !withLogin.has(m.id)).map((m) => m.id);
+
     return {
       allowed: true,
       reason: "ok",
@@ -221,6 +231,7 @@ export const getBuyerDiligence = createServerFn({ method: "GET" })
       noticeText: INDEPENDENT_REVIEW_NOTICE,
       memberAckText: MEMBER_ACK_TEXT,
       agentAckText: AGENT_ACK_TEXT,
+      actableMemberIds,
     };
   });
 

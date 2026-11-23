@@ -9,7 +9,7 @@ import { BuyerEnrollmentCheckout } from "@/components/BuyerEnrollmentCheckout";
 import { formatUsd, getStripeEnvironment } from "@/lib/stripe";
 import { BUYER_ENROLLMENT_CENTS_PER_MEMBER } from "@/lib/buyer-fee";
 import { confirmCoBuyerEnrollmentPayment } from "@/utils/payments.functions";
-import { getCoBuyerSelf } from "@/lib/co-buyer-members.functions";
+import { getCoBuyerActionsFn, getCoBuyerSelf } from "@/lib/co-buyer-members.functions";
 import { getMyAccountMembers } from "@/lib/account-members.functions";
 import { acceptAuthorizationFn, getAuthorizationState } from "@/lib/member-steps.functions";
 import { block1ConsentText, block2AuthorizationText } from "@/constants/authorizationsCopy";
@@ -48,6 +48,9 @@ function CoBuyerPortal() {
     retry: false,
     queryFn: () => getAuthorizationState({ data: { actingMemberId: memberId! } }),
   });
+  // What is waiting on this person for the shares they are on (documents, authorizations, the Operating Agreement).
+  const actions = useQuery({ queryKey: ["co-buyer-actions", user?.id], enabled: !!user && !!self.data, retry: false, queryFn: () => getCoBuyerActionsFn(), refetchOnMount: "always" });
+  const todo = actions.data ?? [];
   const [showCheckout, setShowCheckout] = useState(false);
   const [agree, setAgree] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -126,6 +129,41 @@ function CoBuyerPortal() {
 
       {ready && d ? (
         <>
+          {todo.length > 0 ? (
+            <section className="mt-8 rounded-xl border border-amber-500/50 bg-amber-50 p-5 dark:bg-amber-950/20">
+              <h2 className="font-display text-lg font-semibold">Needs your action ({todo.length})</h2>
+              <ul className="mt-3 space-y-2">
+                {todo.map((a, i) => (
+                  <li key={`${a.kind}-${a.propertyId}-${a.requestId ?? i}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+                    <span>
+                      <span className="font-medium">{a.title}</span>
+                      <span className="block text-xs text-muted-foreground">{a.propertyLabel}</span>
+                    </span>
+                    {a.kind === "due_diligence" ? (
+                      <Link to="/buyer/due-diligence/$id" params={{ id: a.propertyId }} className="font-medium text-primary underline">
+                        Open
+                      </Link>
+                    ) : a.kind === "authorization" ? (
+                      a.requestId ? (
+                        <Link to="/buyer/authorizations/$id" params={{ id: a.requestId }} className="font-medium text-primary underline">
+                          Open
+                        </Link>
+                      ) : (
+                        <Link to="/buyer/authorizations" search={{ property: a.propertyId }} className="font-medium text-primary underline">
+                          Open
+                        </Link>
+                      )
+                    ) : (
+                      <Link to="/buyer/operating-agreement" search={{ property: a.propertyId }} className="font-medium text-primary underline">
+                        Open
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           {next ? (
             <>
               <div className="mt-8">
@@ -231,7 +269,14 @@ function CoBuyerPortal() {
                 {d.shares.map((sh) => (
                   <li key={sh.reservationId} className="rounded-xl border border-border bg-card p-5 shadow-sm">
                     <p className="font-display text-base font-semibold">{sh.address || "Property"}</p>
-                    <p className="text-xs text-muted-foreground">1/8th share · bought together with {d.holderName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      1/8th share · bought together with {d.holderName}
+                      {todo.filter((t) => t.propertyId === sh.propertyId).length > 0 ? (
+                        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+                          {todo.filter((t) => t.propertyId === sh.propertyId).length} to do
+                        </span>
+                      ) : null}
+                    </p>
                     <div className="mt-4 grid gap-2 sm:grid-cols-3">
                       <Link to="/buyer/due-diligence/$id" params={{ id: sh.propertyId }} className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-secondary">
                         Due diligence

@@ -30,6 +30,11 @@ export const getCoBuyerSelf = createServerFn({ method: "POST" })
   .handler(async ({ context }) => (await server()).coBuyerSelf(await adminDb(), { userId: context.userId }));
 
 /** The account row the shared onboarding screens need (a co-buyer's login has no buyer account of its own). */
+/** What is waiting on this co-buyer personally, per share. */
+export const getCoBuyerActionsFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => (await server()).coBuyerActions(await adminDb(), { userId: context.userId }));
+
 export const getMyAccountRowFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

@@ -146,6 +146,7 @@ function BuyerDueDiligencePage() {
             key={state.document.id}
             state={state}
             members={payload.members}
+            actableIds={payload.actableMemberIds}
             noticeText={payload.noticeText}
             memberAckText={payload.memberAckText}
             open={openId === state.document.id}
@@ -189,6 +190,7 @@ function BuyerDueDiligencePage() {
 function DocumentCard({
   state,
   members,
+  actableIds,
   noticeText,
   memberAckText,
   open,
@@ -197,6 +199,8 @@ function DocumentCard({
 }: {
   state: DdDocumentState;
   members: { id: string; full_name: string | null; role: string | null }[];
+  /** Who this login may acknowledge for. */
+  actableIds: string[];
   noticeText: string;
   memberAckText: string;
   open: boolean;
@@ -222,7 +226,8 @@ function DocumentCard({
     }
   }, [open, doc.is_governing_instrument, noticeShownAt]);
 
-  const pendingMembers = members.filter((m) => !state.memberAcked.includes(m.id));
+  const pendingMembers = members.filter((m) => !state.memberAcked.includes(m.id) && actableIds.includes(m.id));
+  const othersPending = members.filter((m) => !state.memberAcked.includes(m.id) && !actableIds.includes(m.id));
 
   useEffect(() => {
     if (pendingMembers.length && !pendingMembers.some((m) => m.id === memberId)) {
@@ -317,11 +322,13 @@ function DocumentCard({
 
           {pendingMembers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Every Account Member has acknowledged this version.
+              {othersPending.length
+                ? `You have acknowledged this version. Waiting on ${othersPending.map((m) => m.full_name ?? "a member").join(" and ")}, who acknowledges from their own login.`
+                : "Every Account Member has acknowledged this version."}
             </p>
           ) : (
             <div className="space-y-3">
-              {members.length > 1 ? (
+              {pendingMembers.length > 1 ? (
                 <label className="block text-xs font-medium text-muted-foreground">
                   Acknowledging Account Member
                   <select
