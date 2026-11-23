@@ -224,6 +224,13 @@ function BuyerDashboardPage() {
         .maybeSingle();
       if (cancelled) return;
       if (!acct) {
+        // A co-buyer has no buyer account of their own: their dashboard is the co-buyer portal.
+        const { data: asMember } = await (supabase as any).from("account_members").select("id").eq("auth_user_id", auth.user.id).eq("status", "active").maybeSingle();
+        if (cancelled) return;
+        if (asMember) {
+          navigate({ to: "/buyer/co/dashboard", replace: true });
+          return;
+        }
         // Not a buyer — sellers get bounced back to their own dashboard.
         const seller = await getSellerAccount(auth.user.id);
         if (cancelled) return;

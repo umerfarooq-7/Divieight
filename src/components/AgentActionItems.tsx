@@ -20,6 +20,11 @@ import type { ListingAgentProperty } from "@/lib/listing-approval";
 import type { HlaInvitation } from "@/lib/hla";
 import { Link } from "@tanstack/react-router";
 import { listPropertyAssignmentOffers, respondToPropertyAssignment } from "@/lib/agent-assignment.functions";
+import { getAgentDiligenceTasks } from "@/lib/due-diligence.functions";
+import { listAgentAuthorizations } from "@/lib/authorization.functions";
+
+type DiligenceTodo = { propertyId: string; propertyLabel: string; buyerLabel: string; count: number; overdue: boolean };
+type AuthTodo = { id: string; propertyLabel: string; headline: string; kind: "recommend" | "commission" };
 
 /**
  * Action-required queue: buyer designations awaiting a 3-day response, and
@@ -47,9 +52,34 @@ export function AgentActionItems() {
   const loadOffers = useServerFn(listPropertyAssignmentOffers);
   const respondOffer = useServerFn(respondToPropertyAssignment);
   const [offers, setOffers] = useState<Array<{ requestId: string; propertyLabel: string }>>([]);
+  const loadDiligence = useServerFn(getAgentDiligenceTasks);
+  const loadAuthorizations = useServerFn(listAgentAuthorizations);
+  const [diligence, setDiligence] = useState<DiligenceTodo[]>([]);
+  const [authTodos, setAuthTodos] = useState<AuthTodo[]>([]);
 
   const refresh = useCallback(async () => {
     setOffers(await loadOffers({}).catch(() => []));
+    // Buyer documents waiting on this agent's own acknowledgment, grouped by home and buyer.
+    const dd = await loadDiligence({}).catch(() => null);
+    const grouped = new Map<string, DiligenceTodo>();
+    for (const t of dd?.tasks ?? []) {
+      if (t.acknowledged) continue;
+      const key = `${t.propertyId}:${t.buyerAccountId}`;
+      const g = grouped.get(key) ?? { propertyId: t.propertyId, propertyLabel: t.propertyLabel, buyerLabel: t.buyerLabel, count: 0, overdue: false };
+      g.count += 1;
+      g.overdue = g.overdue || t.overdue;
+      grouped.set(key, g);
+    }
+    setDiligence([...grouped.values()]);
+    // Authorization requests waiting on a recommendation, and commission provisions this agent has still to propose.
+    const au = await loadAuthorizations({}).catch(() => null);
+    const todos: AuthTodo[] = [];
+    for (const r of au?.rows ?? []) {
+      if (r.status !== "pending") continue;
+      if (r.isHla && r.commission_expected && !r.commissionItem) todos.push({ id: r.id, propertyLabel: r.propertyLabel, headline: r.headline, kind: "commission" });
+      else if (!r.recommendation_kind && !r.isHla) todos.push({ id: r.id, propertyLabel: r.propertyLabel, headline: r.headline, kind: "recommend" });
+    }
+    setAuthTodos(todos);
     const [d, e, h, l, g] = await Promise.all([
       loadDesignations({}),
       loadElections({}),
@@ -62,7 +92,7 @@ export function AgentActionItems() {
     setHlaInvites(h);
     setListingReviews((l ?? []).filter((p) => p.pending_items > 0));
     setEngagements(g ?? []);
-  }, [loadDesignations, loadElections, loadHlaInvites, loadListings, loadEngagements, loadOffers]);
+  }, [loadDesignations, loadElections, loadHlaInvites, loadListings, loadEngagements, loadOffers, loadDiligence, loadAuthorizations]);
 
   useEffect(() => {
     void refresh();
@@ -74,7 +104,9 @@ export function AgentActionItems() {
     elections.length === 0 &&
     hlaInvites.length === 0 &&
     listingReviews.length === 0 &&
-    engagements.length === 0
+    engagements.length === 0 &&
+    diligence.length === 0 &&
+    authTodos.length === 0
   )
     return null;
 
@@ -86,6 +118,50 @@ export function AgentActionItems() {
       </div>
 
       <ul className="mt-4 space-y-4">
+        {diligence.map((d) => (
+          <li key={`dd-${d.propertyId}-${d.buyerLabel}`} className="rounded-lg border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">
+              {d.count} due-diligence document{d.count === 1 ? "" : "s"} await your acknowledgment{d.overdue ? " (overdue)" : ""}
+            </p>
+            <p className="mt-1 break-words text-xs text-muted-foreground">
+              {d.propertyLabel} · Buyer: {d.buyerLabel}
+            </p>
+            <Link
+              to="/agent/due-diligence"
+              className="mt-3 inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              Review and acknowledge
+            </Link>
+          </li>
+        ))}
+
+        {authTodos.map((a) => (
+          <li key={`auth-${a.id}`} className="rounded-lg border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground">
+              {a.kind === "commission" ? "Propose the commission provision" : "An authorization request is waiting for your recommendation"}
+            </p>
+            <p className="mt-1 break-words text-xs text-muted-foreground">
+              {a.propertyLabel} · {a.headline}
+            </p>
+            {a.kind === "commission" ? (
+              <Link
+                to="/agent/authorizations/$id/commission"
+                params={{ id: a.id }}
+                className="mt-3 inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                Propose it
+              </Link>
+            ) : (
+              <Link
+                to="/agent/authorizations"
+                className="mt-3 inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                Open authorizations
+              </Link>
+            )}
+          </li>
+        ))}
+
         {engagements.map((inv) => (
           <li key={`engagement-${inv.propertyId}`} className="rounded-lg border border-border bg-card p-4">
             <p className="text-sm font-medium text-foreground">
