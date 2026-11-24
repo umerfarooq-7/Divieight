@@ -65,7 +65,9 @@ function Agreement({ a }: { a: BuyerOaView }) {
   const qc = useQueryClient();
   const sign = useServerFn(signMyOperatingAgreement);
   const [scrolledEnd, setScrolledEnd] = useState(false);
-  const pending = a.members.filter((m) => !m.signedAt);
+  // Only the people this login signs for: a co-buyer signs from their own login.
+  const pending = a.members.filter((m) => !m.signedAt && a.actableMemberIds.includes(m.id));
+  const others = a.members.filter((m) => !m.signedAt && !a.actableMemberIds.includes(m.id));
   const [memberId, setMemberId] = useState(pending[0]?.id ?? "");
   const member = a.members.find((m) => m.id === memberId) ?? null;
   const [typed, setTyped] = useState("");
@@ -136,6 +138,11 @@ function Agreement({ a }: { a: BuyerOaView }) {
         ))}
       </ul>
 
+      {a.status === "awaiting_signatures" && pending.length === 0 && others.length > 0 ? (
+        <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+          You have signed. Waiting on {others.map((m) => m.name).join(" and ")}, who signs from their own login.
+        </p>
+      ) : null}
       {a.status === "awaiting_signatures" && pending.length > 0 ? (
         <div className="mt-4 space-y-3 border-t border-border pt-4">
           {!scrolledEnd ? <p className="text-xs text-muted-foreground">Scroll to the end of the agreement to sign.</p> : null}

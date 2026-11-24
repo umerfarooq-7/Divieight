@@ -185,6 +185,8 @@ export interface BuyerOaView {
   documentHash: string | null;
   executedAt: string | null;
   members: Array<{ id: string; name: string; signedAt: string | null }>;
+  /** The members this login may sign as: a co-buyer only themselves; the account holder never a co-buyer. */
+  actableMemberIds: string[];
 }
 
 async function buyerFor(db: Db, userId: string) {
@@ -205,6 +207,7 @@ export const listMyOperatingAgreements = createServerFn({ method: "GET" })
       scope.propertyId,
     );
     const s = await stage2();
+    const { actableMemberIds } = await import("@/lib/property-members.server");
     const out: BuyerOaView[] = [];
     for (const pid of ids) {
       const { data: g } = await db.from("entity_genesis").select("*").eq("property_id", pid).maybeSingle();
@@ -224,6 +227,7 @@ export const listMyOperatingAgreements = createServerFn({ method: "GET" })
         documentHash: g.final_oa_hash,
         executedAt: g.oa_executed_at ?? null,
         members: signers.map((m) => ({ id: m.accountMemberId, name: m.name, signedAt: byMember.get(m.accountMemberId) ?? null })),
+        actableMemberIds: await actableMemberIds(db, context.claims?.sub as string, buyer.id, signers.map((m) => m.accountMemberId)),
       });
     }
     return { agreements: out };

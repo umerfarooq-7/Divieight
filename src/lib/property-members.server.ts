@@ -67,3 +67,16 @@ export async function coBuyerRecipients(db: Db, holderAuthUserId: string | null 
     .filter((m) => on.has(m.id) && m.auth_user_id)
     .map((m) => ({ memberId: m.id, authUserId: m.auth_user_id as string, email: m.email }));
 }
+
+/**
+ * Of these members, the ones this login may act as: a co-buyer only themselves; the account holder everyone without a login of their own.
+ * Screens use it so nobody is offered a "responding as" choice for a person who signs from their own login.
+ */
+export async function actableMemberIds(db: Db, userId: string, accountId: string, memberIds: string[]): Promise<string[]> {
+  const { data } = await db.from("account_members").select("id, auth_user_id").eq("buyer_account_id", accountId).eq("status", "active");
+  const rows = (data ?? []) as Array<{ id: string; auth_user_id?: string | null }>;
+  const mine = rows.find((m) => m.auth_user_id === userId);
+  if (mine) return memberIds.filter((id) => id === mine.id);
+  const withLogin = new Set(rows.filter((m) => m.auth_user_id).map((m) => m.id));
+  return memberIds.filter((id) => !withLogin.has(id));
+}

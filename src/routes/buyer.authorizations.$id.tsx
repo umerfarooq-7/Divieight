@@ -130,8 +130,9 @@ function BuyerAuthorizationDetail() {
       return;
     }
     setPayload(result);
-    setMemberId((prev) => prev || (result.members[0]?.id ?? ""));
-    setCommMemberId((prev) => prev || (result.members[0]?.id ?? ""));
+    const first = result.actableMemberIds[0] ?? "";
+    setMemberId((prev) => (prev && result.actableMemberIds.includes(prev) ? prev : first));
+    setCommMemberId((prev) => (prev && result.actableMemberIds.includes(prev) ? prev : first));
     setLoading(false);
   }, [id, load, navigate]);
 
@@ -160,7 +161,9 @@ function BuyerAuthorizationDetail() {
     () => (request ? diffTerms(request.terms ?? {}, request.prior_terms) : []),
     [request],
   );
-  const signer = members.find((m) => m.id === memberId) ?? null;
+  // Who this login responds as. A co-buyer responds from their own login, so they are never offered here.
+  const actable = members.filter((m) => (payload?.actableMemberIds ?? []).includes(m.id));
+  const signer = actable.find((m) => m.id === memberId) ?? null;
   const alreadyAnswered = (payload?.responses ?? []).some(
     (r) => r.account_member_id === memberId || r.on_behalf_of_member_id === memberId,
   );
@@ -205,7 +208,7 @@ function BuyerAuthorizationDetail() {
   }
 
   async function submitCommission(decision: "confirmed" | "declined") {
-    const member = members.find((m) => m.id === commMemberId);
+    const member = actable.find((m) => m.id === commMemberId);
     if (!member || !commVerified) return;
     if (decision === "confirmed" && !commChecked) {
       toast.error("Tick the commission authorization box to authorize this provision.");
@@ -367,8 +370,7 @@ function BuyerAuthorizationDetail() {
       <section className="mt-8">
         <h2 className="text-sm font-semibold text-foreground">Preferred Member confirmation</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Every Preferred Member on this Buyer Account must respond, or one may respond under
-          documented authority for the other.
+          Every Preferred Member on this share must respond, each from their own login.
         </p>
 
         <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
@@ -382,8 +384,12 @@ function BuyerAuthorizationDetail() {
           })}
         </ul>
 
-        {open ? (
+        {open && actable.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">Nothing is waiting on you here.</p>
+        ) : null}
+        {open && actable.length > 0 ? (
           <div className="mt-5 space-y-4 rounded-xl border border-border bg-card p-5">
+            {actable.length > 1 ? (
             <div>
               <label className="text-xs text-muted-foreground" htmlFor="authz-member">
                 Responding as
@@ -394,15 +400,16 @@ function BuyerAuthorizationDetail() {
                 onChange={(e) => setMemberId(e.target.value)}
                 className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                {members.map((m) => (
+                {actable.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.full_name ?? "Account Member"}
                   </option>
                 ))}
               </select>
             </div>
+            ) : null}
 
-            {members.length > 1 ? (
+            {actable.length > 1 ? (
               <div>
                 <label className="text-xs text-muted-foreground" htmlFor="authz-behalf">
                   Also responding for (under documented authority)
@@ -414,7 +421,7 @@ function BuyerAuthorizationDetail() {
                   className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                 >
                   <option value="">No one — I'm responding only for myself</option>
-                  {members
+                  {actable
                     .filter((m) => m.id !== memberId)
                     .map((m) => (
                       <option key={m.id} value={m.id}>
@@ -492,7 +499,7 @@ function BuyerAuthorizationDetail() {
           payload.commissionResponses ?? [],
           members.map((m) => m.id),
         );
-        const commMember = members.find((m) => m.id === commMemberId) ?? null;
+        const commMember = actable.find((m) => m.id === commMemberId) ?? null;
         const commAnswered = (payload.commissionResponses ?? []).some(
           (r) => r.account_member_id === commMemberId,
         );
@@ -582,8 +589,9 @@ function BuyerAuthorizationDetail() {
                 your Resident Agent and the Heavy Lifting Agent for resolution.{" "}
                 {COMMISSION_DECLINE_NOT_DEFAULT}
               </p>
-            ) : open ? (
+            ) : open && actable.length > 0 ? (
               <div className="mt-5 space-y-4 rounded-lg border border-border bg-background p-4">
+                {actable.length > 1 ? (
                 <div>
                   <label className="text-xs text-muted-foreground" htmlFor="comm-member">
                     Responding as
@@ -594,13 +602,14 @@ function BuyerAuthorizationDetail() {
                     onChange={(e) => setCommMemberId(e.target.value)}
                     className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
                   >
-                    {members.map((m) => (
+                    {actable.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.full_name ?? "Account Member"}
                       </option>
                     ))}
                   </select>
                 </div>
+                ) : null}
 
                 <label className="flex items-start gap-2 text-sm text-foreground">
                   <input

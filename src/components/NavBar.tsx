@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { UserCircle2, LogOut, LayoutDashboard, KeyRound } from "lucide-react";
+import { UserCircle2, LogOut, LayoutDashboard, KeyRound, ChevronDown, Settings } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useAdmin } from "@/lib/admin";
 import { getBuyerAccount } from "@/lib/buyer";
@@ -107,7 +108,7 @@ export function NavBar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="mr-6 flex shrink-0 items-center">
           <img
             src="/divieight-logo.png"
             alt="divieight — independent co-ownership"
@@ -115,67 +116,42 @@ export function NavBar() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          <Link
-            to="/properties"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
+        <nav className="hidden items-center gap-6 md:flex">
+          <Link to="/properties" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Properties
           </Link>
-          <Link
-            to="/library"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
+          <Link to="/library" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Library
           </Link>
           {portal === "buyer" ? (
-            <Link
-              to="/buyer/eligibility-standard"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-foreground" }}
-            >
-              Participant Eligibility Standard
-            </Link>
-          ) : null}
-          {portal === "buyer" ? (
-            <Link
-              to="/resale"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-foreground" }}
-            >
+            <Link to="/resale" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
               Resale
             </Link>
           ) : null}
-          <Link
-            to="/about"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
-            About
-          </Link>
-          <Link
-            to="/terms"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
-            Terms
-          </Link>
-          <Link
-            to="/contact"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
-            Contact
-          </Link>
-          <Link
-            to="/support"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            activeProps={{ className: "text-foreground" }}
-          >
+          <Link to="/support" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Support
           </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground outline-none">
+              More <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {portal === "buyer" ? (
+                <DropdownMenuItem asChild>
+                  <Link to="/buyer/eligibility-standard">Participant Eligibility Standard</Link>
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem asChild>
+                <Link to="/about">About</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/terms">Terms</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/contact">Contact</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
 
@@ -186,7 +162,7 @@ export function NavBar() {
               {isAdmin ? (
                 <Link
                   to="/admin"
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   Admin console
@@ -203,7 +179,7 @@ export function NavBar() {
                             ? "/buyer/dashboard"
                             : "/dashboard"
                     }
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     {portal === "agent"
@@ -228,20 +204,27 @@ export function NavBar() {
                   <span className="hidden sm:inline">Owner</span>
                 </Link>
               ) : null}
-              <Link
-                to="/account/settings"
-                className="hidden max-w-[180px] truncate text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline sm:inline"
-              >
-                {user.email}
-              </Link>
-              <button
-                type="button"
-                onClick={onSignOut}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground shadow-sm transition-colors hover:bg-secondary"
-              >
-                <LogOut className="h-4 w-4 text-muted-foreground" />
-                <span className="hidden text-xs font-medium sm:inline">Sign out</span>
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-label="Account"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground shadow-sm outline-none transition-colors hover:bg-secondary"
+                >
+                  <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[220px]">
+                  <p className="max-w-[260px] truncate px-2 py-1.5 text-xs text-muted-foreground">{user.email}</p>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/account/settings">
+                      <Settings className="mr-2 h-4 w-4" /> Account settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void onSignOut()}>
+                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
@@ -265,7 +248,7 @@ export function NavBar() {
               </Link>
               <Link
                 to="/buyer/register"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:-translate-y-0.5"
               >
                 <UserCircle2 className="h-4 w-4" />
                 Get started

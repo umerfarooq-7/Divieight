@@ -366,6 +366,8 @@ export interface BuyerAuthorizationPayload {
   request: AuthorizationRequestRow | null;
   responses: AuthorizationResponseRow[];
   members: AuthorizationMember[];
+  /** The members this login may respond as: a co-buyer only themselves; the account holder never a co-buyer. */
+  actableMemberIds: string[];
   property: { id: string; address: string; city: string; state: string } | null;
   agentName: string | null;
   /** Discrete commission provision proposed by the Heavy Lifting Agent. */
@@ -390,6 +392,7 @@ export const getBuyerAuthorization = createServerFn({ method: "GET" })
       request: null,
       responses: [],
       members: [],
+      actableMemberIds: [],
       property: null,
       agentName: null,
       commissionItem: null,
@@ -437,6 +440,8 @@ export const getBuyerAuthorization = createServerFn({ method: "GET" })
     }
 
     const commissionItem = await loadCommissionItem(db, row.id);
+    const members = await loadMembers(db, buyer.id, row.property_id);
+    const { actableMemberIds } = await import("@/lib/property-members.server");
     return {
       allowed: true,
       gateBlockedPropertyId: null,
@@ -444,7 +449,8 @@ export const getBuyerAuthorization = createServerFn({ method: "GET" })
       buyerAccountId: buyer.id,
       request: row as AuthorizationRequestRow,
       responses: await loadResponses(db, row.id),
-      members: await loadMembers(db, buyer.id, row.property_id),
+      members,
+      actableMemberIds: await actableMemberIds(db, context.claims?.sub as string, buyer.id, members.map((m) => m.id)),
       property: await propertyFor(db, row.property_id),
       agentName,
       commissionItem,
