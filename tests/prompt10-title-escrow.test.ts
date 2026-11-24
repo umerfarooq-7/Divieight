@@ -49,7 +49,8 @@ async function openOrder() {
 
 const fire = (milestone: any, extra: Record<string, unknown> = {}) => {
   as(USERS.admin);
-  return simulateTitleMilestone({ data: { propertyId: IDS.property, milestone, ...extra } });
+  // These scenarios fire funding on a pod that is not closing-ready, on purpose (the panel asks for that to be ticked).
+  return simulateTitleMilestone({ data: { propertyId: IDS.property, milestone, allowOutOfOrder: true, ...extra } });
 };
 
 describe("QualiaAdapter (simulated)", () => {
@@ -288,5 +289,16 @@ describe("real webhook endpoint path", () => {
     await openOrder();
     await fire("closing_scheduled", { closingDate: "2026-11-02" });
     expect(db().audits("title.milestone_received")[0].metadata.out_of_order).toBe(true);
+  });
+});
+
+describe("Simulated funding comes last", () => {
+  it("is refused from the panel until the Source of Truth is transmitted and the gates pass, and says why", async () => {
+    seed();
+    await openOrder();
+    for (const m of ["order_opened", "title_report_ready", "earnest_money_deposited", "closing_scheduled"])
+      await fire(m, m === "closing_scheduled" ? { closingDate: "2026-11-02" } : {});
+    await expect(fire("funded_and_recorded", { allowOutOfOrder: false })).rejects.toThrow(/Not ready to fund yet.*No Source of Truth has been transmitted/s);
+    expect(db().table("title_escrow_events").some((e) => e.milestone === "funded_and_recorded")).toBe(false);
   });
 });

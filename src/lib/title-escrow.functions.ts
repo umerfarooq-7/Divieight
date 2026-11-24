@@ -35,6 +35,31 @@ export interface AdminTitleRow {
   status: TitleStatus;
   next: TitleMilestone | null;
   earnest: Array<{ buyerAccountId: string; amount: number; status: string }>;
+  /** Why the simulated "Funded & recorded" webhook may not be fired yet (empty when it may). */
+  fundingBlockers: string[];
+}
+
+/**
+ * What must be true before the simulated "Funded & recorded" webhook is fired from the panel: a transmitted Source of Truth that is still
+ * current, and every pre-closing gate passing. Fired out of order, the closing saga fails on its first steps and title's figures arrive empty.
+ * A real webhook from the title company is never refused here: it is recorded and any gap is flagged as a discrepancy.
+ */
+export async function fundingSimulationBlockers(db: any, propertyId: string): Promise<string[]> {
+  const { latestSourceOfTruth, settlementPreconditions, loadParticipants, compileSourceOfTruth } = await import("@/lib/settlement.server");
+  const parts = await loadParticipants(db, propertyId);
+  const out = (await settlementPreconditions(db, propertyId, parts)).map((b) => b.message);
+  const sot = await latestSourceOfTruth(db, propertyId);
+  if (!sot) {
+    out.push("No Source of Truth has been transmitted. Generate it under Settlement (CDA) first.");
+    return out;
+  }
+  if (out.length === 0) {
+    const key = (p: { brokerId: string; amountCents: number }) => `${p.brokerId}:${p.amountCents}`;
+    const fresh = compileSourceOfTruth(parts, sot.id, sot.version).payees.map(key).sort().join("|");
+    if (fresh !== sot.structured.payees.map(key).sort().join("|"))
+      out.push("The Source of Truth is out of date: commission figures changed since it was generated. Regenerate and retransmit it under Settlement (CDA).");
+  }
+  return out;
 }
 
 export interface AdminDiscrepancy {
@@ -70,7 +95,9 @@ export const listTitleEscrowAdmin = createServerFn({ method: "GET" })
     for (const id of ids) {
       const status = await s.titleStatus(db, id);
       const { data: earnest } = await db.from("earnest_money_obligations").select("buyer_account_id, amount, status").eq("property_id", id);
+      const next = nextMilestone(status.milestones.filter((m) => m.receivedAt).map((m) => m.milestone));
       rows.push({
+        fundingBlockers: next === "funded_and_recorded" ? await fundingSimulationBlockers(db, id).catch((e: Error) => [e.message]) : [],
         propertyId: id,
         label: label.get(id) ?? "Property",
         acceptanceAuthorized: Boolean(await s.sellerAcceptanceAuthorized(db, id)),
@@ -126,6 +153,8 @@ export const simulateTitleMilestone = createServerFn({ method: "POST" })
       closingDate?: string | null;
       /** funded_and_recorded: shift the first payee by this many cents to simulate a title mismatch. */
       commissionVarianceCents?: number;
+      /** funded_and_recorded: fire it although the closing isn't ready, on purpose, to test the out-of-order discrepancy. */
+      allowOutOfOrder?: boolean;
     }) => {
       if (!input?.propertyId) throw new Error("Missing property");
       if (!TITLE_MILESTONES.includes(input.milestone)) throw new Error("Unknown milestone");
@@ -151,6 +180,8 @@ export const simulateTitleMilestone = createServerFn({ method: "POST" })
     }
     let commissionDisbursements: Array<{ payeeReference: string; amount: number }> = [];
     if (data.milestone === "funded_and_recorded") {
+      const blockers = data.allowOutOfOrder ? [] : await fundingSimulationBlockers(db, data.propertyId);
+      if (blockers.length) throw new Error(`Not ready to fund yet: ${blockers.join(" ")}`);
       const { latestSourceOfTruth } = await import("@/lib/settlement.server");
       const sot = await latestSourceOfTruth(db, data.propertyId);
       const variance = Math.round(Number(data.commissionVarianceCents ?? 0));
