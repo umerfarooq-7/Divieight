@@ -54,6 +54,8 @@ export const listClosingSagas = createServerFn({ method: "GET" })
         .eq("saga_type", CLOSING_SAGA_TYPE)
         .eq("saga_key", r.saga_key)
         .is("resolved_at", null)
+        // every failed attempt leaves a row until the saga completes: show the latest, not the first one
+        .order("created_at", { ascending: false })
         .limit(1);
       const { data: check } = await db
         .from("disbursement_checks")
