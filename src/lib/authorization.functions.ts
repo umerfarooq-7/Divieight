@@ -979,7 +979,12 @@ export const listAuthorizationTargets = createServerFn({ method: "GET" })
       buyerEmail: string | null;
       propertyLabel: string;
       gateClear: boolean;
+      /** Figures to pre-fill in the terms when this target is picked. */
+      suggested: import("@/lib/price-suggestions.server").PriceSuggestion | null;
     }> = [];
+    const suggestions = await (await import("@/lib/price-suggestions.server")).priceSuggestions(db, [
+      ...new Set(((data ?? []) as Array<{ property_id: string }>).map((r) => r.property_id)),
+    ]);
     for (const r of (data ?? []) as Array<{ buyer_account_id: string; property_id: string }>) {
       const key = `${r.buyer_account_id}:${r.property_id}`;
       if (seen.has(key)) continue;
@@ -995,6 +1000,7 @@ export const listAuthorizationTargets = createServerFn({ method: "GET" })
         buyerEmail: buyer?.email ?? null,
         propertyLabel: propertyLabel(await propertyFor(db, r.property_id)),
         gateClear: await diligenceGateClear(db, r.property_id, r.buyer_account_id),
+        suggested: suggestions.get(r.property_id) ?? null,
       });
     }
     return { targets };

@@ -67,6 +67,8 @@ export interface AdminClosingProperty {
   propertyId: string;
   propertyLabel: string;
   shares: number;
+  /** Figures to pre-fill when this property is picked. */
+  suggested: import("@/lib/price-suggestions.server").PriceSuggestion | null;
   terms: ClosingTerms | null;
   obligations: Array<ClosingObligation & { buyerEmail: string | null }>;
 }
@@ -98,9 +100,11 @@ export const listAdminClosingFunds = createServerFn({ method: "GET" })
       : { data: [] };
     const email = new Map(((buyers ?? []) as Array<{ id: string; email: string | null }>).map((b) => [b.id, b.email]));
 
+    const suggestions = await (await import("@/lib/price-suggestions.server")).priceSuggestions(db, ids);
     return {
       properties: ids.map((id) => ({
         propertyId: id,
+        suggested: suggestions.get(id) ?? null,
         propertyLabel: labelOf(props.get(id)),
         shares: shares.get(id) ?? 0,
         terms: terms.get(id) ?? null,

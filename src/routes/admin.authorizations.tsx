@@ -76,7 +76,10 @@ type Target = {
   buyerEmail: string | null;
   propertyLabel: string;
   gateClear: boolean;
+  suggested: { purchasePrice: number | null; earnestMoney: number | null } | null;
 };
+
+const usd = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
 function AdminAuthorizations() {
   const list = useServerFn(listAdminAuthorizations);
@@ -90,7 +93,24 @@ function AdminAuthorizations() {
   const [target, setTarget] = useState("");
   const [action, setAction] = useState<AuthorizationAction>("offer_tender");
   const [headline, setHeadline] = useState("");
-  const [terms, setTerms] = useState("Purchase price: \nClosing date: \nContingencies: ");
+  const [terms, setTerms] = useState("Purchase price: \nEarnest money: \nClosing date: \nContingencies: ");
+
+  // Picking a buyer and property fills the price lines that are still empty; anything already typed is left alone.
+  function pickTarget(value: string) {
+    setTarget(value);
+    const s = targets.find((t) => `${t.buyerAccountId}:${t.propertyId}` === value)?.suggested;
+    if (!s) return;
+    setTerms((prev) =>
+      prev
+        .split("\n")
+        .map((line) => {
+          if (s.purchasePrice != null && /^\s*purchase price:\s*$/i.test(line)) return `Purchase price: ${usd(s.purchasePrice)}`;
+          if (s.earnestMoney != null && /^\s*earnest money:\s*$/i.test(line)) return `Earnest money: ${usd(s.earnestMoney)}`;
+          return line;
+        })
+        .join("\n"),
+    );
+  }
   const [deadline, setDeadline] = useState("");
   const [priorId, setPriorId] = useState("");
   const [commissionExpected, setCommissionExpected] = useState(true);
@@ -193,7 +213,7 @@ function AdminAuthorizations() {
         <h2 className="text-sm font-semibold text-foreground">Queue an authorization request</h2>
         <select
           value={target}
-          onChange={(e) => setTarget(e.target.value)}
+          onChange={(e) => pickTarget(e.target.value)}
           disabled={loading}
           aria-busy={loading}
           className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"

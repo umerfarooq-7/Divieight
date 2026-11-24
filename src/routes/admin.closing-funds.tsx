@@ -48,6 +48,25 @@ function AdminClosingFunds() {
 
   const [selected, setSelected] = useState<string>("");
   const [total, setTotal] = useState("");
+  const [totalHint, setTotalHint] = useState("");
+
+  // Picking a property fills the total from what the platform already knows; the field stays editable.
+  function pickProperty(id: string) {
+    setSelected(id);
+    const p = properties.find((x) => x.propertyId === id);
+    const s = p?.suggested;
+    const issued = (p?.terms as { total_amount?: number | null } | null)?.total_amount;
+    if (issued != null) {
+      setTotal(String(issued));
+      setTotalHint("Filled from the notices already issued for this property.");
+    } else if (s?.purchasePrice != null) {
+      setTotal(String(s.purchasePrice));
+      setTotalHint(`Filled from the ${s.purchasePriceSource === "offer" ? "offer" : "listing"} price. Change it to the Buyer Group's total on the settlement statement.`);
+    } else {
+      setTotal("");
+      setTotalHint("");
+    }
+  }
   const [deadline, setDeadline] = useState("");
   const [company, setCompany] = useState("");
   const [details, setDetails] = useState("");
@@ -153,7 +172,7 @@ function AdminClosingFunds() {
             <span className="mb-1 block text-xs text-muted-foreground">Property</span>
             <select
               value={selected}
-              onChange={(e) => setSelected(e.target.value)}
+              onChange={(e) => pickProperty(e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             >
               <option value="">
@@ -177,6 +196,7 @@ function AdminClosingFunds() {
               placeholder="250000"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
             />
+            {totalHint ? <span className="mt-1 block text-xs text-muted-foreground">{totalHint}</span> : null}
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-xs text-muted-foreground">Wire deadline</span>

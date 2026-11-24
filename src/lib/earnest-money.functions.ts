@@ -32,6 +32,8 @@ export interface AdminEarnestProperty {
   propertyLabel: string;
   shares: number;
   acceptanceAuthorized: boolean;
+  /** Figures to pre-fill when this property is picked. */
+  suggested: import("@/lib/price-suggestions.server").PriceSuggestion | null;
   terms: EarnestTerms | null;
   obligations: Array<EarnestObligation & { buyerEmail: string | null }>;
 }
@@ -106,8 +108,10 @@ export const listAdminEarnestMoney = createServerFn({ method: "GET" })
         emailById.set(b.id, b.email);
     }
 
+    const suggestions = await (await import("@/lib/price-suggestions.server")).priceSuggestions(db, propertyIds);
     const properties: AdminEarnestProperty[] = propertyIds.map((id) => ({
       propertyId: id,
+      suggested: suggestions.get(id) ?? null,
       propertyLabel: propertyLabel(propById.get(id) ?? null),
       shares: byProperty.get(id) ?? 0,
       acceptanceAuthorized: acceptedSet.has(id),
