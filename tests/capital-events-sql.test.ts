@@ -482,3 +482,47 @@ describe.skipIf(!pg)("capital-events.sql", () => {
     });
   });
 });
+
+describe.skipIf(!pg)("the SQL files in any order", () => {
+  it("running capital-accounts.sql again after capital-events.sql does not make a contribution post twice", async () => {
+    await pg!.exec(readFileSync("capital-accounts.sql", "utf8"));
+    const p = await llc();
+    const before = await bal(p, A1);
+    await confirmPayment(p, A1, USER_A1, 187.5, "expense", U(801));
+    await confirmPayment(p, A1, USER_A1, 1500, "capital_call", U(802));
+    expect((await types(p, A1)).filter((t) => t.line_type === "contribution").map((t) => Number(t.amount_cents))).toEqual([18_750, 150_000]);
+    expect(await bal(p, A1)).toBe(before + 168_750);
+    expect(Number((await table(p, USER_A1))!.contributed_amount)).toBe(1687.5);
+    expect(await count("SELECT count(*)::int n FROM journal_entries WHERE property_id = $1 AND source_ref LIKE 'owner_capital_accounts:%'", [p])).toBe(0);
+  });
+});
+
+describe.skipIf(!pg)("fix-double-contributions.sql", () => {
+  it("reverses the second copy of each double-posted contribution, once, and the Month 5 total follows", async () => {
+    // The state that caused it: the older sync function (capital-accounts.sql as it was), installed after capital-events.sql.
+    const { execSync } = await import("node:child_process");
+    const old = execSync("git show 56fdc4c:capital-accounts.sql", { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+    expect(old).not.toContain("skip_owner_sync");
+    await pg!.exec(old);
+    const p = await llc();
+    const before = await bal(p, A1);
+    await confirmPayment(p, A1, USER_A1, 187.5, "expense", U(811));
+    await confirmPayment(p, A1, USER_A1, 1500, "capital_call", U(812));
+    expect(await bal(p, A1)).toBe(before + 2 * 168_750); // doubled
+    expect(Number((await table(p, USER_A1))!.contributed_amount)).toBe(3375);
+
+    await pg!.exec(readFileSync("fix-double-contributions.sql", "utf8"));
+    expect(await bal(p, A1)).toBe(before + 168_750);
+    expect(Number((await table(p, USER_A1))!.contributed_amount)).toBe(1687.5);
+    expect(await count("SELECT count(*)::int n FROM double_posted_contributions")).toBe(0);
+    const rec = (await svc(async () => ok("SELECT matches FROM owner_capital_reconciliation WHERE property_id = $1 AND user_id = $2", [p, USER_A1])))[0]!;
+    expect(rec.matches).toBe(true);
+
+    // Running it again changes nothing, and a new payment now posts once.
+    await pg!.exec(readFileSync("fix-double-contributions.sql", "utf8"));
+    expect(await bal(p, A1)).toBe(before + 168_750);
+    await confirmPayment(p, A1, USER_A1, 100, "capital_call", U(813));
+    expect(await bal(p, A1)).toBe(before + 178_750);
+    expect(Number((await table(p, USER_A1))!.contributed_amount)).toBe(1787.5);
+  });
+});

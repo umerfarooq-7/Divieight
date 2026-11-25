@@ -283,6 +283,11 @@ BEGIN
   IF NEW.line_type NOT IN ('contribution', 'distribution') THEN
     RETURN NULL;
   END IF;
+  -- A contribution posted from its tagged record (capital-events.sql): Month 5 writes the table itself, once, right after.
+  -- Kept here too so that running this file again after capital-events.sql cannot make every contribution post twice.
+  IF COALESCE(current_setting('app.skip_owner_sync', true), '') = 'on' THEN
+    RETURN NULL;
+  END IF;
   holder := NEW.member_key;
   IF EXISTS (SELECT 1 FROM public.buyer_accounts WHERE id = NEW.member_key) THEN
     SELECT auth_user_id INTO holder FROM public.buyer_accounts WHERE id = NEW.member_key;
