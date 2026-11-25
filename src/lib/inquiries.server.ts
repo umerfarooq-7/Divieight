@@ -53,6 +53,8 @@ export interface OwnerLedgerEntry {
   /** Left out where it could name a person (an entry on a member's capital account). */
   memo: string | null;
   lines: Array<{ code: string; name: string; debitCents: number; creditCents: number }>;
+  /** "cancelled": a later entry reversed this one. "correction": this entry reverses an earlier one. The two add up to nothing. */
+  correction: "cancelled" | "correction" | null;
   /** The viewer's own inquiries on this transaction. */
   inquiries: OwnerInquiry[];
 }
@@ -112,6 +114,8 @@ export async function ownerLedger(db: Db, p: { userId: string; propertyId: strin
   const latest = ((versions ?? []) as Row[]).sort((a, b) => b.version - a.version)[0];
   const { data: chart } = latest ? await db.from("coa_accounts").select("code, name, is_member_control, active, version_id").eq("version_id", latest.id) : { data: [] };
 
+  // Nothing in the books is ever deleted: a mistake is cancelled by a reversing entry. The pair nets to zero.
+  const reversedIds = new Set(entries.map((e) => e.reverses_entry_id as string | null).filter(Boolean));
   const out: OwnerLedgerEntry[] = [];
   for (const e of entries) {
     const ls = ((lineRows ?? []) as Row[]).filter((l) => l.entry_id === e.id);
@@ -122,6 +126,7 @@ export async function ownerLedger(db: Db, p: { userId: string; propertyId: strin
       date: e.entry_date,
       source: e.source,
       memo: memberLines.length > 0 ? null : (e.memo ?? null),
+      correction: e.reverses_entry_id ? "correction" : reversedIds.has(e.id) ? "cancelled" : null,
       lines: ls.map((l) => {
         const a = acctBy.get(l.account_id);
         return { code: (a?.code ?? "") as string, name: (a?.name ?? "") as string, debitCents: Number(l.debit_cents), creditCents: Number(l.credit_cents) };

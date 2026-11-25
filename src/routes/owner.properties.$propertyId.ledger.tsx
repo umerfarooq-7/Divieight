@@ -40,6 +40,11 @@ function OwnerLedgerPage() {
     if (!authLoading && !user) navigate({ to: "/owner/login", search: { redirect: window.location.pathname } });
   }, [authLoading, user, navigate]);
   const denied = data?.allowed === false;
+  // An entry that was cancelled, and the entry that cancelled it, add up to nothing: they are kept out of the way unless asked for (or asked about).
+  const [showCorrections, setShowCorrections] = useState(false);
+  const all = data?.allowed ? data.entries : [];
+  const corrections = all.filter((e) => e.correction && e.inquiries.length === 0);
+  const visible = showCorrections ? all : all.filter((e) => !e.correction || e.inquiries.length > 0);
   useEffect(() => {
     if (!denied) return;
     toast.error("You don't have ownership in that property.");
@@ -77,9 +82,20 @@ function OwnerLedgerPage() {
           </p>
         ) : null}
         {data?.allowed && data.entries.length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No transactions yet.</p> : null}
+        {data?.allowed && all.length > 0 && visible.length === 0 ? <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Nothing here except entries that were corrected.</p> : null}
         {data?.allowed
-          ? data.entries.map((e) => <EntryCard key={e.id} entry={e} propertyId={propertyId} accounts={data.accounts} canAsk={data.inquiriesAvailable} onDone={() => void refetch()} />)
+          ? visible.map((e) => <EntryCard key={e.id} entry={e} propertyId={propertyId} accounts={data.accounts} canAsk={data.inquiriesAvailable} onDone={() => void refetch()} />)
           : null}
+        {corrections.length > 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+            {showCorrections
+              ? "Entries marked Cancelled were recorded by mistake, and each one has a Correction entry that undoes it. Together they add up to nothing."
+              : `${corrections.length} entr${corrections.length === 1 ? "y is" : "ies are"} hidden: mistakes that were recorded and then cancelled. They add up to nothing and don't change your balance.`}{" "}
+            <button type="button" className="font-medium text-primary underline" onClick={() => setShowCorrections((v) => !v)}>
+              {showCorrections ? "Hide them" : "Show them"}
+            </button>
+          </div>
+        ) : null}
       </div>
     </OwnerPageShell>
   );
@@ -92,7 +108,12 @@ function EntryCard({ entry, propertyId, accounts, canAsk, onDone }: { entry: Own
   const [message, setMessage] = useState("");
   const [code, setCode] = useState("");
   const [details, setDetails] = useState(false);
-  const plain = plainEntry(entry);
+  const base = plainEntry(entry);
+  // A correction is the mirror image of the entry it cancels, so it must not read as a real payment or distribution.
+  const plain =
+    entry.correction === "correction"
+      ? { ...base, title: "Correction: an earlier entry was cancelled", detail: "This undoes an entry that was recorded by mistake. No real money moved; it only puts the books right." }
+      : base;
   const m = useMutation({
     mutationFn: () => raise({ data: { propertyId, entryId: entry.id, type: mode!, message, suggestedAccountCode: mode === "recategorize" ? code : null } }),
     onSuccess: () => {
@@ -113,10 +134,11 @@ function EntryCard({ entry, propertyId, accounts, canAsk, onDone }: { entry: Own
           <p className="mt-0.5 text-xs text-muted-foreground">
             {new Date(`${entry.date}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })} · {sourceLabel(entry.source)}
             {plain.yours ? <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 font-semibold text-accent">Your account</span> : null}
+            {entry.correction === "cancelled" ? <span className="ml-2 rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground">Cancelled</span> : null}
           </p>
         </div>
         <div className="text-right">
-          <div className={`text-lg font-semibold tabular-nums ${plain.cash === "in" ? "text-emerald-700 dark:text-emerald-400" : "text-foreground"}`}>
+          <div className={`text-lg font-semibold tabular-nums ${entry.correction === "cancelled" ? "text-muted-foreground line-through" : plain.cash === "in" ? "text-emerald-700 dark:text-emerald-400" : "text-foreground"}`}>
             {plain.cash === "in" ? "+" : plain.cash === "out" ? "−" : ""}
             {formatCents(plain.amountCents)}
           </div>

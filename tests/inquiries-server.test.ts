@@ -222,3 +222,18 @@ describe("the Manager's queue", () => {
     expect(readFileSync("src/routeTree.gen.ts", "utf8")).toContain("/admin/books/$propertyId/inquiries");
   });
 });
+
+describe("corrected entries", () => {
+  it("an entry that was reversed is marked cancelled, and the reversal a correction, so the page can keep the pair out of the way", async () => {
+    db().table("journal_entries").push({ id: "e-b1-rev", property_id: A, entry_date: "2026-11-04", source: "capital_call", memo: "Reversal", reverses_entry_id: "e-b1", posted_at: "2026-11-04T00:00:00Z" });
+    db().table("journal_lines").push(
+      { id: "l7", entry_id: "e-b1-rev", account_id: "a2", member_id: IDS.b1, debit_cents: "700", credit_cents: "0" },
+      { id: "l8", entry_id: "e-b1-rev", account_id: "a1", member_id: null, debit_cents: "0", credit_cents: "700" },
+    );
+    const r = await inq.ownerLedger(db(), { userId: USERS.b1, propertyId: A });
+    expect(Object.fromEntries(r.entries.map((e) => [e.id, e.correction]))).toEqual({ "e-b1-rev": "correction", "e-exp": null, "e-b1": "cancelled" });
+    const page = readFileSync("src/routes/owner.properties.$propertyId.ledger.tsx", "utf8");
+    expect(page).toContain("Correction: an earlier entry was cancelled");
+    expect(page).toContain("Show them");
+  });
+});
