@@ -214,7 +214,7 @@ describe("the Manager's queue", () => {
   it("the pages are wired: the owner's two buttons, the Manager's queue URL, and the link from the books", () => {
     const owner = readFileSync("src/routes/owner.properties.$propertyId.ledger.tsx", "utf8");
     expect(owner).toContain("Ask a question");
-    expect(owner).toContain("Suggest recategorization");
+    expect(owner).toContain("This is in the wrong category");
     const admin = readFileSync("src/routes/admin.books_.$propertyId.inquiries.tsx", "utf8");
     expect(admin).toMatch(/createFileRoute\("\/admin\/books_\/\$propertyId\/inquiries"\)/);
     for (const label of ["Send answer", "Resolve with correction", "Decline the suggestion"]) expect(admin).toContain(label);
