@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useAdmin } from "@/lib/admin";
+import { supabase } from "@/integrations/supabase/client";
 import { getMyTermsStatus } from "@/lib/tc.functions";
 import { diffPath } from "@/lib/tc";
 
@@ -29,6 +33,8 @@ function AccountSettings() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Account settings</h1>
       {user?.email ? <p className="mt-1 text-base text-muted-foreground">{user.email}</p> : null}
+
+      <ManagerName />
 
       <section className="mt-8 rounded-xl border border-border bg-card p-5" aria-labelledby="tc-heading">
         <h2 id="tc-heading" className="font-display text-xl font-semibold text-foreground">
@@ -93,5 +99,57 @@ function AccountSettings() {
         )}
       </section>
     </div>
+  );
+}
+
+/**
+ * The Manager's own full legal name. Documents the Manager signs (a distribution, for one) are signed by typing this name, and the server checks
+ * the typed signature against it, so it has to be on the account. Buyers and agents sign against the name on their own records, not this one.
+ */
+function ManagerName() {
+  const { user } = useAuth();
+  const { isAdmin } = useAdmin();
+  const saved = ((user?.user_metadata?.full_name as string | undefined) ?? "").trim();
+  const [name, setName] = useState(saved);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setName(saved), [saved]);
+  if (!isAdmin) return null;
+
+  async function save() {
+    const next = name.trim().replace(/\s+/g, " ");
+    if (next.split(" ").length < 2) return void toast.error("Enter your full legal name: first and last name.");
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ data: { full_name: next } });
+    setBusy(false);
+    if (error) return void toast.error(error.message);
+    toast.success("Name saved. Type it exactly like this when you sign.");
+  }
+
+  return (
+    <section className="mt-8 rounded-xl border border-border bg-card p-5" aria-labelledby="name-heading">
+      <h2 id="name-heading" className="font-display text-xl font-semibold text-foreground">
+        Your full legal name
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {saved ? "You sign as the Manager by typing this name exactly." : "No name is on your account yet. Add it: you sign as the Manager by typing this name exactly."}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="First and last name"
+          aria-label="Your full legal name"
+          className="h-10 w-full max-w-sm rounded-md border border-border bg-background px-3 text-sm text-foreground"
+        />
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={busy || !name.trim() || name.trim() === saved}
+          className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {busy ? "Saving…" : "Save name"}
+        </button>
+      </div>
+    </section>
   );
 }
